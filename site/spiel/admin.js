@@ -53,15 +53,15 @@
     for (const i of [1, 2, 3, 4]) { v[`S${i}`] = person(); v[`S${i}_FKT`] = pick(R.funktionen); v[`S${i}_ABT`] = pick(R.abteilungen); }
     return v;
   }
-  async function quickTest(duration) {
+  async function quickTest(premium) {
     const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Vienna" }).format(new Date());
     const vars = randomVars();
-    created = await MS.api("POST", "admin/session", { label: `Schnelltest · ${vars.FIRMA}`, event_date: today, duration_min: duration, test_mode: true, vars }, H());
+    created = await MS.api("POST", "admin/session", { label: `Schnelltest ${premium ? "Premium" : "Basis"} · ${vars.FIRMA}`, event_date: today, premium, test_mode: true, vars }, H());
     // Organisator gleich anmelden und den Fall öffnen
     const o = await MS.api("POST", "leitung/login", { code: created.org_code });
     MS.set("ms_org", o.token);
     await MS.api("POST", "leitung/aktion", { aktion: "oeffnen" }, { "x-leitung": o.token });
-    created.quick = { firma: vars.FIRMA, dg: meta.diebesgut.find((d) => d.key === vars.DIEBESGUT).label, people: [1, 2, 3, 4].map((i) => vars[`S${i}`]) };
+    created.quick = { premium, firma: vars.FIRMA, dg: meta.diebesgut.find((d) => d.key === vars.DIEBESGUT).label, people: [1, 2, 3, 4].map((i) => vars[`S${i}`]) };
   }
 
   function render(sessions) {
@@ -71,12 +71,12 @@
         <p style="margin:8px 0">Spielcode für Teams: <span class="bigcode" style="font-size:26px">${created.join_code}</span></p>
         <p>Organisator-Code: <b class="mono" style="font-size:20px">${created.org_code}</b></p>
         <p class="mono small">Teams: ${location.origin}/spiel/?code=${created.join_code}<br>Organisator: ${location.origin}/spiel/leitung.html</p>
-        ${created.quick ? `<p class="small" style="margin-top:8px">${MS.esc(created.quick.firma)} · Diebesgut: ${MS.esc(created.quick.dg)} · Verdächtige: ${created.quick.people.map(MS.esc).join(", ")}</p>
+        ${created.quick ? `<p class="small" style="margin-top:8px">${created.quick.premium ? `<b>Premium, 90 Min.</b> · Kuvert-Code: <b class="mono">${MS.esc(meta.card_code)}</b> · ` : "<b>Basis, 60 Min.</b> · "}${MS.esc(created.quick.firma)} · Diebesgut: ${MS.esc(created.quick.dg)} · Verdächtige: ${created.quick.people.map(MS.esc).join(", ")}</p>
         <div class="actions-row" style="margin-top:10px"><a class="btn btn-ink" href="/spiel/leitung.html" target="_blank" rel="noopener">Organisator-Ansicht öffnen</a><a class="btn btn-line" href="/spiel/?code=${created.join_code}" target="_blank" rel="noopener">Als Team beitreten</a></div>
         <p class="small" style="margin-top:8px">Der Fall ist geöffnet. Teams anmelden lassen, dann in der Organisator-Ansicht „Fall starten“.</p>` : ""}</div>` : ""}
       <div class="panel"><div class="eyebrow">Schnelltest</div>
         <p style="margin:8px 0 14px">Ein Klick: Runde mit Zufallsdaten anlegen, Fall öffnen und dich als Organisator anmelden.</p>
-        <div class="actions-row"><button class="btn btn-red" data-quick="60">Schnelltest 60 Min.</button><button class="btn btn-line" data-quick="90">Schnelltest 90 Min.</button></div>
+        <div class="actions-row"><button class="btn btn-red" data-quick="basis">Schnelltest Basis (60 Min.)</button><button class="btn btn-line" data-quick="premium">Schnelltest Premium (90 Min.)</button></div>
       </div>
       <div class="panel"><div class="eyebrow">Neue Spielrunde (mit eigenen Daten)</div>
       <form id="nf" class="form">
@@ -85,12 +85,11 @@
           <div class="field"><label for="event_date">Spieltag</label><input id="event_date" name="event_date" type="date" value="${today}" required></div>
         </div>
         <div class="two">
-          <div class="field"><label for="duration_min">Spieldauer</label><select id="duration_min" name="duration_min"><option value="60">60 Minuten</option><option value="75">75 Minuten</option><option value="90" selected>90 Minuten</option></select></div>
           <div class="field"><label for="DIEBESGUT">Diebesgut</label><select id="DIEBESGUT" name="DIEBESGUT">${meta.diebesgut.map((d) => `<option value="${d.key}">${MS.esc(d.label)}</option>`).join("")}</select></div>
         </div>
         <label class="check"><input type="checkbox" name="test_mode" checked><span><b>Testmodus</b>: Fall lässt sich an jedem Tag öffnen (für Probeläufe).</span></label>
-        <label class="check"><input type="checkbox" name="premium"><span><b>Premium</b> mit Zugangskarte (Lithophan) als 5. Stufe</span></label>
-        <div class="field"><label for="premium_answer">Lösung der Zugangskarte (nur Premium)</label><input id="premium_answer" name="premium_answer" placeholder="noch offen – erst nach Kartendesign"></div>
+        <label class="check"><input type="checkbox" name="premium"><span><b>Premium</b> (90 Min.): Akt 2 und versiegeltes Kuvert mit Zugangskarte. Ohne Haken: <b>Basis</b> (60 Min.).</span></label>
+        <div class="field"><label for="premium_answer">Code der Zugangskarte (nur Premium)</label><input id="premium_answer" name="premium_answer" placeholder="leer = Standard ${MS.esc(meta.card_code || "")}"></div>
         <h3 style="margin-top:8px">Personalisierung</h3>
         <p class="small">Leere Felder bekommen den Beispielwert (grau).</p>
         <div class="two">${meta.fields.map((f) => `<div class="field"><label for="f_${f.key}">${MS.esc(f.label)}</label><input id="f_${f.key}" name="${f.key}" placeholder="${MS.esc(f.example)}" maxlength="80"></div>`).join("")}</div>
@@ -110,7 +109,7 @@
       vars.DIEBESGUT = f.DIEBESGUT.value;
       try {
         created = await MS.api("POST", "admin/session", {
-          label: f.label.value, event_date: f.event_date.value, duration_min: Number(f.duration_min.value),
+          label: f.label.value, event_date: f.event_date.value,
           test_mode: f.test_mode.checked, premium: f.premium.checked, premium_answer: f.premium_answer.value, vars,
         }, H());
         err = ""; scrollTo(0, 0);
@@ -119,7 +118,7 @@
     };
     root.querySelectorAll("[data-quick]").forEach((b) => (b.onclick = async () => {
       b.disabled = true;
-      try { await quickTest(Number(b.dataset.quick)); err = ""; scrollTo(0, 0); } catch (e2) { err = e2.message; }
+      try { await quickTest(b.dataset.quick === "premium"); err = ""; scrollTo(0, 0); } catch (e2) { err = e2.message; }
       load();
     }));
     root.querySelectorAll("[data-del]").forEach((b) => (b.onclick = async () => {

@@ -1,21 +1,28 @@
 // Mordsteam Fallzentrale – Team-Ansicht („Ermittlerschreibtisch“)
 // Titel, Fragen, Hinweise und Dokumente kommen vom Server bereits sicher escaped.
 (function () {
-  const token = MS.get("ms_team");
-  if (!token) { location.href = "/spiel/"; return; }
-  const H = { "x-team": token };
+  // Mitlesegerät: kommt über den QR-Code des Teamgeräts (?mit=…)
+  const mit = MS.qs("mit");
+  if (mit) { MS.set("ms_view", mit); MS.del("ms_team"); ["ms_seen", "ms_heard", "ms_tab", "ms_doc"].forEach(MS.del); history.replaceState(null, "", location.pathname); }
+  const token = MS.get("ms_team"), viewToken = token ? null : MS.get("ms_view");
+  if (!token && !viewToken) { location.href = "/spiel/"; return; }
+  const VIEWER = !token;
+  const H = VIEWER ? { "x-view": viewToken } : { "x-team": token };
   const $ = (id) => document.getElementById(id);
   const root = $("root"), clock = $("clock"), tabsEl = $("tabs"), toastEl = $("toast");
-  const TABS = ["einsatz", "akte", "firma", "funk", "loesung", "rang"];
+  const TABS = VIEWER ? ["akte", "firma", "funk"] : ["einsatz", "akte", "firma", "funk", "loesung", "rang"];
+  if (VIEWER) tabsEl.querySelectorAll("[data-tab]").forEach((b) => { if (!TABS.includes(b.dataset.tab)) b.remove(); });
 
   let S = null;              // letzter Stand vom Server
   let offset = 0;            // Serverzeit − lokale Zeit
   let docs = null, watermark = "";
   let firma = null, vPage = "start", partnerHtml = null;
-  let tab = TABS.includes(MS.get("ms_tab")) ? MS.get("ms_tab") : "einsatz";
+  let tab = TABS.includes(MS.get("ms_tab")) ? MS.get("ms_tab") : TABS[0];
   let openDoc = null;        // Index des offenen Dokuments (0 ist gültig!)
+  let lastDocId = MS.get("ms_doc");   // zuletzt geöffnetes Dokument – beim Zurückkommen wieder dort
+  let vLogin = { u: "", p: "" };      // Eingaben im Partner-Login bleiben stehen
   let draft = {};
-  let lastKey = "";
+  let lastKey = "", lastStage = null;
   let verdict = null;        // { cls: 'bad'|'warn'|'good', html }
   let checkArmed = false, checkRes = "";
   let busy = false, fetchedHint = 0, toastTimer = null;
@@ -32,14 +39,15 @@
       offset = S.now - Date.now();
     } catch (e) {
       if (e.status === 401 || e.status === 410) {
-        MS.del("ms_team");
+        MS.del("ms_team"); MS.del("ms_view");
         root.innerHTML = `<div class="panel center"><p>${MS.esc(e.message)}</p><p style="margin-top:14px"><a class="btn btn-red" href="/spiel/">Neu anmelden</a></p></div>`;
       }
       return;
     }
     $("fallname").textContent = S.fall;
-    $("teamname").textContent = S.team;
-    const key = [S.status, S.solved, S.core_ok, S.check_available].join("|");
+    $("teamname").textContent = VIEWER ? `${S.team} · Mitlesegerät` : S.team;
+    const key = [S.status, S.solved, S.stage, S.check_available].join("|");
+    if (S.stage !== lastStage) { if (lastStage !== null) docs = null; lastStage = S.stage; }
     if (key !== lastKey) { lastKey = key; await render(); }
     else if (tab === "rang" || tab === "funk" || (S.solved && S.status === "running")) renderView();
     announceHints();
@@ -84,7 +92,7 @@
     const fresh = unread.filter((h) => !toasted.has(hid(h)));
     fresh.forEach((h) => toasted.add(hid(h)));
     if (!fresh.length || tab === "funk") return;
-    const txt = fresh.length === 1 ? `Neuer Funkspruch der Zentrale · Frage ${fresh[0].nr}` : `${fresh.length} neue Funksprüche der Zentrale`;
+    const txt = fresh.length === 1 ? `Neuer Funkspruch der Zentrale · ${fresh[0].label}` : `${fresh.length} neue Funksprüche der Zentrale`;
     toastEl.innerHTML = `<button type="button"><span class="led"></span><span>${txt}</span><b>Anhören →</b></button>`;
     toastEl.hidden = false;
     toastEl.querySelector("button").onclick = () => { hideToast(); go("funk"); };
@@ -95,7 +103,10 @@
 
   // ---------- Navigation ----------
   function go(t) {
-    tab = t; MS.set("ms_tab", t); openDoc = null; renderView(); scrollTo(0, 0);
+    tab = t; MS.set("ms_tab", t);
+    openDoc = null;
+    if (t === "akte" && lastDocId && docs) { const i = docs.findIndex((d) => d.id === lastDocId); if (i >= 0) openDoc = i; }
+    renderView(); scrollTo(0, 0);
   }
   tabsEl.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => go(b.dataset.tab)));
 
@@ -104,6 +115,7 @@
     tabsEl.hidden = !running();
     if (running()) {
       try { await ensureContent(); } catch (e) { root.innerHTML = `<div class="panel center"><p class="err">${MS.esc(e.message)}</p></div>`; return; }
+      if (tab === "akte" && openDoc === null && lastDocId) { const i = docs.findIndex((d) => d.id === lastDocId); if (i >= 0) openDoc = i; }
     } else hideToast();
     renderView();
   }
@@ -126,7 +138,7 @@
     root.innerHTML = `<div class="panel center waiting">
       <div class="eyebrow">Team angemeldet</div>
       <h1>${MS.esc(S.team)}</h1>
-      <p>Ihr seid startklar. Sobald euer Organisator den Fall startet, öffnet sich hier euer Einsatzbefehl – bei allen Teams gleichzeitig.</p>
+      <p>${VIEWER ? "Dieses Gerät liest bei eurem Team mit. Sobald der Fall startet, erscheint hier die Akte." : "Ihr seid startklar. Sobald euer Organisator den Fall startet, öffnet sich hier euer Einsatzbefehl – bei allen Teams gleichzeitig."}</p>
       <div class="spinner" aria-hidden="true"></div>
       <h3>Angemeldete Teams</h3>
       <ul class="teamlist">${S.ranking.map((r) => `<li>${MS.esc(r.name)}${r.name === S.team ? " <span>(ihr)</span>" : ""}</li>`).join("")}</ul>
@@ -162,7 +174,7 @@
       <h2>Danke fürs Ermitteln!</h2>
       <p>Die Akte ist geschlossen – aber das Verbrechen schläft nie. Wir hoffen, euch bald wiederzusehen, Detektive: Der nächste Fall liegt schon auf dem Schreibtisch.</p>
       <div class="next-case"><span class="conf">Akte 002</span><div><b>In Ermittlung</b><span>Neuer Fall, neue Verdächtige – vielleicht diesmal jemand von euch.</span></div></div>
-      <div class="actions-row">${S.solved ? `<a class="btn btn-red" href="/spiel/urkunde.html">Urkunde herunterladen</a>` : ""}<a class="btn btn-ghost" href="https://mordsteam.com" target="_blank" rel="noopener">Weitere Fälle auf mordsteam.com</a></div>
+      <div class="actions-row">${S.solved && !VIEWER ? `<a class="btn btn-red" href="/spiel/urkunde.html">Urkunde herunterladen</a>` : ""}<a class="btn btn-ghost" href="https://mordsteam.com" target="_blank" rel="noopener">Weitere Fälle auf mordsteam.com</a></div>
     </section>`;
   }
 
@@ -172,7 +184,7 @@
       <section class="paper final-head">
         <div class="bigstamp ${S.solved ? "" : "grey"}"><div><small>MORDSTEAM · AKTE 001</small><strong>${S.solved ? "FALL GELÖST" : "AKTE GESCHLOSSEN"}</strong><small>TEAM ${MS.esc(S.team).toUpperCase()}</small></div></div>
         <h1>${S.solved ? "Stark ermittelt!" : "Die Zeit ist um."}</h1>
-        <p class="lead">${S.solved ? "Ihr habt die Täterin überführt, bevor die Übergabe stattfinden konnte." : "Die Übergabe hat stattgefunden. Aber jetzt erfahrt ihr, was wirklich geschah."}</p>
+        <p class="lead">${S.solved ? (S.premium ? "Täterin überführt, Kopie gesichert – Veridians Präsentation fällt aus." : "Ihr habt die Täterin überführt, bevor die Übergabe stattfinden konnte.") : "Die Übergabe hat stattgefunden. Aber jetzt erfahrt ihr, was wirklich geschah."}</p>
         ${bilanz()}
       </section>
       <section class="paper">
@@ -191,8 +203,8 @@
     const r = $("reveal");
     if (r) r.onclick = () => {
       $("revealbox").innerHTML = `<div class="answers">${A.answers.map((a, i) => `<div><i>${pad(i + 1)}</i><span>${a.label}</span><b>${MS.esc(a.answer)}${a.detail ? ` · ${MS.esc(a.detail)}` : ""}</b></div>`).join("")}
-        ${A.premium_answer ? `<div><i>05</i><span>Code der Zugangskarte</span><b>${MS.esc(A.premium_answer)}</b></div>` : ""}</div>
-        <p class="story">${A.story}</p>`;
+        ${A.premium_answer ? `<div><i>★</i><span>Code auf Reihers Zugangskarte</span><b>${MS.esc(A.premium_answer)}</b></div>` : ""}</div>
+        <p class="story">${A.story}</p>${A.story2 ? `<p class="story" style="margin-top:14px">${A.story2}</p>` : ""}`;
     };
   }
 
@@ -206,7 +218,7 @@
         <p class="lead">Gelöst in <b>${MS.dur(S.score_ms)}</b>${S.penalty_min ? ` (inkl. ${S.penalty_min} Min. Strafzeit)` : ""}${place ? ` – aktuell <b>Platz ${place}</b>` : ""}.</p>
         <p class="muted">${open ? `${open} ${open === 1 ? "Team ermittelt" : "Teams ermitteln"} noch. Bitte nichts verraten! Die Auflösung und die Siegerehrung erscheinen hier, sobald euer Organisator die Runde beendet.` : "Alle Teams sind fertig. Die Siegerehrung erscheint, sobald euer Organisator die Runde beendet."}</p>
         ${bilanz()}
-        <a class="btn btn-red" href="/spiel/urkunde.html">Urkunde herunterladen</a>
+        ${VIEWER ? "" : `<a class="btn btn-red" href="/spiel/urkunde.html">Urkunde herunterladen</a>`}
       </section>
       <section class="paper"><div class="eyebrow">Live-Rangliste</div>${rankTable()}</section>
     </div>`;
@@ -222,15 +234,28 @@
       <ol class="steps">
         <li><span class="n">1</span><div><b>Akte lesen</b><span>${n} Beweisstücke. Teilt sie untereinander auf und redet miteinander.</span></div></li>
         <li><span class="n">2</span><div><b>Konkurrenz durchleuchten</b><span>Die Website von Veridian verrät mehr, als sie sollte.</span></div></li>
-        <li><span class="n">3</span><div><b>Vier Antworten, ein Versuch</b><span>Geprüft wird alles auf einmal. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten.</span></div></li>
+        <li><span class="n">3</span><div><b>Vier Antworten, ein Versuch</b><span>Geprüft wird alles auf einmal. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten Strafzeit.</span></div></li>
         <li><span class="n">4</span><div><b>Funk der Zentrale</b><span>Hängt ihr fest, meldet sich die Zentrale von selbst – für alle Teams gleichzeitig, ohne Strafzeit.</span></div></li>
         <li><span class="n">5</span><div><b>Fair Play</b><span>Keine KI, keine Suchmaschine. Nur ihr und die Akte.</span></div></li>
+        ${S.premium ? `<li class="prem"><span class="n">6</span><div><b>Zwei Akte und ein Kuvert</b><span>Nach Akt 1 schickt die Zentrale neue Beweisstücke. Euer versiegeltes Kuvert bleibt zu, bis die Fallzentrale es freigibt.</span></div></li>` : ""}
       </ol>
-      <h2 class="qhead">Eure vier Fragen</h2>
-      <div class="qcards">${S.questions.map((q, i) => `<div><i>${pad(i + 1)}</i><span>${q.label}</span></div>`).join("")}</div>
+      <h2 class="qhead">Eure vier Fragen${S.premium ? " in Akt 1" : ""}</h2>
+      <div class="qcards">${S.questions_act1.map((l, i) => `<div><i>${pad(i + 1)}</i><span>${l}</span></div>`).join("")}</div>
       <button type="button" class="btn btn-red btn-big" id="toAkte">Akte öffnen →</button>
+      <div class="more-devices">
+        <div class="qr" id="qr" aria-label="QR-Code für Mitlesegeräte"></div>
+        <div><b>Ihr wollt mehr Geräte verwenden?</b>
+          <p>Scannt den Code mit weiteren Handys oder Laptops eures Teams. Dort seht ihr Akte, Konkurrenz-Website und Funk – so könnt ihr euch die Beweisstücke aufteilen.</p>
+          <p class="small"><b>Lösungen gebt ihr nur hier auf diesem Gerät ein.</b></p>
+          <button type="button" class="btn btn-line" id="copyLink">Link kopieren</button> <span class="small" id="copied"></span></div>
+      </div>
     </div></section>`;
     $("toAkte").onclick = () => go("akte");
+    const link = `${location.origin}/spiel/fall?mit=${S.view_token}`;
+    try { const q = qrcode(0, "M"); q.addData(link); q.make(); $("qr").innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); } catch { $("qr").remove(); }
+    $("copyLink").onclick = async () => {
+      try { await navigator.clipboard.writeText(link); $("copied").textContent = "Kopiert."; } catch { $("copied").textContent = link; }
+    };
   }
 
   // ---------- Akte ----------
@@ -239,8 +264,8 @@
 
   function viewAkte() {
     const read = docs.filter((d) => seen.has(d.id)).length;
-    root.innerHTML = `<div class="deskhead"><h2>Fallakte</h2><span>${read} / ${docs.length} gelesen</span></div>
-      <div class="evid">${docs.map((d, i) => `<button type="button" class="ev ${kindClass(d.kind)} ${seen.has(d.id) ? "seen" : ""}" data-doc="${i}" style="--r:${ROT[i % ROT.length]}deg">
+    root.innerHTML = `${VIEWER ? `<p class="viewer-note">Mitlesegerät · Lösungen gibt euer Team am Hauptgerät ein.</p>` : ""}<div class="deskhead"><h2>Fallakte</h2><span>${read} / ${docs.length} gelesen</span></div>
+      <div class="evid">${docs.map((d, i) => `${d.act === 2 && (i === 0 || docs[i - 1].act !== 2) ? `<div class="actdiv"><span class="conf">Akt 2</span><b>Neue Beweisstücke von der Zentrale</b></div>` : ""}<button type="button" class="ev ${kindClass(d.kind)} ${seen.has(d.id) ? "seen" : ""}" data-doc="${i}" style="--r:${ROT[i % ROT.length]}deg">
         <span class="ev-nr">Nr. ${pad(i + 1)}</span><span class="kind">${MS.esc(d.kind)}</span><span class="ttl">${d.title}</span>${seen.has(d.id) ? `<span class="gel">Gelesen</span>` : ""}</button>`).join("")}</div>`;
     root.querySelectorAll("[data-doc]").forEach((b) => (b.onclick = () => { openDoc = Number(b.dataset.doc); renderView(); scrollTo(0, 0); }));
   }
@@ -251,14 +276,16 @@
 
   function viewDoc() {
     const d = docs[openDoc];
+    if (!d) { openDoc = null; return viewAkte(); }
     seen.add(d.id); MS.set("ms_seen", JSON.stringify([...seen]));
+    lastDocId = d.id; MS.set("ms_doc", d.id);
     const prev = openDoc > 0 ? openDoc - 1 : null, next = openDoc < docs.length - 1 ? openDoc + 1 : null;
     const pbtn = (i, dir) => `<button type="button" data-go="${i}" class="${dir}"><small>${dir === "prev" ? "← Nr. " + pad(i + 1) : "Nr. " + pad(i + 1) + " →"}</small>${docs[i].title}</button>`;
     root.innerHTML = `<div class="docbar"><button type="button" class="back" id="back">← Alle Beweisstücke</button><span class="docpos">Nr. ${pad(openDoc + 1)} / ${docs.length} · ${MS.esc(d.kind)}</span></div>
       <article class="doc" data-wm="${MS.esc((watermark + "   ").repeat(40))}"><div class="doc-inner">${d.html}</div></article>
       <div class="pager">${prev !== null ? pbtn(prev, "prev") : "<span></span>"}${next !== null ? pbtn(next, "next") : ""}</div>`;
     wrapTables(".doc table");
-    $("back").onclick = () => { openDoc = null; renderView(); };
+    $("back").onclick = () => { openDoc = null; lastDocId = null; MS.del("ms_doc"); renderView(); };
     root.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => { openDoc = Number(b.dataset.go); renderView(); scrollTo(0, 0); }));
   }
 
@@ -269,8 +296,8 @@
     if (vPage === "login") {
       body = partnerHtml ? partnerHtml : `<h2>Partnerbereich</h2><p class="v-lead">Nur für registrierte Partner.</p>
         <form id="vlogin" class="v-login">
-          <label for="vu">Benutzer</label><input id="vu" autocomplete="off" autocapitalize="none" spellcheck="false">
-          <label for="vp">Passwort</label><input id="vp" type="password" autocomplete="off">
+          <label for="vu">Benutzer</label><input id="vu" autocomplete="off" autocapitalize="none" spellcheck="false" value="${MS.esc(vLogin.u)}">
+          <label for="vp">Passwort</label><input id="vp" autocomplete="off" autocapitalize="none" spellcheck="false" value="${MS.esc(vLogin.p)}">
           <button type="submit" class="v-btn">Anmelden</button>
           <p class="err" id="vmsg" role="alert"></p>
         </form>`;
@@ -287,6 +314,7 @@
     wrapTables(".v-body table");
     root.querySelectorAll("[data-v]").forEach((b) => (b.onclick = () => { vPage = b.dataset.v; renderView(); }));
     const f = $("vlogin");
+    if (f) { $("vu").oninput = (e) => (vLogin.u = e.target.value); $("vp").oninput = (e) => (vLogin.p = e.target.value); }
     if (f) f.onsubmit = async (e) => {
       e.preventDefault();
       try {
@@ -306,9 +334,9 @@
     hideToast();
     root.innerHTML = `<section class="radio">
       <div class="radio-head"><span class="led"></span>Funkkanal Zentrale · Akte 001</div>
-      ${S.next_hint ? `<p class="radio-next">Nächster Funkspruch in <b id="nexthint">${MS.dur(Math.max(0, S.next_hint.time - Date.now() - offset))}</b> <span>· zu Frage ${S.next_hint.nr}</span></p>`
-        : `<p class="radio-next">${S.core_ok ? "Kein Funkverkehr mehr – ihr seid auf der Zielgeraden." : "Die Zentrale hat alles gesagt, was sie weiß."}</p>`}
-      ${S.hints.length ? S.hints.map((h) => `<div class="rmsg ${unread.has(hid(h)) ? "new" : ""}"><small>Min. ${gameMin(h.time)} · Frage ${h.nr} · Hinweis ${h.level}${unread.has(hid(h)) ? " · neu" : ""}</small><p>${h.text}</p></div>`).join("")
+      ${S.next_hint ? `<p class="radio-next">Nächster Funkspruch in <b id="nexthint">${MS.dur(Math.max(0, S.next_hint.time - Date.now() - offset))}</b> <span>· ${S.next_hint.label}</span></p>`
+        : `<p class="radio-next">Die Zentrale hat zu dieser Stufe alles gesagt, was sie weiß.</p>`}
+      ${S.hints.length ? S.hints.map((h) => `<div class="rmsg ${unread.has(hid(h)) ? "new" : ""}"><small>Min. ${gameMin(h.time)} · ${h.label} · Hinweis ${h.level}${unread.has(hid(h)) ? " · neu" : ""}</small><p>${h.text}</p></div>`).join("")
         : `<p class="radio-empty">Funkstille. Die Zentrale meldet sich von selbst, wenn ihr länger festhängt – bei allen Teams gleichzeitig.</p>`}
       <p class="radio-rules">Funksprüche kosten keine Strafzeit. Sie stehen auch direkt unter der passenden Frage im Tab „Lösung“.</p>
     </section>`;
@@ -321,26 +349,40 @@
   }
 
   function viewLoesung() {
-    const v = verdict ? `<div class="verdict ${verdict.cls}" role="alert">${verdict.html}</div>` : "";
-    if (S.core_ok && S.premium) {
-      root.innerHTML = `<section class="report paper">
-        <div class="eyebrow">Letzte Stufe</div><h2>Die vier Antworten stimmen!</h2>
-        <p class="muted">Aber Dr. Reiher hat noch etwas hinterlassen: seine Zugangskarte. Haltet sie gegen das Licht einer Handy-Taschenlampe. Was verrät sie?</p>
-        <div class="qrow"><span class="qn">5</span><div class="qf"><label for="k">Code der Zugangskarte</label><input id="k" data-q="karte" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done" value="${MS.esc(draft.karte || "")}"></div></div>
-        ${v}<button type="button" class="btn btn-red btn-big" id="pruefen">Code prüfen</button></section>`;
-    } else {
-      root.innerHTML = `<section class="report paper">
-        <div class="eyebrow">Abschlussbericht</div><h2>Wer, wann, warum, wo?</h2>
-        <p class="muted">Alle vier Antworten müssen stimmen. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten Strafzeit.</p>
-        ${S.questions.map((q, i) => `<div class="qrow"><span class="qn">${i + 1}</span><div class="qf">
+    const vHtml = verdict ? `<div class="verdict ${verdict.cls}" role="alert">${verdict.html}</div>` : "";
+    // Erfolgsmeldungen (neue Stufe) oben, Fehlermeldungen direkt über dem Prüfen-Knopf
+    const top = verdict && verdict.cls === "good" ? vHtml : "", v = verdict && verdict.cls !== "good" ? vHtml : "";
+    const qrows = () => S.questions.map((q, i) => `<div class="qrow"><span class="qn">${q.nr}</span><div class="qf">
           <label for="q_${q.key}">${q.label}</label><span class="hint">${MS.esc(q.hint)}</span>
           <input id="q_${q.key}" data-q="${q.key}" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="${i < S.questions.length - 1 ? "next" : "done"}" value="${MS.esc(draft[q.key] || "")}">
-          ${hintsFor(q.key)}</div></div>`).join("")}
-        ${v}
-        <button type="button" class="btn btn-red btn-big" id="pruefen">Lösung prüfen</button>
-        ${S.check_available ? `<div class="ctip"><div><b>Kontrolltipp</b><p>Zeigt, welche Antworten eures letzten Versuchs schon stimmen. Kostet ${S.rules.check} Minuten Strafzeit.</p></div>
+          ${hintsFor(q.key)}</div></div>`).join("");
+    const ctip = S.check_available ? `<div class="ctip"><div><b>Kontrolltipp</b><p>Zeigt, welche Antworten eures letzten Versuchs schon stimmen. Kostet ${S.rules.check} Minuten Strafzeit.</p></div>
           <button type="button" class="btn ${checkArmed ? "btn-ink" : "btn-line"}" id="check">${checkArmed ? `Ja, Kontrolltipp nutzen (+${S.rules.check} Min.)` : "Kontrolltipp nutzen"}</button>
-          ${checkArmed ? `<button type="button" class="linkbtn" id="checkno">Abbrechen</button>` : ""}${checkRes}</div>` : ""}
+          ${checkArmed ? `<button type="button" class="linkbtn" id="checkno">Abbrechen</button>` : ""}${checkRes}</div>` : "";
+    if (S.stage === 3) {
+      // Finale (Premium): versiegeltes Kuvert
+      root.innerHTML = `<section class="report paper kuvert-stage">${top}
+        <div class="eyebrow">Finale · Akt 2 gelöst</div>
+        <div class="envelope" aria-hidden="true"><div class="env-flap"></div><div class="env-seal">M</div></div>
+        <h2>Öffnet jetzt euer versiegeltes Kuvert!</h2>
+        <p class="muted">Darin liegt Reihers Zugangskarte. Kral hat den Code für das Schließfach darauf versteckt – sichtbar nur, wenn man Licht ins Dunkel bringt.</p>
+        <div class="qrow"><span class="qn">★</span><div class="qf"><label for="q_karte">${S.questions[0].label}</label><span class="hint">${MS.esc(S.questions[0].hint)}</span>
+          <input id="q_karte" data-q="karte" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done" value="${MS.esc(draft.karte || "")}">${hintsFor("karte")}</div></div>
+        ${v}<button type="button" class="btn btn-red btn-big" id="pruefen">Schließfach öffnen</button></section>`;
+    } else if (S.stage === 2) {
+      root.innerHTML = `<section class="report paper">
+        <div class="actbanner"><span class="conf">Akt 2</span><span>Akt 1 gelöst · Kral ist überführt</span></div>${top}
+        <div class="eyebrow">Die Übergabe verhindern</div><h2>Wer holt die Beute – und wo liegt die Kopie?</h2>
+        <p class="muted">In eurer Akte liegen neue Beweisstücke. Beide Antworten müssen stimmen. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten. Das Kuvert bleibt noch zu!</p>
+        ${qrows()}${v}
+        <button type="button" class="btn btn-red btn-big" id="pruefen">Lösung prüfen</button>${ctip}
+      </section>`;
+    } else {
+      root.innerHTML = `<section class="report paper">
+        <div class="eyebrow">Abschlussbericht${S.premium ? " · Akt 1" : ""}</div><h2>Wer, wann, warum, wo?</h2>
+        <p class="muted">Alle vier Antworten müssen stimmen. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten Strafzeit.</p>
+        ${qrows()}${v}
+        <button type="button" class="btn btn-red btn-big" id="pruefen">Lösung prüfen</button>${ctip}
       </section>`;
     }
     const inputs = [...root.querySelectorAll("[data-q]")];
@@ -364,7 +406,7 @@
       checkArmed = false;
       try {
         const d = await MS.api("POST", "kontrolle", null, H);
-        checkRes = `<div class="checkrow">${S.questions.map((q, i) => `<span class="${d.result[q.key] ? "y" : "n"}">Frage ${i + 1}: ${d.result[q.key] ? "richtig" : "falsch"}</span>`).join("")}</div>`;
+        checkRes = `<div class="checkrow">${S.questions.map((q, i) => `<span class="${d.result[q.key] ? "y" : "n"}">Frage ${q.nr}: ${d.result[q.key] ? "richtig" : "falsch"}</span>`).join("")}</div>`;
         S.penalty_min += d.penalty_min; tick();
       } catch (err) { checkRes = `<p class="err">${MS.esc(err.message)}</p>`; }
       viewLoesung();
@@ -380,20 +422,26 @@
     if (btn) { btn.disabled = true; btn.textContent = "Wird geprüft …"; }
     try {
       const d = await MS.api("POST", "loesung", a, H);
-      if (d.correct) { verdict = d.solved ? null : { cls: "good", html: "<strong>Richtig!</strong>" }; draft = {}; }
+      if (d.correct) {
+        draft = {};
+        verdict = d.next === "akt2" ? { cls: "good", html: "<strong>Akt 1 gelöst!</strong>Kral ist überführt – aber die Übergabe läuft noch. Neue Beweisstücke liegen in eurer Akte." }
+          : d.next === "kuvert" ? { cls: "good", html: "<strong>Akt 2 gelöst!</strong>Jetzt dürft ihr das Kuvert öffnen." } : null;
+      }
       else verdict = { cls: "bad", html: `<strong>Leider falsch.</strong>+${d.penalty_min} Minuten Strafzeit. Prüft eure Antworten noch einmal.` };
       checkRes = "";
     } catch (err) { verdict = { cls: "warn", html: MS.esc(err.message) }; }
     busy = false;
     lastKey = "";
+    const before = S.stage;
     await poll();
+    if (S.stage !== before) scrollTo(0, 0);
   }
 
   // ---------- Rangliste ----------
   function rankTable() {
     return `<table class="rank"><thead><tr><th>#</th><th>Team</th><th>Stand</th><th>Zeit</th></tr></thead><tbody>
       ${S.ranking.map((r) => `<tr class="${r.name === S.team ? "me" : ""}"><td class="n">${r.rank || "–"}</td><td>${MS.esc(r.name)}${r.name === S.team ? " (ihr)" : ""}</td>
-      <td>${r.solved ? "gelöst" : r.core ? "letzte Stufe" : "ermittelt"}</td><td class="mono">${r.solved ? MS.dur(r.score_ms) : "–"}</td></tr>`).join("")}
+      <td>${MS.stage(r, S.premium)}</td><td class="mono">${r.solved ? MS.dur(r.score_ms) : "–"}</td></tr>`).join("")}
     </tbody></table>`;
   }
   function viewRang() {

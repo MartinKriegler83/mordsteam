@@ -23,5 +23,11 @@ const MS = {
   esc(s) {
     return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   },
+  // Stand eines Teams in der Rangliste
+  stage(r, premium) {
+    if (r.solved) return "gelöst";
+    if (!premium) return "ermittelt";
+    return ["", "Akt 1", "Akt 2", "Kuvert"][r.stage] || "ermittelt";
+  },
   qs(name) { return new URLSearchParams(location.search).get(name); },
 };

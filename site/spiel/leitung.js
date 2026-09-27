@@ -37,9 +37,9 @@
     try {
       const d = await MS.api("GET", "leitung/aufloesung", null, { "x-leitung": token });
       solutionHtml = `<div class="panel" style="margin-top:18px"><div class="eyebrow">Auflösung</div>
-        <ol class="list" style="margin:10px 0">${d.answers.map((a) => `<li><b>${MS.esc(a.label)}</b><br><span class="mono">${MS.esc(a.answer)}</span></li>`).join("")}
-        ${d.premium_answer ? `<li><b>Reihers Zugangskarte</b><br><span class="mono">${MS.esc(d.premium_answer)}</span></li>` : ""}</ol>
-        <p>${MS.esc(d.story)}</p></div>`;
+        <ol class="list" style="margin:10px 0">${d.answers.map((a) => `<li><b>${a.label}</b><br><span class="mono">${MS.esc(a.answer)}</span>${a.detail ? ` · ${MS.esc(a.detail)}` : ""}</li>`).join("")}
+        ${d.premium_answer ? `<li><b>Code auf Reihers Zugangskarte (Kuvert)</b><br><span class="mono">${MS.esc(d.premium_answer)}</span></li>` : ""}</ol>
+        <p>${d.story}</p>${d.story2 ? `<p style="margin-top:10px">${d.story2}</p>` : ""}</div>`;
     } catch (e) { msg = e.message; }
     render();
   }
@@ -52,8 +52,9 @@
     if (S.status === "created") steps = S.may_open
       ? `<p>Heute ist Spieltag. Öffnet den Fall, dann können sich die Teams mit dem Spielcode anmelden.</p><button class="btn btn-red" id="a-open">Fall öffnen</button>`
       : `<p>Der Fall lässt sich erst am Spieltag öffnen: <b>${MS.esc(S.event_date)}</b>.</p>`;
-    if (S.status === "open") steps = `<p>Die Teams melden sich jetzt an. Startet den Fall, wenn alle bereit sind – die Uhr läuft dann für alle gleichzeitig.</p><button class="btn btn-red" id="a-start">Fall starten</button>`;
-    if (S.status === "running") steps = `<p>Läuft seit <b class="mono">${MS.dur(now - S.started_at)}</b>. Übergabe (Spielende) nach ${S.duration_min} Minuten. Spätestens eine Stunde danach schließt die Runde automatisch.</p><button class="btn btn-line" id="a-stop">Runde beenden</button>`;
+    const kuvert = S.premium ? `<p class="note" style="margin:10px 0"><b>Premium:</b> Jedes Team bekommt ein versiegeltes Kuvert mit Reihers Zugangskarte. Es bleibt zu, bis die Fallzentrale dem Team das Öffnen erlaubt (nach Akt 2).</p>` : "";
+    if (S.status === "open") steps = kuvert + `<p>Die Teams melden sich jetzt an. Startet den Fall, wenn alle bereit sind – die Uhr läuft dann für alle gleichzeitig.</p><button class="btn btn-red" id="a-start">Fall starten</button>`;
+    if (S.status === "running") steps = `<p>Läuft seit <b class="mono">${MS.dur(now - S.started_at)}</b>. Übergabe (Spielende) nach ${S.duration_min} Minuten${S.premium ? " (Premium mit Akt 2 und Kuvert)" : ""}. Spätestens eine Stunde danach schließt die Runde automatisch.</p><button class="btn btn-line" id="a-stop">Runde beenden</button>`;
     if (S.status === "finished") steps = `<p>Die Runde ist beendet. Rangliste und Urkunden bleiben 30 Tage abrufbar, dann werden alle Daten gelöscht.</p>`;
     root.innerHTML = `<div class="stack" style="gap:18px;max-width:900px">
       <div class="panel"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
@@ -69,7 +70,7 @@
         <button class="tipbtn" id="copy" type="button">Link kopieren</button></div>` : ""}
       <div class="panel"><div class="eyebrow">Teams und Rangliste</div>
         ${S.ranking.length ? `<table class="rank"><thead><tr><th>#</th><th>Team</th><th>Stand</th><th>Fehlversuche</th><th>Zeit</th></tr></thead><tbody>
-        ${S.ranking.map((r) => `<tr><td class="n">${r.rank || "–"}</td><td>${MS.esc(r.name)}</td><td>${r.solved ? "gelöst" : r.core ? "letzter Hinweis" : "ermittelt"}</td><td>${r.wrong}</td><td class="mono">${r.solved ? MS.dur(r.score_ms) : "–"}</td></tr>`).join("")}
+        ${S.ranking.map((r) => `<tr><td class="n">${r.rank || "–"}</td><td>${MS.esc(r.name)}</td><td>${MS.stage(r, S.premium)}</td><td>${r.wrong}</td><td class="mono">${r.solved ? MS.dur(r.score_ms) : "–"}</td></tr>`).join("")}
         </tbody></table>` : `<p class="muted">Noch kein Team angemeldet.</p>`}
       </div>
       ${S.solution_available ? `<div><button class="btn btn-ink" id="a-sol">Auflösung anzeigen</button></div>` : ""}

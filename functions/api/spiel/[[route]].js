@@ -3,7 +3,17 @@
 import {
   CASES, RULES, json, fail, randInt, randomToken, randomCode, esc, viennaDate,
   buildVars, render, checkAnswers, hintTimes, hardEnd, refreshStatus, expired, purgeSession, ranking, teamScore,
+  isPremium, stageOf, stageQuestions, cardCode,
 } from "../../../lib/game.js";
+
+// Datenbank-Erweiterung ohne Handarbeit: fehlende Spalten beim ersten Aufruf anlegen
+let migrated = false;
+async function migrate(env) {
+  if (migrated) return;
+  try { await env.DB.prepare("ALTER TABLE teams ADD COLUMN act2_at INTEGER").run(); } catch {}
+  try { await env.DB.prepare("ALTER TABLE teams ADD COLUMN view_token TEXT").run(); } catch {}
+  migrated = true;
+}
 
 export async function onRequest(ctx) {
   const { request, env, params } = ctx;
@@ -11,14 +21,15 @@ export async function onRequest(ctx) {
   const route = (params.route || []).join("/");
   const method = request.method;
   try {
+    await migrate(env);
     // --- Teams ---
     if (route === "join" && method === "POST") return join(request, env);
     if (route === "state" && method === "GET") return withTeam(request, env, teamState);
     if (route === "akte" && method === "GET") return withTeam(request, env, akte, true);
     if (route === "firma" && method === "GET") return withTeam(request, env, firma, true);
     if (route === "firma/login" && method === "POST") return withTeam(request, env, firmaLogin, true);
-    if (route === "loesung" && method === "POST") return withTeam(request, env, loesung, true);
-    if (route === "kontrolle" && method === "POST") return withTeam(request, env, kontrolle, true);
+    if (route === "loesung" && method === "POST") return withTeam(request, env, loesung, true, false);
+    if (route === "kontrolle" && method === "POST") return withTeam(request, env, kontrolle, true, false);
     // --- Organisator ---
     if (route === "leitung/login" && method === "POST") return leitungLogin(request, env);
     if (route === "leitung/state" && method === "GET") return withOrg(request, env, leitungState);
@@ -46,14 +57,19 @@ async function loadSession(env, id) {
   if (expired(s)) { await purgeSession(env, s.id); return null; }
   return refreshStatus(env, s);
 }
-async function withTeam(request, env, fn, needsRunning = false) {
+// Teamgerät (x-team) darf alles; Mitlesegeräte (x-view) nur lesen
+async function withTeam(request, env, fn, needsRunning = false, allowViewer = true) {
   const token = request.headers.get("x-team") || "";
-  const team = token && (await env.DB.prepare("SELECT * FROM teams WHERE token=?").bind(token).first());
+  const view = request.headers.get("x-view") || "";
+  let team = null, viewer = false;
+  if (token) team = await env.DB.prepare("SELECT * FROM teams WHERE token=?").bind(token).first();
+  else if (view) { team = await env.DB.prepare("SELECT * FROM teams WHERE view_token=?").bind(view).first(); viewer = !!team; }
+  if (viewer && !allowViewer) return fail("Lösungen gibt euer Team nur am Hauptgerät ein.", 403);
   if (!team) return fail("Team unbekannt. Bitte neu anmelden.", 401);
   const session = await loadSession(env, team.session_id);
   if (!session) return fail("Diese Spielrunde existiert nicht mehr.", 410);
   if (needsRunning && session.status !== "running") return fail("Der Fall ist gerade nicht geöffnet.", 403);
-  return fn({ request, env, team, session });
+  return fn({ request, env, team, session, viewer });
 }
 async function withOrg(request, env, fn) {
   const token = request.headers.get("x-leitung") || "";
@@ -88,23 +104,36 @@ async function join(request, env) {
   return json({ token, team: name });
 }
 
-async function teamState({ env, team, session }) {
+async function teamState({ env, team, session, viewer }) {
+  // Link für Mitlesegeräte: wird beim ersten Abruf des Teamgeräts erzeugt
+  if (!viewer && !team.view_token) {
+    team.view_token = randomToken(16);
+    await env.DB.prepare("UPDATE teams SET view_token=? WHERE id=?").bind(team.view_token, team.id).run();
+  }
   const c = CASES[session.case_id];
   const v = buildVars(session);
   const rank = await ranking(env, session);
-  // Automatische Hinweise: nur die, deren Zeitpunkt schon erreicht ist
+  const stage = stageOf(session, team);
+  const premium = isPremium(session);
+  const label = (q) => { const i = [...c.QUESTIONS, ...c.QUESTIONS2].findIndex((x) => x.key === q); return q === "karte" ? "Kuvert" : `Frage ${i + 1}`; };
+  // Automatische Funksprüche: nur für die Stufe, in der das Team gerade steckt, und nur wenn ihr Zeitpunkt erreicht ist
   const now = Date.now();
   let hints = [], nextHint = null;
-  if (session.started_at && session.status === "running") {
-    const qi = Object.fromEntries(c.QUESTIONS.map((q, i) => [q.key, i + 1]));
+  if (session.started_at && session.status === "running" && stage < 4) {
     for (const h of hintTimes(session)) {
-      if (h.time <= now) hints.push({ q: h.q, nr: qi[h.q], level: h.level, time: h.time, text: render(c.TIPS[h.q][h.level - 1], v) });
-      else if (!nextHint || h.time < nextHint.time) nextHint = { time: h.time, nr: qi[h.q] };
+      if (h.stage !== stage) continue;
+      if (h.time <= now) hints.push({ q: h.q, label: label(h.q), level: h.level, time: h.time, text: render(c.TIPS[h.q][h.level - 1], v) });
+      else if (!nextHint || h.time < nextHint.time) nextHint = { time: h.time, label: label(h.q) };
     }
     hints.sort((a, b) => b.time - a.time);
   }
+  let last = null;
+  try { last = team.last_result ? JSON.parse(team.last_result) : null; } catch {}
+  const offset = stage === 2 ? c.QUESTIONS.length : 0;
   return json({
     team: team.name,
+    viewer: !!viewer,
+    view_token: viewer ? null : team.view_token,
     firma: v.FIRMA,
     fall: c.META.title,
     status: session.status,
@@ -112,8 +141,10 @@ async function teamState({ env, team, session }) {
     started_at: session.started_at,
     duration_min: session.duration_min,
     hard_end: session.started_at ? hardEnd(session) : null,
-    premium: !!session.premium && !!session.premium_answer,
-    questions: c.QUESTIONS.map((q) => ({ key: q.key, label: render(q.label, v), hint: q.hint })),
+    premium,
+    stage,
+    questions: stageQuestions(session, stage < 4 ? stage : 1).map((q, i) => ({ key: q.key, nr: offset + i + 1, label: render(q.label, v), hint: q.hint })),
+    questions_act1: c.QUESTIONS.map((q) => render(q.label, v)),
     core_ok: !!team.core_at,
     solved: !!team.solved_at,
     solved_at: team.solved_at,
@@ -121,23 +152,24 @@ async function teamState({ env, team, session }) {
     penalty_min: team.penalty_min,
     wrong: team.wrong,
     last_attempt_at: team.last_attempt_at,
-    check_available: team.wrong >= RULES.checkAfterWrong && !team.core_at,
+    check_available: stage < 3 && team.wrong >= RULES.checkAfterWrong && !!last && last.stage === stage,
     hints,
-    next_hint: team.core_at ? null : nextHint,
+    next_hint: nextHint,
     rules: { wrong: RULES.wrongPenaltyMin, check: RULES.checkPenaltyMin, checkAfter: RULES.checkAfterWrong, gap: RULES.minSecondsBetween },
     ranking: rank,
     // Nach Spielende bekommen alle Teams die Auflösung (erst dann, damit niemand vorher spickt)
     aufloesung: session.status === "finished" ? solutionInfo(session) : null,
-    hints_total: RULES.hintSchedule.length,
   });
 }
 
-async function akte({ team, session }) {
+async function akte({ team, session, viewer }) {
   const c = CASES[session.case_id];
   const v = buildVars(session);
+  const act2 = isPremium(session) && !!team.core_at;
+  const docs = [...c.DOCS.map((d) => ({ ...d, act: 1 })), ...(act2 ? c.DOCS2.map((d) => ({ ...d, act: 2 })) : [])];
   return json({
-    watermark: `${JSON.parse(session.vars).FIRMA} · Team ${team.name} · vertraulich`, // Klartext, der Browser escaped
-    docs: c.DOCS.map((d) => ({ id: d.id, title: render(d.title, v), kind: d.kind, html: render(d.html, v) })),
+    watermark: `${JSON.parse(session.vars).FIRMA} · Team ${team.name}${viewer ? " · Mitlesegerät" : ""} · vertraulich`, // Klartext, der Browser escaped
+    docs: docs.map((d) => ({ id: d.id, act: d.act, title: render(d.title, v), kind: d.kind, html: render(d.html, v) })),
   });
 }
 
@@ -148,61 +180,62 @@ async function firma({ session }) {
   return json({ name: w.name, domain: w.domain, claim: w.claim, pages: w.pages.map((p) => ({ id: p.id, title: p.title, html: render(p.html, v) })) });
 }
 
+function partnerPassword(session) {
+  const x = JSON.parse(session.secrets);
+  return `${x.HUND || "Bruno"}${x.GRUENDUNG || "2011"}`.toLowerCase();
+}
 async function firmaLogin({ request, session }) {
   const c = CASES[session.case_id];
   const b = await body(request);
   const ok = String(b.user || "").trim().toLowerCase() === c.FIRMA_WEB.login.user &&
-    String(b.password || "").trim().toLowerCase().replace(/\s+/g, "") === c.FIRMA_WEB.login.password;
+    String(b.password || "").trim().toLowerCase().replace(/\s+/g, "") === partnerPassword(session);
   if (!ok) return fail("Benutzername oder Passwort falsch.", 403);
   return json({ html: render(c.FIRMA_WEB.partner, buildVars(session)) });
 }
 
 async function loesung({ request, env, team, session }) {
-  if (team.solved_at) return json({ solved: true });
+  const stage = stageOf(session, team);
+  if (stage === 4) return json({ solved: true });
   const now = Date.now();
   if (team.last_attempt_at && now - team.last_attempt_at < RULES.minSecondsBetween * 1000) {
     const wait = Math.ceil((RULES.minSecondsBetween * 1000 - (now - team.last_attempt_at)) / 1000);
     return fail(`Kurz durchatmen: nächster Versuch in ${wait} Sekunden.`, 429);
   }
   const b = await body(request);
-  const premium = !!session.premium && !!session.premium_answer;
-
-  // Stufe 2 (Premium): nur noch die Karte
-  if (team.core_at && premium) {
-    const ok = String(b.karte || "").trim().toUpperCase().replace(/[^A-ZÄÖÜ0-9]/g, "") ===
-      String(session.premium_answer).trim().toUpperCase().replace(/[^A-ZÄÖÜ0-9]/g, "");
-    await env.DB.prepare("INSERT INTO attempts (team_id, at, payload, correct) VALUES (?,?,?,?)")
-      .bind(team.id, now, JSON.stringify({ karte: b.karte }), ok ? 1 : 0).run();
-    if (ok) {
-      await env.DB.prepare("UPDATE teams SET solved_at=?, last_attempt_at=? WHERE id=?").bind(now, now, team.id).run();
-      return json({ correct: true, solved: true });
-    }
-    await env.DB.prepare("UPDATE teams SET wrong=wrong+1, penalty_min=penalty_min+?, last_attempt_at=? WHERE id=?")
-      .bind(RULES.wrongPenaltyMin, now, team.id).run();
+  const qs = stageQuestions(session, stage);
+  const result = checkAnswers(session, b, qs);
+  const allOk = Object.values(result).every(Boolean);
+  const payload = Object.fromEntries(qs.map((q) => [q.key, String(b[q.key] ?? "").slice(0, 60)]));
+  await env.DB.prepare("INSERT INTO attempts (team_id, at, payload, correct) VALUES (?,?,?,?)")
+    .bind(team.id, now, JSON.stringify({ stage, ...payload }), allOk ? 1 : 0).run();
+  if (!allOk) {
+    await env.DB.prepare("UPDATE teams SET wrong=wrong+1, penalty_min=penalty_min+?, last_attempt_at=?, last_result=? WHERE id=?")
+      .bind(RULES.wrongPenaltyMin, now, JSON.stringify({ stage, result }), team.id).run();
     return json({ correct: false, penalty_min: RULES.wrongPenaltyMin });
   }
-
-  const result = checkAnswers(session, b);
-  const allOk = Object.values(result).every(Boolean);
-  await env.DB.prepare("INSERT INTO attempts (team_id, at, payload, correct) VALUES (?,?,?,?)")
-    .bind(team.id, now, JSON.stringify({ wer: b.wer, wann: b.wann, warum: b.warum, wo: b.wo }), allOk ? 1 : 0).run();
-  if (allOk) {
-    const solvedAt = premium ? null : now;
-    await env.DB.prepare("UPDATE teams SET core_at=?, solved_at=?, last_attempt_at=?, last_result=? WHERE id=?")
-      .bind(now, solvedAt, now, JSON.stringify(result), team.id).run();
-    return json({ correct: true, solved: !premium, next: premium ? "karte" : null });
+  const premium = isPremium(session);
+  if (stage === 1) {
+    await env.DB.prepare("UPDATE teams SET core_at=?, solved_at=?, last_attempt_at=?, last_result=NULL WHERE id=?")
+      .bind(now, premium ? null : now, now, team.id).run();
+    return json({ correct: true, solved: !premium, next: premium ? "akt2" : null });
   }
-  await env.DB.prepare("UPDATE teams SET wrong=wrong+1, penalty_min=penalty_min+?, last_attempt_at=?, last_result=? WHERE id=?")
-    .bind(RULES.wrongPenaltyMin, now, JSON.stringify(result), team.id).run();
-  return json({ correct: false, penalty_min: RULES.wrongPenaltyMin });
+  if (stage === 2) {
+    await env.DB.prepare("UPDATE teams SET act2_at=?, last_attempt_at=?, last_result=NULL WHERE id=?").bind(now, now, team.id).run();
+    return json({ correct: true, solved: false, next: "kuvert" });
+  }
+  await env.DB.prepare("UPDATE teams SET solved_at=?, last_attempt_at=?, last_result=NULL WHERE id=?").bind(now, now, team.id).run();
+  return json({ correct: true, solved: true });
 }
 
-async function kontrolle({ env, team }) {
-  if (team.core_at) return fail("Die vier Fragen sind bereits gelöst.");
+async function kontrolle({ env, team, session }) {
+  const stage = stageOf(session, team);
+  if (stage >= 3) return fail("Für diese Stufe gibt es keinen Kontrolltipp.");
   if (team.wrong < RULES.checkAfterWrong) return fail(`Den Kontrolltipp gibt es erst nach ${RULES.checkAfterWrong} Fehlversuchen.`);
-  if (!team.last_result) return fail("Noch kein Versuch vorhanden.");
+  let last = null;
+  try { last = JSON.parse(team.last_result || "null"); } catch {}
+  if (!last || last.stage !== stage) return fail("Gebt zuerst einen Lösungsversuch für diese Stufe ab.");
   await env.DB.prepare("UPDATE teams SET penalty_min=penalty_min+? WHERE id=?").bind(RULES.checkPenaltyMin, team.id).run();
-  return json({ result: JSON.parse(team.last_result), penalty_min: RULES.checkPenaltyMin });
+  return json({ result: last.result, penalty_min: RULES.checkPenaltyMin });
 }
 
 // ---------- Organisator ----------
@@ -275,13 +308,15 @@ function solutionInfo(session) {
   const secrets = JSON.parse(session.secrets);
   const sol = c.solution(secrets);
   const v = buildVars(session);
-  const names = { [secrets.L_KRAL]: "Sabine Kral" };
+  const premium = isPremium(session);
+  const qs = premium ? [...c.QUESTIONS, ...c.QUESTIONS2] : c.QUESTIONS;
+  const detail = { wer: "Sabine Kral", kurier: "Tobias Reindl" };
   return {
-    answers: c.QUESTIONS.map((q) => ({ key: q.key, label: render(q.label, v), answer: sol[q.key], detail: q.key === "wer" ? names[sol.wer] || "" : "" })),
-    premium_answer: session.premium ? session.premium_answer : null,
-    story: render(
-      "Sabine Kral hat Wissen über Projekt Phoenix an Veridian Systems verkauft. Als Dr. Reiher das Leck aufdeckte und {DG_AKK} als Beweis bei sich trug, holte Kral um {TATZEIT} mit Gästekarte {GASTKARTE} seinen Pfefferminztee ab und tropfte Herztropfen hinein. Um 22:47 betrat sie den {RAUM_TATORT}, nahm {DG_AKK} und Reihers Autoschlüssel an sich und versteckte die Beute in Reihers eigenem Wagen auf Stellplatz {STELLPLATZ} – dort sucht niemand. Das Veridian-Geld floss auf ihr Konto mit der Endung {KONTO}. Um 11:30 wollte sie die Beute holen, um 12:00 übergeben.",
-      v),
+    premium,
+    answers: qs.map((q) => ({ key: q.key, label: render(q.label, v), answer: q.key === "kurier" ? "Reindl" : sol[q.key], detail: q.key === "wer" ? detail.wer : q.key === "kurier" ? "Leiter Innovationslabor" : "" })),
+    premium_answer: premium ? cardCode(session) : null,
+    story: render(c.META.story, v),
+    story2: premium ? render(c.META.story2, v) : null,
   };
 }
 
@@ -297,6 +332,7 @@ function adminMeta() {
   const c = CASES["fall-001"];
   return json({
     cases: [{ id: "fall-001", title: c.META.title }],
+    card_code: c.CARD_CODE,
     fields: c.FIELDS.map(([key, label, example]) => ({ key, label, example })),
     diebesgut: Object.entries(c.DIEBESGUT).map(([key, d]) => ({ key, label: d.label })),
   });
@@ -318,7 +354,7 @@ async function adminCreate(request, env) {
     const val = String(b.vars?.[key] ?? "").trim().slice(0, 80);
     vars[key] = val || example;
   }
-  const duration = [60, 75, 90].includes(Number(b.duration_min)) ? Number(b.duration_min) : 90;
+  const duration = b.premium ? RULES.durationPremium : RULES.durationBasis; // Paket bestimmt die Spielzeit
   const premiumAnswer = String(b.premium_answer || "").trim().slice(0, 40);
   const id = crypto.randomUUID();
   const joinCode = randomCode(6);
