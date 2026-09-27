@@ -18,8 +18,8 @@
   const H = VIEWER ? { "x-view": viewToken } : { "x-team": token };
   const $ = (id) => document.getElementById(id);
   const root = $("root"), clock = $("clock"), tabsEl = $("tabs"), toastEl = $("toast");
-  const TABS = VIEWER ? ["akte", "firma", "funk"] : ["einsatz", "akte", "firma", "funk", "loesung", "rang"];
-  if (VIEWER) tabsEl.querySelectorAll("[data-tab]").forEach((b) => { if (!TABS.includes(b.dataset.tab)) b.remove(); });
+  const TABS = VIEWER ? ["akte", "firma", "funk"] : ["einsatz", "akte", "firma", "funk", "loesung"];
+  tabsEl.querySelectorAll("[data-tab]").forEach((b) => { if (!TABS.includes(b.dataset.tab)) b.remove(); });
 
   let S = null;              // letzter Stand vom Server
   let offset = 0;            // Serverzeit − lokale Zeit
@@ -57,7 +57,7 @@
     const key = [S.status, S.solved, S.stage, S.check_available].join("|");
     if (S.stage !== lastStage) { if (lastStage !== null) docs = null; lastStage = S.stage; }
     if (key !== lastKey) { lastKey = key; await render(); }
-    else if (tab === "rang" || tab === "funk" || (S.solved && S.status === "running")) renderView();
+    else if (tab === "funk") renderView();
     announceHints();
     tick();
   }
@@ -78,7 +78,7 @@
       const left = S.started_at + S.duration_min * 60000 - now;
       const pen = S.penalty_min ? `<span class="pen" title="Strafzeit">+${S.penalty_min} Min.</span>` : "";
       clock.className = "clock" + (left > 0 && left < 600000 ? " urgent" : left <= 0 ? " late" : "");
-      clock.innerHTML = `<span class="clk"><span class="clk-label">${left > 0 ? "Aufsichtsrat in" : "Aufsichtsrat tagt"}</span><b class="clk-time">${MS.dur(left > 0 ? left : now - S.started_at)}</b>${pen}</span>`;
+      clock.innerHTML = `<span class="clk"><span class="clk-label">${left > 0 ? "Übergabe in" : "Übergabe verpasst"}</span><b class="clk-time">${MS.dur(left > 0 ? left : now - S.started_at)}</b>${pen}</span>`;
     }
     const nh = $("nexthint");
     if (nh && S.next_hint) nh.textContent = MS.dur(Math.max(0, S.next_hint.time - now));
@@ -138,7 +138,6 @@
     if (tab === "firma") return viewFirma();
     if (tab === "funk") return viewFunk();
     if (tab === "loesung") return viewLoesung();
-    if (tab === "rang") return viewRang();
   }
 
   // ---------- Vor und nach dem Spiel ----------
@@ -167,8 +166,11 @@
   function bilanz() {
     const me = S.ranking.find((r) => r.name === S.team) || {};
     const total = S.ranking.length;
+    const first = S.status !== "finished"
+      ? `<div><b>✓</b><span>gelöst · Platz nach Spielende</span></div>`
+      : `<div><b>${me.rank ? `${me.rank}.` : "–"}</b><span>${me.rank ? `Platz von ${total}` : "nicht gelöst"}</span></div>`;
     return `<div class="stats">
-      <div><b>${me.rank ? `${me.rank}.` : "–"}</b><span>${me.rank ? `Platz von ${total}` : "nicht gelöst"}</span></div>
+      ${first}
       <div><b>${S.solved ? MS.dur(S.score_ms) : "–"}</b><span>Wertungszeit</span></div>
       <div><b>${S.wrong}</b><span>Fehlversuche</span></div>
       <div><b>${S.penalty_min}</b><span>Min. Strafzeit</span></div>
@@ -190,9 +192,9 @@
     const A = S.aufloesung;
     root.innerHTML = `<div class="final">
       <section class="paper final-head">
-        <div class="bigstamp ${S.solved ? "" : "grey"}"><div><small>MORDSTEAM · AKTE 001</small><strong>${S.solved ? "FALL GELÖST" : "AKTE GESCHLOSSEN"}</strong><small>TEAM ${MS.esc(S.team).toUpperCase()}</small></div></div>
+        <div class="bigstamp ${S.solved ? "" : "grey"}"><div><small>MORDSTEAM · AKTE 001</small><strong>${S.solved ? "FALL GELÖST" : "AKTE GESCHLOSSEN"}</strong><small>${MS.esc(/^team\b/i.test(S.team) ? S.team : "Team " + S.team).toUpperCase()}</small></div></div>
         <h1>${S.solved ? "Stark ermittelt!" : "Die Zeit ist um."}</h1>
-        <p class="lead">${S.solved ? (S.premium ? "Täter überführt, Mitwisser enttarnt, Geld gesichert – der Aufsichtsrat bekommt die ganze Wahrheit." : "Ihr habt den Fall gelöst, bevor der Aufsichtsrat tagt.") : "Der Aufsichtsrat tagt ohne Beweise. Aber jetzt erfahrt ihr, wer es wirklich war."}</p>
+        <p class="lead">${S.solved ? (S.premium ? `Täter überführt, Mitwisser enttarnt, Geld gesichert – ${MS.esc(S.boss || "die Chefetage")} bekommt die ganze Wahrheit.` : `Ihr habt den Fall gelöst, bevor die Mappe bei ${MS.esc(S.boss || "der Chefetage")} sein musste.`) : `${MS.esc(S.boss || "Die Chefetage")} wartet vergeblich auf die Mappe. Aber jetzt erfahrt ihr, wer es wirklich war.`}</p>
         ${bilanz()}
       </section>
       <section class="paper">
@@ -217,18 +219,15 @@
   }
 
   function viewSolved() {
-    const place = (S.ranking.find((r) => r.name === S.team) || {}).rank;
-    const open = S.ranking.filter((r) => !r.solved).length;
     root.innerHTML = `<div class="final">
       <section class="paper final-head">
-        <div class="bigstamp"><div><small>MORDSTEAM · AKTE 001</small><strong>FALL GELÖST</strong><small>TEAM ${MS.esc(S.team).toUpperCase()}</small></div></div>
+        <div class="bigstamp"><div><small>MORDSTEAM · AKTE 001</small><strong>FALL GELÖST</strong><small>${MS.esc(/^team\b/i.test(S.team) ? S.team : "Team " + S.team).toUpperCase()}</small></div></div>
         <h1>Stark ermittelt!</h1>
-        <p class="lead">Gelöst in <b>${MS.dur(S.score_ms)}</b>${S.penalty_min ? ` (inkl. ${S.penalty_min} Min. Strafzeit)` : ""}${place ? ` – aktuell <b>Platz ${place}</b>` : ""}.</p>
-        <p class="muted">${open ? `${open} ${open === 1 ? "Team ermittelt" : "Teams ermitteln"} noch. Bitte nichts verraten! Die Auflösung und die Siegerehrung erscheinen hier, sobald euer Organisator die Runde beendet.` : "Alle Teams sind fertig. Die Siegerehrung erscheint, sobald euer Organisator die Runde beendet."}</p>
+        <p class="lead">Gelöst in <b>${MS.dur(S.score_ms)}</b>${S.penalty_min ? ` (inkl. ${S.penalty_min} Min. Strafzeit)` : ""}.</p>
+        <p class="muted">Pssst – bitte nichts verraten, vielleicht ermitteln die anderen noch. Wer gewonnen hat, zeigt die Siegerehrung: Sie erscheint hier mit der Auflösung, sobald euer Organisator die Runde beendet.</p>
         ${bilanz()}
         ${VIEWER ? "" : `<a class="btn btn-red" href="/spiel/urkunde.html">Urkunde herunterladen</a>`}
       </section>
-      <section class="paper"><div class="eyebrow">Live-Rangliste</div>${rankTable()}</section>
     </div>`;
   }
 
@@ -456,10 +455,7 @@
       <td>${MS.stage(r, S.premium)}</td><td class="mono">${r.solved ? MS.dur(r.score_ms) : "–"}</td></tr>`).join("")}
     </tbody></table>`;
   }
-  function viewRang() {
-    root.innerHTML = `<section class="report paper"><div class="eyebrow">Live-Rangliste</div><h2>Wer ist vorne?</h2>${rankTable()}
-      <p class="small" style="margin-top:12px">Zeit = Spielzeit bis zur Lösung plus Strafzeit für Fehlversuche und Kontrolltipps.</p></section>`;
-  }
+
 
   poll();
   setInterval(poll, 8000);

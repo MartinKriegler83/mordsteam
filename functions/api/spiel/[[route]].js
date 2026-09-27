@@ -159,6 +159,7 @@ async function teamState({ env, team, session, viewer }) {
     fall: c.META.title,
     intro: c.META.intro ? render(c.META.intro, v) : "",
     opfer: String(JSON.parse(session.vars).OPFER || ""),
+    boss: String(JSON.parse(session.vars).BOSS || ""),
     ueberfuehrt: team.core_at ? c.names(JSON.parse(session.secrets), JSON.parse(session.vars)).taeter : null,
     status: session.status,
     now: Date.now(),
@@ -180,7 +181,8 @@ async function teamState({ env, team, session, viewer }) {
     hints,
     next_hint: nextHint,
     rules: { wrong: RULES.wrongPenaltyMin, check: RULES.checkPenaltyMin, checkAfter: RULES.checkAfterWrong, gap: RULES.minSecondsBetween },
-    ranking: rank,
+    // Rangliste nur vor Spielbeginn (nur Namen) und nach Spielende – während des Spiels weiß niemand, wie weit die anderen sind
+    ranking: session.status === "finished" ? rank : session.status === "running" ? [] : rank.map((r) => ({ name: r.name })),
     // Nach Spielende bekommen alle Teams die Auflösung (erst dann, damit niemand vorher spickt)
     aufloesung: session.status === "finished" ? solutionInfo(session) : null,
   });
@@ -389,6 +391,7 @@ async function adminCreate(request, env) {
   const nm = [...Array(n)].map((_, i) => vars[`S${i + 1}`].toLowerCase());
   if (new Set(nm).size !== n) return fail("Jede verdächtige Person braucht einen eigenen Namen.");
   if (nm.includes(String(vars.OPFER || "").toLowerCase())) return fail("Das Opfer darf nicht gleichzeitig verdächtig sein.");
+  if (vars.BOSS && (nm.includes(String(vars.BOSS).toLowerCase()) || String(vars.BOSS).toLowerCase() === String(vars.OPFER || "").toLowerCase())) return fail("Der Oberboss darf weder Opfer noch verdächtig sein.");
   const duration = b.premium ? RULES.durationPremium : RULES.durationBasis; // Paket bestimmt die Spielzeit
   const maxTeams = Math.min(RULES.maxTeams, Math.max(1, Number(b.max_teams) || RULES.maxTeams)); // gebuchte Teams
   const premiumAnswer = String(b.premium_answer || "").trim().slice(0, 40);

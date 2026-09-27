@@ -51,6 +51,9 @@
     const oAnr = pick(["Frau", "Herr"]);
     const v = { FIRMA: pick(R.firmen), STADT: stadt, PARK: park, RAUM_FEIER: pick(R.feier), RAUM_TATORT: pick(R.tatort),
       OPFER_ANR: oAnr, OPFER: person(oAnr), OPFER_FKT: oAnr === "Herr" ? "Geschäftsführer" : "Geschäftsführerin" };
+    const bAnr = pick(["Frau", "Herr"]);
+    Object.assign(v, { BOSS_ANR: bAnr, BOSS: `Dr. ${person(bAnr)}`,
+      BOSS_FKT: pick(bAnr === "Herr" ? ["CEO der Gruppe", "Vorsitzender des Aufsichtsrats", "Eigentümer"] : ["CEO der Gruppe", "Vorsitzende des Aufsichtsrats", "Eigentümerin"]) });
     for (const i of [1, 2, 3, 4, 5, 6]) { const a = pick(["Frau", "Herr"]); v[`S${i}_ANR`] = a; v[`S${i}`] = person(a); v[`S${i}_FKT`] = pick(R.funktionen); v[`S${i}_ABT`] = pick(R.abteilungen); }
     return v;
   }
@@ -62,7 +65,7 @@
     const o = await MS.api("POST", "leitung/login", { code: created.org_code });
     MS.set("ms_org", o.token);
     await MS.api("POST", "leitung/aktion", { aktion: "oeffnen" }, { "x-leitung": o.token });
-    created.quick = { premium, firma: vars.FIRMA, opfer: vars.OPFER, people: [1, 2, 3, 4, 5, 6].slice(0, premium ? 6 : 5).map((i) => vars[`S${i}`]) };
+    created.quick = { premium, firma: vars.FIRMA, opfer: vars.OPFER, boss: vars.BOSS, people: [1, 2, 3, 4, 5, 6].slice(0, premium ? 6 : 5).map((i) => vars[`S${i}`]) };
   }
 
   function render(sessions) {
@@ -72,7 +75,7 @@
         <p style="margin:8px 0">Spielcode für Teams: <span class="bigcode" style="font-size:26px">${created.join_code}</span></p>
         <p>Organisator-Code: <b class="mono" style="font-size:20px">${created.org_code}</b></p>
         <p class="mono small">Teams: ${location.origin}/spiel/?code=${created.join_code}<br>Organisator: ${location.origin}/spiel/leitung.html</p>
-        ${created.quick ? `<p class="small" style="margin-top:8px">${created.quick.premium ? `<b>Premium, 90 Min.</b> · Kuvert-Code: <b class="mono">${MS.esc(meta.card_code)}</b> · ` : "<b>Basis, 60 Min.</b> · "}${MS.esc(created.quick.firma)} · Opfer: ${MS.esc(created.quick.opfer)} · Verdächtige: ${created.quick.people.map(MS.esc).join(", ")} · Täter/in: per Zufall (steht in der Auflösung)</p>
+        ${created.quick ? `<p class="small" style="margin-top:8px">${created.quick.premium ? `<b>Premium, 90 Min.</b> · Kuvert-Code: <b class="mono">${MS.esc(meta.card_code)}</b> · ` : "<b>Basis, 60 Min.</b> · "}${MS.esc(created.quick.firma)} · Opfer: ${MS.esc(created.quick.opfer)} · Oberboss: ${MS.esc(created.quick.boss)} · Verdächtige: ${created.quick.people.map(MS.esc).join(", ")} · Täter/in: per Zufall (steht in der Auflösung)</p>
         <div class="actions-row" style="margin-top:10px"><a class="btn btn-ink" href="/spiel/leitung.html" target="_blank" rel="noopener">Organisator-Ansicht öffnen</a><a class="btn btn-line" href="/spiel/?code=${created.join_code}" target="_blank" rel="noopener">Als Team beitreten</a></div>
         <p class="small" style="margin-top:8px">Der Fall ist geöffnet. Teams anmelden lassen, dann in der Organisator-Ansicht „Fall starten“.</p>` : ""}</div>` : ""}
       <div class="panel"><div class="eyebrow">Schnelltest</div>
