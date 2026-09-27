@@ -157,6 +157,9 @@ async function teamState({ env, team, session, viewer }) {
     max_viewers: RULES.maxViewers,
     firma: v.FIRMA,
     fall: c.META.title,
+    intro: c.META.intro ? render(c.META.intro, v) : "",
+    opfer: String(JSON.parse(session.vars).OPFER || ""),
+    ueberfuehrt: team.core_at ? c.names(JSON.parse(session.secrets), JSON.parse(session.vars)).taeter : null,
     status: session.status,
     now: Date.now(),
     started_at: session.started_at,
@@ -187,7 +190,7 @@ async function akte({ team, session, viewer }) {
   const c = CASES[session.case_id];
   const v = buildVars(session);
   const act2 = isPremium(session) && !!team.core_at;
-  const docs = [...c.DOCS.map((d) => ({ ...d, act: 1 })), ...(act2 ? c.DOCS2.map((d) => ({ ...d, act: 2 })) : [])];
+  const docs = [...c.DOCS.filter((d) => !d.premiumOnly || isPremium(session)).map((d) => ({ ...d, act: 1 })), ...(act2 ? c.DOCS2.map((d) => ({ ...d, act: 2 })) : [])];
   return json({
     watermark: `${JSON.parse(session.vars).FIRMA} · Team ${team.name}${viewer ? " · Mitlesegerät" : ""} · vertraulich`, // Klartext, der Browser escaped
     docs: docs.map((d) => ({ id: d.id, act: d.act, title: render(d.title, v), kind: d.kind, html: render(d.html, v) })),
@@ -198,12 +201,16 @@ async function firma({ session }) {
   const c = CASES[session.case_id];
   const v = buildVars(session);
   const w = c.FIRMA_WEB;
-  return json({ name: w.name, domain: w.domain, claim: w.claim, pages: w.pages.map((p) => ({ id: p.id, title: p.title, html: render(p.html, v) })) });
+  const firmaRaw = String(JSON.parse(session.vars).FIRMA || ""); // Klartext, der Browser escaped
+  const slug = firmaRaw.toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
+    .replace(/\b(gmbh|ag|kg|og|e\.?u\.?|co)\b/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "firma";
+  return json({ name: firmaRaw, domain: `intranet.${slug}.at`, intranet: !!w.intranet, login_label: w.login.label || "Login",
+    pages: w.pages.map((p) => ({ id: p.id, title: p.title, html: render(p.html, v) })) });
 }
 
 function partnerPassword(session) {
   const x = JSON.parse(session.secrets);
-  return `${x.HUND || "Bruno"}${x.GRUENDUNG || "2011"}`.toLowerCase();
+  return `${x.HUND || "Bruno"}${x.JAHR || x.GRUENDUNG || "2011"}`.toLowerCase();
 }
 async function firmaLogin({ request, session }) {
   const c = CASES[session.case_id];
@@ -328,14 +335,16 @@ async function leitungAktion({ request, env, session }) {
 function solutionInfo(session) {
   const c = CASES[session.case_id];
   const secrets = JSON.parse(session.secrets);
-  const sol = c.solution(secrets);
+  const input = JSON.parse(session.vars);
+  const sol = c.solution(secrets, input);
+  const who = c.names(secrets, input); // Klarnamen, der Browser escaped
   const v = buildVars(session);
   const premium = isPremium(session);
   const qs = premium ? [...c.QUESTIONS, ...c.QUESTIONS2] : c.QUESTIONS;
-  const detail = { wer: "Sabine Kral", kurier: "Tobias Reindl" };
   return {
     premium,
-    answers: qs.map((q) => ({ key: q.key, label: render(q.label, v), answer: q.key === "kurier" ? "Reindl" : sol[q.key], detail: q.key === "wer" ? detail.wer : q.key === "kurier" ? "Leiter Innovationslabor" : "" })),
+    taeter: who.taeter,
+    answers: qs.map((q) => ({ key: q.key, label: render(q.label, v), answer: sol[q.key], detail: q.key === "wer" ? who.taeter : "" })),
     premium_answer: premium ? cardCode(session) : null,
     story: render(c.META.story, v),
     story2: premium ? render(c.META.story2, v) : null,
@@ -355,8 +364,7 @@ function adminMeta() {
   return json({
     cases: [{ id: "fall-001", title: c.META.title }],
     card_code: c.CARD_CODE,
-    fields: c.FIELDS.map(([key, label, example]) => ({ key, label, example })),
-    diebesgut: Object.entries(c.DIEBESGUT).map(([key, d]) => ({ key, label: d.label })),
+    fields: c.FIELDS.map(([key, label, example, type]) => ({ key, label, example, type: type || "text" })),
   });
 }
 async function adminList(env) {
@@ -371,11 +379,16 @@ async function adminCreate(request, env) {
   const c = CASES[b.case_id || "fall-001"];
   if (!c) return fail("Unbekannter Fall.");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(b.event_date || ""))) return fail("Spieltag im Format JJJJ-MM-TT angeben.");
-  const vars = { DIEBESGUT: c.DIEBESGUT[b.vars?.DIEBESGUT] ? b.vars.DIEBESGUT : "prototyp" };
-  for (const [key, , example] of c.FIELDS) {
-    const val = String(b.vars?.[key] ?? "").trim().slice(0, 80);
-    vars[key] = val || example;
+  const vars = {};
+  for (const [key, , example, type] of c.FIELDS) {
+    let val = String(b.vars?.[key] ?? "").trim().slice(0, 80) || example;
+    if (type === "anrede") val = /^\s*h/i.test(val) ? "Herr" : "Frau";
+    vars[key] = val;
   }
+  const n = c.suspectCount ? c.suspectCount(!!b.premium) : 5;
+  const nm = [...Array(n)].map((_, i) => vars[`S${i + 1}`].toLowerCase());
+  if (new Set(nm).size !== n) return fail("Jede verdächtige Person braucht einen eigenen Namen.");
+  if (nm.includes(String(vars.OPFER || "").toLowerCase())) return fail("Das Opfer darf nicht gleichzeitig verdächtig sein.");
   const duration = b.premium ? RULES.durationPremium : RULES.durationBasis; // Paket bestimmt die Spielzeit
   const maxTeams = Math.min(RULES.maxTeams, Math.max(1, Number(b.max_teams) || RULES.maxTeams)); // gebuchte Teams
   const premiumAnswer = String(b.premium_answer || "").trim().slice(0, 40);
@@ -386,7 +399,7 @@ async function adminCreate(request, env) {
     "INSERT INTO sessions (id, case_id, label, created_at, event_date, status, premium, premium_answer, duration_min, vars, secrets, join_code, org_code, test_mode, max_teams) VALUES (?,?,?,?,?,'created',?,?,?,?,?,?,?,?,?)"
   ).bind(
     id, b.case_id || "fall-001", String(b.label || vars.FIRMA).slice(0, 80), Date.now(), b.event_date,
-    b.premium ? 1 : 0, premiumAnswer || null, duration, JSON.stringify(vars), JSON.stringify(c.makeSecrets(randInt)),
+    b.premium ? 1 : 0, premiumAnswer || null, duration, JSON.stringify(vars), JSON.stringify(c.makeSecrets(randInt, { premium: !!b.premium })),
     joinCode, orgCode, b.test_mode ? 1 : 0, maxTeams
   ).run();
   return json({ id, join_code: joinCode, org_code: orgCode });

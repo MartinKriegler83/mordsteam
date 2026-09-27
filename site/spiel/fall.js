@@ -78,7 +78,7 @@
       const left = S.started_at + S.duration_min * 60000 - now;
       const pen = S.penalty_min ? `<span class="pen" title="Strafzeit">+${S.penalty_min} Min.</span>` : "";
       clock.className = "clock" + (left > 0 && left < 600000 ? " urgent" : left <= 0 ? " late" : "");
-      clock.innerHTML = `<span class="clk"><span class="clk-label">${left > 0 ? "Übergabe in" : "Übergabe verpasst"}</span><b class="clk-time">${MS.dur(left > 0 ? left : now - S.started_at)}</b>${pen}</span>`;
+      clock.innerHTML = `<span class="clk"><span class="clk-label">${left > 0 ? "Aufsichtsrat in" : "Aufsichtsrat tagt"}</span><b class="clk-time">${MS.dur(left > 0 ? left : now - S.started_at)}</b>${pen}</span>`;
     }
     const nh = $("nexthint");
     if (nh && S.next_hint) nh.textContent = MS.dur(Math.max(0, S.next_hint.time - now));
@@ -157,7 +157,7 @@
   // Podest der ersten drei gelösten Teams
   function podium() {
     const top = S.ranking.filter((r) => r.solved).slice(0, 3);
-    if (!top.length) return `<p class="nopod">Diesmal hat kein Team den Fall rechtzeitig geknackt. Die Täterin lacht sich ins Fäustchen – noch.</p>`;
+    if (!top.length) return `<p class="nopod">Diesmal hat kein Team den Fall rechtzeitig geknackt. Wer es war, lacht sich ins Fäustchen – noch.</p>`;
     const order = [top[1], top[0], top[2]];
     return `<div class="podium">${order.map((r, i) => r ? `<div class="pod p${r.rank} ${r.name === S.team ? "me" : ""}">
       <span class="pod-name">${MS.esc(r.name)}</span><span class="pod-time">${MS.dur(r.score_ms)}</span>
@@ -192,7 +192,7 @@
       <section class="paper final-head">
         <div class="bigstamp ${S.solved ? "" : "grey"}"><div><small>MORDSTEAM · AKTE 001</small><strong>${S.solved ? "FALL GELÖST" : "AKTE GESCHLOSSEN"}</strong><small>TEAM ${MS.esc(S.team).toUpperCase()}</small></div></div>
         <h1>${S.solved ? "Stark ermittelt!" : "Die Zeit ist um."}</h1>
-        <p class="lead">${S.solved ? (S.premium ? "Täterin überführt, Kopie gesichert – Veridians Präsentation fällt aus." : "Ihr habt die Täterin überführt, bevor die Übergabe stattfinden konnte.") : "Die Übergabe hat stattgefunden. Aber jetzt erfahrt ihr, was wirklich geschah."}</p>
+        <p class="lead">${S.solved ? (S.premium ? "Täter überführt, Mitwisser enttarnt, Geld gesichert – der Aufsichtsrat bekommt die ganze Wahrheit." : "Ihr habt den Fall gelöst, bevor der Aufsichtsrat tagt.") : "Der Aufsichtsrat tagt ohne Beweise. Aber jetzt erfahrt ihr, wer es wirklich war."}</p>
         ${bilanz()}
       </section>
       <section class="paper">
@@ -211,7 +211,7 @@
     const r = $("reveal");
     if (r) r.onclick = () => {
       $("revealbox").innerHTML = `<div class="answers">${A.answers.map((a, i) => `<div><i>${pad(i + 1)}</i><span>${a.label}</span><b>${MS.esc(a.answer)}${a.detail ? ` · ${MS.esc(a.detail)}` : ""}</b></div>`).join("")}
-        ${A.premium_answer ? `<div><i>★</i><span>Code auf Reihers Zugangskarte</span><b>${MS.esc(A.premium_answer)}</b></div>` : ""}</div>
+        ${A.premium_answer ? `<div><i>★</i><span>Code auf der Zugangskarte</span><b>${MS.esc(A.premium_answer)}</b></div>` : ""}</div>
         <p class="story">${A.story}</p>${A.story2 ? `<p class="story" style="margin-top:14px">${A.story2}</p>` : ""}`;
     };
   }
@@ -237,11 +237,11 @@
     const n = docs.length;
     root.innerHTML = `<section class="brief"><div class="paper">
       <div class="brief-top"><span class="eyebrow">Einsatzbefehl · Akte 001</span><span class="conf">Streng vertraulich</span></div>
-      <h1>Ein Mord.<br>Ein Verrat.<br><em>Eine Deadline.</em></h1>
-      <p class="sub">Auf der Firmenfeier von ${S.firma} ist ein Gast vergiftet worden – und ein Firmengeheimnis verschwunden. Findet heraus, wer es war, bevor die Übergabe stattfindet. Die Uhr oben läuft bereits.</p>
+      <h1>Ein Giftanschlag.<br>Eine rote Mappe.<br><em>Einer von euch.</em></h1>
+      <p class="sub">${S.intro} Die Uhr oben läuft bereits.</p>
       <ol class="steps">
         <li><span class="n">1</span><div><b>Akte lesen</b><span>${n} Beweisstücke. Teilt sie untereinander auf und redet miteinander.</span></div></li>
-        <li><span class="n">2</span><div><b>Konkurrenz durchleuchten</b><span>Die Website von Veridian verrät mehr, als sie sollte.</span></div></li>
+        <li><span class="n">2</span><div><b>Intranet durchforsten</b><span>Euer eigenes Intranet verrät mehr, als es sollte.</span></div></li>
         <li><span class="n">3</span><div><b>Vier Antworten, ein Versuch</b><span>Geprüft wird alles auf einmal. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten Strafzeit.</span></div></li>
         <li><span class="n">4</span><div><b>Funk der Zentrale</b><span>Hängt ihr fest, meldet sich die Zentrale von selbst – für alle Teams gleichzeitig, ohne Strafzeit.</span></div></li>
         <li><span class="n">5</span><div><b>Fair Play</b><span>Keine KI, keine Suchmaschine. Nur ihr und die Akte.</span></div></li>
@@ -253,7 +253,7 @@
       <div class="more-devices">
         <div class="qr" id="qr" aria-label="QR-Code für Mitlesegeräte"></div>
         <div><b>Ihr wollt mehr Geräte verwenden?</b>
-          <p>Scannt den Code mit weiteren Handys oder Laptops eures Teams (bis zu ${S.max_viewers} Geräte, verbunden: ${S.viewers}). Dort seht ihr Akte, Konkurrenz-Website und Funk – so könnt ihr euch die Beweisstücke aufteilen.</p>
+          <p>Scannt den Code mit weiteren Handys oder Laptops eures Teams (bis zu ${S.max_viewers} Geräte, verbunden: ${S.viewers}). Dort seht ihr Akte, Intranet und Funk – so könnt ihr euch die Beweisstücke aufteilen.</p>
           <p class="small"><b>Lösungen gebt ihr nur hier auf diesem Gerät ein.</b></p>
           <button type="button" class="btn btn-line" id="copyLink">Link kopieren</button> <span class="small" id="copied"></span></div>
       </div>
@@ -297,12 +297,12 @@
     root.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => { openDoc = Number(b.dataset.go); renderView(); scrollTo(0, 0); }));
   }
 
-  // ---------- Konkurrenz-Website im Browserfenster ----------
+  // ---------- Intranet im Browserfenster ----------
   function viewFirma() {
     const nav = firma.pages.map((p) => [p.id, p.title]);
     let body;
     if (vPage === "login") {
-      body = partnerHtml ? partnerHtml : `<h2>Partnerbereich</h2><p class="v-lead">Nur für registrierte Partner.</p>
+      body = partnerHtml ? partnerHtml : `<h2>${MS.esc(firma.login_label)}</h2><p class="v-lead">Geschützter Bereich. Bitte anmelden.</p>
         <form id="vlogin" class="v-login">
           <label for="vu">Benutzer</label><input id="vu" autocomplete="off" autocapitalize="none" spellcheck="false" value="${MS.esc(vLogin.u)}">
           <label for="vp">Passwort</label><input id="vp" autocomplete="off" autocapitalize="none" spellcheck="false" value="${MS.esc(vLogin.p)}">
@@ -310,14 +310,14 @@
           <p class="err" id="vmsg" role="alert"></p>
         </form>`;
     } else body = firma.pages.find((p) => p.id === vPage).html;
-    const path = vPage === "start" ? "" : vPage === "login" ? "partner" : vPage;
-    const [n1, ...rest] = MS.esc(firma.name).split(" ");
+    const path = vPage === "start" ? "" : vPage === "login" ? "freigaben" : vPage;
+    const initials = firma.name.split(/\s+/).filter((w) => /^[A-Za-zÄÖÜäöü]/.test(w)).slice(0, 2).map((w) => w[0].toUpperCase()).join("") || "IN";
     root.innerHTML = `<div class="browser">
       <div class="b-top"><span class="b-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-        <div class="b-url"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><b>${MS.esc(firma.domain || "veridian-systems.at")}</b><span class="path">/${path}</span></div></div>
-      <div class="v-site"><nav class="v-nav"><span class="v-logo"><span class="v-mark"></span>${n1}<b>${rest.join(" ")}</b></span>
+        <div class="b-url"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><b>${MS.esc(firma.domain)}</b><span class="path">/${path}</span></div></div>
+      <div class="v-site"><nav class="v-nav"><span class="v-logo"><span class="v-mark v-initials">${MS.esc(initials)}</span>${MS.esc(firma.name)}<b>Intranet</b></span>
         <div class="v-links">${nav.map(([id, t]) => `<button type="button" data-v="${id}" aria-current="${id === vPage}">${MS.esc(t)}</button>`).join("")}
-        <button type="button" data-v="login" class="v-loginbtn" aria-current="${vPage === "login"}">Partner-Login</button></div></nav>
+        <button type="button" data-v="login" class="v-loginbtn" aria-current="${vPage === "login"}">🔒 ${MS.esc(firma.login_label)}</button></div></nav>
       <div class="v-body">${body}</div></div></div>`;
     wrapTables(".v-body table");
     root.querySelectorAll("[data-v]").forEach((b) => (b.onclick = () => { vPage = b.dataset.v; renderView(); }));
@@ -373,14 +373,14 @@
         <div class="eyebrow">Finale · Akt 2 gelöst</div>
         <div class="envelope" aria-hidden="true"><div class="env-flap"></div><div class="env-seal">M</div></div>
         <h2>Öffnet jetzt euer versiegeltes Kuvert!</h2>
-        <p class="muted">Darin liegt Reihers Zugangskarte. Kral hat den Code für das Schließfach darauf versteckt – sichtbar nur, wenn man Licht ins Dunkel bringt.</p>
+        <p class="muted">Darin liegt die Zugangskarte von ${MS.esc(S.opfer || "")}. ${MS.esc(S.ueberfuehrt || "")} hat den Code für das Schließfach darauf versteckt – sichtbar nur, wenn man Licht ins Dunkel bringt.</p>
         <div class="qrow"><span class="qn">★</span><div class="qf"><label for="q_karte">${S.questions[0].label}</label><span class="hint">${MS.esc(S.questions[0].hint)}</span>
           <input id="q_karte" data-q="karte" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done" value="${MS.esc(draft.karte || "")}">${hintsFor("karte")}</div></div>
         ${v}<button type="button" class="btn btn-red btn-big" id="pruefen">Schließfach öffnen</button></section>`;
     } else if (S.stage === 2) {
       root.innerHTML = `<section class="report paper">
-        <div class="actbanner"><span class="conf">Akt 2</span><span>Akt 1 gelöst · Kral ist überführt</span></div>${top}
-        <div class="eyebrow">Die Übergabe verhindern</div><h2>Wer holt die Beute – und wo liegt die Kopie?</h2>
+        <div class="actbanner"><span class="conf">Akt 2</span><span>Akt 1 gelöst · ${MS.esc(S.ueberfuehrt || "")} ist überführt</span></div>${top}
+        <div class="eyebrow">Dem Geld auf der Spur</div><h2>Wer hat geholfen – und wo liegt das Geld?</h2>
         <p class="muted">In eurer Akte liegen neue Beweisstücke. Beide Antworten müssen stimmen. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten. Das Kuvert bleibt noch zu!</p>
         ${qrows()}${v}
         <button type="button" class="btn btn-red btn-big" id="pruefen">Lösung prüfen</button>${ctip}
@@ -432,7 +432,7 @@
       const d = await MS.api("POST", "loesung", a, H);
       if (d.correct) {
         draft = {};
-        verdict = d.next === "akt2" ? { cls: "good", html: "<strong>Akt 1 gelöst!</strong>Kral ist überführt – aber die Übergabe läuft noch. Neue Beweisstücke liegen in eurer Akte." }
+        verdict = d.next === "akt2" ? { cls: "good", akt2: true, html: "" }
           : d.next === "kuvert" ? { cls: "good", html: "<strong>Akt 2 gelöst!</strong>Jetzt dürft ihr das Kuvert öffnen." } : null;
       }
       else verdict = { cls: "bad", html: `<strong>Leider falsch.</strong>+${d.penalty_min} Minuten Strafzeit. Prüft eure Antworten noch einmal.` };
@@ -442,6 +442,10 @@
     lastKey = "";
     const before = S.stage;
     await poll();
+    if (verdict && verdict.akt2) {
+      verdict = { cls: "good", html: `<strong>Akt 1 gelöst!</strong>${MS.esc(S.ueberfuehrt || "")} ist überführt – aber das Geld ist verschwunden, und es gab Hilfe aus dem Haus. Neue Beweisstücke liegen in eurer Akte.` };
+      renderView();
+    }
     if (S.stage !== before) scrollTo(0, 0);
   }
 
