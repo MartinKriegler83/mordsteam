@@ -17,6 +17,7 @@
     try {
       const d = await MS.api("POST", "join", { code: f.code.value, name: f.name.value });
       MS.set("ms_team", d.token);
+      ["ms_seen", "ms_heard", "ms_tab"].forEach(MS.del);
       location.href = "/spiel/fall.html";
     } catch (err) {
       msg.textContent = err.message;

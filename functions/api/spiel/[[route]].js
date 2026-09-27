@@ -2,7 +2,7 @@
 // Benötigt: D1-Binding "DB" und die geheime Umgebungsvariable "ADMIN_KEY".
 import {
   CASES, RULES, json, fail, randInt, randomToken, randomCode, esc, viennaDate,
-  buildVars, render, checkAnswers, hardEnd, refreshStatus, expired, purgeSession, ranking, teamScore,
+  buildVars, render, checkAnswers, hintTimes, hardEnd, refreshStatus, expired, purgeSession, ranking, teamScore,
 } from "../../../lib/game.js";
 
 export async function onRequest(ctx) {
@@ -18,7 +18,6 @@ export async function onRequest(ctx) {
     if (route === "firma" && method === "GET") return withTeam(request, env, firma, true);
     if (route === "firma/login" && method === "POST") return withTeam(request, env, firmaLogin, true);
     if (route === "loesung" && method === "POST") return withTeam(request, env, loesung, true);
-    if (route === "tipp" && method === "POST") return withTeam(request, env, tipp, true);
     if (route === "kontrolle" && method === "POST") return withTeam(request, env, kontrolle, true);
     // --- Organisator ---
     if (route === "leitung/login" && method === "POST") return leitungLogin(request, env);
@@ -27,7 +26,8 @@ export async function onRequest(ctx) {
     if (route === "leitung/aufloesung" && method === "GET") return withOrg(request, env, aufloesung);
     // --- Admin (Mordsteam) ---
     if (route.startsWith("admin/")) {
-      if (!env.ADMIN_KEY || request.headers.get("x-admin") !== env.ADMIN_KEY) return fail("Nicht berechtigt.", 401);
+      if (!env.ADMIN_KEY) return fail("ADMIN_KEY ist in dieser Umgebung nicht gesetzt (oder das Deployment ist älter als die Variable).", 503);
+      if ((request.headers.get("x-admin") || "").trim() !== String(env.ADMIN_KEY).trim()) return fail("Nicht berechtigt.", 401);
       if (route === "admin/meta" && method === "GET") return adminMeta();
       if (route === "admin/sessions" && method === "GET") return adminList(env);
       if (route === "admin/session" && method === "POST") return adminCreate(request, env);
@@ -92,8 +92,17 @@ async function teamState({ env, team, session }) {
   const c = CASES[session.case_id];
   const v = buildVars(session);
   const rank = await ranking(env, session);
-  const tips = JSON.parse(team.tips || "[]");
-  const tipTexts = tips.map((t) => ({ ...t, text: render(c.TIPS[t.q][t.level - 1], v) }));
+  // Automatische Hinweise: nur die, deren Zeitpunkt schon erreicht ist
+  const now = Date.now();
+  let hints = [], nextHint = null;
+  if (session.started_at && session.status === "running") {
+    const qi = Object.fromEntries(c.QUESTIONS.map((q, i) => [q.key, i + 1]));
+    for (const h of hintTimes(session)) {
+      if (h.time <= now) hints.push({ q: h.q, nr: qi[h.q], level: h.level, time: h.time, text: render(c.TIPS[h.q][h.level - 1], v) });
+      else if (!nextHint || h.time < nextHint.time) nextHint = { time: h.time, nr: qi[h.q] };
+    }
+    hints.sort((a, b) => b.time - a.time);
+  }
   return json({
     team: team.name,
     firma: v.FIRMA,
@@ -113,8 +122,9 @@ async function teamState({ env, team, session }) {
     wrong: team.wrong,
     last_attempt_at: team.last_attempt_at,
     check_available: team.wrong >= RULES.checkAfterWrong && !team.core_at,
-    tips: tipTexts,
-    rules: { wrong: RULES.wrongPenaltyMin, tips: RULES.tipPenaltyMin, check: RULES.checkPenaltyMin, gap: RULES.minSecondsBetween },
+    hints,
+    next_hint: team.core_at ? null : nextHint,
+    rules: { wrong: RULES.wrongPenaltyMin, check: RULES.checkPenaltyMin, checkAfter: RULES.checkAfterWrong, gap: RULES.minSecondsBetween },
     ranking: rank,
   });
 }
@@ -132,7 +142,7 @@ async function firma({ session }) {
   const c = CASES[session.case_id];
   const v = buildVars(session);
   const w = c.FIRMA_WEB;
-  return json({ name: w.name, claim: w.claim, pages: w.pages.map((p) => ({ id: p.id, title: p.title, html: render(p.html, v) })) });
+  return json({ name: w.name, domain: w.domain, claim: w.claim, pages: w.pages.map((p) => ({ id: p.id, title: p.title, html: render(p.html, v) })) });
 }
 
 async function firmaLogin({ request, session }) {
@@ -184,24 +194,9 @@ async function loesung({ request, env, team, session }) {
   return json({ correct: false, penalty_min: RULES.wrongPenaltyMin });
 }
 
-async function tipp({ request, env, team, session }) {
-  const c = CASES[session.case_id];
-  const b = await body(request);
-  const q = String(b.q || "");
-  const level = Number(b.level);
-  if (!c.TIPS[q] || ![1, 2].includes(level)) return fail("Unbekannter Tipp.");
-  const tips = JSON.parse(team.tips || "[]");
-  if (tips.some((t) => t.q === q && t.level === level)) return fail("Diesen Tipp habt ihr schon.");
-  if (level === 2 && !tips.some((t) => t.q === q && t.level === 1)) return fail("Zuerst Tipp 1 öffnen.");
-  const pen = RULES.tipPenaltyMin[level - 1];
-  tips.push({ q, level, at: Date.now(), penalty: pen });
-  await env.DB.prepare("UPDATE teams SET tips=?, penalty_min=penalty_min+? WHERE id=?").bind(JSON.stringify(tips), pen, team.id).run();
-  return json({ text: render(c.TIPS[q][level - 1], buildVars(session)), penalty_min: pen });
-}
-
 async function kontrolle({ env, team }) {
   if (team.core_at) return fail("Die vier Fragen sind bereits gelöst.");
-  if (team.wrong < RULES.checkAfterWrong) return fail(`Der Kontrolltipp gibt es erst nach ${RULES.checkAfterWrong} Fehlversuchen.`);
+  if (team.wrong < RULES.checkAfterWrong) return fail(`Den Kontrolltipp gibt es erst nach ${RULES.checkAfterWrong} Fehlversuchen.`);
   if (!team.last_result) return fail("Noch kein Versuch vorhanden.");
   await env.DB.prepare("UPDATE teams SET penalty_min=penalty_min+? WHERE id=?").bind(RULES.checkPenaltyMin, team.id).run();
   return json({ result: JSON.parse(team.last_result), penalty_min: RULES.checkPenaltyMin });

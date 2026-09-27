@@ -1,22 +1,29 @@
-// Mordsteam Fallzentrale – Team-Ansicht
-// Hinweis: Titel, Fragen und Dokumente kommen vom Server bereits sicher escaped.
+// Mordsteam Fallzentrale – Team-Ansicht („Ermittlerschreibtisch“)
+// Titel, Fragen, Hinweise und Dokumente kommen vom Server bereits sicher escaped.
 (function () {
   const token = MS.get("ms_team");
   if (!token) { location.href = "/spiel/"; return; }
   const H = { "x-team": token };
-  const root = document.getElementById("root");
-  const clock = document.getElementById("clock");
-  const tabsEl = document.getElementById("tabs");
+  const $ = (id) => document.getElementById(id);
+  const root = $("root"), clock = $("clock"), tabsEl = $("tabs"), toastEl = $("toast");
+  const TABS = ["einsatz", "akte", "firma", "funk", "loesung", "rang"];
 
-  let S = null;            // letzter Stand vom Server
-  let offset = 0;          // Serverzeit − lokale Zeit
+  let S = null;              // letzter Stand vom Server
+  let offset = 0;            // Serverzeit − lokale Zeit
   let docs = null, watermark = "";
   let firma = null, vPage = "start", partnerHtml = null;
-  let tab = "akte", openDoc = null;
+  let tab = TABS.includes(MS.get("ms_tab")) ? MS.get("ms_tab") : "einsatz";
+  let openDoc = null;        // Index des offenen Dokuments (0 ist gültig!)
   let draft = {};
   let lastKey = "";
-  let flash = null;        // { type: 'ok'|'err', text }
-  const seen = new Set(JSON.parse(MS.get("ms_seen") || "[]"));
+  let verdict = null;        // { cls: 'bad'|'warn'|'good', html }
+  let checkArmed = false, checkRes = "";
+  let busy = false, fetchedHint = 0, toastTimer = null;
+  const seen = new Set(JSON.parse(MS.get("ms_seen") || "[]"));    // gelesene Dokumente
+  const heard = new Set(JSON.parse(MS.get("ms_heard") || "[]"));  // gelesene Funksprüche
+  const toasted = new Set();
+  const hid = (h) => `${h.q}-${h.level}`;
+  const pad = (n) => String(n).padStart(2, "0");
 
   // ---------- Laden ----------
   async function poll() {
@@ -24,45 +31,80 @@
       S = await MS.api("GET", "state", null, H);
       offset = S.now - Date.now();
     } catch (e) {
-      if (e.status === 401 || e.status === 410) { MS.del("ms_team"); root.innerHTML = `<div class="panel center"><p>${MS.esc(e.message)}</p><p><a class="btn btn-red" href="/spiel/">Neu anmelden</a></p></div>`; return; }
+      if (e.status === 401 || e.status === 410) {
+        MS.del("ms_team");
+        root.innerHTML = `<div class="panel center"><p>${MS.esc(e.message)}</p><p style="margin-top:14px"><a class="btn btn-red" href="/spiel/">Neu anmelden</a></p></div>`;
+      }
       return;
     }
-    document.getElementById("fallname").textContent = `${S.fall} · ${S.team}`;
-    const key = [S.status, S.solved, S.core_ok].join("|");
+    $("fallname").textContent = S.fall;
+    $("teamname").textContent = S.team;
+    const key = [S.status, S.solved, S.core_ok, S.check_available].join("|");
     if (key !== lastKey) { lastKey = key; await render(); }
-    else if (tab === "rang") renderView();
-    tickClock();
+    else if (tab === "rang" || tab === "funk") renderView();
+    announceHints();
+    tick();
   }
 
   async function ensureContent() {
-    if (!docs) {
-      const d = await MS.api("GET", "akte", null, H);
-      docs = d.docs; watermark = d.watermark;
-    }
+    if (!docs) { const d = await MS.api("GET", "akte", null, H); docs = d.docs; watermark = d.watermark; }
     if (!firma) firma = await MS.api("GET", "firma", null, H);
   }
 
-  // ---------- Uhr ----------
-  function tickClock() {
-    if (!S || S.status !== "running" || !S.started_at || S.solved) { clock.textContent = ""; return; }
-    const now = Date.now() + offset;
-    const handover = S.started_at + S.duration_min * 60000;
-    const left = handover - now;
-    const pen = S.penalty_min ? ` <span class="pen">+${S.penalty_min} Min.</span>` : "";
-    clock.innerHTML = left > 0
-      ? `Übergabe in <b>${MS.dur(left)}</b>${pen}`
-      : `<span class="late">Übergabe verpasst – ermittelt weiter</span> <b>${MS.dur(now - S.started_at)}</b>${pen}`;
-  }
-  setInterval(tickClock, 1000);
+  const running = () => S && S.status === "running" && !S.solved;
 
-  // ---------- Ansichten ----------
+  // ---------- Uhr und Funk-Countdown ----------
+  function tick() {
+    if (!S) return;
+    const now = Date.now() + offset;
+    if (!running() || !S.started_at) { clock.innerHTML = ""; }
+    else {
+      const left = S.started_at + S.duration_min * 60000 - now;
+      const pen = S.penalty_min ? `<span class="pen" title="Strafzeit">+${S.penalty_min} Min.</span>` : "";
+      clock.className = "clock" + (left > 0 && left < 600000 ? " urgent" : left <= 0 ? " late" : "");
+      clock.innerHTML = `<span class="clk"><span class="clk-label">${left > 0 ? "Übergabe in" : "Übergabe verpasst"}</span><b class="clk-time">${MS.dur(left > 0 ? left : now - S.started_at)}</b>${pen}</span>`;
+    }
+    const nh = $("nexthint");
+    if (nh && S.next_hint) nh.textContent = MS.dur(Math.max(0, S.next_hint.time - now));
+    // Neuer Funkspruch fällig → gleich nachladen
+    if (running() && S.next_hint && now >= S.next_hint.time && fetchedHint !== S.next_hint.time) {
+      fetchedHint = S.next_hint.time;
+      setTimeout(poll, 1200);
+    }
+  }
+  setInterval(tick, 1000);
+
+  // ---------- Funksprüche: Badge und Toast ----------
+  function announceHints() {
+    const hints = running() ? S.hints : [];
+    const unread = hints.filter((h) => !heard.has(hid(h)));
+    const badge = $("funkbadge");
+    badge.hidden = !unread.length || tab === "funk";
+    badge.textContent = unread.length;
+    const fresh = unread.filter((h) => !toasted.has(hid(h)));
+    fresh.forEach((h) => toasted.add(hid(h)));
+    if (!fresh.length || tab === "funk") return;
+    const txt = fresh.length === 1 ? `Neuer Funkspruch der Zentrale · Frage ${fresh[0].nr}` : `${fresh.length} neue Funksprüche der Zentrale`;
+    toastEl.innerHTML = `<button type="button"><span class="led"></span><span>${txt}</span><b>Anhören →</b></button>`;
+    toastEl.hidden = false;
+    toastEl.querySelector("button").onclick = () => { hideToast(); go("funk"); };
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, 15000);
+  }
+  function hideToast() { toastEl.hidden = true; toastEl.innerHTML = ""; }
+
+  // ---------- Navigation ----------
+  function go(t) {
+    tab = t; MS.set("ms_tab", t); openDoc = null; renderView(); scrollTo(0, 0);
+  }
+  tabsEl.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => go(b.dataset.tab)));
+
   async function render() {
     if (!S) return;
-    const running = S.status === "running" && !S.solved;
-    tabsEl.hidden = !running;
-    if (running) {
-      try { await ensureContent(); } catch (e) { root.innerHTML = `<p class="err">${MS.esc(e.message)}</p>`; return; }
-    }
+    tabsEl.hidden = !running();
+    if (running()) {
+      try { await ensureContent(); } catch (e) { root.innerHTML = `<div class="panel center"><p class="err">${MS.esc(e.message)}</p></div>`; return; }
+    } else hideToast();
     renderView();
   }
 
@@ -70,28 +112,31 @@
     if (S.solved) return viewSolved();
     if (S.status === "created" || S.status === "open") return viewWaiting();
     if (S.status === "finished") return viewFinished();
-    for (const b of tabsEl.querySelectorAll("button")) b.setAttribute("aria-selected", String(b.dataset.tab === tab));
-    if (tab === "akte") return openDoc ? viewDoc() : viewAkte();
+    for (const b of tabsEl.querySelectorAll("[data-tab]")) b.setAttribute("aria-selected", String(b.dataset.tab === tab));
+    if (tab === "einsatz") return viewEinsatz();
+    if (tab === "akte") return openDoc !== null ? viewDoc() : viewAkte();
     if (tab === "firma") return viewFirma();
+    if (tab === "funk") return viewFunk();
     if (tab === "loesung") return viewLoesung();
     if (tab === "rang") return viewRang();
   }
 
+  // ---------- Vor und nach dem Spiel ----------
   function viewWaiting() {
-    root.innerHTML = `<div class="panel center">
+    root.innerHTML = `<div class="panel center waiting">
       <div class="eyebrow">Team angemeldet</div>
-      <h1 style="font-family:var(--serif);font-size:32px;margin:8px 0">${MS.esc(S.team)}</h1>
-      <p>Ihr seid startklar. Sobald euer Organisator den Fall startet, öffnet sich hier eure Akte – bei allen Teams gleichzeitig.</p>
-      <p class="muted">Diese Seite aktualisiert sich von selbst.</p>
-      <h3 style="margin-top:20px">Angemeldete Teams</h3>
-      <ul class="list">${S.ranking.map((r) => `<li>${MS.esc(r.name)}</li>`).join("")}</ul>
-      <p class="small" style="margin-top:18px">Fair Play: Keine KI und keine Suchmaschinen – der Fall ist mit Köpfchen lösbar.</p>
+      <h1>${MS.esc(S.team)}</h1>
+      <p>Ihr seid startklar. Sobald euer Organisator den Fall startet, öffnet sich hier euer Einsatzbefehl – bei allen Teams gleichzeitig.</p>
+      <div class="spinner" aria-hidden="true"></div>
+      <h3>Angemeldete Teams</h3>
+      <ul class="teamlist">${S.ranking.map((r) => `<li>${MS.esc(r.name)}${r.name === S.team ? " <span>(ihr)</span>" : ""}</li>`).join("")}</ul>
+      <p class="small">Fair Play: Keine KI und keine Suchmaschinen – der Fall ist mit Köpfchen lösbar.</p>
     </div>`;
   }
 
   function viewFinished() {
     root.innerHTML = `<div class="panel center"><div class="eyebrow">Runde beendet</div>
-      <h1 style="font-family:var(--serif);font-size:32px;margin:8px 0">Die Zeit ist um.</h1>
+      <h1 class="ptitle">Die Zeit ist um.</h1>
       <p>Euer Organisator kann jetzt die Auflösung zeigen.</p>${rankTable()}</div>`;
   }
 
@@ -105,138 +150,195 @@
     </div>`;
   }
 
+  // ---------- Einsatz: Regeln in einer Minute ----------
+  function viewEinsatz() {
+    const n = docs.length;
+    root.innerHTML = `<section class="brief"><div class="paper">
+      <div class="brief-top"><span class="eyebrow">Einsatzbefehl · Akte 001</span><span class="conf">Streng vertraulich</span></div>
+      <h1>Ein Mord.<br>Ein Verrat.<br><em>Eine Deadline.</em></h1>
+      <p class="sub">Auf der Firmenfeier von ${S.firma} ist ein Gast vergiftet worden – und ein Firmengeheimnis verschwunden. Findet heraus, wer es war, bevor die Übergabe stattfindet. Die Uhr oben läuft bereits.</p>
+      <ol class="steps">
+        <li><span class="n">1</span><div><b>Akte lesen</b><span>${n} Beweisstücke. Teilt sie untereinander auf und redet miteinander.</span></div></li>
+        <li><span class="n">2</span><div><b>Konkurrenz durchleuchten</b><span>Die Website von Veridian verrät mehr, als sie sollte.</span></div></li>
+        <li><span class="n">3</span><div><b>Vier Antworten, ein Versuch</b><span>Geprüft wird alles auf einmal. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten.</span></div></li>
+        <li><span class="n">4</span><div><b>Funk der Zentrale</b><span>Hängt ihr fest, meldet sich die Zentrale von selbst – für alle Teams gleichzeitig, ohne Strafzeit.</span></div></li>
+        <li><span class="n">5</span><div><b>Fair Play</b><span>Keine KI, keine Suchmaschine. Nur ihr und die Akte.</span></div></li>
+      </ol>
+      <h2 class="qhead">Eure vier Fragen</h2>
+      <div class="qcards">${S.questions.map((q, i) => `<div><i>${pad(i + 1)}</i><span>${q.label}</span></div>`).join("")}</div>
+      <button type="button" class="btn btn-red btn-big" id="toAkte">Akte öffnen →</button>
+    </div></section>`;
+    $("toAkte").onclick = () => go("akte");
+  }
+
+  // ---------- Akte ----------
+  const kindClass = (k) => ({ Presse: "k-press", Notiz: "k-note", Beleg: "k-receipt", Belege: "k-receipt", "E-Mail": "k-mail", Systemauszug: "k-sys" })[k] || "";
+  const ROT = [-1.4, 0.9, -0.5, 1.2, -1, 0.6, -0.2, 1.4];
+
   function viewAkte() {
-    root.innerHTML = `<div class="stack" style="gap:14px">
-      <p class="muted">Eure Fallakte: ${docs.length} Dokumente. Tippt ein Dokument an, um es zu öffnen.</p>
-      <div class="doclist">${docs.map((d, i) => `<button class="docitem ${seen.has(d.id) ? "seen" : ""}" data-doc="${i}"><span>${d.title}</span><small>${MS.esc(d.kind)}${seen.has(d.id) ? " · gelesen" : ""}</small></button>`).join("")}</div>
-    </div>`;
-    root.querySelectorAll("[data-doc]").forEach((b) => b.addEventListener("click", () => { openDoc = Number(b.dataset.doc); renderView(); scrollTo(0, 0); }));
+    const read = docs.filter((d) => seen.has(d.id)).length;
+    root.innerHTML = `<div class="deskhead"><h2>Fallakte</h2><span>${read} / ${docs.length} gelesen</span></div>
+      <div class="evid">${docs.map((d, i) => `<button type="button" class="ev ${kindClass(d.kind)} ${seen.has(d.id) ? "seen" : ""}" data-doc="${i}" style="--r:${ROT[i % ROT.length]}deg">
+        <span class="ev-nr">Nr. ${pad(i + 1)}</span><span class="kind">${MS.esc(d.kind)}</span><span class="ttl">${d.title}</span>${seen.has(d.id) ? `<span class="gel">Gelesen</span>` : ""}</button>`).join("")}</div>`;
+    root.querySelectorAll("[data-doc]").forEach((b) => (b.onclick = () => { openDoc = Number(b.dataset.doc); renderView(); scrollTo(0, 0); }));
+  }
+
+  function wrapTables(sel) {
+    root.querySelectorAll(sel).forEach((t) => { const w = document.createElement("div"); w.className = "tablewrap"; t.before(w); w.append(t); });
   }
 
   function viewDoc() {
     const d = docs[openDoc];
     seen.add(d.id); MS.set("ms_seen", JSON.stringify([...seen]));
     const prev = openDoc > 0 ? openDoc - 1 : null, next = openDoc < docs.length - 1 ? openDoc + 1 : null;
-    root.innerHTML = `<button class="back" id="back">← Alle Dokumente</button>
+    const pbtn = (i, dir) => `<button type="button" data-go="${i}" class="${dir}"><small>${dir === "prev" ? "← Nr. " + pad(i + 1) : "Nr. " + pad(i + 1) + " →"}</small>${docs[i].title}</button>`;
+    root.innerHTML = `<div class="docbar"><button type="button" class="back" id="back">← Alle Beweisstücke</button><span class="docpos">Nr. ${pad(openDoc + 1)} / ${docs.length} · ${MS.esc(d.kind)}</span></div>
       <article class="doc" data-wm="${MS.esc((watermark + "   ").repeat(40))}"><div class="doc-inner">${d.html}</div></article>
-      <div class="actions-row" style="justify-content:space-between;margin-top:14px">
-        ${prev !== null ? `<button class="btn btn-line" data-go="${prev}">← ${docs[prev].title}</button>` : "<span></span>"}
-        ${next !== null ? `<button class="btn btn-line" data-go="${next}">${docs[next].title} →</button>` : ""}
-      </div>`;
-    root.querySelectorAll(".doc table").forEach((t) => { const w = document.createElement("div"); w.className = "tablewrap"; t.before(w); w.append(t); });
-    document.getElementById("back").onclick = () => { openDoc = null; renderView(); };
+      <div class="pager">${prev !== null ? pbtn(prev, "prev") : "<span></span>"}${next !== null ? pbtn(next, "next") : ""}</div>`;
+    wrapTables(".doc table");
+    $("back").onclick = () => { openDoc = null; renderView(); };
     root.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => { openDoc = Number(b.dataset.go); renderView(); scrollTo(0, 0); }));
   }
 
+  // ---------- Konkurrenz-Website im Browserfenster ----------
   function viewFirma() {
-    const nav = [...firma.pages.map((p) => [p.id, p.title]), ["login", "Partnerbereich"]];
+    const nav = firma.pages.map((p) => [p.id, p.title]);
     let body;
     if (vPage === "login") {
-      body = partnerHtml ? partnerHtml : `<h2>Partnerbereich</h2><p>Nur für registrierte Partner.</p>
-        <form id="vlogin" class="v-login form">
-          <div class="field"><label for="vu">Benutzer</label><input id="vu" autocomplete="off" autocapitalize="none"></div>
-          <div class="field"><label for="vp">Passwort</label><input id="vp" type="password" autocomplete="off"></div>
-          <div><button class="btn btn-ink" type="submit">Anmelden</button></div>
+      body = partnerHtml ? partnerHtml : `<h2>Partnerbereich</h2><p class="v-lead">Nur für registrierte Partner.</p>
+        <form id="vlogin" class="v-login">
+          <label for="vu">Benutzer</label><input id="vu" autocomplete="off" autocapitalize="none" spellcheck="false">
+          <label for="vp">Passwort</label><input id="vp" type="password" autocomplete="off">
+          <button type="submit" class="v-btn">Anmelden</button>
           <p class="err" id="vmsg" role="alert"></p>
         </form>`;
-    } else {
-      body = firma.pages.find((p) => p.id === vPage).html;
-    }
-    root.innerHTML = `<p class="muted" style="margin-bottom:12px">Die Website der Konkurrenzfirma, wie sie im Internet steht.</p>
-      <div class="v-site"><nav class="v-nav"><span class="v-logo">${MS.esc(firma.name)}</span>
-      ${nav.map(([id, t]) => `<button data-v="${id}" aria-current="${id === vPage}">${MS.esc(t)}</button>`).join("")}</nav>
-      <div class="v-body">${body}</div></div>`;
-    root.querySelectorAll(".v-body table").forEach((t) => { const w = document.createElement("div"); w.className = "tablewrap"; t.before(w); w.append(t); });
+    } else body = firma.pages.find((p) => p.id === vPage).html;
+    const path = vPage === "start" ? "" : vPage === "login" ? "partner" : vPage;
+    const [n1, ...rest] = MS.esc(firma.name).split(" ");
+    root.innerHTML = `<div class="browser">
+      <div class="b-top"><span class="b-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <div class="b-url"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><b>${MS.esc(firma.domain || "veridian-systems.at")}</b><span class="path">/${path}</span></div></div>
+      <div class="v-site"><nav class="v-nav"><span class="v-logo"><span class="v-mark"></span>${n1}<b>${rest.join(" ")}</b></span>
+        <div class="v-links">${nav.map(([id, t]) => `<button type="button" data-v="${id}" aria-current="${id === vPage}">${MS.esc(t)}</button>`).join("")}
+        <button type="button" data-v="login" class="v-loginbtn" aria-current="${vPage === "login"}">Partner-Login</button></div></nav>
+      <div class="v-body">${body}</div></div></div>`;
+    wrapTables(".v-body table");
     root.querySelectorAll("[data-v]").forEach((b) => (b.onclick = () => { vPage = b.dataset.v; renderView(); }));
-    const f = document.getElementById("vlogin");
+    const f = $("vlogin");
     if (f) f.onsubmit = async (e) => {
       e.preventDefault();
       try {
-        const d = await MS.api("POST", "firma/login", { user: document.getElementById("vu").value, password: document.getElementById("vp").value }, H);
+        const d = await MS.api("POST", "firma/login", { user: $("vu").value, password: $("vp").value }, H);
         partnerHtml = d.html; renderView();
-      } catch (err) { document.getElementById("vmsg").textContent = err.message; }
+      } catch (err) { $("vmsg").textContent = err.message; }
     };
   }
 
-  function tipsFor(q) {
-    const taken = S.tips.filter((t) => t.q === q);
-    let h = taken.map((t) => `<div class="tiptext"><b>TIPP ${t.level}</b><br>${MS.esc(t.text)}</div>`).join("");
-    const has1 = taken.some((t) => t.level === 1), has2 = taken.some((t) => t.level === 2);
-    if (!has1) h += `<button class="tipbtn" data-tip="${q}" data-level="1">Tipp 1 (+${S.rules.tips[0]} Min.)</button>`;
-    else if (!has2) h += `<button class="tipbtn" data-tip="${q}" data-level="2">Tipp 2 (+${S.rules.tips[1]} Min.)</button>`;
-    return h;
+  // ---------- Funk der Zentrale ----------
+  const gameMin = (t) => Math.max(0, Math.round((t - S.started_at) / 60000));
+  function viewFunk() {
+    const unread = new Set(S.hints.filter((h) => !heard.has(hid(h))).map(hid));
+    S.hints.forEach((h) => heard.add(hid(h)));
+    MS.set("ms_heard", JSON.stringify([...heard]));
+    $("funkbadge").hidden = true;
+    hideToast();
+    root.innerHTML = `<section class="radio">
+      <div class="radio-head"><span class="led"></span>Funkkanal Zentrale · Akte 001</div>
+      ${S.next_hint ? `<p class="radio-next">Nächster Funkspruch in <b id="nexthint">${MS.dur(Math.max(0, S.next_hint.time - Date.now() - offset))}</b> <span>· zu Frage ${S.next_hint.nr}</span></p>`
+        : `<p class="radio-next">${S.core_ok ? "Kein Funkverkehr mehr – ihr seid auf der Zielgeraden." : "Die Zentrale hat alles gesagt, was sie weiß."}</p>`}
+      ${S.hints.length ? S.hints.map((h) => `<div class="rmsg ${unread.has(hid(h)) ? "new" : ""}"><small>Min. ${gameMin(h.time)} · Frage ${h.nr} · Hinweis ${h.level}${unread.has(hid(h)) ? " · neu" : ""}</small><p>${h.text}</p></div>`).join("")
+        : `<p class="radio-empty">Funkstille. Die Zentrale meldet sich von selbst, wenn ihr länger festhängt – bei allen Teams gleichzeitig.</p>`}
+      <p class="radio-rules">Funksprüche kosten keine Strafzeit. Sie stehen auch direkt unter der passenden Frage im Tab „Lösung“.</p>
+    </section>`;
+  }
+
+  // ---------- Lösung ----------
+  function hintsFor(q) {
+    return S.hints.filter((h) => h.q === q).sort((a, b) => a.level - b.level)
+      .map((h) => `<div class="funknote"><b>Funk · Hinweis ${h.level}</b>${h.text}</div>`).join("");
   }
 
   function viewLoesung() {
-    const msg = flash ? `<p class="${flash.type}" role="alert">${MS.esc(flash.text)}</p>` : "";
-    flash = null;
+    const v = verdict ? `<div class="verdict ${verdict.cls}" role="alert">${verdict.html}</div>` : "";
     if (S.core_ok && S.premium) {
-      root.innerHTML = `<div class="panel center"><div class="eyebrow">Fast geschafft</div>
-        <h2 class="h2" style="font-size:30px;margin:6px 0 10px">Die vier Antworten stimmen!</h2>
-        <p>Aber Reiher hat noch etwas hinterlassen: seine Zugangskarte. Was verrät sie?</p>
-        <form id="karte" class="form"><div class="field"><label for="k">Lösung der Karte</label><input id="k" autocomplete="off" style="text-transform:uppercase"></div>
-        <div><button class="btn btn-red" type="submit">Prüfen</button></div>${msg}</form></div>`;
-      document.getElementById("karte").onsubmit = (e) => { e.preventDefault(); submit({ karte: document.getElementById("k").value }); };
-      return;
+      root.innerHTML = `<section class="report paper">
+        <div class="eyebrow">Letzte Stufe</div><h2>Die vier Antworten stimmen!</h2>
+        <p class="muted">Aber Dr. Reiher hat noch etwas hinterlassen: seine Zugangskarte. Haltet sie gegen das Licht einer Handy-Taschenlampe. Was verrät sie?</p>
+        <div class="qrow"><span class="qn">5</span><div class="qf"><label for="k">Code der Zugangskarte</label><input id="k" data-q="karte" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done" value="${MS.esc(draft.karte || "")}"></div></div>
+        ${v}<button type="button" class="btn btn-red btn-big" id="pruefen">Code prüfen</button></section>`;
+    } else {
+      root.innerHTML = `<section class="report paper">
+        <div class="eyebrow">Abschlussbericht</div><h2>Wer, wann, warum, wo?</h2>
+        <p class="muted">Alle vier Antworten müssen stimmen. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten Strafzeit.</p>
+        ${S.questions.map((q, i) => `<div class="qrow"><span class="qn">${i + 1}</span><div class="qf">
+          <label for="q_${q.key}">${q.label}</label><span class="hint">${MS.esc(q.hint)}</span>
+          <input id="q_${q.key}" data-q="${q.key}" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="${i < S.questions.length - 1 ? "next" : "done"}" value="${MS.esc(draft[q.key] || "")}">
+          ${hintsFor(q.key)}</div></div>`).join("")}
+        ${v}
+        <button type="button" class="btn btn-red btn-big" id="pruefen">Lösung prüfen</button>
+        ${S.check_available ? `<div class="ctip"><div><b>Kontrolltipp</b><p>Zeigt, welche Antworten eures letzten Versuchs schon stimmen. Kostet ${S.rules.check} Minuten Strafzeit.</p></div>
+          <button type="button" class="btn ${checkArmed ? "btn-ink" : "btn-line"}" id="check">${checkArmed ? `Ja, Kontrolltipp nutzen (+${S.rules.check} Min.)` : "Kontrolltipp nutzen"}</button>
+          ${checkArmed ? `<button type="button" class="linkbtn" id="checkno">Abbrechen</button>` : ""}${checkRes}</div>` : ""}
+      </section>`;
     }
-    root.innerHTML = `<div class="panel" style="max-width:760px">
-      <div class="eyebrow">Lösung eintragen</div>
-      <p class="muted" style="margin:6px 0 16px">Alle vier Antworten müssen stimmen. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten Strafzeit.</p>
-      <form id="sol" class="form qs">
-        ${S.questions.map((q, i) => `<div class="field">
-          <label for="q_${q.key}">${i + 1}. ${q.label}</label>
-          <span class="hint">${MS.esc(q.hint)}</span>
-          <input id="q_${q.key}" name="${q.key}" autocomplete="off" value="${MS.esc(draft[q.key] || "")}">
-          <div class="tipbox">${tipsFor(q.key)}</div>
-        </div>`).join("")}
-        <div><button class="btn btn-red" type="submit">Lösung prüfen</button></div>
-        ${msg}
-        ${S.check_available ? `<div class="note">Ihr hängt fest? Der <b>Kontrolltipp</b> zeigt, welche Antworten eures letzten Versuchs stimmen (+${S.rules.check} Min.). <button type="button" class="tipbtn" id="check">Kontrolltipp nutzen</button><div id="checkres"></div></div>` : ""}
-      </form></div>`;
-    const f = document.getElementById("sol");
-    f.addEventListener("input", (e) => { draft[e.target.name] = e.target.value; });
-    f.onsubmit = (e) => {
-      e.preventDefault();
-      const a = {}; for (const q of S.questions) a[q.key] = f.elements[q.key].value;
+    const inputs = [...root.querySelectorAll("[data-q]")];
+    inputs.forEach((inp, i) => {
+      inp.addEventListener("input", () => { draft[inp.dataset.q] = inp.value; });
+      // Enter springt nur zum nächsten Feld – geprüft wird ausschließlich per Klick
+      inp.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        if (inputs[i + 1]) inputs[i + 1].focus(); else inp.blur();
+      });
+    });
+    $("pruefen").onclick = () => {
+      const a = {};
+      for (const inp of inputs) a[inp.dataset.q] = inp.value;
       submit(a);
     };
-    root.querySelectorAll("[data-tip]").forEach((b) => (b.onclick = async () => {
-      if (!confirm(`Tipp ${b.dataset.level} öffnen? Das kostet ${S.rules.tips[b.dataset.level - 1]} Minuten Strafzeit.`)) return;
-      try { await MS.api("POST", "tipp", { q: b.dataset.tip, level: Number(b.dataset.level) }, H); await poll(); renderView(); }
-      catch (err) { flash = { type: "err", text: err.message }; renderView(); }
-    }));
-    const c = document.getElementById("check");
+    const c = $("check");
     if (c) c.onclick = async () => {
-      if (!confirm(`Kontrolltipp nutzen? Das kostet ${S.rules.check} Minuten Strafzeit.`)) return;
+      if (!checkArmed) { checkArmed = true; return viewLoesung(); }
+      checkArmed = false;
       try {
         const d = await MS.api("POST", "kontrolle", null, H);
-        document.getElementById("checkres").innerHTML = `<div class="checkrow">${S.questions.map((q, i) => `<span class="${d.result[q.key] ? "y" : "n"}">Frage ${i + 1}: ${d.result[q.key] ? "richtig" : "falsch"}</span>`).join("")}</div>`;
-        S.penalty_min += d.penalty_min; tickClock();
-      } catch (err) { document.getElementById("checkres").innerHTML = `<p class="err">${MS.esc(err.message)}</p>`; }
+        checkRes = `<div class="checkrow">${S.questions.map((q, i) => `<span class="${d.result[q.key] ? "y" : "n"}">Frage ${i + 1}: ${d.result[q.key] ? "richtig" : "falsch"}</span>`).join("")}</div>`;
+        S.penalty_min += d.penalty_min; tick();
+      } catch (err) { checkRes = `<p class="err">${MS.esc(err.message)}</p>`; }
+      viewLoesung();
     };
+    const cn = $("checkno");
+    if (cn) cn.onclick = () => { checkArmed = false; viewLoesung(); };
   }
 
   async function submit(a) {
+    if (busy) return;
+    busy = true;
+    const btn = $("pruefen");
+    if (btn) { btn.disabled = true; btn.textContent = "Wird geprüft …"; }
     try {
       const d = await MS.api("POST", "loesung", a, H);
-      if (d.correct) { flash = { type: "ok", text: "Richtig!" }; draft = {}; }
-      else flash = { type: "err", text: `Leider falsch. +${d.penalty_min} Minuten Strafzeit.` };
-    } catch (err) { flash = { type: "err", text: err.message }; }
-    lastKey = ""; await poll();
+      if (d.correct) { verdict = d.solved ? null : { cls: "good", html: "<strong>Richtig!</strong>" }; draft = {}; }
+      else verdict = { cls: "bad", html: `<strong>Leider falsch.</strong>+${d.penalty_min} Minuten Strafzeit. Prüft eure Antworten noch einmal.` };
+      checkRes = "";
+    } catch (err) { verdict = { cls: "warn", html: MS.esc(err.message) }; }
+    busy = false;
+    lastKey = "";
+    await poll();
   }
 
+  // ---------- Rangliste ----------
   function rankTable() {
     return `<table class="rank"><thead><tr><th>#</th><th>Team</th><th>Stand</th><th>Zeit</th></tr></thead><tbody>
-      ${S.ranking.map((r) => `<tr><td class="n">${r.rank || "–"}</td><td>${MS.esc(r.name)}${r.name === S.team ? " (ihr)" : ""}</td>
-      <td>${r.solved ? "gelöst" : r.core ? "letzter Hinweis" : "ermittelt"}</td><td class="mono">${r.solved ? MS.dur(r.score_ms) : "–"}</td></tr>`).join("")}
+      ${S.ranking.map((r) => `<tr class="${r.name === S.team ? "me" : ""}"><td class="n">${r.rank || "–"}</td><td>${MS.esc(r.name)}${r.name === S.team ? " (ihr)" : ""}</td>
+      <td>${r.solved ? "gelöst" : r.core ? "letzte Stufe" : "ermittelt"}</td><td class="mono">${r.solved ? MS.dur(r.score_ms) : "–"}</td></tr>`).join("")}
     </tbody></table>`;
   }
   function viewRang() {
-    root.innerHTML = `<div class="panel" style="max-width:760px"><div class="eyebrow">Live-Rangliste</div>${rankTable()}
-      <p class="small" style="margin-top:12px">Zeit = Spielzeit bis zur Lösung plus Strafzeit für Fehlversuche und Tipps.</p></div>`;
+    root.innerHTML = `<section class="report paper"><div class="eyebrow">Live-Rangliste</div><h2>Wer ist vorne?</h2>${rankTable()}
+      <p class="small" style="margin-top:12px">Zeit = Spielzeit bis zur Lösung plus Strafzeit für Fehlversuche und Kontrolltipps.</p></section>`;
   }
 
-  tabsEl.querySelectorAll("button").forEach((b) => (b.onclick = () => { tab = b.dataset.tab; openDoc = null; renderView(); scrollTo(0, 0); }));
   poll();
   setInterval(poll, 8000);
 })();

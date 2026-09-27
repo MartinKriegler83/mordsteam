@@ -8,7 +8,7 @@ rm -rf dist
 mkdir -p dist
 if [ "$CF_PAGES_BRANCH" = "main" ] && [ "$LAUNCH" != "true" ]; then
   echo "Modus: TEASER"
-  cp -r site/assets site/spiel site/_headers site/robots.txt site/impressum.html site/datenschutz.html dist/
+  cp -r site/assets site/spiel site/_headers site/robots.txt site/favicon.ico site/site.webmanifest site/impressum.html site/datenschutz.html dist/
   cp teaser/index.html dist/index.html
   # Rechtsseiten: Navigation zur noch versteckten Seite entfernen
   for f in dist/impressum.html dist/datenschutz.html; do
