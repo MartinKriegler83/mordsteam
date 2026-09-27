@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="stylesheet" href="/spiel/spiel.css">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<title>Fallakte – Mordsteam</title>
+</head>
+<body class="app">
+<header class="bar"><div class="wrap">
+<span class="brand"><svg width="22" height="22" viewBox="0 0 34 34" fill="none" stroke="#F3EFE6" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg> <span id="fallname">MORDSTEAM</span></span>
+<span class="clock" id="clock" aria-live="polite"></span>
+</div></header>
+<nav class="tabs noprint" id="tabs" role="tablist" hidden>
+<div class="wrap" style="display:flex;gap:4px">
+<button role="tab" data-tab="akte" aria-selected="true">Akte</button>
+<button role="tab" data-tab="firma" aria-selected="false" id="tab-firma">Konkurrenz</button>
+<button role="tab" data-tab="loesung" aria-selected="false">Lösung</button>
+<button role="tab" data-tab="rang" aria-selected="false">Rangliste</button>
+</div>
+</nav>
+<main class="view"><div class="wrap" id="root"><p class="muted">Lade…</p></div></main>
+<script src="/spiel/common.js"></script>
+<script src="/spiel/fall.js"></script>
+</body>
+</html>

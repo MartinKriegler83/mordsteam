@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="stylesheet" href="/spiel/spiel.css">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<title>Fallzentrale – Mordsteam</title>
+</head>
+<body class="app">
+<header class="bar"><div class="wrap"><span class="brand"><svg width="22" height="22" viewBox="0 0 34 34" fill="none" stroke="#F3EFE6" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg> MORDSTEAM · Fallzentrale</span></div></header>
+<main class="view"><div class="wrap center">
+<div class="panel">
+<div class="eyebrow">Ermittlerteam anmelden</div>
+<h1 style="font-family:var(--serif);font-size:34px;margin:8px 0 10px">Willkommen in der Fallzentrale</h1>
+<p class="muted">Gebt den Spielcode von eurem Organisator ein und wählt einen Teamnamen. Jedes Team meldet sich mit einem Gerät an.</p>
+<form id="join" class="form">
+<div class="field"><label for="code">Spielcode</label><input id="code" name="code" required maxlength="8" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;font-family:var(--mono);font-size:22px;letter-spacing:4px"></div>
+<div class="field"><label for="name">Teamname</label><input id="name" name="name" required maxlength="40" autocomplete="off" placeholder="z. B. Die Spürnasen"></div>
+<div><button class="btn btn-red" type="submit">Anmelden</button></div>
+<p id="msg" class="err" role="alert"></p>
+</form>
+</div>
+<p class="small" style="margin-top:18px">Fair Play: Keine KI und keine Suchmaschinen – der Fall ist mit Köpfchen lösbar. <a href="/spiel/leitung.html">Zur Organisator-Ansicht</a></p>
+</div></main>
+<script src="/spiel/common.js"></script>
+<script src="/spiel/join.js"></script>
+</body>
+</html>
