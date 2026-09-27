@@ -85,6 +85,7 @@
           <div class="field"><label for="event_date">Spieltag</label><input id="event_date" name="event_date" type="date" value="${today}" required></div>
         </div>
         <div class="two">
+          <div class="field"><label for="max_teams">Gebuchte Teams</label><input id="max_teams" name="max_teams" type="number" min="1" max="15" value="3"></div>
           <div class="field"><label for="DIEBESGUT">Diebesgut</label><select id="DIEBESGUT" name="DIEBESGUT">${meta.diebesgut.map((d) => `<option value="${d.key}">${MS.esc(d.label)}</option>`).join("")}</select></div>
         </div>
         <label class="check"><input type="checkbox" name="test_mode" checked><span><b>Testmodus</b>: Fall lässt sich an jedem Tag öffnen (für Probeläufe).</span></label>
@@ -109,7 +110,7 @@
       vars.DIEBESGUT = f.DIEBESGUT.value;
       try {
         created = await MS.api("POST", "admin/session", {
-          label: f.label.value, event_date: f.event_date.value,
+          label: f.label.value, event_date: f.event_date.value, max_teams: Number(f.max_teams.value),
           test_mode: f.test_mode.checked, premium: f.premium.checked, premium_answer: f.premium_answer.value, vars,
         }, H());
         err = ""; scrollTo(0, 0);

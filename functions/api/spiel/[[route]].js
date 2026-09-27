@@ -12,6 +12,8 @@ async function migrate(env) {
   if (migrated) return;
   try { await env.DB.prepare("ALTER TABLE teams ADD COLUMN act2_at INTEGER").run(); } catch {}
   try { await env.DB.prepare("ALTER TABLE teams ADD COLUMN view_token TEXT").run(); } catch {}
+  try { await env.DB.prepare("ALTER TABLE sessions ADD COLUMN max_teams INTEGER").run(); } catch {}
+  try { await env.DB.prepare("CREATE TABLE IF NOT EXISTS viewers (token TEXT PRIMARY KEY, team_id TEXT NOT NULL, created_at INTEGER NOT NULL)").run(); } catch {}
   migrated = true;
 }
 
@@ -24,6 +26,7 @@ export async function onRequest(ctx) {
     await migrate(env);
     // --- Teams ---
     if (route === "join" && method === "POST") return join(request, env);
+    if (route === "mitlesen" && method === "POST") return mitlesen(request, env);
     if (route === "state" && method === "GET") return withTeam(request, env, teamState);
     if (route === "akte" && method === "GET") return withTeam(request, env, akte, true);
     if (route === "firma" && method === "GET") return withTeam(request, env, firma, true);
@@ -63,7 +66,7 @@ async function withTeam(request, env, fn, needsRunning = false, allowViewer = tr
   const view = request.headers.get("x-view") || "";
   let team = null, viewer = false;
   if (token) team = await env.DB.prepare("SELECT * FROM teams WHERE token=?").bind(token).first();
-  else if (view) { team = await env.DB.prepare("SELECT * FROM teams WHERE view_token=?").bind(view).first(); viewer = !!team; }
+  else if (view) { team = await env.DB.prepare("SELECT teams.* FROM viewers JOIN teams ON teams.id = viewers.team_id WHERE viewers.token=?").bind(view).first(); viewer = !!team; }
   if (viewer && !allowViewer) return fail("Lösungen gibt euer Team nur am Hauptgerät ein.", 403);
   if (!team) return fail("Team unbekannt. Bitte neu anmelden.", 401);
   const session = await loadSession(env, team.session_id);
@@ -95,13 +98,29 @@ async function join(request, env) {
   if (session.status === "created") return fail("Der Fall ist noch nicht freigeschaltet. Euer Organisator öffnet ihn am Spieltag.", 403);
   if (session.status === "finished") return fail("Diese Spielrunde ist bereits beendet.", 403);
   const count = await env.DB.prepare("SELECT COUNT(*) AS n FROM teams WHERE session_id=?").bind(session.id).first();
-  if (count.n >= RULES.maxTeams) return fail("Maximale Anzahl an Teams erreicht.", 403);
+  const maxTeams = session.max_teams || RULES.maxTeams;
+  if (count.n >= maxTeams) return fail(`Alle gebuchten Teams (${maxTeams}) sind bereits angemeldet. Weitere Personen können per QR-Code bei einem Team mitlesen.`, 403);
   const exists = await env.DB.prepare("SELECT id FROM teams WHERE session_id=? AND name=?").bind(session.id, name).first();
   if (exists) return fail("Diesen Teamnamen gibt es schon. Bitte einen anderen wählen.", 409);
   const token = randomToken();
   await env.DB.prepare("INSERT INTO teams (id, session_id, name, token, created_at) VALUES (?,?,?,?,?)")
     .bind(crypto.randomUUID(), session.id, name, token, Date.now()).run();
   return json({ token, team: name });
+}
+
+// Mitlesegerät anmelden: jedes Gerät bekommt einen eigenen Schlüssel, höchstens RULES.maxViewers pro Team
+async function mitlesen(request, env) {
+  const b = await body(request);
+  const code = String(b.code || "");
+  const team = code && (await env.DB.prepare("SELECT * FROM teams WHERE view_token=?").bind(code).first());
+  if (!team) return fail("Dieser Mitlese-Link ist ungültig. Bitte den QR-Code am Teamgerät neu scannen.", 404);
+  const session = await loadSession(env, team.session_id);
+  if (!session || session.status === "finished") return fail("Diese Spielrunde ist bereits beendet.", 410);
+  const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM viewers WHERE team_id=?").bind(team.id).first();
+  if (n.n >= RULES.maxViewers) return fail(`Euer Team „${team.name}“ hat schon ${RULES.maxViewers} Mitlesegeräte – mehr geht pro Team nicht.`, 403);
+  const token = randomToken(16);
+  await env.DB.prepare("INSERT INTO viewers (token, team_id, created_at) VALUES (?,?,?)").bind(token, team.id, Date.now()).run();
+  return json({ token, team: team.name });
 }
 
 async function teamState({ env, team, session, viewer }) {
@@ -134,6 +153,8 @@ async function teamState({ env, team, session, viewer }) {
     team: team.name,
     viewer: !!viewer,
     view_token: viewer ? null : team.view_token,
+    viewers: viewer ? null : (await env.DB.prepare("SELECT COUNT(*) AS n FROM viewers WHERE team_id=?").bind(team.id).first()).n,
+    max_viewers: RULES.maxViewers,
     firma: v.FIRMA,
     fall: c.META.title,
     status: session.status,
@@ -270,6 +291,7 @@ async function leitungState({ env, session }) {
     join_code: session.join_code,
     duration_min: session.duration_min,
     premium: !!session.premium,
+    max_teams: session.max_teams || RULES.maxTeams,
     now: Date.now(),
     started_at: session.started_at,
     hard_end: session.started_at ? hardEnd(session) : null,
@@ -355,16 +377,17 @@ async function adminCreate(request, env) {
     vars[key] = val || example;
   }
   const duration = b.premium ? RULES.durationPremium : RULES.durationBasis; // Paket bestimmt die Spielzeit
+  const maxTeams = Math.min(RULES.maxTeams, Math.max(1, Number(b.max_teams) || RULES.maxTeams)); // gebuchte Teams
   const premiumAnswer = String(b.premium_answer || "").trim().slice(0, 40);
   const id = crypto.randomUUID();
   const joinCode = randomCode(6);
   const orgCode = randomCode(8);
   await env.DB.prepare(
-    "INSERT INTO sessions (id, case_id, label, created_at, event_date, status, premium, premium_answer, duration_min, vars, secrets, join_code, org_code, test_mode) VALUES (?,?,?,?,?,'created',?,?,?,?,?,?,?,?)"
+    "INSERT INTO sessions (id, case_id, label, created_at, event_date, status, premium, premium_answer, duration_min, vars, secrets, join_code, org_code, test_mode, max_teams) VALUES (?,?,?,?,?,'created',?,?,?,?,?,?,?,?,?)"
   ).bind(
     id, b.case_id || "fall-001", String(b.label || vars.FIRMA).slice(0, 80), Date.now(), b.event_date,
     b.premium ? 1 : 0, premiumAnswer || null, duration, JSON.stringify(vars), JSON.stringify(c.makeSecrets(randInt)),
-    joinCode, orgCode, b.test_mode ? 1 : 0
+    joinCode, orgCode, b.test_mode ? 1 : 0, maxTeams
   ).run();
   return json({ id, join_code: joinCode, org_code: orgCode });
 }

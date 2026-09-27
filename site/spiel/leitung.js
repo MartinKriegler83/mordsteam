@@ -68,7 +68,7 @@
         <p><span class="bigcode">${S.join_code}</span></p>
         <p class="mono" style="word-break:break-all;margin-top:10px">${MS.esc(link)}</p>
         <button class="tipbtn" id="copy" type="button">Link kopieren</button></div>` : ""}
-      <div class="panel"><div class="eyebrow">Teams und Rangliste</div>
+      <div class="panel"><div class="eyebrow">Teams und Rangliste · ${S.ranking.length} von ${S.max_teams} Teams angemeldet</div>
         ${S.ranking.length ? `<table class="rank"><thead><tr><th>#</th><th>Team</th><th>Stand</th><th>Fehlversuche</th><th>Zeit</th></tr></thead><tbody>
         ${S.ranking.map((r) => `<tr><td class="n">${r.rank || "–"}</td><td>${MS.esc(r.name)}</td><td>${MS.stage(r, S.premium)}</td><td>${r.wrong}</td><td class="mono">${r.solved ? MS.dur(r.score_ms) : "–"}</td></tr>`).join("")}
         </tbody></table>` : `<p class="muted">Noch kein Team angemeldet.</p>`}

@@ -99,6 +99,7 @@ p{margin:0}
 .pack h3{font-family:var(--serif);font-size:28px;font-weight:700}
 .pack .sub{font-size:15px;color:#4A4D55;margin-top:-8px}
 .pack .price{font-weight:600}
+.pack .per{font-size:14px;opacity:.75;margin-top:-6px}
 .pack .list{font-size:15px;color:#2D3036;gap:6px}
 .pack .btn{margin-top:auto}
 .pack.featured{background:var(--ink);color:var(--paper);border-color:var(--ink);order:-1}

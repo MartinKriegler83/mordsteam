@@ -3,7 +3,15 @@
 (function () {
   // Mitlesegerät: kommt über den QR-Code des Teamgeräts (?mit=…)
   const mit = MS.qs("mit");
-  if (mit) { MS.set("ms_view", mit); MS.del("ms_team"); ["ms_seen", "ms_heard", "ms_tab", "ms_doc"].forEach(MS.del); history.replaceState(null, "", location.pathname); }
+  if (mit) {
+    const r = document.getElementById("root");
+    r.innerHTML = `<div class="panel center"><p>Verbinde mit eurem Team …</p></div>`;
+    MS.api("POST", "mitlesen", { code: mit }).then((d) => {
+      MS.set("ms_view", d.token); MS.del("ms_team"); ["ms_seen", "ms_heard", "ms_tab", "ms_doc"].forEach(MS.del);
+      location.replace(location.pathname);
+    }).catch((e) => { r.innerHTML = `<div class="panel center"><div class="eyebrow">Mitlesen</div><p style="margin-top:8px">${MS.esc(e.message)}</p></div>`; });
+    return;
+  }
   const token = MS.get("ms_team"), viewToken = token ? null : MS.get("ms_view");
   if (!token && !viewToken) { location.href = "/spiel/"; return; }
   const VIEWER = !token;
@@ -245,7 +253,7 @@
       <div class="more-devices">
         <div class="qr" id="qr" aria-label="QR-Code für Mitlesegeräte"></div>
         <div><b>Ihr wollt mehr Geräte verwenden?</b>
-          <p>Scannt den Code mit weiteren Handys oder Laptops eures Teams. Dort seht ihr Akte, Konkurrenz-Website und Funk – so könnt ihr euch die Beweisstücke aufteilen.</p>
+          <p>Scannt den Code mit weiteren Handys oder Laptops eures Teams (bis zu ${S.max_viewers} Geräte, verbunden: ${S.viewers}). Dort seht ihr Akte, Konkurrenz-Website und Funk – so könnt ihr euch die Beweisstücke aufteilen.</p>
           <p class="small"><b>Lösungen gebt ihr nur hier auf diesem Gerät ein.</b></p>
           <button type="button" class="btn btn-line" id="copyLink">Link kopieren</button> <span class="small" id="copied"></span></div>
       </div>
