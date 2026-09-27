@@ -126,6 +126,9 @@ async function teamState({ env, team, session }) {
     next_hint: team.core_at ? null : nextHint,
     rules: { wrong: RULES.wrongPenaltyMin, check: RULES.checkPenaltyMin, checkAfter: RULES.checkAfterWrong, gap: RULES.minSecondsBetween },
     ranking: rank,
+    // Nach Spielende bekommen alle Teams die Auflösung (erst dann, damit niemand vorher spickt)
+    aufloesung: session.status === "finished" ? solutionInfo(session) : null,
+    hints_total: RULES.hintSchedule.length,
   });
 }
 
@@ -267,20 +270,26 @@ async function leitungAktion({ request, env, session }) {
   return fail("Unbekannte Aktion.");
 }
 
-async function aufloesung({ session }) {
-  const ok = session.status === "finished" ||
-    (session.status === "running" && Date.now() - session.started_at >= RULES.solutionAfterMin * 60000);
-  if (!ok) return fail(`Die Auflösung gibt es frühestens ${RULES.solutionAfterMin} Minuten nach dem Start.`, 403);
+function solutionInfo(session) {
   const c = CASES[session.case_id];
-  const sol = c.solution(JSON.parse(session.secrets));
+  const secrets = JSON.parse(session.secrets);
+  const sol = c.solution(secrets);
   const v = buildVars(session);
-  return json({
-    answers: c.QUESTIONS.map((q) => ({ label: render(q.label, v), answer: sol[q.key] })),
+  const names = { [secrets.L_KRAL]: "Sabine Kral" };
+  return {
+    answers: c.QUESTIONS.map((q) => ({ key: q.key, label: render(q.label, v), answer: sol[q.key], detail: q.key === "wer" ? names[sol.wer] || "" : "" })),
     premium_answer: session.premium ? session.premium_answer : null,
     story: render(
       "Sabine Kral hat Wissen über Projekt Phoenix an Veridian Systems verkauft. Als Dr. Reiher das Leck aufdeckte und {DG_AKK} als Beweis bei sich trug, holte Kral um {TATZEIT} mit Gästekarte {GASTKARTE} seinen Pfefferminztee ab und tropfte Herztropfen hinein. Um 22:47 betrat sie den {RAUM_TATORT}, nahm {DG_AKK} und Reihers Autoschlüssel an sich und versteckte die Beute in Reihers eigenem Wagen auf Stellplatz {STELLPLATZ} – dort sucht niemand. Das Veridian-Geld floss auf ihr Konto mit der Endung {KONTO}. Um 11:30 wollte sie die Beute holen, um 12:00 übergeben.",
       v),
-  });
+  };
+}
+
+async function aufloesung({ session }) {
+  const ok = session.status === "finished" ||
+    (session.status === "running" && Date.now() - session.started_at >= RULES.solutionAfterMin * 60000);
+  if (!ok) return fail(`Die Auflösung gibt es frühestens ${RULES.solutionAfterMin} Minuten nach dem Start.`, 403);
+  return json(solutionInfo(session));
 }
 
 // ---------- Admin ----------
