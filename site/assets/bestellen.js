@@ -18,7 +18,8 @@
   const eur = (c) => (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + " €";
   const fmtDate = (d) => { if (!d) return "–"; const [y, m, t] = d.split("-"); return `${Number(t)}.${Number(m)}.${y}`; };
   const paket = () => form.paket.value;
-  const premium = () => paket() === "premium";
+  const premium = () => paket() !== "basis";
+  const TN = { basis: "Basis, 50 Minuten", premium: "Premium, 70 Minuten", plus: "Premium Plus, 90 Minuten" };
   const field = (key) => META.fields.find((f) => f.key === key);
 
   function input(key, label, hint, cls = "") {
@@ -38,7 +39,7 @@
       <div class="two">${input("PARK", ...LABELS.PARK)}<div></div></div>`;
     $("#f-opfer").innerHTML = person("OPFER", "Das Opfer");
     $("#f-boss").innerHTML = person("BOSS", "Der Oberboss");
-    $("#f-sus").innerHTML = [1, 2, 3, 4, 5, 6].map((i) => `<div class="susrow" data-i="${i}">${person("S" + i, `Verdächtige/r ${i}${i === 6 ? ' <span class="opt">nur Premium</span>' : ""}`)}</div>`).join("");
+    $("#f-sus").innerHTML = [1, 2, 3, 4, 5, 6].map((i) => `<div class="susrow" data-i="${i}">${person("S" + i, `Verdächtige/r ${i}${i === 6 ? ' <span class="opt">nur Premium und Premium Plus</span>' : ""}`)}</div>`).join("");
     const sel = $("#teams");
     sel.innerHTML = [...Array(15)].map((_, i) => `<option value="${i + 1}">${i + 1} Team${i ? "s" : ""}</option>`).join("");
     sel.value = "3";
@@ -46,19 +47,18 @@
 
   function update() {
     const p = premium();
-    $("#liefer").hidden = !p;
     $(".susrow[data-i='6']").hidden = !p;
-    const min = META.earliest[paket()];
+    const min = META.earliest;
     const d = $("#event_date");
     d.min = min;
-    $("#datehint").textContent = p ? `Frühestens ${fmtDate(min)} – die Kuverts kommen per Post.` : `Frühestens ${fmtDate(min)}. Der Code ist sofort nach dem Bezahlen da.`;
+    $("#datehint").textContent = `Frühestens ${fmtDate(min)}. Der Spielcode ist sofort nach dem Bezahlen da.`;
     const n = Number($("#teams").value);
     const sum = META.prices[paket()] * n;
-    $("#pb-text").textContent = `${p ? "Premium" : "Basis"} · ${n} Team${n > 1 ? "s" : ""}`;
+    $("#pb-text").textContent = `${TN[paket()].split(",")[0]} · ${n} Team${n > 1 ? "s" : ""}`;
     $("#pb-sum").textContent = eur(sum);
     const v = (k) => (form["v_" + k]?.value || "").trim();
     $("#summary").innerHTML = `<dl>
-      <dt>Paket</dt><dd>Fall 001 „${esc(META.fall)}“ – ${p ? "Premium, 90 Minuten" : "Basis, 60 Minuten"}</dd>
+      <dt>Paket</dt><dd>Fall 001 „${esc(META.fall)}“ – ${TN[paket()]}</dd>
       <dt>Teams</dt><dd>${n} × ${eur(META.prices[paket()])}</dd>
       <dt>Spieltag</dt><dd>${esc(fmtDate(d.value))}</dd>
       <dt>Firma</dt><dd>${esc(v("FIRMA") || "–")}</dd>
@@ -124,7 +124,7 @@
       }
       if (d._logo) setLogo(d._logo);
     }
-    if (qp === "basis" || qp === "premium") form.querySelector(`input[name=paket][value=${qp}]`).checked = true;
+    if (qp === "basis" || qp === "premium" || qp === "plus") form.querySelector(`input[name=paket][value=${qp}]`).checked = true;
   }
 
   // ---------- Prüfen und senden ----------
@@ -153,7 +153,7 @@
         const val = form["v_" + k].value.trim();
         if (!val) {
           const el = form["v_" + k];
-          const who = el.closest(".prow").querySelector("h3").textContent.replace("nur Premium", "").trim();
+          const who = el.closest(".prow").querySelector("h3").textContent.replace("nur Premium und Premium Plus", "").trim();
           const what = { _ANR: "Anrede", "": "Name", _FKT: "Funktion", _ABT: "Abteilung" }[suf];
           throw [`Bitte ausfüllen: ${what} bei „${who}“.`, el];
         }
@@ -170,21 +170,16 @@
 
     const date = form.event_date.value;
     if (!date) throw ["Bitte einen Spieltag wählen.", form.event_date];
-    if (date < META.earliest[paket()]) throw [p ? `Premium braucht Vorlauf für den Postversand: frühestens ${fmtDate(META.earliest.premium)}.` : `Der Spieltag muss frühestens ${fmtDate(META.earliest.basis)} sein.`, form.event_date];
+    if (date < META.earliest) throw [`Der Spieltag muss frühestens ${fmtDate(META.earliest)} sein.`, form.event_date];
 
     const contact = { name: form.c_name.value.trim(), email: form.c_email.value.trim(), telefon: form.c_tel.value.trim(), rechnung_firma: form.c_firma.value.trim() };
     if (contact.name.length < 2) throw ["Bitte deinen Namen angeben.", form.c_name];
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw ["Bitte eine gültige E-Mail-Adresse angeben.", form.c_email];
-    let liefer = null;
-    if (p) {
-      liefer = { name: form.l_name.value.trim(), strasse: form.l_strasse.value.trim(), plz: form.l_plz.value.trim(), ort: form.l_ort.value.trim(), land: form.l_land.value };
-      for (const k of ["name", "strasse", "plz", "ort"]) if (!liefer[k]) throw ["Bitte die Lieferadresse für die Kuverts vollständig angeben.", form["l_" + k]];
-    }
     const consent = { zustimmung: form.zustimmung.checked, agb: form.agb.checked, logo_rechte: form.logo_rechte.checked };
     if (logoData && !consent.logo_rechte) throw ["Bitte bestätigen, dass ihr das Logo verwenden dürft.", form.logo_rechte];
     if (!consent.zustimmung) throw ["Bitte bestätigen, dass alle genannten Personen einverstanden sind.", form.zustimmung];
     if (!consent.agb) throw ["Bitte AGB und Datenschutzerklärung akzeptieren.", form.agb];
-    return { paket: paket(), teams: Number(form.teams.value), event_date: date, vars, contact, liefer, consent, logo: logoData };
+    return { paket: paket(), teams: Number(form.teams.value), event_date: date, vars, contact, consent, logo: logoData, lang: "de" };
   }
 
   async function submit(ev) {

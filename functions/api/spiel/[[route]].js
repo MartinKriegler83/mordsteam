@@ -3,7 +3,7 @@
 import {
   CASES, RULES, json, fail, randInt, randomToken, randomCode, esc, viennaDate,
   buildVars, render, checkAnswers, hintTimes, hardEnd, refreshStatus, finishIfAllSolved, recordStats, expired, purgeSession, ranking, teamScore,
-  isPremium, stageOf, stageQuestions, cardCode,
+  isPremium, isPlus, tierOf, TIER_NAMES, stageOf, stageQuestions,
 } from "../../../lib/game.js";
 
 import { migrate, createGameSession, InputError } from "../../../lib/create.js";
@@ -24,6 +24,9 @@ export async function onRequest(ctx) {
     if (route === "firma/login" && method === "POST") return withTeam(request, env, firmaLogin, true);
     if (route === "loesung" && method === "POST") return withTeam(request, env, loesung, true, false);
     if (route === "kontrolle" && method === "POST") return withTeam(request, env, kontrolle, true, false);
+    if (route === "aria" && method === "GET") return withTeam(request, env, ariaGet);
+    if (route === "aria/chat" && method === "POST") return withTeam(request, env, ariaChat, true);
+    if (route === "aria/kennwort" && method === "POST") return withTeam(request, env, ariaKennwort, true);
     if (route === "test/vorspulen" && method === "POST") return withTeam(request, env, vorspulen, true, false);
     // --- Organisator ---
     if (route === "leitung/login" && method === "POST") return leitungLogin(request, env);
@@ -129,7 +132,7 @@ async function teamState({ env, team, session, viewer }) {
   const rank = await ranking(env, session);
   const stage = stageOf(session, team);
   const premium = isPremium(session);
-  const label = (q) => { const i = [...c.QUESTIONS, ...c.QUESTIONS2].findIndex((x) => x.key === q); return q === "karte" ? "Kuvert" : `Frage ${i + 1}`; };
+  const label = (q) => { const i = [...c.QUESTIONS, ...c.QUESTIONS2].findIndex((x) => x.key === q); return q === "pin" ? "Finale" : `Frage ${i + 1}`; };
   // Automatische Funksprüche: nur für die Stufe, in der das Team gerade steckt, und nur wenn ihr Zeitpunkt erreicht ist
   const now = Date.now();
   let hints = [], nextHint = null;
@@ -143,7 +146,7 @@ async function teamState({ env, team, session, viewer }) {
   }
   let last = null;
   try { last = team.last_result ? JSON.parse(team.last_result) : null; } catch {}
-  const offset = stage === 2 ? c.QUESTIONS.length : 0;
+  const offset = stage === 2 ? c.QUESTIONS.length : stage === 3 ? c.QUESTIONS.length + c.QUESTIONS2.length : 0;
   return json({
     team: team.name,
     viewer: !!viewer,
@@ -163,6 +166,9 @@ async function teamState({ env, team, session, viewer }) {
     duration_min: session.duration_min,
     hard_end: session.started_at ? hardEnd(session) : null,
     premium,
+    tier: tierOf(session),
+    tier_name: TIER_NAMES[tierOf(session)],
+    plus: isPlus(session),
     stage,
     questions: stageQuestions(session, stage < 4 ? stage : 1).map((q, i) => ({ key: q.key, nr: offset + i + 1, label: render(q.label, v), hint: q.hint })),
     questions_act1: c.QUESTIONS.map((q) => render(q.label, v)),
@@ -188,7 +194,9 @@ async function akte({ team, session, viewer }) {
   const c = CASES[session.case_id];
   const v = buildVars(session);
   const act2 = isPremium(session) && !!team.core_at;
-  const docs = [...c.DOCS.filter((d) => !d.premiumOnly || isPremium(session)).map((d) => ({ ...d, act: 1 })), ...(act2 ? c.DOCS2.map((d) => ({ ...d, act: 2 })) : [])];
+  const act3 = isPlus(session) && !!team.act2_at;
+  const docs = [...c.DOCS.filter((d) => !d.premiumOnly || isPremium(session)).map((d) => ({ ...d, act: 1 })),
+    ...(act2 ? c.DOCS2.map((d) => ({ ...d, act: 2 })) : []), ...(act3 && c.DOCS3 ? c.DOCS3.map((d) => ({ ...d, act: 3 })) : [])];
   return json({
     watermark: `${JSON.parse(session.vars).FIRMA} · Team ${team.name}${viewer ? " · Mitlesegerät" : ""} · vertraulich`, // Klartext, der Browser escaped
     docs: docs.map((d) => ({ id: d.id, act: d.act, title: render(d.title, v), kind: d.kind, html: render(d.html, v) })),
@@ -203,7 +211,8 @@ async function firma({ session }) {
   const slug = firmaRaw.toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
     .replace(/\b(gmbh|ag|kg|og|e\.?u\.?|co)\b/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "firma";
   return json({ name: firmaRaw, logo: session.logo || null, domain: `intranet.${slug}.at`, intranet: !!w.intranet, login_label: w.login.label || "Login",
-    pages: w.pages.map((p) => ({ id: p.id, title: p.title, html: render(p.html, v) })) });
+    pages: [...w.pages.map((p) => ({ id: p.id, title: p.title, html: (p.id === "news" && isPlus(session) && c.ARIA ? c.ARIA.news : "") + render(p.html, v) })),
+      ...(isPlus(session) && c.ARIA ? [{ id: "aria", title: "ARIA", aria: true, html: "" }] : [])] });
 }
 
 function partnerPassword(session) {
@@ -247,12 +256,98 @@ async function loesung({ request, env, team, session }) {
     return json({ correct: true, solved: !premium, next: premium ? "akt2" : null });
   }
   if (stage === 2) {
-    await env.DB.prepare("UPDATE teams SET act2_at=?, last_attempt_at=?, last_result=NULL WHERE id=?").bind(now, now, team.id).run();
-    return json({ correct: true, solved: false, next: "kuvert" });
+    const plus = isPlus(session);
+    await env.DB.prepare("UPDATE teams SET act2_at=?, solved_at=?, last_attempt_at=?, last_result=NULL WHERE id=?").bind(now, plus ? null : now, now, team.id).run();
+    if (!plus) await finishIfAllSolved(env, session, now);
+    return json({ correct: true, solved: !plus, next: plus ? "finale" : null });
   }
   await env.DB.prepare("UPDATE teams SET solved_at=?, last_attempt_at=?, last_result=NULL WHERE id=?").bind(now, now, team.id).run();
   await finishIfAllSolved(env, session, now);
   return json({ correct: true, solved: true });
+}
+
+// ---------- ARIA: KI-Assistenz im Intranet (nur Premium Plus, erst im Finale) ----------
+const ARIA_LIMITS = { maxMsgs: 40, maxChars: 300, gapMs: 3000, history: 16 };
+const ariaX = (session) => ({ ...JSON.parse(session.vars), ...JSON.parse(session.secrets) });
+
+async function ariaMsgs(env, team) {
+  const { results } = await env.DB.prepare("SELECT role, text, at FROM aria_msgs WHERE team_id=? ORDER BY id LIMIT 300").bind(team.id).all();
+  return results;
+}
+async function ariaGet({ env, team, session }) {
+  const c = CASES[session.case_id];
+  if (!isPlus(session) || !c.ARIA) return fail("ARIA gibt es nur im Paket Premium Plus.", 404);
+  const live = stageOf(session, team) >= 3;
+  const msgs = live ? await ariaMsgs(env, team) : [];
+  return json({
+    live, msgs,
+    used: msgs.filter((m) => m.role === "user").length, max: ARIA_LIMITS.maxMsgs, max_chars: ARIA_LIMITS.maxChars,
+    unlocked: !!team.aria_unlocked_at, note: team.aria_unlocked_at ? c.ARIA.note(ariaX(session)) : null,
+  });
+}
+// Zeitsperre gegen Dauerfeuer (gilt für das ganze Team, alle Geräte)
+async function ariaGate(env, team) {
+  const now = Date.now();
+  const r = await env.DB.prepare("UPDATE teams SET aria_last_at=? WHERE id=? AND (aria_last_at IS NULL OR aria_last_at < ?)").bind(now, team.id, now - ARIA_LIMITS.gapMs).run();
+  return !!r.meta?.changes;
+}
+async function ariaChat({ request, env, team, session }) {
+  const c = CASES[session.case_id];
+  if (!isPlus(session) || !c.ARIA || stageOf(session, team) < 3) return fail("ARIA ist noch nicht freigeschaltet.", 403);
+  const b = await body(request);
+  const text = String(b.text || "").replace(/\s+/g, " ").trim().slice(0, ARIA_LIMITS.maxChars);
+  if (!text) return fail("Bitte eine Frage eingeben.");
+  const used = (await env.DB.prepare("SELECT COUNT(*) AS n FROM aria_msgs WHERE team_id=? AND role='user'").bind(team.id).first()).n;
+  if (used >= ARIA_LIMITS.maxMsgs) return fail("ARIA braucht eine Pause: Euer Team hat alle Nachrichten verbraucht. Die Hinweise der Zentrale kommen trotzdem.", 429);
+  if (!(await ariaGate(env, team))) return fail("ARIA tippt noch … einen Moment.", 429);
+  const now = Date.now();
+  await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, now, "user", text).run();
+  const x = ariaX(session);
+  let reply;
+  try {
+    if (!env.ANTHROPIC_API_KEY) throw new Error("kein Schlüssel");
+    const hist = (await ariaMsgs(env, team)).filter((m) => m.role === "user" || m.role === "assistant").slice(-ARIA_LIMITS.history);
+    const messages = [];
+    for (const m of hist) {
+      const last = messages[messages.length - 1];
+      if (last && last.role === m.role) last.content += "\n" + m.text; else messages.push({ role: m.role, content: m.text });
+    }
+    while (messages.length && messages[0].role !== "user") messages.shift();
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      body: JSON.stringify({
+        model: env.ARIA_MODEL || "claude-haiku-4-5-20251001", max_tokens: 300, temperature: 0.6,
+        system: [{ type: "text", text: c.ARIA.system(x), cache_control: { type: "ephemeral" } }],
+        messages,
+      }),
+      signal: AbortSignal.timeout(20000),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error?.message || String(r.status));
+    reply = (d.content || []).filter((p) => p.type === "text").map((p) => p.text).join("").trim().slice(0, 1200);
+    if (!reply) throw new Error("leer");
+  } catch (e) {
+    reply = c.ARIA.fallback(x);
+  }
+  await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, Date.now(), "assistant", reply).run();
+  return json({ ok: true });
+}
+async function ariaKennwort({ request, env, team, session }) {
+  const c = CASES[session.case_id];
+  if (!isPlus(session) || !c.ARIA || stageOf(session, team) < 3) return fail("ARIA ist noch nicht freigeschaltet.", 403);
+  const x = ariaX(session);
+  if (team.aria_unlocked_at) return json({ ok: true, note: c.ARIA.note(x) });
+  const b = await body(request);
+  const pw = String(b.kennwort || "").trim().slice(0, 60);
+  if (!pw) return fail("Bitte ein Kennwort eingeben.");
+  if (!(await ariaGate(env, team))) return fail("Einen Moment – nächster Versuch in ein paar Sekunden.", 429);
+  const ok = c.ARIA.checkPassword(pw, x);
+  const now = Date.now();
+  await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, now, "event", ok ? `🔓 Kennwort „${pw}“ – Notiz geöffnet` : `🔒 Kennwort „${pw}“ – falsch`).run();
+  if (!ok) return json({ ok: false });
+  await env.DB.prepare("UPDATE teams SET aria_unlocked_at=? WHERE id=?").bind(now, team.id).run();
+  return json({ ok: true, note: c.ARIA.note(x) });
 }
 
 // Nur in Testrunden: Spielzeit vorspulen (bis zum nächsten Hinweis der aktuellen Stufe oder um x Minuten)
@@ -313,7 +408,9 @@ async function leitungState({ env, session }) {
     may_open: mayOpen(session),
     join_code: session.join_code,
     duration_min: session.duration_min,
-    premium: !!session.premium,
+    premium: isPremium(session),
+    tier: tierOf(session),
+    tier_name: TIER_NAMES[tierOf(session)],
     max_teams: session.max_teams || RULES.maxTeams,
     now: Date.now(),
     started_at: session.started_at,
@@ -356,15 +453,18 @@ function solutionInfo(session) {
   const sol = c.solution(secrets, input);
   const who = c.names(secrets, input); // Klarnamen, der Browser escaped
   const v = buildVars(session);
-  const premium = isPremium(session);
-  const qs = premium ? [...c.QUESTIONS, ...c.QUESTIONS2] : c.QUESTIONS;
+  const premium = isPremium(session), plus = isPlus(session);
+  const qs = [...c.QUESTIONS, ...(premium ? c.QUESTIONS2 : []), ...(plus ? c.QUESTIONS3 || [] : [])];
   return {
     premium,
+    plus,
+    tier: tierOf(session),
     taeter: who.taeter,
-    answers: qs.map((q) => ({ key: q.key, label: render(q.label, v), answer: sol[q.key], detail: q.key === "wer" ? who.taeter : "" })),
-    premium_answer: premium ? cardCode(session) : null,
+    answers: qs.map((q) => ({ key: q.key, label: render(q.label, v), answer: sol[q.key],
+      detail: q.key === "wer" ? who.taeter : q.key === "pin" ? `Kennwort der Notiz bei ARIA: ${v.ROOM_NEU}` : "" })),
     story: render(c.META.story, v),
     story2: premium ? render(c.META.story2, v) : null,
+    story3: plus && c.META.story3 ? render(c.META.story3, v) : null,
   };
 }
 
@@ -380,7 +480,7 @@ function adminMeta() {
   const c = CASES["fall-001"];
   return json({
     cases: [{ id: "fall-001", title: c.META.title }],
-    card_code: c.CARD_CODE,
+    tiers: TIER_NAMES,
     fields: c.FIELDS.map(([key, label, example, type]) => ({ key, label, example, type: type || "text" })),
   });
 }
@@ -412,10 +512,10 @@ async function adminStats(request, env) {
   const { results } = await env.DB.prepare(`SELECT * FROM stats_teams ${tests ? "" : "WHERE test_mode=0"} ORDER BY recorded_at DESC LIMIT 5000`).all();
   const q = (arr, p) => { const a = arr.filter((x) => x != null).sort((x, y) => x - y); if (!a.length) return null; const i = (a.length - 1) * p; const lo = Math.floor(i); return Math.round((a[lo] + (a[Math.ceil(i)] - a[lo]) * (i - lo)) * 10) / 10; };
   const groups = {};
-  for (const r of results) (groups[r.premium ? "premium" : "basis"] ||= []).push(r);
+  for (const r of results) (groups[["basis", "premium", "plus"][r.premium] || "basis"] ||= []).push(r);
   const out = {};
   for (const [k, rows] of Object.entries(groups)) {
-    const prem = k === "premium";
+    const prem = k !== "basis";
     const wrong = {};
     for (const r of rows) { let w = {}; try { w = JSON.parse(r.wrong_by_q || "{}"); } catch {} for (const [kk, n] of Object.entries(w)) wrong[kk] = (wrong[kk] || 0) + n; }
     const stat = (arr) => ({ p25: q(arr, 0.25), median: q(arr, 0.5), p75: q(arr, 0.75), n: arr.filter((x) => x != null).length });
@@ -425,7 +525,7 @@ async function adminStats(request, env) {
       ganz_geloest: rows.filter((r) => r.solved_min != null).length,
       akt1_min: stat(rows.map((r) => r.core_min)),
       akt2_min: prem ? stat(rows.map((r) => (r.act2_min != null && r.core_min != null ? r.act2_min - r.core_min : null))) : null,
-      finale_min: prem ? stat(rows.map((r) => (r.solved_min != null && r.act2_min != null ? r.solved_min - r.act2_min : null))) : null,
+      finale_min: k === "plus" ? stat(rows.map((r) => (r.solved_min != null && r.act2_min != null ? r.solved_min - r.act2_min : null))) : null,
       gesamt_min: stat(rows.map((r) => r.solved_min)),
       fehler_je_team: Object.fromEntries(Object.entries(wrong).map(([kk, n]) => [kk, Math.round((n / rows.length) * 100) / 100])),
       hinweise_akt1: stat(rows.map((r) => r.hints_akt1)),

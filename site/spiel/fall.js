@@ -29,6 +29,7 @@
   let openDoc = null;        // Index des offenen Dokuments (0 ist gültig!)
   let lastDocId = MS.get("ms_doc");   // zuletzt geöffnetes Dokument – beim Zurückkommen wieder dort
   let vLogin = { u: "", p: "" };      // Eingaben im Partner-Login bleiben stehen
+  let aria = null, ariaDraft = "", ariaPw = "", ariaBusy = false, ariaMsg = "";  // ARIA-Chat (Premium Plus)
   let draft = {};
   let lastKey = "", lastStage = null;
   let verdict = null;        // { cls: 'bad'|'warn'|'good', html }
@@ -58,6 +59,7 @@
     if (S.stage !== lastStage) { if (lastStage !== null) docs = null; lastStage = S.stage; }
     if (key !== lastKey) { lastKey = key; await render(); }
     else if (tab === "funk") renderView();
+    if (tab === "firma" && vPage === "aria" && !ariaBusy) loadAria();
     announceHints();
     tick();
     const tb = $("testbar");
@@ -207,7 +209,7 @@
       <section class="paper final-head">
         <div class="bigstamp ${S.solved ? "" : "grey"}"><div><small>MORDSTEAM · AKTE 001</small><strong>${S.solved ? "FALL GELÖST" : "AKTE GESCHLOSSEN"}</strong><small>${MS.esc(/^team\b/i.test(S.team) ? S.team : "Team " + S.team).toUpperCase()}</small></div></div>
         <h1>${S.solved ? "Stark ermittelt!" : "Die Zeit ist um."}</h1>
-        <p class="lead">${S.solved ? (S.premium ? `Täter überführt, Mitwisser enttarnt, Geld gesichert – ${MS.esc(S.boss || "die Chefetage")} bekommt die ganze Wahrheit.` : `Ihr habt den Fall gelöst, bevor die Mappe bei ${MS.esc(S.boss || "der Chefetage")} sein musste.`) : `${MS.esc(S.boss || "Die Chefetage")} wartet vergeblich auf die Mappe. Aber jetzt erfahrt ihr, wer es wirklich war.`}</p>
+        <p class="lead">${S.solved ? (S.plus ? `Täter überführt, Mitwisser enttarnt, Schließfach geknackt – ${MS.esc(S.boss || "die Chefetage")} bekommt die ganze Wahrheit.` : S.premium ? `Täter überführt, Mitwisser enttarnt, Geld gefunden – ${MS.esc(S.boss || "die Chefetage")} bekommt die ganze Wahrheit.` : `Ihr habt den Fall gelöst, bevor die Mappe bei ${MS.esc(S.boss || "der Chefetage")} sein musste.`) : `${MS.esc(S.boss || "Die Chefetage")} wartet vergeblich auf die Mappe. Aber jetzt erfahrt ihr, wer es wirklich war.`}</p>
         ${bilanz()}
       </section>
       <section class="paper">
@@ -226,8 +228,8 @@
     const r = $("reveal");
     if (r) r.onclick = () => {
       $("revealbox").innerHTML = `<div class="answers">${A.answers.map((a, i) => `<div><i>${pad(i + 1)}</i><span>${a.label}</span><b>${MS.esc(a.answer)}${a.detail ? ` · ${MS.esc(a.detail)}` : ""}</b></div>`).join("")}
-        ${A.premium_answer ? `<div><i>★</i><span>Code auf der Zugangskarte</span><b>${MS.esc(A.premium_answer)}</b></div>` : ""}</div>
-        <p class="story">${A.story}</p>${A.story2 ? `<p class="story" style="margin-top:14px">${A.story2}</p>` : ""}`;
+</div>
+        <p class="story">${A.story}</p>${A.story2 ? `<p class="story" style="margin-top:14px">${A.story2}</p>` : ""}${A.story3 ? `<p class="story" style="margin-top:14px">${A.story3}</p>` : ""}`;
     };
   }
 
@@ -256,8 +258,9 @@
         <li><span class="n">2</span><div><b>Intranet durchforsten</b><span>Euer eigenes Intranet verrät mehr, als es sollte.</span></div></li>
         <li><span class="n">3</span><div><b>Vier Antworten, ein Versuch</b><span>Geprüft wird alles auf einmal. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten Strafzeit.</span></div></li>
         <li><span class="n">4</span><div><b>Funk der Zentrale</b><span>Hängt ihr fest, meldet sich die Zentrale von selbst – für alle Teams gleichzeitig, ohne Strafzeit.</span></div></li>
-        <li><span class="n">5</span><div><b>Fair Play</b><span>Keine KI, keine Suchmaschine. Nur ihr und die Akte.</span></div></li>
-        ${S.premium ? `<li class="prem"><span class="n">6</span><div><b>Zwei Akte und ein Kuvert</b><span>Nach Akt 1 schickt die Zentrale neue Beweisstücke. Euer versiegeltes Kuvert bleibt zu, bis die Fallzentrale es freigibt.</span></div></li>` : ""}
+        <li><span class="n">5</span><div><b>Fair Play</b><span>Keine KI von außen, keine Suchmaschine. Nur ihr und die Akte.</span></div></li>
+        ${S.plus ? `<li class="prem"><span class="n">6</span><div><b>Zwei Akte und ein Finale</b><span>Nach Akt 1 schickt die Zentrale neue Beweisstücke. Im Finale wird ARIA freigeschaltet, die KI-Assistenz eures Intranets.</span></div></li>`
+          : S.premium ? `<li class="prem"><span class="n">6</span><div><b>Zwei Akte</b><span>Nach Akt 1 schickt die Zentrale neue Beweisstücke.</span></div></li>` : ""}
       </ol>
       <h2 class="qhead">Eure vier Fragen${S.premium ? " in Akt 1" : ""}</h2>
       <div class="qcards">${S.questions_act1.map((l, i) => `<div><i>${pad(i + 1)}</i><span>${l}</span></div>`).join("")}</div>
@@ -285,7 +288,7 @@
   function viewAkte() {
     const read = docs.filter((d) => seen.has(d.id)).length;
     root.innerHTML = `${VIEWER ? `<p class="viewer-note">Mitlesegerät · Lösungen gibt euer Team am Hauptgerät ein.</p>` : ""}<div class="deskhead"><h2>Fallakte</h2><span>${read} / ${docs.length} gelesen</span></div>
-      <div class="evid">${docs.map((d, i) => `${d.act === 2 && (i === 0 || docs[i - 1].act !== 2) ? `<div class="actdiv"><span class="conf">Akt 2</span><b>Neue Beweisstücke von der Zentrale</b></div>` : ""}<button type="button" class="ev ${kindClass(d.kind)} ${seen.has(d.id) ? "seen" : ""}" data-doc="${i}" style="--r:${ROT[i % ROT.length]}deg">
+      <div class="evid">${docs.map((d, i) => `${d.act >= 2 && (i === 0 || docs[i - 1].act !== d.act) ? `<div class="actdiv"><span class="conf">${d.act === 3 ? "Finale" : "Akt 2"}</span><b>${d.act === 3 ? "Die letzte Notiz" : "Neue Beweisstücke von der Zentrale"}</b></div>` : ""}<button type="button" class="ev ${kindClass(d.kind)} ${seen.has(d.id) ? "seen" : ""}" data-doc="${i}" style="--r:${ROT[i % ROT.length]}deg">
         <span class="ev-nr">Nr. ${pad(i + 1)}</span><span class="kind">${MS.esc(d.kind)}</span><span class="ttl">${d.title}</span>${seen.has(d.id) ? `<span class="gel">Gelesen</span>` : ""}</button>`).join("")}</div>`;
     root.querySelectorAll("[data-doc]").forEach((b) => (b.onclick = () => { openDoc = Number(b.dataset.doc); renderView(); scrollTo(0, 0); }));
   }
@@ -321,18 +324,20 @@
           <button type="submit" class="v-btn">Anmelden</button>
           <p class="err" id="vmsg" role="alert"></p>
         </form>`;
-    } else body = firma.pages.find((p) => p.id === vPage).html;
+    } else if (vPage === "aria") body = ariaHtml();
+    else body = (firma.pages.find((p) => p.id === vPage) || firma.pages[0]).html;
     const path = vPage === "start" ? "" : vPage === "login" ? "freigaben" : vPage;
     const initials = firma.name.split(/\s+/).filter((w) => /^[A-Za-zÄÖÜäöü]/.test(w)).slice(0, 2).map((w) => w[0].toUpperCase()).join("") || "IN";
     root.innerHTML = `<div class="browser">
       <div class="b-top"><span class="b-dots" aria-hidden="true"><i></i><i></i><i></i></span>
         <div class="b-url"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><b>${MS.esc(firma.domain)}</b><span class="path">/${path}</span></div></div>
       <div class="v-site"><nav class="v-nav"><span class="v-logo">${firma.logo && /^data:image\/(png|jpeg|webp);base64,/.test(firma.logo) ? `<img class="v-img" src="${MS.esc(firma.logo)}" alt="${MS.esc(firma.name)}">` : `<span class="v-mark v-initials">${MS.esc(initials)}</span>${MS.esc(firma.name)}`}<b>Intranet</b></span>
-        <div class="v-links">${nav.map(([id, t]) => `<button type="button" data-v="${id}" aria-current="${id === vPage}">${MS.esc(t)}</button>`).join("")}
+        <div class="v-links">${nav.map(([id, t]) => `<button type="button" data-v="${id}" aria-current="${id === vPage}" class="${id === "aria" ? "v-aria" : ""}">${id === "aria" ? "✦ " : ""}${MS.esc(t)}</button>`).join("")}
         <button type="button" data-v="login" class="v-loginbtn" aria-current="${vPage === "login"}">🔒 ${MS.esc(firma.login_label)}</button></div></nav>
       <div class="v-body">${body}</div></div></div>`;
     wrapTables(".v-body table");
-    root.querySelectorAll("[data-v]").forEach((b) => (b.onclick = () => { vPage = b.dataset.v; renderView(); }));
+    root.querySelectorAll("[data-v]").forEach((b) => (b.onclick = () => { vPage = b.dataset.v; if (vPage === "aria") loadAria(); renderView(); }));
+    if (vPage === "aria") bindAria();
     const f = $("vlogin");
     if (f) { $("vu").oninput = (e) => (vLogin.u = e.target.value); $("vp").oninput = (e) => (vLogin.p = e.target.value); }
     if (f) f.onsubmit = async (e) => {
@@ -342,6 +347,80 @@
         partnerHtml = d.html; renderView();
       } catch (err) { $("vmsg").textContent = err.message; }
     };
+  }
+
+  // ---------- ARIA: KI-Assistenz im Intranet (Premium Plus, ab dem Finale) ----------
+  const nl2br = (t) => MS.esc(t).replace(/\n/g, "<br>");
+  function ariaLog() {
+    if (!aria) return `<p class="aria-empty">Verbinde …</p>`;
+    const m = aria.msgs.map((x) => x.role === "event" ? `<p class="aria-ev">${MS.esc(x.text)}</p>`
+      : `<div class="aria-b ${x.role === "user" ? "me" : "bot"}">${nl2br(x.text)}</div>`).join("");
+    return (m || `<div class="aria-b bot">Hallo! Ich bin ARIA, die KI-Assistenz von ${MS.esc(firma.name)}. Ich kenne den Kalender und das Intranet. Was möchtet ihr wissen?</div>`)
+      + (ariaBusy ? `<div class="aria-b bot typing"><span></span><span></span><span></span></div>` : "");
+  }
+  function ariaLock() {
+    if (aria && aria.unlocked) return `<div class="aria-note"><b>🔓 Geschützte Notiz „privat“</b><p>${MS.esc(aria.note)}</p></div>`;
+    return `<form class="aria-lock" id="pwform"><b>🔒 Geschützte Notiz „privat“</b>
+      <div class="aria-row"><input id="pwin" placeholder="Kennwort" autocomplete="off" autocapitalize="none" spellcheck="false" value="${MS.esc(ariaPw)}"><button type="submit" class="v-btn">Öffnen</button></div>
+      <p class="err" id="pwmsg" role="alert">${MS.esc(ariaMsg)}</p></form>`;
+  }
+  function ariaHtml() {
+    if (S.stage < 3 && !S.solved) return `<section class="aria-soon"><div class="aria-orb"></div><h2>ARIA geht in Kürze live</h2>
+      <p class="v-lead">Eure neue KI-Assistenz kennt jeden Termin und merkt sich alles für euch. Die Testphase mit der Geschäftsführung läuft – bald ist sie für alle da.</p></section>`;
+    return `<section class="aria">
+      <div class="aria-head"><span class="aria-orb small"></span><div><b>ARIA</b><span>KI-Assistenz · Kalender und Intranet</span></div></div>
+      <div class="aria-log" id="arialog">${ariaLog()}</div>
+      <form class="aria-form" id="ariaform"><textarea id="ariain" rows="2" maxlength="${aria ? aria.max_chars : 300}" placeholder="Frag ARIA …">${MS.esc(ariaDraft)}</textarea><button type="submit" class="v-btn" ${ariaBusy ? "disabled" : ""}>Senden</button></form>
+      <p class="aria-meta" id="ariameta">${aria ? `${aria.used} / ${aria.max} Nachrichten eures Teams · ` : ""}ARIA ist eine KI und kann sich irren. Bitte keine echten persönlichen Daten eingeben.</p>
+      <div id="arialock">${ariaLock()}</div>
+    </section>`;
+  }
+  function paintAria() {
+    const log = $("arialog");
+    if (!log) return;
+    const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+    log.innerHTML = ariaLog();
+    if (atBottom) log.scrollTop = log.scrollHeight;
+    $("ariameta").innerHTML = `${aria ? `${aria.used} / ${aria.max} Nachrichten eures Teams · ` : ""}ARIA ist eine KI und kann sich irren. Bitte keine echten persönlichen Daten eingeben.`;
+    if (aria && aria.unlocked && $("pwform")) { $("arialock").innerHTML = ariaLock(); }
+  }
+  async function loadAria() {
+    if (!S || !S.plus || (S.stage < 3 && !S.solved)) return;
+    try { aria = await MS.api("GET", "aria", null, H); } catch { return; }
+    if (tab === "firma" && vPage === "aria") { if ($("arialog")) paintAria(); else renderView(); }
+  }
+  function bindAria() {
+    const log = $("arialog"); if (log) log.scrollTop = log.scrollHeight;
+    const f = $("ariaform"), ta = $("ariain");
+    if (!f) return;
+    ta.oninput = () => (ariaDraft = ta.value);
+    ta.onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); f.requestSubmit(); } };
+    f.onsubmit = async (e) => {
+      e.preventDefault();
+      const text = ta.value.trim();
+      if (!text || ariaBusy) return;
+      ariaBusy = true; ariaDraft = ""; ta.value = "";
+      aria = aria || { msgs: [], used: 0, max: 40, max_chars: 300 };
+      aria.msgs.push({ role: "user", text }); paintAria(); log.scrollTop = log.scrollHeight;
+      try { await MS.api("POST", "aria/chat", { text }, H); }
+      catch (err) { aria.msgs.push({ role: "event", text: err.message }); }
+      ariaBusy = false;
+      await loadAria(); const l2 = $("arialog"); if (l2) l2.scrollTop = l2.scrollHeight;
+    };
+    const pf = $("pwform");
+    if (pf) {
+      $("pwin").oninput = (e) => (ariaPw = e.target.value);
+      pf.onsubmit = async (e) => {
+        e.preventDefault();
+        try {
+          const d = await MS.api("POST", "aria/kennwort", { kennwort: $("pwin").value }, H);
+          ariaMsg = d.ok ? "" : "Falsches Kennwort.";
+          if (d.ok) ariaPw = "";
+        } catch (err) { ariaMsg = err.message; }
+        await loadAria();
+        if ($("pwmsg")) $("pwmsg").textContent = ariaMsg;
+      };
+    }
   }
 
   // ---------- Funk der Zentrale ----------
@@ -380,20 +459,20 @@
           <button type="button" class="btn ${checkArmed ? "btn-ink" : "btn-line"}" id="check">${checkArmed ? `Ja, Kontrolltipp nutzen (+${S.rules.check} Min.)` : "Kontrolltipp nutzen"}</button>
           ${checkArmed ? `<button type="button" class="linkbtn" id="checkno">Abbrechen</button>` : ""}${checkRes}</div>` : "";
     if (S.stage === 3) {
-      // Finale (Premium): versiegeltes Kuvert
-      root.innerHTML = `<section class="report paper kuvert-stage">${top}
-        <div class="eyebrow">Finale · Akt 2 gelöst</div>
-        <div class="envelope" aria-hidden="true"><div class="env-flap"></div><div class="env-seal">M</div></div>
-        <h2>Öffnet jetzt euer versiegeltes Kuvert!</h2>
-        <p class="muted">Darin liegt die Zugangskarte von ${MS.esc(S.opfer || "")}. ${MS.esc(S.ueberfuehrt || "")} hat den Code für das Schließfach darauf versteckt.</p>
-        <div class="qrow"><span class="qn">★</span><div class="qf"><label for="q_karte">${S.questions[0].label}</label><span class="hint">${MS.esc(S.questions[0].hint)}</span>
-          <input id="q_karte" data-q="karte" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done" value="${MS.esc(draft.karte || "")}">${hintsFor("karte")}</div></div>
-        ${v}<button type="button" class="btn btn-red btn-big" id="pruefen">Schließfach öffnen</button></section>`;
+      // Finale (Premium Plus): PIN aus der geschützten Notiz bei ARIA
+      root.innerHTML = `<section class="report paper finale-stage">${top}
+        <div class="actbanner"><span class="conf">Finale</span><span>Akt 2 gelöst · Schließfach gefunden</span></div>
+        <div class="eyebrow">Die letzte Notiz</div><h2>Knackt das Zahlenschloss!</h2>
+        <p class="muted">Das Schließfach hat eine vierstellige PIN. Sie steckt in einer geschützten Notiz bei ARIA, der KI-Assistenz in eurem Intranet. Findet das Kennwort, öffnet die Notiz – und tragt die PIN hier ein. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten.</p>
+        <p><button type="button" class="btn btn-line" id="toAria">✦ Zu ARIA im Intranet</button></p>
+        ${qrows()}${v}
+        <button type="button" class="btn btn-red btn-big" id="pruefen">Schließfach öffnen</button></section>`;
+      $("toAria").onclick = () => { vPage = "aria"; go("firma"); loadAria(); };
     } else if (S.stage === 2) {
       root.innerHTML = `<section class="report paper">
         <div class="actbanner"><span class="conf">Akt 2</span><span>Akt 1 gelöst · ${MS.esc(S.ueberfuehrt || "")} ist überführt</span></div>${top}
         <div class="eyebrow">Dem Geld auf der Spur</div><h2>Wer hat geholfen – und wo liegt das Geld?</h2>
-        <p class="muted">In eurer Akte liegen neue Beweisstücke. Beide Antworten müssen stimmen. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten. Das Kuvert bleibt noch zu!</p>
+        <p class="muted">In eurer Akte liegen neue Beweisstücke. Beide Antworten müssen stimmen. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten.${S.plus ? " Danach wartet noch das Finale." : ""}</p>
         ${qrows()}${v}
         <button type="button" class="btn btn-red btn-big" id="pruefen">Lösung prüfen</button>${ctip}
       </section>`;
@@ -445,7 +524,7 @@
       if (d.correct) {
         draft = {};
         verdict = d.next === "akt2" ? { cls: "good", akt2: true, html: "" }
-          : d.next === "kuvert" ? { cls: "good", html: "<strong>Akt 2 gelöst!</strong>Jetzt dürft ihr das Kuvert öffnen." } : null;
+          : d.next === "finale" ? { cls: "good", html: "<strong>Akt 2 gelöst!</strong>Das Geld liegt im Schließfach – aber das hat ein Zahlenschloss. Neuer Einsatzbrief in der Akte, und ARIA ist jetzt im Intranet freigeschaltet." } : null;
       }
       else verdict = { cls: "bad", html: `<strong>Leider falsch.</strong>+${d.penalty_min} Minuten Strafzeit. Prüft eure Antworten noch einmal.` };
       checkRes = "";
@@ -465,7 +544,7 @@
   function rankTable() {
     return `<table class="rank"><thead><tr><th>#</th><th>Team</th><th>Stand</th><th>Zeit</th></tr></thead><tbody>
       ${S.ranking.map((r) => `<tr class="${r.name === S.team ? "me" : ""}"><td class="n">${r.rank || "–"}</td><td>${MS.esc(r.name)}${r.name === S.team ? " (ihr)" : ""}</td>
-      <td>${MS.stage(r, S.premium)}</td><td class="mono">${r.solved ? MS.dur(r.score_ms) : "–"}</td></tr>`).join("")}
+      <td>${MS.stage(r, S.tier)}</td><td class="mono">${r.solved ? MS.dur(r.score_ms) : "–"}</td></tr>`).join("")}
     </tbody></table>`;
   }
 

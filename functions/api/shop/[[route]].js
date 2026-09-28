@@ -8,8 +8,10 @@
 import { CASES, json, fail, randomToken, viennaDate } from "../../../lib/game.js";
 import { migrate, createGameSession, normalizeVars, InputError } from "../../../lib/create.js";
 
-export const PRICES = { basis: 8900, premium: 12900 };          // Cent pro Team, Endpreise
-const LEAD_DAYS = { basis: 1, premium: 10 };                      // frühester Spieltag ab heute
+export const PRICES = { basis: 8900, premium: 11900, plus: 14900 };   // Cent pro Team, Endpreise
+const TIER = { basis: 0, premium: 1, plus: 2 };
+const NAMES = { basis: "Basis (50 Min.)", premium: "Premium (70 Min.)", plus: "Premium Plus (90 Min.)" };
+const LEAD_DAYS = 1;                                                  // alles digital: spielbar ab morgen
 const CASE_ID = "fall-001";
 
 export async function onRequest({ request, env, params }) {
@@ -39,8 +41,8 @@ function meta(env) {
     open: shopOpen(env),
     fall: c.META.title,
     prices: PRICES,
-    earliest: { basis: addDays(today, LEAD_DAYS.basis), premium: addDays(today, LEAD_DAYS.premium) },
-    suspects: { basis: c.suspectCount(false), premium: c.suspectCount(true) },
+    earliest: addDays(today, LEAD_DAYS),
+    suspects: { basis: c.suspectCount(false), premium: c.suspectCount(true), plus: c.suspectCount(true) },
     fields: c.FIELDS.map(([key, label, example, type]) => ({ key, label, example, type: type || "text" })),
   });
 }
@@ -50,14 +52,14 @@ async function bestellung(request, env) {
   if (!shopOpen(env)) return fail("Bestellungen sind derzeit noch nicht möglich.", 403);
   let b = {};
   try { b = await request.json(); } catch {}
-  const paket = b.paket === "premium" ? "premium" : "basis";
-  const premium = paket === "premium";
+  const paket = TIER[b.paket] != null ? b.paket : "basis";
+  const premium = TIER[paket] >= 1;
   const teams = Math.round(Number(b.teams));
   if (!(teams >= 1 && teams <= 15)) throw new InputError("Bitte 1 bis 15 Teams wählen.");
   const today = viennaDate();
   const date = String(b.event_date || "");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new InputError("Bitte einen Spieltag wählen.");
-  if (date < addDays(today, LEAD_DAYS[paket])) throw new InputError(premium ? "Premium braucht mindestens 10 Tage Vorlauf (Postversand der Kuverts)." : "Der Spieltag muss frühestens morgen sein.");
+  if (date < addDays(today, LEAD_DAYS)) throw new InputError("Der Spieltag muss frühestens morgen sein.");
   if (date > addDays(today, 365)) throw new InputError("Der Spieltag darf höchstens ein Jahr in der Zukunft liegen.");
   const vars = normalizeVars(CASE_ID, b.vars || {}, premium, false);
 
@@ -66,11 +68,6 @@ async function bestellung(request, env) {
   const contact = { name: s(k.name), email: s(k.email, 160).toLowerCase(), telefon: s(k.telefon, 40), rechnung_firma: s(k.rechnung_firma) };
   if (contact.name.length < 2) throw new InputError("Bitte deinen Namen angeben.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError("Bitte eine gültige E-Mail-Adresse angeben.");
-  if (premium) {
-    const l = b.liefer || {};
-    contact.liefer = { name: s(l.name), strasse: s(l.strasse), plz: s(l.plz, 12), ort: s(l.ort, 80), land: s(l.land, 40) || "Österreich" };
-    if (!contact.liefer.name || !contact.liefer.strasse || !contact.liefer.plz || !contact.liefer.ort) throw new InputError("Bitte die Lieferadresse für die Kuverts vollständig angeben.");
-  }
   const c = b.consent || {};
   if (!c.zustimmung) throw new InputError("Bitte bestätigen, dass alle genannten Personen einverstanden sind.");
   if (!c.agb) throw new InputError("Bitte AGB und Datenschutzerklärung akzeptieren.");
@@ -105,7 +102,7 @@ async function bestellung(request, env) {
       line_items: [{
         quantity: teams,
         price_data: { currency: "eur", unit_amount: PRICES[paket],
-          product_data: { name: `Mordsteam Fall 001 „${CASES[CASE_ID].META.title}“ – ${premium ? "Premium (90 Min.)" : "Basis (60 Min.)"}`, description: `Pro Team · Spieltag ${date}` } },
+          product_data: { name: `Mordsteam Fall 001 „${CASES[CASE_ID].META.title}“ – ${NAMES[paket]}`, description: `Pro Team · Spieltag ${date}` } },
       }],
       metadata: { order_id: id },
       payment_intent_data: { metadata: { order_id: id } },
@@ -187,7 +184,7 @@ async function fulfill(env, id, origin) {
   const vars = JSON.parse(o.vars);
   try {
     const s = await createGameSession(env, {
-      case_id: CASE_ID, premium: o.paket === "premium", event_date: o.event_date, vars, max_teams: o.teams,
+      case_id: CASE_ID, tier: TIER[o.paket] ?? 0, event_date: o.event_date, vars, max_teams: o.teams,
       label: `Bestellung · ${vars.FIRMA}`, logo: o.logo,
     });
     await env.DB.prepare("UPDATE orders SET status='fulfilled', session_id=? WHERE id=?").bind(s.id, id).run();
@@ -203,12 +200,11 @@ async function sendMail(env, o, s, origin) {
   if (!env.RESEND_API_KEY || !env.MAIL_FROM) return;
   const c = JSON.parse(o.contact);
   const vars = JSON.parse(o.vars);
-  const premium = o.paket === "premium";
   const e = (x) => String(x).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
   const html = `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#15171C">
 <h2 style="font-family:Georgia,serif">Euer Fall ist bereit.</h2>
 <p>Hallo ${e(c.name)},</p>
-<p>danke für eure Bestellung von <b>Fall 001 „${e(CASES[CASE_ID].META.title)}“ – ${premium ? "Premium" : "Basis"}</b> für ${o.teams} Team${o.teams === 1 ? "" : "s"} bei ${e(vars.FIRMA)}. Spieltag: <b>${e(o.event_date)}</b>.</p>
+<p>danke für eure Bestellung von <b>Fall 001 „${e(CASES[CASE_ID].META.title)}“ – ${NAMES[o.paket] || o.paket}</b> für ${o.teams} Team${o.teams === 1 ? "" : "s"} bei ${e(vars.FIRMA)}. Spieltag: <b>${e(o.event_date)}</b>.</p>
 <table style="border-collapse:collapse;margin:14px 0">
 <tr><td style="padding:6px 12px 6px 0">Organisator-Code (nur für euch):</td><td style="font-family:monospace;font-size:18px"><b>${e(s.org_code)}</b></td></tr>
 <tr><td style="padding:6px 12px 6px 0">Spielcode für die Teams:</td><td style="font-family:monospace;font-size:18px"><b>${e(s.join_code)}</b></td></tr>
@@ -220,7 +216,6 @@ async function sendMail(env, o, s, origin) {
 <li>Wenn alle bereit sind: „Fall starten“. Die Uhr läuft für alle gleichzeitig.</li>
 <li>Haben alle Teams gelöst, endet die Runde automatisch und alle sehen Rangliste und Auflösung. Schafft es ein Team nicht in der Zeit, beendet ihr die Runde auf der Organisator-Seite selbst.</li>
 </ol>
-${premium ? `<p>Die versiegelten Kuverts schicken wir rechtzeitig vor dem Spieltag an: ${e(c.liefer.name)}, ${e(c.liefer.strasse)}, ${e(c.liefer.plz)} ${e(c.liefer.ort)}. Bitte ungeöffnet an die Teams verteilen.</p>` : ""}
 <p>Die Rechnung kommt separat per Mail von unserem Zahlungsanbieter.</p>
 <p>Viel Spaß beim Ermitteln!<br>Mordsteam</p></div>`;
   await fetch("https://api.resend.com/emails", {

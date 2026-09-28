@@ -377,3 +377,35 @@ button.btn-big{margin-top:14px}
 .testbar[hidden]{display:none}
 .testbar span{font-family:var(--mono);letter-spacing:1px;padding:0 4px}
 .testbar button{font:inherit;font-weight:600;background:#E0B400;color:#15171C;border:0;border-radius:6px;padding:7px 10px;cursor:pointer}
+
+/* ---------- ARIA (KI-Assistenz im Intranet, Premium Plus) ---------- */
+.v-links .v-aria{color:#6B3FD1;font-weight:700}
+.v-aria-news{border-left:4px solid #7B4DE8;padding-left:12px}
+.aria-orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFFFFF 0,#C9B6FF 18%,#7B4DE8 55%,#2B1470 100%);box-shadow:0 0 28px rgba(123,77,232,.55);animation:ariapulse 2.6s ease-in-out infinite}
+.aria-orb.small{width:30px;height:30px;flex:none}
+@keyframes ariapulse{50%{transform:scale(1.06);box-shadow:0 0 38px rgba(123,77,232,.8)}}
+.aria-soon{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:28px 8px}
+.aria{display:flex;flex-direction:column;gap:10px}
+.aria-head{display:flex;align-items:center;gap:10px}
+.aria-head b{display:block;font-size:18px;color:#2B1470}
+.aria-head span{font-size:13px;color:#5A6378}
+.aria-log{display:flex;flex-direction:column;gap:8px;max-height:52vh;min-height:220px;overflow-y:auto;background:#F4F2FB;border:1px solid #E0DAF3;border-radius:12px;padding:12px}
+.aria-b{max-width:85%;padding:9px 12px;border-radius:14px;font-size:15px;line-height:1.45;overflow-wrap:anywhere}
+.aria-b.bot{align-self:flex-start;background:#fff;border:1px solid #E0DAF3;color:#1B1F2A;border-bottom-left-radius:4px}
+.aria-b.me{align-self:flex-end;background:#6B3FD1;color:#fff;border-bottom-right-radius:4px}
+.aria-ev{align-self:center;font-size:12.5px;color:#5A6378;background:#E9E4F7;border-radius:999px;padding:3px 10px;margin:0}
+.aria-b.typing{display:flex;gap:4px}
+.aria-b.typing span{width:7px;height:7px;border-radius:50%;background:#9A86D8;animation:ariadot 1s infinite}
+.aria-b.typing span:nth-child(2){animation-delay:.15s}.aria-b.typing span:nth-child(3){animation-delay:.3s}
+@keyframes ariadot{50%{opacity:.25;transform:translateY(-2px)}}
+.aria-form{display:flex;gap:8px;align-items:flex-end}
+.aria-form textarea{flex:1;min-width:0;font:inherit;font-size:15px;padding:10px 12px;border:1.5px solid #CFC6EC;border-radius:10px;resize:none;background:#fff;color:#1B1F2A}
+.aria-form textarea:focus{outline:3px solid rgba(123,77,232,.3);border-color:#7B4DE8}
+.aria-meta{font-size:12.5px;color:#5A6378;margin:0}
+.aria-lock,.aria-note{border:1.5px dashed #7B4DE8;border-radius:12px;padding:12px;background:#fff;display:grid;gap:8px}
+.aria-note{border-style:solid;background:#F1ECFF}
+.aria-note p{margin:0;font-family:var(--mono);font-size:14px;color:#1B1F2A}
+.aria-row{display:flex;gap:8px}
+.aria-row input{flex:1;min-width:0;font:inherit;padding:9px 12px;border:1.5px solid #CFC6EC;border-radius:8px}
+.aria-lock .err{margin:0;min-height:0}
+.aria .v-btn{background:#6B3FD1;color:#fff;flex:none}.aria .v-btn[disabled]{opacity:.5}

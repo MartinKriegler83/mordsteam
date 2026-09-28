@@ -302,10 +302,11 @@ p{margin:0}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (min-width:760px){
   .step{padding:28px 30px}
-  .pick{grid-template-columns:1fr 1fr}
+  .pick{grid-template-columns:repeat(3,minmax(0,1fr))}
   .pgrid{grid-template-columns:110px minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr)}
   .pgrid .field:nth-child(n+3){grid-column:auto}
   .form .three{grid-template-columns:1fr 2fr 1fr}
   .codes{grid-template-columns:1fr 1fr}
 }
 .shop .btn{font:inherit;font-weight:600;border:0;cursor:pointer}
+@media (min-width:1000px){ .pack-grid.three{grid-template-columns:repeat(3,minmax(0,1fr));max-width:1280px} }

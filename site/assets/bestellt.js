@@ -9,10 +9,10 @@
   function show(h){out.innerHTML=h;}
   function done(d){
     try{localStorage.removeItem("ms_order_draft");}catch(e){}
-    var prem=d.paket==="premium", link=location.origin+"/spiel/?code="+d.join_code;
+    var TN={basis:"Basis",premium:"Premium",plus:"Premium Plus"}, MIN={basis:50,premium:70,plus:90}, link=location.origin+"/spiel/?code="+d.join_code;
     show('<div class="eyebrow">Bezahlt · Fall angelegt</div>'+
       '<h1>Euer Fall ist bereit.</h1>'+
-      '<p class="lead">Fall 001 für '+esc(d.firma)+' – '+(prem?"Premium":"Basis")+', '+d.teams+' Team'+(d.teams>1?"s":"")+', Spieltag '+fmt(d.event_date)+'. Bitte diese Seite speichern oder die Codes notieren'+'.</p>'+
+      '<p class="lead">Fall 001 für '+esc(d.firma)+' – '+(TN[d.paket]||d.paket)+', '+d.teams+' Team'+(d.teams>1?"s":"")+', Spieltag '+fmt(d.event_date)+'. Bitte diese Seite speichern oder die Codes notieren'+'.</p>'+
       '<div class="codes">'+
       '<div class="codecard dark"><small>ORGANISATOR-CODE · NUR FÜR EUCH</small><div class="code">'+esc(d.org_code)+'</div><p>Damit öffnet und startet ihr den Fall und seht am Ende die Auflösung. Nicht an die Teams weitergeben.</p></div>'+
       '<div class="codecard"><small>SPIELCODE FÜR DIE TEAMS</small><div class="code">'+esc(d.join_code)+'</div><p>Den bekommen alle Teams am Spieltag, zusammen mit dem Link.</p></div>'+
@@ -20,8 +20,7 @@
       '<div class="prose"><h2>So läuft der Spieltag</h2><ol>'+
       '<li>Ihr öffnet <a href="/spiel/leitung.html">'+esc(location.host)+'/spiel/leitung.html</a>, meldet euch mit dem Organisator-Code an und tippt auf „Fall öffnen“.</li>'+
       '<li>Jedes Team öffnet auf <b>einem</b> Gerät <a href="'+esc(link)+'">'+esc(link.replace(/^https?:\/\//,""))+'</a> und gibt einen Teamnamen ein. Weitere Geräte können sich danach per QR-Code zum Mitlesen verbinden.</li>'+
-      '<li>Sind alle angemeldet, startet ihr den Fall. Die Uhr läuft für alle gleichzeitig: '+(prem?"90":"60")+' Minuten.</li>'+
-      (prem?'<li>Die versiegelten Kuverts kommen per Post an die angegebene Adresse. Bitte ungeöffnet lassen und am Spieltag jedem Team eines geben – geöffnet wird erst, wenn die Fallzentrale es sagt.</li>':'')+
+      '<li>Sind alle angemeldet, startet ihr den Fall. Die Uhr läuft für alle gleichzeitig: '+(MIN[d.paket]||60)+' Minuten.</li>'+
       '<li>Haben alle Teams gelöst, endet die Runde automatisch und alle sehen Rangliste und Auflösung. Schafft es ein Team nicht in der Zeit, beendet ihr die Runde auf der Organisator-Seite selbst.</li>'+
       '</ol><p>Die Rechnung kommt per E-Mail von unserem Zahlungsanbieter Stripe. Fragen? <a href="mailto:office@mordsteam.com">office@mordsteam.com</a></p></div>'+
       '<p style="margin-top:24px"><button class="btn btn-ink" type="button" id="print">Seite drucken</button></p>');
