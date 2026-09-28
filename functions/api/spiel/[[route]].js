@@ -6,16 +6,7 @@ import {
   isPremium, stageOf, stageQuestions, cardCode,
 } from "../../../lib/game.js";
 
-// Datenbank-Erweiterung ohne Handarbeit: fehlende Spalten beim ersten Aufruf anlegen
-let migrated = false;
-async function migrate(env) {
-  if (migrated) return;
-  try { await env.DB.prepare("ALTER TABLE teams ADD COLUMN act2_at INTEGER").run(); } catch {}
-  try { await env.DB.prepare("ALTER TABLE teams ADD COLUMN view_token TEXT").run(); } catch {}
-  try { await env.DB.prepare("ALTER TABLE sessions ADD COLUMN max_teams INTEGER").run(); } catch {}
-  try { await env.DB.prepare("CREATE TABLE IF NOT EXISTS viewers (token TEXT PRIMARY KEY, team_id TEXT NOT NULL, created_at INTEGER NOT NULL)").run(); } catch {}
-  migrated = true;
-}
+import { migrate, createGameSession, InputError } from "../../../lib/create.js";
 
 export async function onRequest(ctx) {
   const { request, env, params } = ctx;
@@ -46,6 +37,8 @@ export async function onRequest(ctx) {
       if (route === "admin/sessions" && method === "GET") return adminList(env);
       if (route === "admin/session" && method === "POST") return adminCreate(request, env);
       if (route === "admin/delete" && method === "POST") return adminDelete(request, env);
+      if (route === "admin/orders" && method === "GET") return adminOrders(env);
+      if (route === "admin/order-shipped" && method === "POST") return adminShipped(request, env);
     }
     return fail("Nicht gefunden.", 404);
   } catch (e) {
@@ -206,7 +199,7 @@ async function firma({ session }) {
   const firmaRaw = String(JSON.parse(session.vars).FIRMA || ""); // Klartext, der Browser escaped
   const slug = firmaRaw.toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
     .replace(/\b(gmbh|ag|kg|og|e\.?u\.?|co)\b/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "firma";
-  return json({ name: firmaRaw, domain: `intranet.${slug}.at`, intranet: !!w.intranet, login_label: w.login.label || "Login",
+  return json({ name: firmaRaw, logo: session.logo || null, domain: `intranet.${slug}.at`, intranet: !!w.intranet, login_label: w.login.label || "Login",
     pages: w.pages.map((p) => ({ id: p.id, title: p.title, html: render(p.html, v) })) });
 }
 
@@ -378,34 +371,24 @@ async function adminList(env) {
 }
 async function adminCreate(request, env) {
   const b = await body(request);
-  const c = CASES[b.case_id || "fall-001"];
-  if (!c) return fail("Unbekannter Fall.");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(b.event_date || ""))) return fail("Spieltag im Format JJJJ-MM-TT angeben.");
-  const vars = {};
-  for (const [key, , example, type] of c.FIELDS) {
-    let val = String(b.vars?.[key] ?? "").trim().slice(0, 80) || example;
-    if (type === "anrede") val = /^\s*h/i.test(val) ? "Herr" : "Frau";
-    vars[key] = val;
+  try {
+    return json(await createGameSession(env, { ...b, allowExamples: true }));
+  } catch (e) {
+    if (e instanceof InputError) return fail(e.message);
+    throw e;
   }
-  const n = c.suspectCount ? c.suspectCount(!!b.premium) : 5;
-  const nm = [...Array(n)].map((_, i) => vars[`S${i + 1}`].toLowerCase());
-  if (new Set(nm).size !== n) return fail("Jede verdächtige Person braucht einen eigenen Namen.");
-  if (nm.includes(String(vars.OPFER || "").toLowerCase())) return fail("Das Opfer darf nicht gleichzeitig verdächtig sein.");
-  if (vars.BOSS && (nm.includes(String(vars.BOSS).toLowerCase()) || String(vars.BOSS).toLowerCase() === String(vars.OPFER || "").toLowerCase())) return fail("Der Oberboss darf weder Opfer noch verdächtig sein.");
-  const duration = b.premium ? RULES.durationPremium : RULES.durationBasis; // Paket bestimmt die Spielzeit
-  const maxTeams = Math.min(RULES.maxTeams, Math.max(1, Number(b.max_teams) || RULES.maxTeams)); // gebuchte Teams
-  const premiumAnswer = String(b.premium_answer || "").trim().slice(0, 40);
-  const id = crypto.randomUUID();
-  const joinCode = randomCode(6);
-  const orgCode = randomCode(8);
-  await env.DB.prepare(
-    "INSERT INTO sessions (id, case_id, label, created_at, event_date, status, premium, premium_answer, duration_min, vars, secrets, join_code, org_code, test_mode, max_teams) VALUES (?,?,?,?,?,'created',?,?,?,?,?,?,?,?,?)"
-  ).bind(
-    id, b.case_id || "fall-001", String(b.label || vars.FIRMA).slice(0, 80), Date.now(), b.event_date,
-    b.premium ? 1 : 0, premiumAnswer || null, duration, JSON.stringify(vars), JSON.stringify(c.makeSecrets(randInt, { premium: !!b.premium })),
-    joinCode, orgCode, b.test_mode ? 1 : 0, maxTeams
-  ).run();
-  return json({ id, join_code: joinCode, org_code: orgCode });
+}
+async function adminOrders(env) {
+  const { results } = await env.DB.prepare(
+    "SELECT o.id, o.created_at, o.status, o.paket, o.teams, o.amount_cents, o.event_date, o.contact, o.paid_at, o.shipped_at, json_extract(o.vars,'$.FIRMA') AS firma, s.join_code, s.org_code FROM orders o LEFT JOIN sessions s ON s.id=o.session_id ORDER BY o.created_at DESC LIMIT 200"
+  ).all();
+  return json({ orders: results.map((o) => ({ ...o, contact: JSON.parse(o.contact || "{}") })) });
+}
+async function adminShipped(request, env) {
+  const b = await body(request);
+  if (!b.id) return fail("id fehlt.");
+  await env.DB.prepare("UPDATE orders SET shipped_at=? WHERE id=?").bind(b.undo ? null : Date.now(), b.id).run();
+  return json({ ok: true });
 }
 async function adminDelete(request, env) {
   const b = await body(request);

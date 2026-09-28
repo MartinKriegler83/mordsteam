@@ -370,3 +370,4 @@ button.btn-big{margin-top:14px}
 .receipt table.tea{font-size:12.5px}.receipt table.tea td,.receipt table.tea th{padding:6px 6px}
 .v-initials{transform:none;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;width:30px;height:30px;letter-spacing:.5px}
 .v-qa{grid-template-columns:1fr!important;gap:8px}.v-qa>div{padding:12px 16px}.v-qa h3{font-size:15px}
+.v-img{max-height:34px;max-width:150px;width:auto;height:auto;object-fit:contain}

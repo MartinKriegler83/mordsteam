@@ -253,3 +253,59 @@ p{margin:0}
   .case-card{padding:32px}
   .aud{padding:32px}
 }
+
+/* ---------- Bestellung ---------- */
+.shop .form{gap:28px}
+.step{border:0;margin:0;padding:22px 18px;background:var(--card);border:1px solid var(--line);border-radius:12px;display:grid;gap:18px;min-width:0}
+.step legend{float:left;width:100%;font-family:var(--serif);font-weight:700;font-size:24px;display:flex;align-items:center;gap:12px;margin:0}
+.step legend span{font-family:var(--mono);font-size:14px;width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--paper);display:inline-flex;align-items:center;justify-content:center;flex:none}
+.step legend+*{clear:both}
+.steplead{font-size:15px;color:var(--ink-2)}
+.subhead{font-family:var(--sans);font-weight:600;font-size:15px;letter-spacing:.3px;margin:4px 0 -4px}
+.opt{font-weight:400;font-size:13px;color:#6A6D75}
+.pick{display:grid;gap:12px}
+.pickcard{position:relative;cursor:pointer}
+.pickcard input{position:absolute;opacity:0;pointer-events:none}
+.pickcard>span{display:flex;flex-direction:column;gap:2px;border:2px solid var(--line);border-radius:10px;padding:14px 16px;background:#fff}
+.pickcard b{font-family:var(--serif);font-size:22px}
+.pickcard small{font-size:14px;color:var(--ink-2)}
+.pickcard em{font-style:normal;font-weight:600;margin-top:4px}
+.pickcard input:checked+span{border-color:var(--red);box-shadow:0 0 0 2px var(--red) inset}
+.pickcard input:focus-visible+span{outline:3px solid rgba(179,38,30,.35)}
+.prow{display:grid;gap:10px;padding-top:6px}
+.susrow+.susrow .prow,#f-boss .prow{border-top:1px dashed var(--line);padding-top:16px}
+.pgrid{display:grid;gap:12px;grid-template-columns:96px minmax(0,1fr)}
+.pgrid .field:nth-child(n+3){grid-column:1/-1}
+.form .three{display:grid;gap:18px}
+.logobox{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.logobox img{max-height:56px;max-width:200px;background:repeating-conic-gradient(#eee 0 25%,#fff 0 50%) 0 0/14px 14px;border:1px solid var(--line);border-radius:4px;padding:4px}
+.logobox input[type=file]{min-height:0;padding:10px;max-width:100%}
+.linkbtn{background:none;border:0;padding:0;color:var(--red-dark);text-decoration:underline;font:inherit;cursor:pointer}
+.summary dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 16px;margin:0;font-size:15px}
+.summary dt{color:#5A5D66}
+.summary dd{margin:0;overflow-wrap:anywhere}
+.summary .tot{font-weight:600;font-size:18px;border-top:1px solid var(--line);padding-top:8px;color:var(--ink)}
+.formerr{background:#FBE9E7;border-left:4px solid var(--red);padding:12px 14px;border-radius:4px;font-weight:500}
+.field .bad,.check .bad{border-color:var(--red)!important;outline:3px solid rgba(179,38,30,.35)}
+.hint.small{font-size:14px;color:#5A5D66}
+.shop button[disabled]{opacity:.6;cursor:wait}
+.pricebar{position:sticky;bottom:0;background:var(--ink);color:var(--paper);padding:12px 0;z-index:5;margin-top:32px}
+.pricebar .wrap{max-width:860px;display:flex;justify-content:space-between;gap:12px;font-size:15px}
+.pricebar strong{font-size:18px}
+.codes{display:grid;gap:14px;margin:22px 0}
+.codecard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+.codecard small{font-family:var(--mono);font-size:12px;letter-spacing:1.5px;color:var(--red)}
+.codecard .code{font-family:var(--mono);font-size:30px;font-weight:500;letter-spacing:3px;margin:6px 0}
+.codecard p{font-size:15px;color:var(--ink-2)}
+.codecard.dark{background:var(--ink);color:var(--paper);border-color:var(--ink)} .codecard.dark p{color:var(--muted)}
+.spinner{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--red);border-radius:50%;animation:spin 1s linear infinite;margin:20px 0}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (min-width:760px){
+  .step{padding:28px 30px}
+  .pick{grid-template-columns:1fr 1fr}
+  .pgrid{grid-template-columns:110px minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr)}
+  .pgrid .field:nth-child(n+3){grid-column:auto}
+  .form .three{grid-template-columns:1fr 2fr 1fr}
+  .codes{grid-template-columns:1fr 1fr}
+}
+.shop .btn{font:inherit;font-weight:600;border:0;cursor:pointer}

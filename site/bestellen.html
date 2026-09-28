@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bestellen – Mordsteam</title>
+<meta name="description" content="Fall 001 „Die rote Mappe“ bestellen: Daten eingeben, bezahlen, Spielcode sofort erhalten.">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/assets/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+</head>
+<body>
+<header class="header"><div class="wrap">
+<a class="logo" href="index.html" aria-label="Mordsteam Startseite">
+<svg width="30" height="30" viewBox="0 0 34 34" fill="none" stroke="#15171C" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg>
+<span>MORDSTEAM</span>
+</a>
+<nav class="nav-desktop" aria-label="Hauptnavigation">
+<a href="index.html#ablauf">So funktioniert's</a>
+<a href="index.html#faelle">Fälle</a>
+<a href="index.html#pakete">Pakete</a>
+<a href="index.html#faq">FAQ</a>
+<a class="btn btn-ink" href="bestellen.html">Bestellen</a>
+</nav>
+<details class="menu">
+<summary aria-label="Menü öffnen"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15171C" stroke-width="2.2" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></summary>
+<nav aria-label="Menü">
+<a href="index.html#ablauf">So funktioniert's</a>
+<a href="index.html#faelle">Fälle</a>
+<a href="index.html#pakete">Pakete</a>
+<a href="index.html#faq">FAQ</a>
+<a class="btn btn-red" href="bestellen.html">Bestellen</a>
+</nav>
+</details>
+</div></header>
+
+<main class="page shop"><div class="wrap">
+<div class="eyebrow">Bestellung · Fall 001</div>
+<h1>Euren Fall bestellen</h1>
+<p class="lead">Ihr gebt ein, wer in eurem Fall vorkommt, bezahlt – und bekommt sofort euren Spielcode. Dauert rund 5 Minuten.</p>
+<div class="note" id="closed" hidden>Bestellungen sind noch nicht geöffnet. Ihr könnt das Formular ansehen, aber noch nicht absenden.</div>
+<div class="note" id="cancelled" hidden>Die Zahlung wurde abgebrochen. Eure Eingaben sind noch da – ihr könnt es einfach nochmals versuchen.</div>
+<form class="form" id="order" novalidate>
+
+<fieldset class="step"><legend><span>1</span> Paket und Termin</legend>
+<div class="pick" role="radiogroup" aria-label="Paket">
+<label class="pickcard"><input type="radio" name="paket" value="basis" checked><span><b>Basis</b><small>60 Minuten · alles digital</small><em>89 € pro Team</em></span></label>
+<label class="pickcard"><input type="radio" name="paket" value="premium"><span><b>Premium</b><small>90 Minuten · Akt 2 + Kuvert per Post</small><em>129 € pro Team</em></span></label>
+</div>
+<div class="two">
+<div class="field"><label for="teams">Anzahl Teams *</label>
+<select id="teams" name="teams"></select><span class="hint">Ideal sind 3 bis 6 Personen pro Team. Jedes Team braucht ein Gerät.</span></div>
+<div class="field"><label for="event_date">Spieltag *</label><input id="event_date" name="event_date" type="date" required><span class="hint" id="datehint"></span></div>
+</div>
+</fieldset>
+
+<fieldset class="step"><legend><span>2</span> Eure Firma</legend>
+<div id="f-firma"></div>
+<div class="field"><label for="logo">Firmenlogo <span class="opt">optional</span></label>
+<div class="logobox"><img id="logoprev" alt="" hidden><input id="logo" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"><button type="button" class="linkbtn" id="logodel" hidden>Logo entfernen</button></div>
+<span class="hint">Erscheint im Fall-Intranet. PNG oder SVG mit transparentem Hintergrund sieht am besten aus.</span></div>
+<label class="check" id="logorechte" hidden><input type="checkbox" name="logo_rechte"><span>Wir dürfen dieses Logo für unser internes Teamevent verwenden. *</span></label>
+</fieldset>
+
+<fieldset class="step"><legend><span>3</span> Opfer und Oberboss</legend>
+<p class="steplead">Das Opfer ist eure Chefin oder euer Chef: Sie oder er überlebt den Giftanschlag knapp. Der Oberboss hätte am nächsten Tag die rote Mappe bekommen sollen – etwa die CEO der Gruppe oder der Aufsichtsrat.</p>
+<div id="f-opfer" class="person"></div>
+<div id="f-boss" class="person"></div>
+</fieldset>
+
+<fieldset class="step"><legend><span>4</span> Die Verdächtigen</legend>
+<p class="steplead">Fünf Kolleginnen und Kollegen (Premium: sechs). Eine oder einer davon wird per Zufall zur Täterin oder zum Täter – nicht einmal wir wissen vorher, wer. Gut sind Leute, die mitspielen und über sich lachen können.</p>
+<div id="f-sus"></div>
+</fieldset>
+
+<fieldset class="step"><legend><span>5</span> Kontakt und Rechnung</legend>
+<div class="two">
+<div class="field"><label for="c_name">Euer Name *</label><input id="c_name" name="c_name" maxlength="120" autocomplete="name"></div>
+<div class="field"><label for="c_email">E-Mail *</label><input id="c_email" name="c_email" type="email" maxlength="160" autocomplete="email"><span class="hint">Hierher schicken wir Spielcode und Rechnung.</span></div>
+</div>
+<div class="two">
+<div class="field"><label for="c_tel">Telefon <span class="opt">optional</span></label><input id="c_tel" name="c_tel" type="tel" maxlength="40" autocomplete="tel"></div>
+<div class="field"><label for="c_firma">Firma auf der Rechnung <span class="opt">optional</span></label><input id="c_firma" name="c_firma" maxlength="120" autocomplete="organization"><span class="hint">Rechnungsadresse und UID gebt ihr beim Bezahlen an.</span></div>
+</div>
+<div id="liefer" hidden>
+<h3 class="subhead">Lieferadresse für die Kuverts</h3>
+<div class="two">
+<div class="field"><label for="l_name">Empfänger *</label><input id="l_name" name="l_name" maxlength="120" autocomplete="shipping name"></div>
+<div class="field"><label for="l_strasse">Straße und Hausnummer *</label><input id="l_strasse" name="l_strasse" maxlength="120" autocomplete="shipping street-address"></div>
+</div>
+<div class="three">
+<div class="field"><label for="l_plz">PLZ *</label><input id="l_plz" name="l_plz" maxlength="12" inputmode="numeric" autocomplete="shipping postal-code"></div>
+<div class="field"><label for="l_ort">Ort *</label><input id="l_ort" name="l_ort" maxlength="80" autocomplete="shipping address-level2"></div>
+<div class="field"><label for="l_land">Land *</label><select id="l_land" name="l_land"><option>Österreich</option><option>Deutschland</option></select></div>
+</div>
+</div>
+</fieldset>
+
+<fieldset class="step"><legend><span>6</span> Prüfen und bezahlen</legend>
+<div class="summary" id="summary"></div>
+<label class="check"><input type="checkbox" name="zustimmung"><span>Alle Personen, die wir namentlich eingetragen haben, wissen davon und sind einverstanden, im Fall vorzukommen – auch als Opfer oder Verdächtige. *</span></label>
+<label class="check"><input type="checkbox" name="agb"><span>Ich akzeptiere die <a href="agb.html" target="_blank">AGB</a> und habe die <a href="datenschutz.html" target="_blank">Datenschutzerklärung</a> gelesen. *</span></label>
+<p class="formerr" id="err" role="alert" hidden></p>
+<div><button class="btn btn-red" type="submit" id="submit">Zahlungspflichtig bestellen</button></div>
+<p class="hint small">Bezahlt wird sicher über Stripe (Karte, Apple Pay, Google Pay u. a.). Spielcode und Organisator-Code seht ihr direkt danach. Umsatzsteuerfrei (Kleinunternehmerregelung).</p>
+</fieldset>
+</form>
+</div></main>
+
+<div class="pricebar" id="pricebar"><div class="wrap"><span id="pb-text"></span><strong id="pb-sum"></strong></div></div>
+<script src="assets/bestellen.js"></script>
+
+<footer class="footer"><div class="wrap">
+<span class="brand">MORDSTEAM</span>
+<nav aria-label="Rechtliches"><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a><a href="agb.html">AGB</a><a href="mailto:office@mordsteam.com">Kontakt</a></nav>
+<span>© 2026 Mordsteam</span>
+</div></footer>
+</body>
+</html>

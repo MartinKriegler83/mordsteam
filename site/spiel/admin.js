@@ -22,7 +22,8 @@
     try {
       meta = meta || (await MS.api("GET", "admin/meta", null, H()));
       const list = await MS.api("GET", "admin/sessions", null, H());
-      render(list.sessions);
+      const ord = await MS.api("GET", "admin/orders", null, H()).catch(() => ({ orders: [] }));
+      render(list.sessions, ord.orders);
     } catch (e) {
       if (e.status === 401 || e.status === 503) { try { sessionStorage.removeItem("ms_admin"); } catch {} key = null; return keyView(e.status === 401 ? "Schlüssel falsch." : e.message); }
       root.innerHTML = `<p class="err">${MS.esc(e.message)}</p>`;
@@ -68,7 +69,26 @@
     created.quick = { premium, firma: vars.FIRMA, opfer: vars.OPFER, boss: vars.BOSS, people: [1, 2, 3, 4, 5, 6].slice(0, premium ? 6 : 5).map((i) => vars[`S${i}`]) };
   }
 
-  function render(sessions) {
+  function ordersPanel(orders) {
+    const eur = (c) => (c / 100).toLocaleString("de-AT", { maximumFractionDigits: 2 }) + " €";
+    const lbl = { pending: "offen", paid: "bezahlt", fulfilling: "in Arbeit", fulfilled: "bezahlt · Runde angelegt" };
+    const paid = orders.filter((o) => o.status !== "pending");
+    const toShip = paid.filter((o) => o.paket === "premium" && !o.shipped_at);
+    return `<div class="panel"><div class="eyebrow">Bestellungen</div>
+      <p style="margin:8px 0">${paid.length} bezahlt · Umsatz ${eur(paid.reduce((a, o) => a + o.amount_cents, 0))}${toShip.length ? ` · <b style="color:var(--red)">${toShip.length} Premium-Kuvert-Versand offen</b>` : ""}</p>
+      <div class="list-sessions">${orders.length ? orders.map((o) => {
+        const c = o.contact || {}, l = c.liefer;
+        return `<div class="sess">
+          <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${MS.esc(o.firma || "–")}</b><span class="chip ${o.status === "fulfilled" ? "open" : ""}">${lbl[o.status] || o.status}</span></div>
+          <div class="mono">${new Date(o.created_at).toLocaleString("de-AT")} · ${o.paket === "premium" ? "PREMIUM" : "Basis"} · ${o.teams} Teams · ${eur(o.amount_cents)} · Spieltag ${o.event_date}${o.join_code ? ` · Spielcode ${o.join_code} · Organisator ${o.org_code}` : ""}</div>
+          <div class="small">${MS.esc(c.name || "")} · <a href="mailto:${MS.esc(c.email || "")}">${MS.esc(c.email || "")}</a>${c.telefon ? " · " + MS.esc(c.telefon) : ""}${c.rechnung_firma ? " · Rechnung: " + MS.esc(c.rechnung_firma) : ""}</div>
+          ${l ? `<div class="small"><b>Kuverts an:</b> ${MS.esc(l.name)}, ${MS.esc(l.strasse)}, ${MS.esc(l.plz)} ${MS.esc(l.ort)}, ${MS.esc(l.land)} · Karte-Code: ${MS.esc(meta.card_code)}
+            ${o.status !== "pending" ? (o.shipped_at ? ` · <b>versendet ${new Date(o.shipped_at).toLocaleDateString("de-AT")}</b> <button class="tipbtn" data-ship="${o.id}" data-undo="1">rückgängig</button>` : ` <button class="tipbtn" data-ship="${o.id}">Als versendet markieren</button>`) : ""}</div>` : ""}
+        </div>`;
+      }).join("") : `<p class="muted">Noch keine Bestellungen.</p>`}</div></div>`;
+  }
+
+  function render(sessions, orders = []) {
     const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Vienna" }).format(new Date());
     root.innerHTML = `<div class="stack" style="gap:22px;max-width:980px">
       ${created ? `<div class="panel" style="border-color:var(--red)"><div class="eyebrow">Runde angelegt</div>
@@ -103,6 +123,7 @@
         <div><button class="btn btn-red" type="submit">Runde anlegen</button></div>
         <p class="err">${MS.esc(err)}</p>
       </form></div>
+      ${ordersPanel(orders)}
       <div class="panel"><div class="eyebrow">Alle Runden</div>
         <div class="list-sessions" style="margin-top:10px">${sessions.length ? sessions.map((s) => `<div class="sess">
           <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${MS.esc(s.label || s.id)}</b><span class="chip ${({ open: "open", running: "run", finished: "fin" })[s.status] || ""}">${s.status}</span></div>
@@ -126,6 +147,9 @@
       b.disabled = true;
       try { await quickTest(b.dataset.quick === "premium"); err = ""; scrollTo(0, 0); } catch (e2) { err = e2.message; }
       load();
+    }));
+    root.querySelectorAll("[data-ship]").forEach((b) => (b.onclick = async () => {
+      await MS.api("POST", "admin/order-shipped", { id: b.dataset.ship, undo: !!b.dataset.undo }, H()); load();
     }));
     root.querySelectorAll("[data-del]").forEach((b) => (b.onclick = async () => {
       if (!confirm("Diese Runde samt Teams und Ergebnissen endgültig löschen?")) return;

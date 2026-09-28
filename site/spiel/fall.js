@@ -314,7 +314,7 @@
     root.innerHTML = `<div class="browser">
       <div class="b-top"><span class="b-dots" aria-hidden="true"><i></i><i></i><i></i></span>
         <div class="b-url"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><b>${MS.esc(firma.domain)}</b><span class="path">/${path}</span></div></div>
-      <div class="v-site"><nav class="v-nav"><span class="v-logo"><span class="v-mark v-initials">${MS.esc(initials)}</span>${MS.esc(firma.name)}<b>Intranet</b></span>
+      <div class="v-site"><nav class="v-nav"><span class="v-logo">${firma.logo && /^data:image\/(png|jpeg|webp);base64,/.test(firma.logo) ? `<img class="v-img" src="${MS.esc(firma.logo)}" alt="${MS.esc(firma.name)}">` : `<span class="v-mark v-initials">${MS.esc(initials)}</span>${MS.esc(firma.name)}`}<b>Intranet</b></span>
         <div class="v-links">${nav.map(([id, t]) => `<button type="button" data-v="${id}" aria-current="${id === vPage}">${MS.esc(t)}</button>`).join("")}
         <button type="button" data-v="login" class="v-loginbtn" aria-current="${vPage === "login"}">🔒 ${MS.esc(firma.login_label)}</button></div></nav>
       <div class="v-body">${body}</div></div></div>`;
