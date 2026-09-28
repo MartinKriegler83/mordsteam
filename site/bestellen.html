@@ -48,9 +48,9 @@
 
 <fieldset class="step"><legend><span>1</span> Paket und Termin</legend>
 <div class="pick" role="radiogroup" aria-label="Paket">
-<label class="pickcard"><input type="radio" name="paket" value="basis" checked><span><b>Basis</b><small>50 Minuten · Akt 1 mit vier Fragen</small><em>89 € pro Team</em></span></label>
-<label class="pickcard"><input type="radio" name="paket" value="premium"><span><b>Premium</b><small>70 Minuten · + Akt 2: Mitwisser und Geld</small><em>119 € pro Team</em></span></label>
-<label class="pickcard"><input type="radio" name="paket" value="plus"><span><b>Premium Plus</b><small>90 Minuten · + Finale mit ARIA, der KI-Assistenz im Intranet</small><em>149 € pro Team</em></span></label>
+<label class="pickcard"><input type="radio" name="paket" value="basis" checked><span><b>Basis</b><small>50 Minuten<br>Akt 1 mit vier Fragen</small><em>89 € pro Team</em></span></label>
+<label class="pickcard"><input type="radio" name="paket" value="premium"><span><b>Premium</b><small>70 Minuten<br>Akt 1 + Akt 2 mit zwei weiteren, noch kniffligeren Aufgaben</small><em>119 € pro Team</em></span></label>
+<label class="pickcard"><input type="radio" name="paket" value="plus"><span><b>Premium Plus</b><small>90 Minuten<br>Akt 1 &amp; 2 + Finale mit ARIA, der KI-Assistenz im Intranet</small><em>149 € pro Team</em></span></label>
 </div>
 <div class="two">
 <div class="field"><label for="teams">Anzahl Teams *</label>
@@ -59,7 +59,16 @@
 </div>
 </fieldset>
 
-<fieldset class="step"><legend><span>2</span> Eure Firma</legend>
+<fieldset class="step"><legend><span>2</span> Eure Firma oder fiktiv?</legend>
+<p class="steplead">Am meisten Spaß macht der Fall mit echten Personen und Orten: eure Chefin oder euer Chef als Opfer, Kolleginnen und Kollegen als Verdächtige, eure Räume als Tatort. Wer lieber niemanden einträgt, bekommt eine erfundene Firma mit erfundenen Figuren.</p>
+<div class="pick two-pick" role="radiogroup" aria-label="Besetzung">
+<label class="pickcard"><input type="radio" name="besetzung" value="echt" checked><span><b>Mit eurer Firma</b><small>Eure Namen, eure Räume, euer Logo<br>empfohlen</small></span></label>
+<label class="pickcard"><input type="radio" name="besetzung" value="fiktiv"><span><b>Fiktive Firma</b><small>Erfundene Firma und Figuren<br>ohne Dateneingabe</small></span></label>
+</div>
+<p class="note" id="fiktivnote" hidden>Ihr spielt in der erfundenen Firma „<span id="fiktivname"></span>“. Die Schritte zu Firma, Opfer und Verdächtigen entfallen.</p>
+</fieldset>
+
+<fieldset class="step" data-real><legend><span>2</span> Eure Firma</legend>
 <div id="f-firma"></div>
 <div class="field"><label for="logo">Firmenlogo <span class="opt">optional</span></label>
 <div class="logobox"><img id="logoprev" alt="" hidden><input id="logo" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"><button type="button" class="linkbtn" id="logodel" hidden>Logo entfernen</button></div>
@@ -67,13 +76,13 @@
 <label class="check" id="logorechte" hidden><input type="checkbox" name="logo_rechte"><span>Wir dürfen dieses Logo für unser internes Teamevent verwenden. *</span></label>
 </fieldset>
 
-<fieldset class="step"><legend><span>3</span> Opfer und Oberboss</legend>
+<fieldset class="step" data-real><legend><span>3</span> Opfer und Oberboss</legend>
 <p class="steplead">Das Opfer ist eure Chefin oder euer Chef – keine Sorge, es geht gut aus. Der Oberboss steht noch darüber, etwa die CEO der Gruppe oder der Aufsichtsrat.</p>
 <div id="f-opfer" class="person"></div>
 <div id="f-boss" class="person"></div>
 </fieldset>
 
-<fieldset class="step"><legend><span>4</span> Die Verdächtigen</legend>
+<fieldset class="step" data-real><legend><span>4</span> Die Verdächtigen</legend>
 <p class="steplead">Fünf Kolleginnen und Kollegen (Premium und Premium Plus: sechs). Eine oder einer davon wird per Zufall zur Täterin oder zum Täter – nicht einmal wir wissen vorher, wer. Gut sind Leute, die mitspielen und über sich lachen können.</p>
 <div id="f-sus"></div>
 </fieldset>
@@ -91,7 +100,7 @@
 
 <fieldset class="step"><legend><span>6</span> Prüfen und bezahlen</legend>
 <div class="summary" id="summary"></div>
-<label class="check"><input type="checkbox" name="zustimmung"><span>Alle Personen, die wir namentlich eingetragen haben, wissen davon und sind einverstanden, im fiktiven Fall vorzukommen – auch als Opfer oder Verdächtige. *</span></label>
+<label class="check" id="zustimmungbox"><input type="checkbox" name="zustimmung"><span>Alle Personen, die wir namentlich eingetragen haben, wissen davon und sind einverstanden, im fiktiven Fall vorzukommen – auch als Opfer oder Verdächtige. *</span></label>
 <label class="check"><input type="checkbox" name="agb"><span>Ich akzeptiere die <a href="agb.html" target="_blank">AGB</a> und habe die <a href="datenschutz.html" target="_blank">Datenschutzerklärung</a> gelesen. *</span></label>
 <p class="formerr" id="err" role="alert" hidden></p>
 <div><button class="btn btn-red" type="submit" id="submit">Zahlungspflichtig bestellen</button></div>

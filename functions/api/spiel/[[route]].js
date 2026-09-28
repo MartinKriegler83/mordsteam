@@ -267,7 +267,7 @@ async function loesung({ request, env, team, session }) {
 }
 
 // ---------- ARIA: KI-Assistenz im Intranet (nur Premium Plus, erst im Finale) ----------
-const ARIA_LIMITS = { maxMsgs: 40, maxChars: 300, gapMs: 3000, history: 16 };
+const ARIA_LIMITS = { maxMsgs: 100, maxChars: 300, gapMs: 3000, history: 16 };
 const ariaX = (session) => ({ ...JSON.parse(session.vars), ...JSON.parse(session.secrets) });
 
 async function ariaMsgs(env, team) {

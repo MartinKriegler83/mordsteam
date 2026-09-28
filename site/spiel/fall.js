@@ -400,7 +400,7 @@
       const text = ta.value.trim();
       if (!text || ariaBusy) return;
       ariaBusy = true; ariaDraft = ""; ta.value = "";
-      aria = aria || { msgs: [], used: 0, max: 40, max_chars: 300 };
+      aria = aria || { msgs: [], used: 0, max: 100, max_chars: 300 };
       aria.msgs.push({ role: "user", text }); paintAria(); log.scrollTop = log.scrollHeight;
       try { await MS.api("POST", "aria/chat", { text }, H); }
       catch (err) { aria.msgs.push({ role: "event", text: err.message }); }

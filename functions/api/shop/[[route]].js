@@ -40,6 +40,7 @@ function meta(env) {
   return json({
     open: shopOpen(env),
     fall: c.META.title,
+    fiktiv_firma: c.FICTION ? c.FICTION.FIRMA : null,
     prices: PRICES,
     earliest: addDays(today, LEAD_DAYS),
     suspects: { basis: c.suspectCount(false), premium: c.suspectCount(true), plus: c.suspectCount(true) },
@@ -61,7 +62,8 @@ async function bestellung(request, env) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new InputError("Bitte einen Spieltag wählen.");
   if (date < addDays(today, LEAD_DAYS)) throw new InputError("Der Spieltag muss frühestens morgen sein.");
   if (date > addDays(today, 365)) throw new InputError("Der Spieltag darf höchstens ein Jahr in der Zukunft liegen.");
-  const vars = normalizeVars(CASE_ID, b.vars || {}, premium, false);
+  const fiktiv = b.besetzung === "fiktiv" && !!CASES[CASE_ID].FICTION;
+  const vars = normalizeVars(CASE_ID, fiktiv ? CASES[CASE_ID].FICTION : b.vars || {}, premium, false);
 
   const k = b.contact || {};
   const s = (x, max = 120) => String(x ?? "").trim().slice(0, max);
@@ -69,10 +71,11 @@ async function bestellung(request, env) {
   if (contact.name.length < 2) throw new InputError("Bitte deinen Namen angeben.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError("Bitte eine gültige E-Mail-Adresse angeben.");
   const c = b.consent || {};
-  if (!c.zustimmung) throw new InputError("Bitte bestätigen, dass alle genannten Personen einverstanden sind.");
+  if (fiktiv) contact.fiktiv = true;
+  if (!fiktiv && !c.zustimmung) throw new InputError("Bitte bestätigen, dass alle genannten Personen einverstanden sind.");
   if (!c.agb) throw new InputError("Bitte AGB und Datenschutzerklärung akzeptieren.");
   let logo = null;
-  if (b.logo) {
+  if (b.logo && !fiktiv) {
     logo = String(b.logo);
     if (!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(logo)) throw new InputError("Das Logo muss ein Bild sein (PNG, JPG oder WebP).");
     if (logo.length > 400000) throw new InputError("Das Logo ist zu groß.");

@@ -19,6 +19,7 @@
   const fmtDate = (d) => { if (!d) return "–"; const [y, m, t] = d.split("-"); return `${Number(t)}.${Number(m)}.${y}`; };
   const paket = () => form.paket.value;
   const premium = () => paket() !== "basis";
+  const fiktiv = () => form.besetzung.value === "fiktiv";
   const TN = { basis: "Basis, 50 Minuten", premium: "Premium, 70 Minuten", plus: "Premium Plus, 90 Minuten" };
   const field = (key) => META.fields.find((f) => f.key === key);
 
@@ -48,6 +49,13 @@
   function update() {
     const p = premium();
     $(".susrow[data-i='6']").hidden = !p;
+    const fk = fiktiv();
+    form.querySelectorAll("[data-real]").forEach((f) => (f.hidden = fk));
+    $("#fiktivnote").hidden = !fk;
+    $("#fiktivname").textContent = META.fiktiv_firma || "";
+    $("#zustimmungbox").hidden = fk;
+    // Schritte fortlaufend nummerieren (fiktiv: Firma, Opfer, Verdächtige entfallen)
+    [...form.querySelectorAll("fieldset.step")].filter((f) => !f.hidden).forEach((f, i) => (f.querySelector("legend span").textContent = i + 1));
     const min = META.earliest;
     const d = $("#event_date");
     d.min = min;
@@ -61,9 +69,9 @@
       <dt>Paket</dt><dd>Fall 001 „${esc(META.fall)}“ – ${TN[paket()]}</dd>
       <dt>Teams</dt><dd>${n} × ${eur(META.prices[paket()])}</dd>
       <dt>Spieltag</dt><dd>${esc(fmtDate(d.value))}</dd>
-      <dt>Firma</dt><dd>${esc(v("FIRMA") || "–")}</dd>
+      ${fk ? `<dt>Besetzung</dt><dd>Fiktiv: ${esc(META.fiktiv_firma || "")}</dd>` : `<dt>Firma</dt><dd>${esc(v("FIRMA") || "–")}</dd>
       <dt>Opfer</dt><dd>${esc(v("OPFER") || "–")}</dd>
-      <dt>Verdächtige</dt><dd>${[...Array(p ? 6 : 5)].map((_, i) => esc(v("S" + (i + 1)) || "–")).join(", ")}</dd>
+      <dt>Verdächtige</dt><dd>${[...Array(p ? 6 : 5)].map((_, i) => esc(v("S" + (i + 1)) || "–")).join(", ")}</dd>`}
       <dt class="tot">Gesamt</dt><dd class="tot">${eur(sum)}</dd></dl>`;
   }
 
@@ -143,30 +151,33 @@
     const p = premium();
     const n = p ? 6 : 5;
     const vars = {};
-    const need = (k) => { const el = form["v_" + k]; const val = el.value.trim(); if (!val) throw [`Bitte ausfüllen: ${el.closest(".prow,.field").querySelector("h3,label").textContent.replace(" *", "")}`, el]; return val; };
-    for (const k of ["FIRMA", "STADT", "RAUM_FEIER", "RAUM_TATORT", "PARK"]) vars[k] = need(k);
-    const people = ["OPFER", "BOSS", ...[...Array(n)].map((_, i) => "S" + (i + 1))];
-    for (const pre of people) {
-      for (const suf of ["_ANR", "", "_FKT", "_ABT"]) {
-        const k = pre + suf;
-        if (!form["v_" + k]) continue;
-        const val = form["v_" + k].value.trim();
-        if (!val) {
-          const el = form["v_" + k];
-          const who = el.closest(".prow").querySelector("h3").textContent.replace("nur Premium und Premium Plus", "").trim();
-          const what = { _ANR: "Anrede", "": "Name", _FKT: "Funktion", _ABT: "Abteilung" }[suf];
-          throw [`Bitte ausfüllen: ${what} bei „${who}“.`, el];
+    if (!fiktiv()) {
+      const need = (k) => { const el = form["v_" + k]; const val = el.value.trim(); if (!val) throw [`Bitte ausfüllen: ${el.closest(".prow,.field").querySelector("h3,label").textContent.replace(" *", "")}`, el]; return val; };
+      for (const k of ["FIRMA", "STADT", "RAUM_FEIER", "RAUM_TATORT", "PARK"]) vars[k] = need(k);
+      const people = ["OPFER", "BOSS", ...[...Array(n)].map((_, i) => "S" + (i + 1))];
+      for (const pre of people) {
+        for (const suf of ["_ANR", "", "_FKT", "_ABT"]) {
+          const k = pre + suf;
+          if (!form["v_" + k]) continue;
+          const val = form["v_" + k].value.trim();
+          if (!val) {
+            const el = form["v_" + k];
+            const who = el.closest(".prow").querySelector("h3").textContent.replace("nur Premium und Premium Plus", "").trim();
+            const what = { _ANR: "Anrede", "": "Name", _FKT: "Funktion", _ABT: "Abteilung" }[suf];
+            throw [`Bitte ausfüllen: ${what} bei „${who}“.`, el];
+          }
+          vars[k] = val;
         }
-        vars[k] = val;
+        if (vars[pre].split(" ").length < 2) throw [`Bitte Vor- und Nachnamen angeben: ${vars[pre]}`, form["v_" + pre]];
       }
-      if (vars[pre].split(" ").length < 2) throw [`Bitte Vor- und Nachnamen angeben: ${vars[pre]}`, form["v_" + pre]];
+      const lower = people.map((k) => vars[k].toLowerCase());
+      const dup = lower.findIndex((x, i) => lower.indexOf(x) !== i);
+      if (dup >= 0) throw [`„${vars[people[dup]]}“ kommt doppelt vor. Jede Person darf nur einmal vorkommen.`, form["v_" + people[dup]]];
+      const last = people.slice(2).map((k) => vars[k].split(" ").pop().toLowerCase());
+      const dl = last.findIndex((x, i) => last.indexOf(x) !== i);
+      if (dl >= 0) throw [`Zwei Verdächtige heißen „${vars[people[dl + 2]].split(" ").pop()}“. Die Lösung wird mit dem Nachnamen eingegeben – bitte bei einer Person einen Spitznamen oder Zusatz verwenden.`, form["v_" + people[dl + 2]]];
+
     }
-    const lower = people.map((k) => vars[k].toLowerCase());
-    const dup = lower.findIndex((x, i) => lower.indexOf(x) !== i);
-    if (dup >= 0) throw [`„${vars[people[dup]]}“ kommt doppelt vor. Jede Person darf nur einmal vorkommen.`, form["v_" + people[dup]]];
-    const last = people.slice(2).map((k) => vars[k].split(" ").pop().toLowerCase());
-    const dl = last.findIndex((x, i) => last.indexOf(x) !== i);
-    if (dl >= 0) throw [`Zwei Verdächtige heißen „${vars[people[dl + 2]].split(" ").pop()}“. Die Lösung wird mit dem Nachnamen eingegeben – bitte bei einer Person einen Spitznamen oder Zusatz verwenden.`, form["v_" + people[dl + 2]]];
 
     const date = form.event_date.value;
     if (!date) throw ["Bitte einen Spieltag wählen.", form.event_date];
@@ -176,10 +187,11 @@
     if (contact.name.length < 2) throw ["Bitte deinen Namen angeben.", form.c_name];
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw ["Bitte eine gültige E-Mail-Adresse angeben.", form.c_email];
     const consent = { zustimmung: form.zustimmung.checked, agb: form.agb.checked, logo_rechte: form.logo_rechte.checked };
-    if (logoData && !consent.logo_rechte) throw ["Bitte bestätigen, dass ihr das Logo verwenden dürft.", form.logo_rechte];
-    if (!consent.zustimmung) throw ["Bitte bestätigen, dass alle genannten Personen einverstanden sind.", form.zustimmung];
+    const fk = fiktiv();
+    if (!fk && logoData && !consent.logo_rechte) throw ["Bitte bestätigen, dass ihr das Logo verwenden dürft.", form.logo_rechte];
+    if (!fk && !consent.zustimmung) throw ["Bitte bestätigen, dass alle genannten Personen einverstanden sind.", form.zustimmung];
     if (!consent.agb) throw ["Bitte AGB und Datenschutzerklärung akzeptieren.", form.agb];
-    return { paket: paket(), teams: Number(form.teams.value), event_date: date, vars, contact, consent, logo: logoData, lang: "de" };
+    return { paket: paket(), teams: Number(form.teams.value), event_date: date, vars: fk ? {} : vars, contact, consent, logo: fk ? null : logoData, besetzung: fk ? "fiktiv" : "echt", lang: "de" };
   }
 
   async function submit(ev) {
