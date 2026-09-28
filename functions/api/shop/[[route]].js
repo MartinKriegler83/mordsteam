@@ -73,6 +73,7 @@ async function bestellung(request, env) {
   const c = b.consent || {};
   if (fiktiv) contact.fiktiv = true;
   if (!fiktiv && !c.zustimmung) throw new InputError("Bitte bestätigen, dass alle genannten Personen einverstanden sind.");
+  if (paket === "plus" && !c.ab18) throw new InputError("Premium Plus mit ARIA ist für Teilnehmende ab 18 Jahren. Bitte bestätigen oder Basis bzw. Premium wählen.");
   if (!c.agb) throw new InputError("Bitte AGB und Datenschutzerklärung akzeptieren.");
   let logo = null;
   if (b.logo && !fiktiv) {

@@ -50,6 +50,8 @@
     const p = premium();
     $(".susrow[data-i='6']").hidden = !p;
     const fk = fiktiv();
+    $("#plusnote").hidden = paket() !== "plus";
+    $("#ab18box").hidden = paket() !== "plus";
     form.querySelectorAll("[data-real]").forEach((f) => (f.hidden = fk));
     $("#fiktivnote").hidden = !fk;
     $("#fiktivname").textContent = META.fiktiv_firma || "";
@@ -186,10 +188,11 @@
     const contact = { name: form.c_name.value.trim(), email: form.c_email.value.trim(), telefon: form.c_tel.value.trim(), rechnung_firma: form.c_firma.value.trim() };
     if (contact.name.length < 2) throw ["Bitte deinen Namen angeben.", form.c_name];
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw ["Bitte eine gültige E-Mail-Adresse angeben.", form.c_email];
-    const consent = { zustimmung: form.zustimmung.checked, agb: form.agb.checked, logo_rechte: form.logo_rechte.checked };
+    const consent = { ab18: form.ab18.checked, zustimmung: form.zustimmung.checked, agb: form.agb.checked, logo_rechte: form.logo_rechte.checked };
     const fk = fiktiv();
     if (!fk && logoData && !consent.logo_rechte) throw ["Bitte bestätigen, dass ihr das Logo verwenden dürft.", form.logo_rechte];
     if (!fk && !consent.zustimmung) throw ["Bitte bestätigen, dass alle genannten Personen einverstanden sind.", form.zustimmung];
+    if (paket() === "plus" && !form.ab18.checked) throw ["Bitte bestätigen, dass alle Teilnehmenden mindestens 18 Jahre alt sind – oder Basis bzw. Premium wählen.", form.ab18];
     if (!consent.agb) throw ["Bitte AGB und Datenschutzerklärung akzeptieren.", form.agb];
     return { paket: paket(), teams: Number(form.teams.value), event_date: date, vars: fk ? {} : vars, contact, consent, logo: fk ? null : logoData, besetzung: fk ? "fiktiv" : "echt", lang: "de" };
   }
