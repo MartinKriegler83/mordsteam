@@ -312,3 +312,9 @@ p{margin:0}
 @media (min-width:1000px){ .pack-grid.three{grid-template-columns:repeat(3,minmax(0,1fr));max-width:1280px} }
 .step[hidden],.shop .note[hidden],.check[hidden]{display:none}
 @media (min-width:760px){ .pick.two-pick{grid-template-columns:1fr 1fr} }
+.pack-grid.three .pack.featured{order:0}
+.devicebox{display:flex;gap:16px;align-items:center;background:var(--card);border:2px solid var(--ink);border-radius:12px;padding:18px 22px;margin-top:6px;max-width:1280px}
+.devicebox svg{flex:none;color:var(--red)}
+.devicebox p{font-size:16px;color:var(--ink-2)}
+.devicebox b{color:var(--ink)}
+.pack-grid.three+.devicebox+.example{font-size:13px;opacity:.85}

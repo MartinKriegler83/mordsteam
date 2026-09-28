@@ -60,13 +60,16 @@
 </div>
 </fieldset>
 
-<fieldset class="step"><legend><span>2</span> Eure Firma oder fiktiv?</legend>
+<fieldset class="step"><legend><span>2</span> Land und Besetzung</legend>
+<div class="field"><label for="land">Land *</label>
+<select id="land" name="land"><option value="AT">Österreich</option><option value="DE">Deutschland</option><option value="CH">Schweiz</option></select>
+<span class="hint">Polizei, Währung, Kennzeichen und Bankdaten im Fall passen dann zu eurem Land.</span></div>
 <p class="steplead">Am meisten Spaß macht der Fall mit echten Personen und Orten: eure Chefin oder euer Chef als Opfer, Kolleginnen und Kollegen als Verdächtige, eure Räume als Tatort. Wer lieber niemanden einträgt, bekommt eine erfundene Firma mit erfundenen Figuren.</p>
 <div class="pick two-pick" role="radiogroup" aria-label="Besetzung">
 <label class="pickcard"><input type="radio" name="besetzung" value="echt" checked><span><b>Mit eurer Firma</b><small>Eure Namen, eure Räume, euer Logo<br>empfohlen</small></span></label>
 <label class="pickcard"><input type="radio" name="besetzung" value="fiktiv"><span><b>Fiktive Firma</b><small>Erfundene Firma und Figuren<br>ohne Dateneingabe</small></span></label>
 </div>
-<p class="note" id="fiktivnote" hidden>Ihr spielt in der erfundenen Firma „<span id="fiktivname"></span>“. Die Schritte zu Firma, Opfer und Verdächtigen entfallen.</p>
+<p class="note" id="fiktivnote" hidden>Ihr spielt in einer erfundenen Firma mit erfundenen Figuren – welche, verrät euch der Fall. Die Schritte zu Firma, Opfer und Verdächtigen entfallen.</p>
 </fieldset>
 
 <fieldset class="step" data-real><legend><span>2</span> Eure Firma</legend>

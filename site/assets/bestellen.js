@@ -54,7 +54,6 @@
     $("#ab18box").hidden = paket() !== "plus";
     form.querySelectorAll("[data-real]").forEach((f) => (f.hidden = fk));
     $("#fiktivnote").hidden = !fk;
-    $("#fiktivname").textContent = META.fiktiv_firma || "";
     $("#zustimmungbox").hidden = fk;
     // Schritte fortlaufend nummerieren (fiktiv: Firma, Opfer, Verdächtige entfallen)
     [...form.querySelectorAll("fieldset.step")].filter((f) => !f.hidden).forEach((f, i) => (f.querySelector("legend span").textContent = i + 1));
@@ -69,9 +68,10 @@
     const v = (k) => (form["v_" + k]?.value || "").trim();
     $("#summary").innerHTML = `<dl>
       <dt>Paket</dt><dd>Fall 001 „${esc(META.fall)}“ – ${TN[paket()]}</dd>
+      <dt>Land</dt><dd>${esc(form.land.options[form.land.selectedIndex].text)}</dd>
       <dt>Teams</dt><dd>${n} × ${eur(META.prices[paket()])}</dd>
       <dt>Spieltag</dt><dd>${esc(fmtDate(d.value))}</dd>
-      ${fk ? `<dt>Besetzung</dt><dd>Fiktiv: ${esc(META.fiktiv_firma || "")}</dd>` : `<dt>Firma</dt><dd>${esc(v("FIRMA") || "–")}</dd>
+      ${fk ? `<dt>Besetzung</dt><dd>Fiktive Firma mit erfundenen Figuren</dd>` : `<dt>Firma</dt><dd>${esc(v("FIRMA") || "–")}</dd>
       <dt>Opfer</dt><dd>${esc(v("OPFER") || "–")}</dd>
       <dt>Verdächtige</dt><dd>${[...Array(p ? 6 : 5)].map((_, i) => esc(v("S" + (i + 1)) || "–")).join(", ")}</dd>`}
       <dt class="tot">Gesamt</dt><dd class="tot">${eur(sum)}</dd></dl>`;
@@ -194,7 +194,7 @@
     if (!fk && !consent.zustimmung) throw ["Bitte bestätigen, dass alle genannten Personen einverstanden sind.", form.zustimmung];
     if (paket() === "plus" && !form.ab18.checked) throw ["Bitte bestätigen, dass alle Teilnehmenden mindestens 18 Jahre alt sind – oder Basis bzw. Premium wählen.", form.ab18];
     if (!consent.agb) throw ["Bitte AGB und Datenschutzerklärung akzeptieren.", form.agb];
-    return { paket: paket(), teams: Number(form.teams.value), event_date: date, vars: fk ? {} : vars, contact, consent, logo: fk ? null : logoData, besetzung: fk ? "fiktiv" : "echt", lang: "de" };
+    return { paket: paket(), teams: Number(form.teams.value), event_date: date, vars: fk ? {} : vars, land: form.land.value, contact, consent, logo: fk ? null : logoData, besetzung: fk ? "fiktiv" : "echt", lang: "de" };
   }
 
   async function submit(ev) {

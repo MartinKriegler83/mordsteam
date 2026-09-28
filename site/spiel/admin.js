@@ -128,6 +128,7 @@
 
         </div>
         <label class="check"><input type="checkbox" name="test_mode" checked><span><b>Testmodus</b>: Fall lässt sich an jedem Tag öffnen (für Probeläufe).</span></label>
+        <div class="field"><label for="land">Land</label><select id="land" name="LAND"><option value="AT">Österreich</option><option value="DE">Deutschland</option><option value="CH">Schweiz</option></select></div>
         <div class="field"><label for="tier">Paket</label><select id="tier" name="tier"><option value="0">Basis – 50 Min., Akt 1</option><option value="1">Premium – 70 Min., Akt 1 + 2</option><option value="2">Premium Plus – 90 Min., Akt 1 + 2 + Finale mit ARIA</option></select></div>
         <h3 style="margin-top:8px">Personalisierung</h3>
         <p class="small">Leere Felder bekommen den Beispielwert (grau). Basis nutzt Verdächtige 1–5, Premium 1–6. Wer Täter/in ist, entscheidet der Zufall.</p>
@@ -149,6 +150,7 @@
       e.preventDefault();
       const f = e.target, vars = {};
       for (const fl of meta.fields) vars[fl.key] = f.elements[fl.key].value;
+      vars.LAND = f.elements.LAND.value;
       try {
         created = await MS.api("POST", "admin/session", {
           label: f.label.value, event_date: f.event_date.value, max_teams: Number(f.max_teams.value),

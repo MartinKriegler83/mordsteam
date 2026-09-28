@@ -5,7 +5,7 @@
 //   STRIPE_WEBHOOK_SECRET       whsec_… (Webhook-Endpunkt /api/shop/stripe-webhook)
 //   ORDER_FAKE_PAY=true         nur für Tests ohne Stripe: Bestellung gilt sofort als bezahlt
 //   RESEND_API_KEY, MAIL_FROM   optional: Bestätigungsmail über Resend (z. B. MAIL_FROM="Mordsteam <office@mordsteam.com>")
-import { CASES, json, fail, randomToken, viennaDate } from "../../../lib/game.js";
+import { CASES, json, fail, randomToken, viennaDate, randInt } from "../../../lib/game.js";
 import { migrate, createGameSession, normalizeVars, InputError } from "../../../lib/create.js";
 
 export const PRICES = { basis: 8900, premium: 11900, plus: 14900 };   // Cent pro Team, Endpreise
@@ -40,7 +40,8 @@ function meta(env) {
   return json({
     open: shopOpen(env),
     fall: c.META.title,
-    fiktiv_firma: c.FICTION ? c.FICTION.FIRMA : null,
+    fiktiv: !!c.FICTIONS,
+    laender: [["AT", "Österreich"], ["DE", "Deutschland"], ["CH", "Schweiz"]],
     prices: PRICES,
     earliest: addDays(today, LEAD_DAYS),
     suspects: { basis: c.suspectCount(false), premium: c.suspectCount(true), plus: c.suspectCount(true) },
@@ -62,8 +63,10 @@ async function bestellung(request, env) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new InputError("Bitte einen Spieltag wählen.");
   if (date < addDays(today, LEAD_DAYS)) throw new InputError("Der Spieltag muss frühestens morgen sein.");
   if (date > addDays(today, 365)) throw new InputError("Der Spieltag darf höchstens ein Jahr in der Zukunft liegen.");
-  const fiktiv = b.besetzung === "fiktiv" && !!CASES[CASE_ID].FICTION;
-  const vars = normalizeVars(CASE_ID, fiktiv ? CASES[CASE_ID].FICTION : b.vars || {}, premium, false);
+  const land = ["AT", "DE", "CH"].includes(b.land) ? b.land : "AT";
+  const F = (CASES[CASE_ID].FICTIONS || {})[land] || [];
+  const fiktiv = b.besetzung === "fiktiv" && F.length > 0;
+  const vars = normalizeVars(CASE_ID, { ...(fiktiv ? F[randInt(F.length)] : b.vars || {}), LAND: land }, premium, false);
 
   const k = b.contact || {};
   const s = (x, max = 120) => String(x ?? "").trim().slice(0, max);
