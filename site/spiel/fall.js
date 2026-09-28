@@ -60,6 +60,19 @@
     else if (tab === "funk") renderView();
     announceHints();
     tick();
+    const tb = $("testbar");
+    if (tb) tb.hidden = !(S.test && !VIEWER && S.status === "running" && !S.solved);
+  }
+
+  // Testrunden: Zeit vorspulen, um Hinweise schnell durchzuprobieren
+  async function vorspulen(body) {
+    try { const d = await MS.api("POST", "test/vorspulen", body, H); await poll(); alertTest(`+${d.minuten} Min. vorgespult`); }
+    catch (e) { alertTest(e.message); }
+  }
+  function alertTest(m) { const t = $("testbar"); const s = t.querySelector("span"); s.textContent = m; setTimeout(() => (s.textContent = "TEST"), 3000); }
+  if ($("ff-hint")) {
+    $("ff-hint").onclick = () => vorspulen({ bis: "hinweis" });
+    $("ff-5").onclick = () => vorspulen({ minuten: 5 });
   }
 
   async function ensureContent() {

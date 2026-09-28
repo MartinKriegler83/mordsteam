@@ -2,7 +2,7 @@
 // Benötigt: D1-Binding "DB" und die geheime Umgebungsvariable "ADMIN_KEY".
 import {
   CASES, RULES, json, fail, randInt, randomToken, randomCode, esc, viennaDate,
-  buildVars, render, checkAnswers, hintTimes, hardEnd, refreshStatus, finishIfAllSolved, expired, purgeSession, ranking, teamScore,
+  buildVars, render, checkAnswers, hintTimes, hardEnd, refreshStatus, finishIfAllSolved, recordStats, expired, purgeSession, ranking, teamScore,
   isPremium, stageOf, stageQuestions, cardCode,
 } from "../../../lib/game.js";
 
@@ -24,6 +24,7 @@ export async function onRequest(ctx) {
     if (route === "firma/login" && method === "POST") return withTeam(request, env, firmaLogin, true);
     if (route === "loesung" && method === "POST") return withTeam(request, env, loesung, true, false);
     if (route === "kontrolle" && method === "POST") return withTeam(request, env, kontrolle, true, false);
+    if (route === "test/vorspulen" && method === "POST") return withTeam(request, env, vorspulen, true, false);
     // --- Organisator ---
     if (route === "leitung/login" && method === "POST") return leitungLogin(request, env);
     if (route === "leitung/state" && method === "GET") return withOrg(request, env, leitungState);
@@ -38,6 +39,7 @@ export async function onRequest(ctx) {
       if (route === "admin/session" && method === "POST") return adminCreate(request, env);
       if (route === "admin/delete" && method === "POST") return adminDelete(request, env);
       if (route === "admin/orders" && method === "GET") return adminOrders(env);
+      if (route === "admin/stats" && method === "GET") return adminStats(request, env);
       if (route === "admin/order-shipped" && method === "POST") return adminShipped(request, env);
     }
     return fail("Nicht gefunden.", 404);
@@ -155,6 +157,7 @@ async function teamState({ env, team, session, viewer }) {
     boss: String(JSON.parse(session.vars).BOSS || ""),
     ueberfuehrt: team.core_at ? c.names(JSON.parse(session.secrets), JSON.parse(session.vars)).taeter : null,
     status: session.status,
+    test: !!session.test_mode,
     now: Date.now(),
     started_at: session.started_at,
     duration_min: session.duration_min,
@@ -252,6 +255,22 @@ async function loesung({ request, env, team, session }) {
   return json({ correct: true, solved: true });
 }
 
+// Nur in Testrunden: Spielzeit vorspulen (bis zum nächsten Hinweis der aktuellen Stufe oder um x Minuten)
+async function vorspulen({ request, env, team, session }) {
+  if (!session.test_mode) return fail("Vorspulen gibt es nur in Testrunden.", 403);
+  const b = await body(request);
+  const now = Date.now();
+  const stage = stageOf(session, team);
+  let shift = Math.min(60, Math.max(1, Number(b.minuten) || 5)) * 60000;
+  if (b.bis === "hinweis") {
+    const next = hintTimes(session).filter((h) => h.stage === stage && h.time > now).sort((a, c) => a.time - c.time)[0];
+    if (!next) return fail("In dieser Stufe kommt kein weiterer Hinweis mehr.");
+    shift = next.time - now + 1000;
+  }
+  await env.DB.prepare("UPDATE sessions SET started_at=started_at-? WHERE id=?").bind(shift, session.id).run();
+  return json({ ok: true, minuten: Math.round(shift / 60000) });
+}
+
 async function kontrolle({ env, team, session }) {
   const stage = stageOf(session, team);
   if (stage >= 3) return fail("Für diese Stufe gibt es keinen Kontrolltipp.");
@@ -324,6 +343,7 @@ async function leitungAktion({ request, env, session }) {
   if (b.aktion === "beenden") {
     if (session.status !== "running") return fail("Die Runde läuft nicht.");
     await env.DB.prepare("UPDATE sessions SET status='finished', ended_at=? WHERE id=?").bind(now, session.id).run();
+    await recordStats(env, { ...session, status: "finished", ended_at: now });
     return json({ ok: true });
   }
   return fail("Unbekannte Aktion.");
@@ -385,6 +405,34 @@ async function adminOrders(env) {
     "SELECT o.id, o.created_at, o.status, o.paket, o.teams, o.amount_cents, o.event_date, o.contact, o.paid_at, o.shipped_at, json_extract(o.vars,'$.FIRMA') AS firma, s.join_code, s.org_code FROM orders o LEFT JOIN sessions s ON s.id=o.session_id ORDER BY o.created_at DESC LIMIT 200"
   ).all();
   return json({ orders: results.map((o) => ({ ...o, contact: JSON.parse(o.contact || "{}") })) });
+}
+// Statistik: Zeiten je Paket (Median und Quartile), Lösungsquote, Fehlversuche je Frage
+async function adminStats(request, env) {
+  const tests = new URL(request.url).searchParams.get("tests") === "1";
+  const { results } = await env.DB.prepare(`SELECT * FROM stats_teams ${tests ? "" : "WHERE test_mode=0"} ORDER BY recorded_at DESC LIMIT 5000`).all();
+  const q = (arr, p) => { const a = arr.filter((x) => x != null).sort((x, y) => x - y); if (!a.length) return null; const i = (a.length - 1) * p; const lo = Math.floor(i); return Math.round((a[lo] + (a[Math.ceil(i)] - a[lo]) * (i - lo)) * 10) / 10; };
+  const groups = {};
+  for (const r of results) (groups[r.premium ? "premium" : "basis"] ||= []).push(r);
+  const out = {};
+  for (const [k, rows] of Object.entries(groups)) {
+    const prem = k === "premium";
+    const wrong = {};
+    for (const r of rows) { let w = {}; try { w = JSON.parse(r.wrong_by_q || "{}"); } catch {} for (const [kk, n] of Object.entries(w)) wrong[kk] = (wrong[kk] || 0) + n; }
+    const stat = (arr) => ({ p25: q(arr, 0.25), median: q(arr, 0.5), p75: q(arr, 0.75), n: arr.filter((x) => x != null).length });
+    out[k] = {
+      teams: rows.length, runden: new Set(rows.map((r) => r.session_id)).size,
+      akt1_geloest: rows.filter((r) => r.core_min != null).length,
+      ganz_geloest: rows.filter((r) => r.solved_min != null).length,
+      akt1_min: stat(rows.map((r) => r.core_min)),
+      akt2_min: prem ? stat(rows.map((r) => (r.act2_min != null && r.core_min != null ? r.act2_min - r.core_min : null))) : null,
+      finale_min: prem ? stat(rows.map((r) => (r.solved_min != null && r.act2_min != null ? r.solved_min - r.act2_min : null))) : null,
+      gesamt_min: stat(rows.map((r) => r.solved_min)),
+      fehler_je_team: Object.fromEntries(Object.entries(wrong).map(([kk, n]) => [kk, Math.round((n / rows.length) * 100) / 100])),
+      hinweise_akt1: stat(rows.map((r) => r.hints_akt1)),
+      mitlesegeraete: stat(rows.map((r) => r.viewers)),
+    };
+  }
+  return json({ tests, stats: out });
 }
 async function adminShipped(request, env) {
   const b = await body(request);

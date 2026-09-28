@@ -23,7 +23,8 @@
       meta = meta || (await MS.api("GET", "admin/meta", null, H()));
       const list = await MS.api("GET", "admin/sessions", null, H());
       const ord = await MS.api("GET", "admin/orders", null, H()).catch(() => ({ orders: [] }));
-      render(list.sessions, ord.orders);
+      const st = await MS.api("GET", "admin/stats" + (statTests ? "?tests=1" : ""), null, H()).catch(() => ({ stats: {} }));
+      render(list.sessions, ord.orders, st.stats);
     } catch (e) {
       if (e.status === 401 || e.status === 503) { try { sessionStorage.removeItem("ms_admin"); } catch {} key = null; return keyView(e.status === 401 ? "Schlüssel falsch." : e.message); }
       root.innerHTML = `<p class="err">${MS.esc(e.message)}</p>`;
@@ -69,6 +70,18 @@
     created.quick = { premium, firma: vars.FIRMA, opfer: vars.OPFER, boss: vars.BOSS, people: [1, 2, 3, 4, 5, 6].slice(0, premium ? 6 : 5).map((i) => vars[`S${i}`]) };
   }
 
+  let statTests = true;
+  function statsPanel(stats) {
+    const lab = { wer: "1 Wer", wann: "2 Wann", warum: "3 Konto", wo: "4 Mappe", helfer: "5 Helfer", fach: "6 Fach", karte: "Karte" };
+    const f = (x) => (x && x.n ? `${x.median} <span class="muted">(${x.p25}–${x.p75})</span>` : "–");
+    const col = (k, g) => g ? `<td>${g.teams} Teams / ${g.runden} Runden</td><td>${g.akt1_geloest} / ${g.teams}${k === "premium" ? ` · ganz: ${g.ganz_geloest}` : ""}</td><td>${f(g.akt1_min)}</td><td>${f(g.akt2_min)}</td><td>${f(g.finale_min)}</td><td>${f(g.hinweise_akt1)}</td><td>${Object.entries(g.fehler_je_team).map(([q, n]) => `${lab[q] || q}: ${n}`).join("<br>") || "–"}</td>` : `<td colspan="7" class="muted">noch keine Daten</td>`;
+    return `<div class="panel"><div class="eyebrow">Statistik (anonym, ab Rundenende)</div>
+      <p class="small" style="margin:6px 0">Minuten ab Start: Median (mittlere Hälfte der Teams). Akt 2 und Finale jeweils ab Lösung der Stufe davor. Fehler = falsche Antworten je Frage pro Team.</p>
+      <label class="check small"><input type="checkbox" id="stattests" ${statTests ? "checked" : ""}><span>Testrunden einbeziehen</span></label>
+      <div style="overflow-x:auto"><table class="grid small"><tr><th>Paket</th><th>Daten</th><th>Akt 1 gelöst</th><th>Akt 1 Min.</th><th>Akt 2 Min.</th><th>Finale Min.</th><th>Hinweise bis Akt 1</th><th>Fehler je Frage</th></tr>
+      <tr><th>Basis</th>${col("basis", stats.basis)}</tr><tr><th>Premium</th>${col("premium", stats.premium)}</tr></table></div></div>`;
+  }
+
   function ordersPanel(orders) {
     const eur = (c) => (c / 100).toLocaleString("de-AT", { maximumFractionDigits: 2 }) + " €";
     const lbl = { pending: "offen", paid: "bezahlt", fulfilling: "in Arbeit", fulfilled: "bezahlt · Runde angelegt" };
@@ -88,7 +101,7 @@
       }).join("") : `<p class="muted">Noch keine Bestellungen.</p>`}</div></div>`;
   }
 
-  function render(sessions, orders = []) {
+  function render(sessions, orders = [], stats = {}) {
     const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Vienna" }).format(new Date());
     root.innerHTML = `<div class="stack" style="gap:22px;max-width:980px">
       ${created ? `<div class="panel" style="border-color:var(--red)"><div class="eyebrow">Runde angelegt</div>
@@ -124,6 +137,7 @@
         <p class="err">${MS.esc(err)}</p>
       </form></div>
       ${ordersPanel(orders)}
+      ${statsPanel(stats)}
       <div class="panel"><div class="eyebrow">Alle Runden</div>
         <div class="list-sessions" style="margin-top:10px">${sessions.length ? sessions.map((s) => `<div class="sess">
           <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${MS.esc(s.label || s.id)}</b><span class="chip ${({ open: "open", running: "run", finished: "fin" })[s.status] || ""}">${s.status}</span></div>
@@ -148,6 +162,8 @@
       try { await quickTest(b.dataset.quick === "premium"); err = ""; scrollTo(0, 0); } catch (e2) { err = e2.message; }
       load();
     }));
+    const stc = document.getElementById("stattests");
+    if (stc) stc.onchange = () => { statTests = stc.checked; load(); };
     root.querySelectorAll("[data-ship]").forEach((b) => (b.onclick = async () => {
       await MS.api("POST", "admin/order-shipped", { id: b.dataset.ship, undo: !!b.dataset.undo }, H()); load();
     }));
