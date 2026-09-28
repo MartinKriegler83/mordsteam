@@ -437,8 +437,9 @@ async function leitungState({ env, session }) {
     now: Date.now(),
     started_at: session.started_at,
     hard_end: session.started_at ? hardEnd(session) : null,
-    solution_available: session.status === "finished" ||
-      (session.status === "running" && Date.now() - session.started_at >= RULES.solutionAfterMin * 60000),
+    // Testrunden: Auflösung sofort, damit man beim Testen nicht warten muss
+    solution_available: session.status === "finished" || (session.status === "running" && (!!session.test_mode ||
+      Date.now() - session.started_at >= RULES.solutionAfterMin * 60000)),
     ranking: rank,
   });
 }
@@ -491,8 +492,8 @@ function solutionInfo(session) {
 }
 
 async function aufloesung({ session }) {
-  const ok = session.status === "finished" ||
-    (session.status === "running" && Date.now() - session.started_at >= RULES.solutionAfterMin * 60000);
+  const ok = session.status === "finished" || (session.status === "running" && (!!session.test_mode ||
+    Date.now() - session.started_at >= RULES.solutionAfterMin * 60000));
   if (!ok) return fail(`Die Auflösung gibt es frühestens ${RULES.solutionAfterMin} Minuten nach dem Start.`, 403);
   return json(solutionInfo(session));
 }

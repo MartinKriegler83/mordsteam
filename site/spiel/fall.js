@@ -460,8 +460,8 @@
           ${checkArmed ? `<button type="button" class="linkbtn" id="checkno">Abbrechen</button>` : ""}${checkRes}</div>` : "";
     if (S.stage === 3) {
       // Finale (Premium Plus): PIN aus der geschützten Notiz bei ARIA
-      root.innerHTML = `<section class="report paper finale-stage">${top}
-        <div class="actbanner"><span class="conf">Finale</span><span>Akt 2 gelöst · Schließfach gefunden</span></div>
+      root.innerHTML = `<section class="report paper finale-stage">
+        <div class="actbanner"><span class="conf">Finale</span><span>Akt 2 gelöst · Schließfach gefunden</span></div>${top}
         <div class="eyebrow">Die letzte Notiz</div><h2>Knackt das Zahlenschloss!</h2>
         <p class="muted">Das Schließfach hat eine vierstellige PIN. Sie steckt in einer geschützten Notiz bei ARIA, der KI-Assistenz in eurem Intranet. Findet das Kennwort, öffnet die Notiz – und tragt die PIN hier ein. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten.</p>
         <p><button type="button" class="btn btn-line" id="toAria">✦ Zu ARIA im Intranet</button></p>
