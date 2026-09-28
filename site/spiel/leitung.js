@@ -54,7 +54,7 @@
       : `<p>Der Fall lässt sich erst am Spieltag öffnen: <b>${MS.esc(S.event_date)}</b>.</p>`;
     const kuvert = S.premium ? `<p class="note" style="margin:10px 0"><b>Premium:</b> Jedes Team bekommt ein versiegeltes Kuvert mit der Zugangskarte. Es bleibt zu, bis die Fallzentrale dem Team das Öffnen erlaubt (nach Akt 2).</p>` : "";
     if (S.status === "open") steps = kuvert + `<p>Die Teams melden sich jetzt an. Startet den Fall, wenn alle bereit sind – die Uhr läuft dann für alle gleichzeitig.</p><button class="btn btn-red" id="a-start">Fall starten</button>`;
-    if (S.status === "running") steps = `<p>Läuft seit <b class="mono">${MS.dur(now - S.started_at)}</b>. Übergabe der Mappe (Spielende) nach ${S.duration_min} Minuten${S.premium ? " (Premium mit Akt 2 und Kuvert)" : ""}. Spätestens eine Stunde danach schließt die Runde automatisch.</p><button class="btn btn-line" id="a-stop">Runde beenden</button>`;
+    if (S.status === "running") steps = `<p>Läuft seit <b class="mono">${MS.dur(now - S.started_at)}</b>. Übergabe der Mappe (Spielende) nach ${S.duration_min} Minuten${S.premium ? " (Premium mit Akt 2 und Kuvert)" : ""}. Haben alle Teams gelöst, endet die Runde automatisch und alle sehen Rangliste und Auflösung. Schafft es ein Team nicht, beendet ihr die Runde hier selbst.</p><button class="btn btn-line" id="a-stop">Runde beenden</button>`;
     if (S.status === "finished") steps = `<p>Die Runde ist beendet. Rangliste und Urkunden bleiben 30 Tage abrufbar, dann werden alle Daten gelöscht.</p>`;
     root.innerHTML = `<div class="stack" style="gap:18px;max-width:900px">
       <div class="panel"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">

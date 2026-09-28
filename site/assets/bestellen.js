@@ -8,9 +8,9 @@
   let logoData = null;
 
   const LABELS = {
-    FIRMA: ["Firmenname *", "so, wie ihr ihn im Alltag nennt"],
+    FIRMA: ["Firmenname *", ""],
     STADT: ["Stadt *", ""],
-    PARK: ["Park in der Nähe *", "Dort läuft der Firmenlauf – ein Detail im Fall"],
+    PARK: ["Park in der Nähe *", "Ein Detail im Fall"],
     RAUM_FEIER: ["Wo feiert ihr? *", "z. B. Kantine, Dachterrasse, Besprechungsraum 3"],
     RAUM_TATORT: ["Büro der Chefin / des Chefs *", "der Tatort"],
   };
@@ -173,7 +173,7 @@
     if (date < META.earliest[paket()]) throw [p ? `Premium braucht Vorlauf für den Postversand: frühestens ${fmtDate(META.earliest.premium)}.` : `Der Spieltag muss frühestens ${fmtDate(META.earliest.basis)} sein.`, form.event_date];
 
     const contact = { name: form.c_name.value.trim(), email: form.c_email.value.trim(), telefon: form.c_tel.value.trim(), rechnung_firma: form.c_firma.value.trim() };
-    if (contact.name.length < 2) throw ["Bitte euren Namen angeben.", form.c_name];
+    if (contact.name.length < 2) throw ["Bitte deinen Namen angeben.", form.c_name];
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw ["Bitte eine gültige E-Mail-Adresse angeben.", form.c_email];
     let liefer = null;
     if (p) {

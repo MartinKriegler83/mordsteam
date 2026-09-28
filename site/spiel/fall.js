@@ -372,7 +372,7 @@
         <div class="eyebrow">Finale · Akt 2 gelöst</div>
         <div class="envelope" aria-hidden="true"><div class="env-flap"></div><div class="env-seal">M</div></div>
         <h2>Öffnet jetzt euer versiegeltes Kuvert!</h2>
-        <p class="muted">Darin liegt die Zugangskarte von ${MS.esc(S.opfer || "")}. ${MS.esc(S.ueberfuehrt || "")} hat den Code für das Schließfach darauf versteckt – sichtbar nur, wenn man Licht ins Dunkel bringt.</p>
+        <p class="muted">Darin liegt die Zugangskarte von ${MS.esc(S.opfer || "")}. ${MS.esc(S.ueberfuehrt || "")} hat den Code für das Schließfach darauf versteckt.</p>
         <div class="qrow"><span class="qn">★</span><div class="qf"><label for="q_karte">${S.questions[0].label}</label><span class="hint">${MS.esc(S.questions[0].hint)}</span>
           <input id="q_karte" data-q="karte" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done" value="${MS.esc(draft.karte || "")}">${hintsFor("karte")}</div></div>
         ${v}<button type="button" class="btn btn-red btn-big" id="pruefen">Schließfach öffnen</button></section>`;

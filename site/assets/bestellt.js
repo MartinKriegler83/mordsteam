@@ -22,6 +22,7 @@
       '<li>Jedes Team öffnet auf <b>einem</b> Gerät <a href="'+esc(link)+'">'+esc(link.replace(/^https?:\/\//,""))+'</a> und gibt einen Teamnamen ein. Weitere Geräte können sich danach per QR-Code zum Mitlesen verbinden.</li>'+
       '<li>Sind alle angemeldet, startet ihr den Fall. Die Uhr läuft für alle gleichzeitig: '+(prem?"90":"60")+' Minuten.</li>'+
       (prem?'<li>Die versiegelten Kuverts kommen per Post an die angegebene Adresse. Bitte ungeöffnet lassen und am Spieltag jedem Team eines geben – geöffnet wird erst, wenn die Fallzentrale es sagt.</li>':'')+
+      '<li>Haben alle Teams gelöst, endet die Runde automatisch und alle sehen Rangliste und Auflösung. Schafft es ein Team nicht in der Zeit, beendet ihr die Runde auf der Organisator-Seite selbst.</li>'+
       '</ol><p>Die Rechnung kommt per E-Mail von unserem Zahlungsanbieter Stripe. Fragen? <a href="mailto:office@mordsteam.com">office@mordsteam.com</a></p></div>'+
       '<p style="margin-top:24px"><button class="btn btn-ink" type="button" id="print">Seite drucken</button></p>');
     document.getElementById("print").addEventListener("click",function(){window.print();});

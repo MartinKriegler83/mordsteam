@@ -64,7 +64,7 @@ async function bestellung(request, env) {
   const k = b.contact || {};
   const s = (x, max = 120) => String(x ?? "").trim().slice(0, max);
   const contact = { name: s(k.name), email: s(k.email, 160).toLowerCase(), telefon: s(k.telefon, 40), rechnung_firma: s(k.rechnung_firma) };
-  if (contact.name.length < 2) throw new InputError("Bitte euren Namen angeben.");
+  if (contact.name.length < 2) throw new InputError("Bitte deinen Namen angeben.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError("Bitte eine gültige E-Mail-Adresse angeben.");
   if (premium) {
     const l = b.liefer || {};
@@ -218,6 +218,7 @@ async function sendMail(env, o, s, origin) {
 <li>Organisator: <a href="${origin}/spiel/leitung.html">${origin}/spiel/leitung.html</a> öffnen, mit dem Organisator-Code anmelden und „Fall öffnen“.</li>
 <li>Jedes Team öffnet <a href="${origin}/spiel/?code=${e(s.join_code)}">${origin}/spiel/?code=${e(s.join_code)}</a> auf einem Gerät und gibt einen Teamnamen ein.</li>
 <li>Wenn alle bereit sind: „Fall starten“. Die Uhr läuft für alle gleichzeitig.</li>
+<li>Haben alle Teams gelöst, endet die Runde automatisch und alle sehen Rangliste und Auflösung. Schafft es ein Team nicht in der Zeit, beendet ihr die Runde auf der Organisator-Seite selbst.</li>
 </ol>
 ${premium ? `<p>Die versiegelten Kuverts schicken wir rechtzeitig vor dem Spieltag an: ${e(c.liefer.name)}, ${e(c.liefer.strasse)}, ${e(c.liefer.plz)} ${e(c.liefer.ort)}. Bitte ungeöffnet an die Teams verteilen.</p>` : ""}
 <p>Die Rechnung kommt separat per Mail von unserem Zahlungsanbieter.</p>

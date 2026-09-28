@@ -2,7 +2,7 @@
 // Benötigt: D1-Binding "DB" und die geheime Umgebungsvariable "ADMIN_KEY".
 import {
   CASES, RULES, json, fail, randInt, randomToken, randomCode, esc, viennaDate,
-  buildVars, render, checkAnswers, hintTimes, hardEnd, refreshStatus, expired, purgeSession, ranking, teamScore,
+  buildVars, render, checkAnswers, hintTimes, hardEnd, refreshStatus, finishIfAllSolved, expired, purgeSession, ranking, teamScore,
   isPremium, stageOf, stageQuestions, cardCode,
 } from "../../../lib/game.js";
 
@@ -240,6 +240,7 @@ async function loesung({ request, env, team, session }) {
   if (stage === 1) {
     await env.DB.prepare("UPDATE teams SET core_at=?, solved_at=?, last_attempt_at=?, last_result=NULL WHERE id=?")
       .bind(now, premium ? null : now, now, team.id).run();
+    if (!premium) await finishIfAllSolved(env, session, now);
     return json({ correct: true, solved: !premium, next: premium ? "akt2" : null });
   }
   if (stage === 2) {
@@ -247,6 +248,7 @@ async function loesung({ request, env, team, session }) {
     return json({ correct: true, solved: false, next: "kuvert" });
   }
   await env.DB.prepare("UPDATE teams SET solved_at=?, last_attempt_at=?, last_result=NULL WHERE id=?").bind(now, now, team.id).run();
+  await finishIfAllSolved(env, session, now);
   return json({ correct: true, solved: true });
 }
 
