@@ -269,6 +269,26 @@ async function loesung({ request, env, team, session }) {
 // ---------- ARIA: KI-Assistenz im Intranet (nur Premium Plus, erst im Finale) ----------
 const ARIA_LIMITS = { maxMsgs: 100, maxChars: 300, gapMs: 3000, history: 16 };
 const ariaX = (session) => ({ ...JSON.parse(session.vars), ...JSON.parse(session.secrets) });
+// Datenschutz: Echte Namen (Firma, Chefin/Chef, Oberboss, Verdächtige, Feierraum) verlassen unseren Server nie.
+// Vor dem Senden an die KI werden sie durch Platzhalter ersetzt, in der Antwort wieder eingesetzt.
+function ariaPseudo(x) {
+  const pairs = [[x.FIRMA, "[FIRMA]"], [x.OPFER, "[CHEFIN]"], [x.BOSS, "[OBERBOSS]"], [x.RAUM_FEIER, "[FEIERRAUM]"]];
+  for (let i = 1; i <= 6; i++) if (x["S" + i]) pairs.push([x["S" + i], `[PERSON${i}]`]);
+  const full = pairs.filter(([real]) => real && String(real).trim().length > 1);
+  // Nachnamen einzeln (nur großgeschrieben, mind. 4 Buchstaben), damit auch „Frau Lang“ ersetzt wird
+  const last = full.filter(([, t]) => /CHEFIN|OBERBOSS|PERSON/.test(t)).map(([real, t]) => [String(real).trim().split(/\s+/).pop(), t])
+    .filter(([l]) => l.length >= 4 && /^[A-ZÄÖÜ]/.test(l));
+  const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const hide = (text) => {
+    let out = String(text);
+    for (const [real, t] of [...full].sort((a, b) => String(b[0]).length - String(a[0]).length)) out = out.replace(new RegExp(esc(String(real).trim()), "gi"), t);
+    for (const [l, t] of last) out = out.replace(new RegExp(`(^|[^\\p{L}])${esc(l)}(?![\\p{L}])`, "gu"), `$1${t}`);
+    return out;
+  };
+  const show = (text) => { let out = String(text); for (const [real, t] of full) out = out.split(t).join(String(real).trim()); return out.replace(/\[(?:FIRMA|CHEFIN|OBERBOSS|FEIERRAUM|PERSON\d)\]/g, "(unbekannt)"); };
+  const xp = { ...x, FIRMA: "[FIRMA]", OPFER: "[CHEFIN]", BOSS: "[OBERBOSS]", RAUM_FEIER: "[FEIERRAUM]" };
+  return { hide, show, xp };
+}
 
 async function ariaMsgs(env, team) {
   const { results } = await env.DB.prepare("SELECT role, text, at FROM aria_msgs WHERE team_id=? ORDER BY id LIMIT 300").bind(team.id).all();
@@ -303,6 +323,7 @@ async function ariaChat({ request, env, team, session }) {
   const now = Date.now();
   await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, now, "user", text).run();
   const x = ariaX(session);
+  const ps = ariaPseudo(x);
   let reply;
   try {
     if (!env.ANTHROPIC_API_KEY) throw new Error("kein Schlüssel");
@@ -310,7 +331,8 @@ async function ariaChat({ request, env, team, session }) {
     const messages = [];
     for (const m of hist) {
       const last = messages[messages.length - 1];
-      if (last && last.role === m.role) last.content += "\n" + m.text; else messages.push({ role: m.role, content: m.text });
+      const t = ps.hide(m.text);
+      if (last && last.role === m.role) last.content += "\n" + t; else messages.push({ role: m.role, content: t });
     }
     while (messages.length && messages[0].role !== "user") messages.shift();
     const r = await fetch("https://api.anthropic.com/v1/messages", {
@@ -318,14 +340,14 @@ async function ariaChat({ request, env, team, session }) {
       headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
         model: env.ARIA_MODEL || "claude-haiku-4-5-20251001", max_tokens: 300, temperature: 0.6,
-        system: [{ type: "text", text: c.ARIA.system(x), cache_control: { type: "ephemeral" } }],
+        system: [{ type: "text", text: c.ARIA.system(ps.xp), cache_control: { type: "ephemeral" } }],
         messages,
       }),
       signal: AbortSignal.timeout(20000),
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error?.message || String(r.status));
-    reply = (d.content || []).filter((p) => p.type === "text").map((p) => p.text).join("").trim().slice(0, 1200);
+    reply = ps.show((d.content || []).filter((p) => p.type === "text").map((p) => p.text).join("").trim()).slice(0, 1200);
     if (!reply) throw new Error("leer");
   } catch (e) {
     reply = c.ARIA.fallback(x);

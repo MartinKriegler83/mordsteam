@@ -219,6 +219,7 @@ async function sendMail(env, o, s, origin) {
 <li>Wenn alle bereit sind: „Fall starten“. Die Uhr läuft für alle gleichzeitig.</li>
 <li>Haben alle Teams gelöst, endet die Runde automatisch und alle sehen Rangliste und Auflösung. Schafft es ein Team nicht in der Zeit, beendet ihr die Runde auf der Organisator-Seite selbst.</li>
 </ol>
+<p><b>Tipp:</b> Öffnet ein paar Tage vorher ${origin}/spiel auf einem Firmengerät. Lädt die Seite, bremst euch kein Webfilter.</p>
 <p>Die Rechnung kommt separat per Mail von unserem Zahlungsanbieter.</p>
 <p>Viel Spaß beim Ermitteln!<br>Mordsteam</p></div>`;
   await fetch("https://api.resend.com/emails", {
