@@ -366,3 +366,6 @@ p{margin:0}
 /* E-Mail-Adressen und Links nie mit Bindestrich trennen */
 a[href^="mailto:"],.prose a,.lead a{hyphens:none;-webkit-hyphens:none;overflow-wrap:anywhere}
 a[href^="mailto:"]{white-space:nowrap}
+
+/* Kontaktformular / Kleingedrucktes */
+p.small{font-size:14px;color:#5A5D66}

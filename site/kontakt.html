@@ -50,7 +50,19 @@
 <p>Sportplatzgasse 16, 7152 Pamhagen, Österreich</p>
 <p><a class="cc-mail" href="mailto:office@mordsteam.com">office@mordsteam.com</a></p>
 </div>
-<p>Fragen zu einem Fall, zur Bestellung oder zu eurer Spielrunde? Schreibt uns einfach – wir melden uns so schnell wie möglich. Alle Unternehmensangaben findet ihr im <a href="impressum.html">Impressum</a>.</p>
+<p>Fragen zu einem Fall, zur Bestellung oder zu eurer Spielrunde? Schreibt uns – über das Formular oder per E-Mail. Wir melden uns so schnell wie möglich.</p>
+<form id="kf" class="form" novalidate>
+<div class="two">
+<div class="field"><label for="kf-name">Name</label><input id="kf-name" name="name" autocomplete="name" maxlength="100" required></div>
+<div class="field"><label for="kf-email">E-Mail</label><input id="kf-email" name="email" type="email" autocomplete="email" maxlength="200" required></div>
+</div>
+<div class="field"><label for="kf-msg">Nachricht</label><textarea id="kf-msg" name="message" rows="6" maxlength="5000" required></textarea></div>
+<div class="hp" aria-hidden="true"><label for="kf-web">Website</label><input id="kf-web" name="website" tabindex="-1" autocomplete="off"></div>
+<p class="small">Eure Angaben verwenden wir nur, um eure Anfrage zu beantworten. Mehr dazu in der <a href="datenschutz.html">Datenschutzerklärung</a>.</p>
+<p class="formerr" id="kferr" role="alert" hidden></p>
+<div><button class="btn btn-red" type="submit">Nachricht senden</button></div>
+</form>
+<p class="small" style="margin-top:20px">Alle Unternehmensangaben findet ihr im <a href="impressum.html">Impressum</a>.</p>
 </div></main>
 
 <footer class="footer"><div class="wrap">
@@ -58,5 +70,6 @@
 <nav aria-label="Rechtliches"><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a><a href="agb.html">AGB</a><a href="kontakt.html">Kontakt</a></nav>
 <span>© 2026 Mordsteam e.U.</span>
 </div></footer>
+<script src="assets/kontakt.js"></script>
 </body>
 </html>

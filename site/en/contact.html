@@ -51,9 +51,21 @@
 <p>Sportplatzgasse 16, 7152 Pamhagen, Austria</p>
 <p><a class="cc-mail" href="mailto:office@mordsteam.com">office@mordsteam.com</a></p>
 </div>
-<p>Questions about a case, an order or your game round? Just write to us – we'll get back to you as soon as we can. You'll find all company details in the <a href="imprint.html">imprint</a>.</p>
+<p>Questions about a case, an order or your game round? Write to us – using the form or by email. We'll get back to you as soon as we can.</p>
+<form id="kf" class="form" novalidate>
+<div class="two">
+<div class="field"><label for="kf-name">Name</label><input id="kf-name" name="name" autocomplete="name" maxlength="100" required></div>
+<div class="field"><label for="kf-email">Email</label><input id="kf-email" name="email" type="email" autocomplete="email" maxlength="200" required></div>
+</div>
+<div class="field"><label for="kf-msg">Message</label><textarea id="kf-msg" name="message" rows="6" maxlength="5000" required></textarea></div>
+<div class="hp" aria-hidden="true"><label for="kf-web">Website</label><input id="kf-web" name="website" tabindex="-1" autocomplete="off"></div>
+<p class="small">We only use your details to answer your enquiry. More in our <a href="privacy.html">privacy policy</a>.</p>
+<p class="formerr" id="kferr" role="alert" hidden></p>
+<div><button class="btn btn-red" type="submit">Send message</button></div>
+</form>
+<p class="small" style="margin-top:20px">You'll find all company details in the <a href="imprint.html">imprint</a>.</p>
 </div></main>
-
+<script src="/assets/kontakt.js"></script>
 <footer class="footer"><div class="wrap">
 <span class="brand"><span class="wm"><span class="wm-r">MORDS</span>TEAM</span></span>
 <nav aria-label="Legal"><a href="imprint.html">Imprint</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a></nav>

@@ -319,14 +319,14 @@ P["privacy"] = dict(title="Privacy policy – Mordsteam", desc="How Mordsteam ha
 <p>The day after the game ends, we send the person who ordered a single email with a link to a feedback form (Art. 6(1)(f) GDPR – we want to improve our cases; for early bird orders part of the discount conditions, Art. 6(1)(b) GDPR). You can opt out of this email when ordering. We store your answers without reference to the people in the case. We only publish a review if you expressly agree in the form – anonymously or under the name you provide for it. You can withdraw your consent at any time by email; we will then remove the review from the website.</p>
 <h2>4. Order and payment</h2>
 <p>For an order we process the chosen package, number of teams, game language, your name, your email address, optionally phone and invoice company, and the details for personalising the case (company name, city, rooms, names, title and role of the people who appear in the case, optionally your logo). The purpose is performance of the contract (Art. 6(1)(b) GDPR). If you choose the fictional company, you don't provide any personal data for the personalisation.</p>
-<p>Payment and invoicing are handled by Stripe (Stripe Payments Europe, Ltd., Dublin, Ireland). Stripe receives your payment and billing data for this and processes it under its own responsibility; we never see card details. We keep invoice and payment data for as long as tax retention obligations require (in Austria usually seven years).</p>
+<p>Payment and invoicing are handled by Stripe (Stripe Payments Europe, Ltd., Dublin, Ireland). Stripe receives your payment and billing data for this and processes it under its own responsibility; we never see card details. We send the order confirmation and the feedback email via the email service Resend (Resend, Inc., USA; sent via servers in the EU, safeguarded by EU standard contractual clauses). We keep invoice and payment data for as long as tax retention obligations require (in Austria usually seven years).</p>
 <h2>5. Game round and case desk</h2>
 <p>For the game round we store the personalisation details, team names, times, answer attempts and hints in a database at Cloudflare. On the teams' devices only a login key is stored in the browser's local storage (no cookie, no tracking). 30 days after the game ends we delete the game round including teams, answer attempts, chat histories and logo – if a case is never played, 13 months after the order at the latest; the personal data of the personalisation is then removed from the order. To develop our cases further, we keep anonymous statistics (playing times, number of wrong attempts and hints per team) without names.</p>
 <h2>6. ARIA – AI assistant in the Premium Plus package</h2>
 <p>In the Premium Plus package, teams can chat with ARIA, an AI assistant on the case intranet, in the finale. What the teams write in the chat is sent together with the invented case data (calendar, intranet) to our AI provider Anthropic so that ARIA can reply (Art. 6(1)(b) GDPR). We replace the real names from the personalisation (company, people, rooms) with placeholders before sending and only reinsert them in the reply – even if they are typed into the chat. The teams' devices only connect to mordsteam.com, not directly to the AI provider. Anthropic processes the data as a processor, does not use it to train its models and deletes inputs and outputs after 30 days by default. The transfer to the USA is based on certification under the EU-US Data Privacy Framework or on EU standard contractual clauses.</p>
 <p>Please don't enter real personal data in the chat – ARIA doesn't need it and only knows the world of the game. Each team can send at most 100 messages. We store the chat history with the game round and delete it 30 days after the game ends. ARIA is labelled as an AI; her answers may contain errors.</p>
-<h2>7. Email contact</h2>
-<p>If you email us, we process your details to answer your enquiry (Art. 6(1)(b) or (f) GDPR). Our emails are processed via Apple iCloud.</p>
+<h2>7. Contact form and email</h2>
+<p>If you write to us using the contact form or by email, we process your name, email address and message to answer your enquiry (Art. 6(1)(b) or (f) GDPR). Messages from the form are delivered to our mailbox via our email service Resend (Resend, Inc., USA; sent via servers in the EU) and stored there. To prevent abuse, we also store a hashed short value of your IP address with the time and delete it after 24 hours. Our emails are processed via Apple iCloud.</p>
 <h2>8. Your rights</h2>
 <p>You have the right to access, rectification, erasure, restriction of processing, data portability and objection. Write to <a href="mailto:office@mordsteam.com">office@mordsteam.com</a>. You can also lodge a complaint with the Austrian Data Protection Authority: <a href="https://www.dsb.gv.at">www.dsb.gv.at</a>.</p>
 <p>Last updated: September 2026</p>
@@ -339,7 +339,7 @@ P["imprint"] = dict(title="Imprint – Mordsteam", desc="Legal information about
 <h2>Company</h2>
 <p><b>Mordsteam e.U.</b><br>Owner: Martin Kriegler<br>Legal form: registered sole proprietorship (eingetragenes Einzelunternehmen)</p>
 <p>Sportplatzgasse 16<br>7152 Pamhagen<br>Austria</p>
-<p>Email: <a href="mailto:office@mordsteam.com">office@mordsteam.com</a><!-- TELEFON --></p>
+<p>Email: <a href="mailto:office@mordsteam.com">office@mordsteam.com</a><br>Contact form: <a href="contact.html">mordsteam.com/en/contact</a></p>
 <h2>Company register</h2>
 <p>Registered seat: Pamhagen<br>Company register number: <!-- FN -->to be added after registration<br>Register court: Landesgericht Eisenstadt</p>
 <h2>Business purpose</h2>
@@ -459,7 +459,7 @@ P["feedback"] = dict(title="Feedback – Mordsteam", robots="noindex, nofollow",
 <div id="fb"><p class="muted">Loading …</p></div>
 </div></main>''')
 
-P["contact"] = dict(title="Contact – Mordsteam", desc="How to reach Mordsteam.",
+P["contact"] = dict(title="Contact – Mordsteam", desc="How to reach Mordsteam.", scripts='<script src="/assets/kontakt.js"></script>',
  body='''<main class="page"><div class="wrap prose">
 <div class="eyebrow">Contact</div>
 <h1>Get in touch</h1>
@@ -469,7 +469,19 @@ P["contact"] = dict(title="Contact – Mordsteam", desc="How to reach Mordsteam.
 <p>Sportplatzgasse 16, 7152 Pamhagen, Austria</p>
 <p><a class="cc-mail" href="mailto:office@mordsteam.com">office@mordsteam.com</a></p>
 </div>
-<p>Questions about a case, an order or your game round? Just write to us – we'll get back to you as soon as we can. You'll find all company details in the <a href="imprint.html">imprint</a>.</p>
+<p>Questions about a case, an order or your game round? Write to us – using the form or by email. We'll get back to you as soon as we can.</p>
+<form id="kf" class="form" novalidate>
+<div class="two">
+<div class="field"><label for="kf-name">Name</label><input id="kf-name" name="name" autocomplete="name" maxlength="100" required></div>
+<div class="field"><label for="kf-email">Email</label><input id="kf-email" name="email" type="email" autocomplete="email" maxlength="200" required></div>
+</div>
+<div class="field"><label for="kf-msg">Message</label><textarea id="kf-msg" name="message" rows="6" maxlength="5000" required></textarea></div>
+<div class="hp" aria-hidden="true"><label for="kf-web">Website</label><input id="kf-web" name="website" tabindex="-1" autocomplete="off"></div>
+<p class="small">We only use your details to answer your enquiry. More in our <a href="privacy.html">privacy policy</a>.</p>
+<p class="formerr" id="kferr" role="alert" hidden></p>
+<div><button class="btn btn-red" type="submit">Send message</button></div>
+</form>
+<p class="small" style="margin-top:20px">You'll find all company details in the <a href="imprint.html">imprint</a>.</p>
 </div></main>''')
 
 for name, p in P.items():

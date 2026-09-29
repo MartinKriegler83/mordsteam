@@ -14,6 +14,7 @@ import { CASES, json, fail, randomToken, viennaDate, randInt } from "../../../li
 import { migrate, createGameSession, normalizeVars, InputError } from "../../../lib/create.js";
 import { COUNTRIES, COUNTRY_ORDER, randomCast, castToEnglish } from "../../../lib/countries.js";
 import { runFeedbackMails, feedbackInfo, saveFeedback, publicReviews } from "../../../lib/feedback.js";
+import { handleContact } from "../../../lib/contact.js";
 
 // Sprache der Webseite (Fehlermeldungen, Stripe, Mail) – getrennt von der Spielsprache
 const L = (lang, de, en) => (lang === "en" ? en : de);
@@ -37,6 +38,7 @@ export async function onRequest({ request, env, params }) {
     if (route === "stripe-webhook" && method === "POST") return webhook(request, env);
     if (route === "status" && method === "GET") return status(request, env);
     if (route === "bestellung" && method === "POST") return bestellung(request, env);
+    if (route === "kontakt" && method === "POST") return handleContact(request, env);
     // Feedback nach dem Spiel
     if (route === "feedback" && method === "GET") {
       const f = await feedbackInfo(env, new URL(request.url).searchParams.get("f"));
