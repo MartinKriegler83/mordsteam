@@ -318,3 +318,7 @@ p{margin:0}
 .devicebox p{font-size:16px;color:var(--ink-2)}
 .devicebox b{color:var(--ink)}
 .pack-grid.three+.devicebox+.example{font-size:13px;opacity:.85}
+/* Sprachwechsel DE/EN im Kopf */
+.langlink{font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:1px;border:1px solid currentColor;border-radius:4px;padding:5px 8px;opacity:.75}
+.langlink:hover{opacity:1}
+.hero{overflow-x:clip}

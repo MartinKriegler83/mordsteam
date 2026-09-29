@@ -11,25 +11,25 @@
 <link rel="icon" href="/assets/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<title>Fallzentrale – Mordsteam</title>
+<title data-en="Case desk – Mordsteam">Fallzentrale – Mordsteam</title>
 </head>
 <body class="app desk">
-<header class="bar"><div class="wrap"><span class="brand"><svg width="22" height="22" viewBox="0 0 34 34" fill="none" stroke="#F3EFE6" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg> MORDSTEAM · Fallzentrale</span></div></header>
+<header class="bar"><div class="wrap"><span class="brand"><svg width="22" height="22" viewBox="0 0 34 34" fill="none" stroke="#F3EFE6" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg> MORDSTEAM · <span data-en="Case desk">Fallzentrale</span></span><button type="button" class="langsw" id="langsw">EN</button></div></header>
 <main class="view"><div class="wrap">
 <div class="joinhero">
-<div class="eyebrow">Mordsteam · Fallzentrale</div>
-<h1>Die Akte wartet.</h1>
-<p>Spielcode von eurem Organisator eingeben, Teamnamen wählen – ein Gerät pro Team.</p>
+<div class="eyebrow" data-en="Mordsteam · Case desk">Mordsteam · Fallzentrale</div>
+<h1 data-en="The file is waiting.">Die Akte wartet.</h1>
+<p data-en="Enter the game code from your organiser, choose a team name – one device per team.">Spielcode von eurem Organisator eingeben, Teamnamen wählen – ein Gerät pro Team.</p>
 </div>
 <div class="panel center">
 <form id="join" class="form">
-<div class="field"><label for="code">Spielcode</label><input id="code" name="code" required maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" style="text-transform:uppercase;font-family:var(--mono);font-size:24px;letter-spacing:5px"></div>
-<div class="field"><label for="name">Teamname</label><input id="name" name="name" required maxlength="40" autocomplete="off" placeholder="z. B. Die Spürnasen"></div>
-<div><button class="btn btn-red btn-big" type="submit">Anmelden</button></div>
+<div class="field"><label for="code" data-en="Game code">Spielcode</label><input id="code" name="code" required maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" style="text-transform:uppercase;font-family:var(--mono);font-size:24px;letter-spacing:5px"></div>
+<div class="field"><label for="name" data-en="Team name">Teamname</label><input id="name" name="name" required maxlength="40" autocomplete="off" placeholder="z. B. Die Spürnasen" data-en-ph="e.g. The Sleuths"></div>
+<div><button class="btn btn-red btn-big" type="submit" data-en="Join">Anmelden</button></div>
 <p id="msg" class="err" role="alert"></p>
 </form>
 </div>
-<p class="small ondesk center" style="margin-top:18px;text-align:center">Fair Play: Keine KI und keine Suchmaschinen – der Fall ist mit Köpfchen lösbar.<br><a href="/spiel/leitung.html">Zur Organisator-Ansicht</a></p>
+<p class="small ondesk center" style="margin-top:18px;text-align:center"><span data-en="Fair play: no AI and no search engines – the case can be solved with brainpower alone.">Fair Play: Keine KI und keine Suchmaschinen – der Fall ist mit Köpfchen lösbar.</span><br><a href="/spiel/leitung.html" data-en="To the organiser view">Zur Organisator-Ansicht</a></p>
 </div></main>
 <script src="/spiel/common.js"></script>
 <script src="/spiel/join.js"></script>

@@ -60,16 +60,18 @@
     return v;
   }
   const TN = ["Basis", "Premium", "Premium Plus"], TMIN = [50, 70, 90];
+  let qLang = "de", qLand = "AT";
   async function quickTest(tier) {
     const premium = tier >= 1;
     const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Vienna" }).format(new Date());
-    const vars = randomVars();
-    created = await MS.api("POST", "admin/session", { label: `Schnelltest ${TN[tier]} · ${vars.FIRMA}`, event_date: today, tier, test_mode: true, vars }, H());
+    created = await MS.api("POST", "admin/session", { event_date: today, tier, test_mode: true, cast: "fiktiv", lang: qLang, vars: { LAND: qLand } }, H());
+    const vars = { FIRMA: created.quick.firma, OPFER: created.quick.opfer, BOSS: created.quick.boss };
+    for (let i = 1; i <= 6; i++) vars["S" + i] = created.quick.people[i - 1];
     // Organisator gleich anmelden und den Fall öffnen
     const o = await MS.api("POST", "leitung/login", { code: created.org_code });
     MS.set("ms_org", o.token);
     await MS.api("POST", "leitung/aktion", { aktion: "oeffnen" }, { "x-leitung": o.token });
-    created.quick = { tier, premium, firma: vars.FIRMA, opfer: vars.OPFER, boss: vars.BOSS, people: [1, 2, 3, 4, 5, 6].slice(0, premium ? 6 : 5).map((i) => vars[`S${i}`]) };
+    created.quick = { ...created.quick, tier, premium, people: created.quick.people.slice(0, premium ? 6 : 5) };
   }
 
   let statTests = true;
@@ -96,7 +98,7 @@
         return `<div class="sess">
           <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${MS.esc(o.firma || "–")}</b><span class="chip ${o.status === "fulfilled" ? "open" : ""}">${lbl[o.status] || o.status}</span></div>
           <div class="mono">${new Date(o.created_at).toLocaleString("de-AT")} · ${({ basis: "Basis", premium: "PREMIUM", plus: "PREMIUM PLUS" })[o.paket] || o.paket} · ${o.teams} Teams · ${eur(o.amount_cents)} · Spieltag ${o.event_date}${o.join_code ? ` · Spielcode ${o.join_code} · Organisator ${o.org_code}` : ""}</div>
-          <div class="small">${MS.esc(c.name || "")} · <a href="mailto:${MS.esc(c.email || "")}">${MS.esc(c.email || "")}</a>${c.telefon ? " · " + MS.esc(c.telefon) : ""}${c.rechnung_firma ? " · Rechnung: " + MS.esc(c.rechnung_firma) : ""}</div>
+          <div class="small">${MS.esc(c.name || "")} · <a href="mailto:${MS.esc(c.email || "")}">${MS.esc(c.email || "")}</a>${c.telefon ? " · " + MS.esc(c.telefon) : ""}${c.rechnung_firma ? " · Rechnung: " + MS.esc(c.rechnung_firma) : ""}${c.lang ? " · Spielsprache " + c.lang.toUpperCase() : ""}${c.site ? " · Seite " + c.site.toUpperCase() : ""}${c.fiktiv ? " · fiktiv" : ""}</div>
           ${l ? `<div class="small"><b>Kuverts an:</b> ${MS.esc(l.name)}, ${MS.esc(l.strasse)}, ${MS.esc(l.plz)} ${MS.esc(l.ort)}, ${MS.esc(l.land)} · Karte-Code: ${MS.esc(meta.card_code)}
             ${o.status !== "pending" ? (o.shipped_at ? ` · <b>versendet ${new Date(o.shipped_at).toLocaleDateString("de-AT")}</b> <button class="tipbtn" data-ship="${o.id}" data-undo="1">rückgängig</button>` : ` <button class="tipbtn" data-ship="${o.id}">Als versendet markieren</button>`) : ""}</div>` : ""}
         </div>`;
@@ -110,11 +112,13 @@
         <p style="margin:8px 0">Spielcode für Teams: <span class="bigcode" style="font-size:26px">${created.join_code}</span></p>
         <p>Organisator-Code: <b class="mono" style="font-size:20px">${created.org_code}</b></p>
         <p class="mono small">Teams: ${location.origin}/spiel/?code=${created.join_code}<br>Organisator: ${location.origin}/spiel/leitung.html</p>
-        ${created.quick ? `<p class="small" style="margin-top:8px"><b>${TN[created.quick.tier]}, ${TMIN[created.quick.tier]} Min.</b> · ${MS.esc(created.quick.firma)} · Opfer: ${MS.esc(created.quick.opfer)} · Oberboss: ${MS.esc(created.quick.boss)} · Verdächtige: ${created.quick.people.map(MS.esc).join(", ")} · Täter/in: per Zufall (steht in der Auflösung)</p>
-        <div class="actions-row" style="margin-top:10px"><a class="btn btn-ink" href="/spiel/leitung.html" target="_blank" rel="noopener">Organisator-Ansicht öffnen</a><a class="btn btn-line" href="/spiel/?code=${created.join_code}" target="_blank" rel="noopener">Als Team beitreten</a></div>
+        ${created.quick ? `<p class="small" style="margin-top:8px"><b>${TN[created.quick.tier]}, ${TMIN[created.quick.tier]} Min. · ${created.quick.land} · ${created.quick.lang.toUpperCase()}</b> · ${MS.esc(created.quick.firma)} (${MS.esc(created.quick.stadt)}) · Opfer: ${MS.esc(created.quick.opfer)} · Oberboss: ${MS.esc(created.quick.boss)} · Verdächtige: ${created.quick.people.map(MS.esc).join(", ")} · Täter/in: per Zufall (steht in der Auflösung)</p>
+        <div class="actions-row" style="margin-top:10px"><a class="btn btn-ink" href="/spiel/leitung.html" target="_blank" rel="noopener">Organisator-Ansicht öffnen</a><a class="btn btn-line" href="/spiel/?code=${created.join_code}&lang=${created.quick.lang}" target="_blank" rel="noopener">Als Team beitreten</a></div>
         <p class="small" style="margin-top:8px">Der Fall ist geöffnet. Teams anmelden lassen, dann in der Organisator-Ansicht „Fall starten“.</p>` : ""}</div>` : ""}
       <div class="panel"><div class="eyebrow">Schnelltest</div>
-        <p style="margin:8px 0 14px">Ein Klick: Runde mit Zufallsdaten anlegen, Fall öffnen und dich als Organisator anmelden.</p>
+        <p style="margin:8px 0 14px">Ein Klick: Runde mit fiktiver Besetzung anlegen (Land und Spielsprache wählbar), Fall öffnen und dich als Organisator anmelden.</p>
+        <div class="two" style="margin-bottom:12px"><div class="field"><label for="qlang">Spielsprache</label><select id="qlang">${meta.langs.map((l) => `<option value="${l}" ${l === qLang ? "selected" : ""}>${l === "en" ? "Englisch" : "Deutsch"}</option>`).join("")}</select></div>
+        <div class="field"><label for="qland">Land</label><select id="qland">${meta.countries.map((c) => `<option value="${c.code}" ${c.code === qLand ? "selected" : ""}>${MS.esc(c.de)} (${c.code})</option>`).join("")}</select></div></div>
         <div class="actions-row"><button class="btn btn-red" data-quick="0">Basis (50 Min.)</button><button class="btn btn-line" data-quick="1">Premium (70 Min.)</button><button class="btn btn-line" data-quick="2">Premium Plus (90 Min., ARIA)</button></div>
       </div>
       <div class="panel"><div class="eyebrow">Neue Spielrunde (mit eigenen Daten)</div>
@@ -128,7 +132,8 @@
 
         </div>
         <label class="check"><input type="checkbox" name="test_mode" checked><span><b>Testmodus</b>: Fall lässt sich an jedem Tag öffnen (für Probeläufe).</span></label>
-        <div class="field"><label for="land">Land</label><select id="land" name="LAND"><option value="AT">Österreich</option><option value="DE">Deutschland</option><option value="CH">Schweiz</option></select></div>
+        <div class="two"><div class="field"><label for="land">Land</label><select id="land" name="LAND">${meta.countries.map((c) => `<option value="${c.code}">${MS.esc(c.de)} (${c.code})</option>`).join("")}</select></div>
+        <div class="field"><label for="nlang">Spielsprache</label><select id="nlang" name="lang"><option value="de">Deutsch</option><option value="en">Englisch</option></select></div></div>
         <div class="field"><label for="tier">Paket</label><select id="tier" name="tier"><option value="0">Basis – 50 Min., Akt 1</option><option value="1">Premium – 70 Min., Akt 1 + 2</option><option value="2">Premium Plus – 90 Min., Akt 1 + 2 + Finale mit ARIA</option></select></div>
         <h3 style="margin-top:8px">Personalisierung</h3>
         <p class="small">Leere Felder bekommen den Beispielwert (grau). Basis nutzt Verdächtige 1–5, Premium 1–6. Wer Täter/in ist, entscheidet der Zufall.</p>
@@ -143,7 +148,7 @@
       <div class="panel"><div class="eyebrow">Alle Runden</div>
         <div class="list-sessions" style="margin-top:10px">${sessions.length ? sessions.map((s) => `<div class="sess">
           <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${MS.esc(s.label || s.id)}</b><span class="chip ${({ open: "open", running: "run", finished: "fin" })[s.status] || ""}">${s.status}</span></div>
-          <div class="mono">Spieltag ${s.event_date} · Teams ${s.teams} · Spielcode ${s.join_code} · Organisator ${s.org_code}${s.test_mode ? " · TEST" : ""}${s.premium ? " · " + TN[s.premium].toUpperCase() : ""}</div>
+          <div class="mono">Spieltag ${s.event_date} · Teams ${s.teams} · Spielcode ${s.join_code} · Organisator ${s.org_code}${s.test_mode ? " · TEST" : ""}${s.premium ? " · " + TN[s.premium].toUpperCase() : ""} · ${s.land || "AT"} · ${(s.lang || "de").toUpperCase()}</div>
           <div><button class="tipbtn" data-del="${s.id}">Löschen</button></div></div>`).join("") : `<p class="muted">Noch keine Runden.</p>`}</div></div>
     </div>`;
     document.getElementById("nf").onsubmit = async (e) => {
@@ -154,7 +159,7 @@
       try {
         created = await MS.api("POST", "admin/session", {
           label: f.label.value, event_date: f.event_date.value, max_teams: Number(f.max_teams.value),
-          test_mode: f.test_mode.checked, tier: Number(f.tier.value), vars,
+          test_mode: f.test_mode.checked, tier: Number(f.tier.value), lang: f.elements.lang.value, vars,
         }, H());
         err = ""; scrollTo(0, 0);
       } catch (e2) { err = e2.message; }
@@ -165,6 +170,9 @@
       try { await quickTest(Number(b.dataset.quick)); err = ""; scrollTo(0, 0); } catch (e2) { err = e2.message; }
       load();
     }));
+    const ql = document.getElementById("qlang"), qd = document.getElementById("qland");
+    if (ql) ql.onchange = () => (qLang = ql.value);
+    if (qd) qd.onchange = () => (qLand = qd.value);
     const stc = document.getElementById("stattests");
     if (stc) stc.onchange = () => { statTests = stc.checked; load(); };
     root.querySelectorAll("[data-ship]").forEach((b) => (b.onclick = async () => {

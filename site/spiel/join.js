@@ -1,14 +1,28 @@
 (function () {
+  const t = MS.t;
   const f = document.getElementById("join");
   const msg = document.getElementById("msg");
   const code = MS.qs("code");
-  if (code) document.getElementById("code").value = code.toUpperCase();
-  if (MS.get("ms_team")) {
-    const p = document.createElement("p");
-    p.className = "small";
-    p.innerHTML = 'Dieses Gerät ist schon angemeldet. <a href="/spiel/fall.html">Zurück zu eurer Fallakte</a>';
-    f.after(p);
+  const codeIn = document.getElementById("code");
+  if (code) codeIn.value = code.toUpperCase();
+  let back = null;
+  const paintBack = () => {
+    if (!MS.get("ms_team")) return;
+    if (!back) { back = document.createElement("p"); back.className = "small"; f.after(back); }
+    back.innerHTML = `${t("Dieses Gerät ist schon angemeldet.", "This device is already registered.")} <a href="/spiel/fall.html">${t("Zurück zu eurer Fallakte", "Back to your case file")}</a>`;
+  };
+  paintBack();
+  document.addEventListener("ms-lang", paintBack);
+  // Spielsprache aus dem Spielcode übernehmen (Englisch gebuchte Runden zeigen die Anmeldung auf Englisch)
+  let looked = "";
+  async function lookup() {
+    const c = codeIn.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (c.length < 6 || c === looked) return;
+    looked = c;
+    try { const d = await MS.api("GET", "code?code=" + encodeURIComponent(c)); if (d.found) { MS.setLang(d.lang); paintBack(); const b = document.getElementById("langsw"); if (b) b.textContent = MS.lang === "en" ? "DE" : "EN"; } } catch {}
   }
+  codeIn.addEventListener("input", lookup);
+  lookup();
   f.addEventListener("submit", async (e) => {
     e.preventDefault();
     msg.textContent = "";
@@ -17,6 +31,7 @@
     try {
       const d = await MS.api("POST", "join", { code: f.code.value, name: f.name.value });
       MS.set("ms_team", d.token);
+      if (d.lang) MS.setLang(d.lang);
       ["ms_seen", "ms_heard", "ms_tab", "ms_doc"].forEach(MS.del);
       location.href = "/spiel/fall.html";
     } catch (err) {

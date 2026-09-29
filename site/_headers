@@ -22,3 +22,17 @@
 
 /bestellen.html
   X-Robots-Tag: noindex, nofollow
+
+/en/ordered
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
+
+/en/ordered.html
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
+
+/en/order
+  X-Robots-Tag: noindex, nofollow
+
+/en/order.html
+  X-Robots-Tag: noindex, nofollow

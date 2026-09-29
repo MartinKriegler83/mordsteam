@@ -11,7 +11,7 @@
 <link rel="icon" href="/assets/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<title>Urkunde – Mordsteam</title>
+<title data-en="Certificate – Mordsteam">Urkunde – Mordsteam</title>
 <style>
 @page{size:A4 landscape;margin:0}
 .cert{max-width:1000px;margin:24px auto;background:#FFFDF8;border:10px double #15171C;padding:48px 40px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;position:relative}
@@ -22,8 +22,8 @@
 </style>
 </head>
 <body class="app">
-<header class="bar noprint"><div class="wrap"><span class="brand"><svg width="22" height="22" viewBox="0 0 34 34" fill="none" stroke="#F3EFE6" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg> MORDSTEAM · Urkunde</span><button class="btn btn-red" id="print" type="button">Als PDF speichern / drucken</button></div></header>
-<main><div id="root"><p class="wrap muted" style="padding-top:24px">Lade…</p></div></main>
+<header class="bar noprint"><div class="wrap"><span class="brand"><svg width="22" height="22" viewBox="0 0 34 34" fill="none" stroke="#F3EFE6" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg> MORDSTEAM · <span data-en="Certificate">Urkunde</span></span><button class="btn btn-red" id="print" type="button" data-en="Save as PDF / print">Als PDF speichern / drucken</button></div></header>
+<main><div id="root"><p class="wrap muted" style="padding-top:24px" data-en="Loading…">Lade…</p></div></main>
 <script src="/spiel/common.js"></script>
 <script src="/spiel/urkunde.js"></script>
 </body>

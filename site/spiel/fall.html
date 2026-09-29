@@ -12,28 +12,28 @@
 <link rel="icon" href="/assets/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<title>Fallakte – Mordsteam</title>
+<title data-en="Case file – Mordsteam">Fallakte – Mordsteam</title>
 </head>
 <body class="app desk">
 <header class="bar">
 <div class="wrap">
 <span class="brand"><svg width="26" height="26" viewBox="0 0 34 34" fill="none" stroke="#F3EFE6" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg>
-<span class="brandbox"><small id="fallname">Mordsteam</small><strong id="teamname">Fallzentrale</strong></span></span>
+<span class="brandbox"><small id="fallname">Mordsteam</small><strong id="teamname" data-en="Case desk">Fallzentrale</strong></span></span>
 <span class="clock" id="clock" aria-live="off"></span>
 </div>
 <nav class="tabs noprint" id="tabs" role="tablist" hidden>
 <div class="wrap">
-<button type="button" role="tab" data-tab="einsatz">Einsatz</button>
-<button type="button" role="tab" data-tab="akte">Akte</button>
+<button type="button" role="tab" data-tab="einsatz"><span data-en="Briefing">Einsatz</span></button>
+<button type="button" role="tab" data-tab="akte"><span data-en="File">Akte</span></button>
 <button type="button" role="tab" data-tab="firma">Intranet</button>
-<button type="button" role="tab" data-tab="funk">Funk <span class="fbadge" id="funkbadge" hidden></span></button>
-<button type="button" role="tab" data-tab="loesung">Lösung</button>
+<button type="button" role="tab" data-tab="funk"><span data-en="Radio">Funk</span> <span class="fbadge" id="funkbadge" hidden></span></button>
+<button type="button" role="tab" data-tab="loesung"><span data-en="Answers">Lösung</span></button>
 </div>
 </nav>
 </header>
-<main class="view"><div class="wrap" id="root"><p class="ondesk">Lade…</p></div></main>
+<main class="view"><div class="wrap" id="root"><p class="ondesk" data-en="Loading…">Lade…</p></div></main>
 <div class="toast" id="toast" role="status" hidden></div>
-<div class="testbar noprint" id="testbar" hidden><span>TEST</span><button type="button" id="ff-hint">⏩ Nächster Hinweis</button><button type="button" id="ff-5">+5 Min.</button></div>
+<div class="testbar noprint" id="testbar" hidden><span>TEST</span><button type="button" id="ff-hint" data-en="⏩ Next hint">⏩ Nächster Hinweis</button><button type="button" id="ff-5" data-en="+5 min">+5 Min.</button></div>
 <script src="/spiel/common.js"></script>
 <script src="/spiel/qrcode.js"></script>
 <script src="/spiel/fall.js"></script>

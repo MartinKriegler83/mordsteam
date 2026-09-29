@@ -409,3 +409,6 @@ button.btn-big{margin-top:14px}
 .aria-row input{flex:1;min-width:0;font:inherit;padding:9px 12px;border:1.5px solid #CFC6EC;border-radius:8px}
 .aria-lock .err{margin:0;min-height:0}
 .aria .v-btn{background:#6B3FD1;color:#fff;flex:none}.aria .v-btn[disabled]{opacity:.5}
+/* Sprachumschalter */
+.langsw{margin-left:auto;background:transparent;border:1px solid rgba(243,239,230,.35);color:#F3EFE6;font:600 12px/1 var(--mono);letter-spacing:1px;padding:6px 9px;border-radius:4px;cursor:pointer}
+.langsw:hover{border-color:#F3EFE6}

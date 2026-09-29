@@ -6,6 +6,8 @@
 <title>Bestellen – Mordsteam</title>
 <meta name="description" content="Fall 001 „Die rote Mappe“ bestellen: Daten eingeben, bezahlen, Spielcode sofort erhalten.">
 <meta name="robots" content="noindex">
+<link rel="alternate" hreflang="de" href="https://mordsteam.com/bestellen.html">
+<link rel="alternate" hreflang="en" href="https://mordsteam.com/en/order.html">
 <link rel="stylesheet" href="assets/style.css">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
@@ -24,6 +26,7 @@
 <a href="index.html#faelle">Fälle</a>
 <a href="index.html#pakete">Pakete</a>
 <a href="index.html#faq">FAQ</a>
+<a class="langlink" href="/en/order.html" hreflang="en" lang="en" title="English">EN</a>
 <a class="btn btn-ink" href="bestellen.html">Bestellen</a>
 </nav>
 <details class="menu">
@@ -33,6 +36,7 @@
 <a href="index.html#faelle">Fälle</a>
 <a href="index.html#pakete">Pakete</a>
 <a href="index.html#faq">FAQ</a>
+<a href="/en/order.html" hreflang="en" lang="en">English</a>
 <a class="btn btn-red" href="bestellen.html">Bestellen</a>
 </nav>
 </details>
@@ -60,10 +64,15 @@
 </div>
 </fieldset>
 
-<fieldset class="step"><legend><span>2</span> Land und Besetzung</legend>
+<fieldset class="step"><legend><span>2</span> Sprache, Land und Besetzung</legend>
+<div class="two">
+<div class="field"><label for="lang">Spielsprache *</label>
+<select id="lang" name="lang"><option value="de">Deutsch</option><option value="en">Englisch</option></select>
+<span class="hint">Die Sprache von Akte, Intranet, Fallzentrale und ARIA – unabhängig von dieser Webseite.</span></div>
 <div class="field"><label for="land">Land *</label>
-<select id="land" name="land"><option value="AT">Österreich</option><option value="DE">Deutschland</option><option value="CH">Schweiz</option></select>
-<span class="hint">Polizei, Währung, Kennzeichen und Bankdaten im Fall passen dann zu eurem Land.</span></div>
+<select id="land" name="land"></select>
+<span class="hint">Polizei, Währung, Kennzeichen, Bankdaten und Städte im Fall passen dann zu eurem Land.</span></div>
+</div>
 <p class="steplead">Am meisten Spaß macht der Fall mit echten Personen und Orten: eure Chefin oder euer Chef als Opfer, Kolleginnen und Kollegen als Verdächtige, eure Räume als Tatort. Wer lieber niemanden einträgt, bekommt eine erfundene Firma mit erfundenen Figuren.</p>
 <div class="pick two-pick" role="radiogroup" aria-label="Besetzung">
 <label class="pickcard"><input type="radio" name="besetzung" value="echt" checked><span><b>Mit eurer Firma</b><small>Eure Namen, eure Räume, euer Logo<br>empfohlen</small></span></label>
@@ -119,7 +128,7 @@
 
 <footer class="footer"><div class="wrap">
 <span class="brand">MORDSTEAM</span>
-<nav aria-label="Rechtliches"><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a><a href="agb.html">AGB</a><a href="mailto:office@mordsteam.com">Kontakt</a></nav>
+<nav aria-label="Rechtliches"><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a><a href="agb.html">AGB</a><a href="mailto:office@mordsteam.com">Kontakt</a><a href="/en/order.html" hreflang="en" lang="en">English</a></nav>
 <span>© 2026 Mordsteam</span>
 </div></footer>
 </body>
