@@ -7,6 +7,7 @@ import {
 } from "../../../lib/game.js";
 
 import { migrate, createGameSession, InputError } from "../../../lib/create.js";
+import { migrateFeedback, dueFeedback, runFeedbackMails } from "../../../lib/feedback.js";
 import { localize, countryOf, COUNTRIES, COUNTRY_ORDER, randomCast, castToEnglish } from "../../../lib/countries.js";
 
 // Sprache: bei Team-/Organisator-Aufrufen die Spielsprache der Runde, sonst der Header x-lang der Seite
@@ -50,6 +51,9 @@ export async function onRequest(ctx) {
       if (route === "admin/orders" && method === "GET") return adminOrders(env);
       if (route === "admin/stats" && method === "GET") return adminStats(request, env);
       if (route === "admin/order-shipped" && method === "POST") return adminShipped(request, env);
+      if (route === "admin/feedback" && method === "GET") return adminFeedback(env);
+      if (route === "admin/feedback-run" && method === "POST") { const b = await body(request); return json({ sent: await runFeedbackMails(env, new URL(request.url).origin, { force: !!b.force }) }); }
+      if (route === "admin/feedback-approve" && method === "POST") { const b = await body(request); await migrateFeedback(env); await env.DB.prepare("UPDATE feedback SET approved=? WHERE id=?").bind(b.approved ? 1 : 0, String(b.id || "")).run(); return json({ ok: true }); }
     }
     return fail(L(hLang(request), "Nicht gefunden.", "Not found."), 404);
   } catch (e) {
@@ -605,6 +609,19 @@ async function adminStats(request, env) {
     };
   }
   return json({ tests, stats: out });
+}
+// Feedback: eingegangene Bögen und fällige bzw. nicht zustellbare Feedback-Mails
+async function adminFeedback(env) {
+  await migrateFeedback(env);
+  const { results } = await env.DB.prepare(
+    "SELECT f.*, json_extract(o.vars,'$.FIRMA') AS firma, json_extract(o.contact,'$.name') AS name, json_extract(o.contact,'$.email') AS email FROM feedback f LEFT JOIN orders o ON o.id=f.order_id ORDER BY f.created_at DESC LIMIT 200").all();
+  const due = await dueFeedback(env, { force: true });
+  const { results: open } = await env.DB.prepare(
+    "SELECT id, feedback_token, json_extract(contact,'$.email') AS email, json_extract(contact,'$.site') AS site FROM orders WHERE feedback_token IS NOT NULL AND feedback_sent_at IS NULL AND id NOT IN (SELECT order_id FROM feedback)").all();
+  return json({ feedback: results.map((f) => ({ ...f, answers: JSON.parse(f.answers || "{}") })),
+    due: due.map((o) => ({ order: o.id, email: JSON.parse(o.contact || "{}").email, ended_at: o.ended_at })),
+    links: open.map((o) => ({ order: o.id, email: o.email, link: `${o.site === "en" ? "/en/feedback.html" : "/feedback.html"}?f=${o.feedback_token}` })),
+    mail: !!(env.RESEND_API_KEY && env.MAIL_FROM), cron: !!env.CRON_KEY });
 }
 async function adminShipped(request, env) {
   const b = await body(request);

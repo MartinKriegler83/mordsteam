@@ -191,7 +191,7 @@ p{margin:0}
 }
 
 /* ---------- Unterseiten ---------- */
-.page{padding:48px 0 72px}
+.page{padding:72px 0 80px}
 .page .wrap{max-width:860px}
 .page h1{font-family:var(--serif);font-weight:900;font-size:40px;line-height:1.05;margin-bottom:12px;hyphens:auto;overflow-wrap:break-word}
 .prose,.page{hyphens:auto;overflow-wrap:break-word}
@@ -336,3 +336,30 @@ p{margin:0}
 .contactcard .cc-firm{font-family:var(--serif);font-weight:900;font-size:22px}
 .contactcard .cc-mail{font-weight:600;color:var(--red)}
 .promo .star{color:#E0463C}
+/* Seitentitel, die in eine Zeile passen sollen (Early Bird, Feedback) */
+.page h1.h1-page{font-size:min(46px,5.7vw);white-space:nowrap;margin-top:10px}
+/* Feedbackbogen */
+.fb-q .label{font-weight:600}
+.fb-stars{display:flex;gap:6px}
+.fb-stars label{cursor:pointer}
+.fb-stars input,.fb-nps input,.fb-opt input{position:absolute;opacity:0;width:1px;height:1px}
+.fb-stars span{font-size:38px;line-height:1;color:#D2CABB;transition:color .1s}
+.fb-stars:has(input:checked) label:has(input:checked) ~ label span{color:#D2CABB}
+.fb-stars:has(input:checked) span{color:var(--red)}
+.fb-stars label:has(input:checked) ~ label span{color:#D2CABB}
+.fb-stars input:focus-visible + span{outline:2px solid var(--red);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.fb-nps{display:flex;flex-wrap:wrap;gap:6px}
+.fb-nps span,.fb-opt span{display:inline-block;border:1.5px solid #B9B09C;border-radius:6px;background:#fff;padding:8px 12px;cursor:pointer;min-width:20px;text-align:center}
+.fb-nps input:checked + span,.fb-opt input:checked + span{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.fb-nps input:focus-visible + span,.fb-opt input:focus-visible + span{outline:2px solid var(--red);outline-offset:2px}
+.fb-npsl{display:flex;justify-content:space-between;font-size:13px;color:#5A5D66;max-width:520px}
+.fb-opts{display:flex;flex-wrap:wrap;gap:8px}
+.fb-hr{border:0;border-top:1px dashed var(--line);margin:8px 0}
+/* Bewertungen auf der Startseite */
+.reviews{display:grid;gap:18px}
+@media (min-width:760px){.reviews{grid-template-columns:repeat(3,1fr)}}
+.review{margin:0;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:20px 22px;display:flex;flex-direction:column;gap:10px}
+.review .rs{color:var(--red);letter-spacing:2px}
+.review p{margin:0;font-size:16px}
+.review small{color:#5A5D66;font-family:var(--mono);font-size:12px;letter-spacing:.5px}

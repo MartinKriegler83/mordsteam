@@ -13,6 +13,7 @@
 import { CASES, json, fail, randomToken, viennaDate, randInt } from "../../../lib/game.js";
 import { migrate, createGameSession, normalizeVars, InputError } from "../../../lib/create.js";
 import { COUNTRIES, COUNTRY_ORDER, randomCast, castToEnglish } from "../../../lib/countries.js";
+import { runFeedbackMails, feedbackInfo, saveFeedback, publicReviews } from "../../../lib/feedback.js";
 
 // Sprache der Webseite (Fehlermeldungen, Stripe, Mail) – getrennt von der Spielsprache
 const L = (lang, de, en) => (lang === "en" ? en : de);
@@ -34,6 +35,27 @@ export async function onRequest({ request, env, params }) {
     if (route === "stripe-webhook" && method === "POST") return webhook(request, env);
     if (route === "status" && method === "GET") return status(request, env);
     if (route === "bestellung" && method === "POST") return bestellung(request, env);
+    // Feedback nach dem Spiel
+    if (route === "feedback" && method === "GET") {
+      const f = await feedbackInfo(env, new URL(request.url).searchParams.get("f"));
+      if (!f) return fail("Feedback-Link ungültig. / Invalid feedback link.", 404);
+      return json({ variant: f.variant, lang: f.lang, paket: f.paket, firma: f.fiktiv ? "" : f.firma, done: f.done });
+    }
+    if (route === "feedback" && method === "POST") {
+      let b = {}; try { b = await request.json(); } catch {}
+      const r = await saveFeedback(env, String(b.f || ""), b);
+      if (r.error === "notfound") return fail("Feedback-Link ungültig. / Invalid feedback link.", 404);
+      if (r.error === "done") return fail(b.lang === "en" ? "You have already sent your feedback – thank you!" : "Ihr habt euer Feedback schon geschickt – danke!", 409);
+      if (r.error === "rating") return fail(b.lang === "en" ? "Please choose a star rating." : "Bitte eine Sternebewertung wählen.");
+      return json({ ok: true });
+    }
+    if (route === "bewertungen" && method === "GET") return json({ reviews: await publicReviews(env, new URL(request.url).searchParams.get("lang") === "en" ? "en" : "de") });
+    // Täglicher Lauf (GitHub Action): fällige Feedback-Mails verschicken
+    if (route === "cron" && method === "POST") {
+      if (!env.CRON_KEY || request.headers.get("x-cron-key") !== env.CRON_KEY) return fail("Nicht berechtigt.", 401);
+      const sent = await runFeedbackMails(env, new URL(request.url).origin);
+      return json({ ok: true, count: sent.length, sent: sent.map((x) => ({ order: x.order, sent: x.sent })) });
+    }
     return fail("Nicht gefunden.", 404);
   } catch (e) {
     if (e instanceof InputError) return fail(e.message);
@@ -112,6 +134,9 @@ async function bestellung(request, env) {
   contact.site = site;
   if (!fiktiv && !c.zustimmung) throw new InputError(L(site, "Bitte bestätigen, dass alle genannten Personen einverstanden sind.", "Please confirm that everyone named has agreed."));
   if (paket === "plus" && !c.ab18) throw new InputError(L(site, "Premium Plus mit ARIA ist für Teilnehmende ab 18 Jahren. Bitte bestätigen oder Basis bzw. Premium wählen.", "Premium Plus with ARIA is for participants aged 18 and over. Please confirm or choose Basic or Premium."));
+  // Digitale Leistung sofort: ausdrückliche Zustimmung + Kenntnis vom Verlust des Rücktrittsrechts (§ 18 Abs. 1 Z 11 FAGG)
+  if (!c.sofort) throw new InputError(L(site, "Bitte bestätigen, dass wir sofort nach dem Bezahlen beginnen dürfen.", "Please confirm that we may begin immediately after payment."));
+  contact.sofort_zustimmung = new Date().toISOString();
   if (!c.agb) throw new InputError(L(site, "Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."));
   let logo = null;
   if (b.logo && !fiktiv) {
@@ -127,6 +152,7 @@ async function bestellung(request, env) {
   const eb = b.earlybird === true ? earlybird(env) : null;
   if (b.earlybird === true && !eb) throw new InputError(L(site, "Die Early-Bird-Aktion ist leider schon vorbei. Bitte das Häkchen entfernen.", "Sorry, the early bird offer has ended. Please untick the box."));
   if (eb) { contact.earlybird = eb.prozent; }
+  else if (c.no_feedback) contact.no_feedback = true;     // keine Feedback-Mail nach dem Spiel (bei Early Bird Teil der Bedingungen)
   const full = PRICES[paket] * teams;
   const amount = eb ? Math.round(full * (100 - eb.prozent) / 100) : full;
   await env.DB.prepare(
@@ -280,7 +306,16 @@ async function sendMail(env, o, s, origin) {
 <p><b>${T("Tipp:", "Tip:")}</b> ${T(`Öffnet ein paar Tage vorher ${origin}/spiel auf einem Firmengerät. Lädt die Seite, bremst euch kein Webfilter.`, `A few days before, open ${origin}/spiel on a company device. If the page loads, no web filter will get in your way.`)}</p>
 ${c.earlybird ? `<p><b>Early Bird:</b> ${T("Danke, dass ihr uns helft! Nach dem Spiel melden wir uns für euer Feedback.", "Thanks for helping us! After the game we'll be in touch for your feedback.")}</p>` : ""}
 <p>${T("Die Rechnung kommt separat per Mail von unserem Zahlungsanbieter.", "The invoice will be sent separately by our payment provider.")}</p>
-<p>${T("Viel Spaß beim Ermitteln!", "Happy investigating!")}<br>Mordsteam</p></div>`;
+<p>${T("Viel Spaß beim Ermitteln!", "Happy investigating!")}<br>Mordsteam</p>
+<hr style="border:0;border-top:1px solid #DDD5C4;margin:24px 0 14px">
+<div style="font-size:12.5px;color:#5A5D66;line-height:1.5">
+<b>${T("Vertragsbestätigung", "Contract confirmation")}</b><br>
+${T("Anbieter", "Provider")}: Martin Kriegler, Mordsteam, Sportplatzgasse 16, 7152 Pamhagen, ${T("Österreich", "Austria")}, office@mordsteam.com<br>
+${T("Leistung", "Service")}: ${T(`Personalisierter digitaler Krimi-Fall „${e(title)}“, Paket ${NAMES[o.paket] || o.paket}, ${o.teams} Team${o.teams === 1 ? "" : "s"}, Spielsprache ${lang === "en" ? "Englisch" : "Deutsch"}; spielbar 12 Monate ab Kauf, einmal startbar.`, `Personalised digital murder-mystery case “${e(title)}”, package ${NAMES_EN[o.paket] || o.paket}, ${o.teams} team${o.teams === 1 ? "" : "s"}, game language ${lang === "en" ? "English" : "German"}; playable for 12 months from purchase, can be started once.`)}<br>
+${T("Preis", "Price")}: ${(o.amount_cents / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 })} € ${T("(Endpreis; Kleinunternehmer, keine USt gemäß § 6 Abs. 1 Z 27 UStG). Bezahlt über Stripe.", "(final price; small business, no VAT under § 6 (1) no. 27 UStG). Paid via Stripe.")}<br>
+${T("Es gelten unsere AGB", "Our terms apply")}: <a href="${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}">${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}</a><br>
+${T("Ihr habt bei der Bestellung ausdrücklich zugestimmt, dass wir sofort nach dem Bezahlen mit der Ausführung beginnen, und bestätigt, dass ihr als Verbraucher dadurch euer Rücktrittsrecht verliert (§ 18 Abs. 1 Z 11 FAGG). Mit dieser Bestätigung und der Bereitstellung der Codes ist das Rücktrittsrecht erloschen.", "When ordering, you expressly agreed that we begin performance immediately after payment and confirmed that as a consumer you thereby lose your right of withdrawal (§ 18 (1) no. 11 FAGG). With this confirmation and the provision of the codes, the right of withdrawal has expired.")}
+</div></div>`;
   await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },

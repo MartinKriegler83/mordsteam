@@ -2,7 +2,7 @@
 # Aufruf: python3 tools/en_pages.py  – danach site/en/*.html committen.
 import os, html
 ROOT = os.path.join(os.path.dirname(__file__), "..", "site")
-MAP = {"index": "index", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "contact": "kontakt", "early-bird": "earlybird"}
+MAP = {"index": "index", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "contact": "kontakt", "early-bird": "earlybird", "feedback": "feedback"}
 LOGO = '<svg width="30" height="30" viewBox="0 0 34 34" fill="none" stroke="#15171C" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg>'
 
 
@@ -13,7 +13,7 @@ def page(name, title, desc, body, robots=None, scripts="", home=False):
     de = MAP[name]
     pre = "" if home else "index.html"
     nav = f'''<a href="{pre}#how">How it works</a>
-<a href="{pre}#cases">Cases</a>
+<a href="{pre}#case">The case</a>
 <a href="{pre}#packages">Packages</a>
 <a href="{pre}#faq">FAQ</a>'''
     return f'''<!doctype html>
@@ -104,17 +104,7 @@ P["index"] = dict(title="Mordsteam – The personalised murder-mystery team even
 <div class="steps">
 <div class="step"><span class="num">1</span><div><h3>Enter your teams</h3><p>Your boss as the victim, the top boss waiting for the folder, five suspects from your group (Premium and Premium Plus: six), plus rooms and teams. Who did it is decided at random – not even the organiser knows in advance.</p></div></div>
 <div class="step"><span class="num">2</span><div><h3>Get your file</h3><p>Your personal case file arrives digitally on laptop, phone or tablet. Plus your own case intranet – with your logo – and the case desk for every team.</p></div></div>
-<div class="step"><span class="num">3</span><div><h3>Investigate and crack it</h3><p>Four answers, one attempt: who, when, why, where. Enter everything correctly at the case desk and you've solved the case – with a live ranking, a big reveal and winners' certificates to download.</p></div></div>
-</div>
-</div></section>
-
-<section id="cases" class="section" style="padding-top:0"><div class="wrap stack">
-<div class="eyebrow">The cases</div>
-<h2 class="h2">A case for every group</h2>
-<p class="lead">Each case is written for a particular kind of group. More cases are on the way.</p>
-<div class="cases">
-<a class="case-card" href="#case"><div class="meta"><span>CASE 001 · FOR COMPANIES</span><span class="status live">BOOK NOW</span></div><h3>The Red Folder</h3><p>A poison attack on your top floor, a missing folder and a handover to the top boss at 12:00 noon. Someone from your group did it.</p></a>
-<div class="case-card upcoming"><div class="meta"><span>MORE CASES</span><span class="status plan">IN PREPARATION</span></div><h3>For clubs and groups of friends</h3><p>The next cases are in the works. <a href="contact.html">Write to us</a> if you'd like to be the first to know.</p></div>
+<div class="step"><span class="num">3</span><div><h3>Investigate and solve the case</h3><p>Will you find all the crucial clues? Enter everything correctly at the case desk and you've solved the case. At the end: an award ceremony, the big reveal and certificates to download.</p></div></div>
 </div>
 </div></section>
 
@@ -137,7 +127,7 @@ P["index"] = dict(title="Mordsteam – The personalised murder-mystery team even
 <div class="clues" aria-label="Examples from the case file">
 <div class="clue"><small>ACCESS LOG</small><span>22:47 · Executive office<br>Badge 4 ? ? ?</span></div>
 <div class="clue"><small>CATERING DELIVERY NOTE</small><span>Peppermint with honey<br>collected 21:?? · badge ????</span></div>
-<div class="clue dark"><small>CASE DESK</small><div class="codebox" aria-label="Four-digit solution code"><i>?</i><i>?</i><i>?</i><i>?</i></div><span class="hint">Enter the code, solve the case, top the ranking.</span></div>
+<div class="clue dark"><small>CASE DESK</small><div class="codebox" aria-label="Four-digit solution code"><i>?</i><i>?</i><i>?</i><i>?</i></div><span class="hint">Enter your answers, solve the case, make the podium.</span></div>
 <div class="clue"><small>ARIA · AI ASSISTANT</small><span>Premium Plus only:<br>“I know every appointment. Ask me!”</span></div>
 </div>
 </div></section>
@@ -180,19 +170,25 @@ P["index"] = dict(title="Mordsteam – The personalised murder-mystery team even
 <div class="stack" style="margin-bottom:28px"><div class="eyebrow">Who it's for</div><h2 class="h2">Made for every group with secrets</h2></div>
 <div class="audience">
 <div class="aud"><span class="status live">CASE 001 · BOOK NOW</span><h3>Companies</h3><ul class="list"><li>Team building and offsites</li><li>Onboarding new teams</li><li>Department and holiday parties</li></ul></div>
-<div class="aud"><span class="status plan">IN PREPARATION</span><h3>Clubs</h3><ul class="list"><li>Club nights and anniversaries</li><li>Holiday parties and outings</li><li>Sports, music and cultural clubs</li></ul></div>
-<div class="aud"><span class="status plan">PLANNED</span><h3>Friends</h3><ul class="list"><li>Milestone birthdays</li><li>Cabin weekends and game nights</li><li>Stag and hen parties</li></ul></div>
+<div class="aud"><span class="status plan">COMING SOON</span><h3>Clubs</h3><ul class="list"><li>Club nights and anniversaries</li><li>Holiday parties and outings</li><li>Sports, music and cultural clubs</li></ul></div>
+<div class="aud"><span class="status plan">COMING SOON</span><h3>Friends</h3><ul class="list"><li>Milestone birthdays</li><li>Cabin weekends and game nights</li><li>Stag and hen parties</li></ul></div>
 </div>
 <div class="privacy"><h2>Privacy, taken seriously</h2>
 <ul class="list"><li>Only names and roles, no emails or photos of your players</li><li>Case website and case desk protected and hidden from search engines</li><li>All data automatically deleted 30 days after the game</li><li>All suspects and the victim agree beforehand – you confirm this when ordering</li><li>Your logo only with confirmed permission – it appears only in your case intranet</li></ul>
 </div>
 </div></section>
 
+<section id="bewertungen" class="section" hidden><div class="wrap stack">
+<div class="eyebrow">Reviews</div>
+<h2 class="h2">What investigator teams say</h2>
+<div class="reviews" id="reviews"></div>
+</div></section>
+
 <section id="faq" class="section faq"><div class="wrap faq-grid">
 <div class="stack"><div class="eyebrow">FAQ</div><h2 class="h2">Questions?</h2></div>
 <div>
 <details><summary>How many people fit in a team?</summary><p>3 to 6 is ideal. Each team enters its answers on one main device and can connect up to 5 more phones or laptops via QR code to follow along – so you can split up the evidence. More people? Just book one more team – that makes the competition more exciting, too.</p></details>
-<details><summary>Do we need a game master?</summary><p>No person needed. Instructions and the digital case desk guide you through the case: start, automatic hints, answer entry and ranking. One person from your group just starts the clock – and can still play along.</p></details>
+<details><summary>Do we need a game master?</summary><p>No person needed. Instructions and the digital case desk guide you through the case: start, automatic hints, answer entry and award ceremony. One person from your group just starts the clock – and can still play along.</p></details>
 <details><summary>How long does a case take?</summary><p>Basic: 50 minutes, one act with four questions. Premium: 70 minutes – after act 1, the case desk unlocks a second act. Premium Plus: 90 minutes – in the finale you question ARIA, the AI assistant on your intranet. If a team gets stuck, HQ sends hints automatically.</p></details>
 <details><summary>Who is the culprit?</summary><p>Always someone from your group – drawn at random, new every round. Not even the organiser knows in advance, and neither does the culprit. Everyone who appears in the case should have agreed beforehand.</p></details>
 <details><summary>Can we play in English?</summary><p>Yes. You choose the game language (German or English) when you order – independently of the language of this website. The whole case, the intranet, the case desk and ARIA then speak that language.</p></details>
@@ -200,7 +196,7 @@ P["index"] = dict(title="Mordsteam – The personalised murder-mystery team even
 <details><summary>What do we need to play?</summary><p>One laptop, tablet or smartphone with internet per team – for the case file, intranet, answer entry and ranking. Up to 5 more devices per team can follow along via QR code. That's all you need.</p></details>
 <details><summary>Can we use AI or Google?</summary><p>Please don't – with one exception: ARIA, the AI assistant in the game (Premium Plus only), helps you in the grand finale. Otherwise the case is built to be solved with brainpower – outside AI and search engines only spoil the fun. A matter of honour among detectives.</p></details>
 <details><summary>How gruesome is it?</summary><p>Not at all. A crime story with a wink – no blood, no shock effects, and nobody is shown up.</p></details>
-<details><summary>Do we have to enter real names?</summary><p>No. It's most fun with your real colleagues and rooms – but you can also choose a fictional company with invented characters. Then you don't enter any names when ordering.</p></details>
+<details><summary>Do we have to enter real names?</summary><p>No. But it's most fun with your real colleagues and rooms – you can also choose a fictional company with invented characters.</p></details>
 <details><summary>What age is it for?</summary><p>Our cases are written for adults – with a poisoning, fraud and dark humour. Premium Plus with the AI assistant ARIA is intended for participants aged 18 and over. If younger people play along, for example apprentices, choose Basic or Premium: no AI runs there.</p></details>
 <details><summary>Our IT blocks AI tools – will ARIA still work?</summary><p>Usually, yes. Your devices only connect to mordsteam.com; ARIA runs via our server and only knows the invented world of the case. We don't send real names from your personalisation to the AI provider but replace them with placeholders first. If your policies prohibit AI applications altogether, check briefly with your IT or choose Premium without ARIA. Tip for all packages: open mordsteam.com/spiel on a company device beforehand – then you know no web filter will get in the way.</p></details>
 <details><summary>How quickly do we get the case?</summary><p>Immediately, in all three packages. After paying you see your game code right on the screen and can start straight away – or any time in the next 12 months. Each case can be started once. Everything is digital, nothing is shipped.</p></details>
@@ -210,7 +206,7 @@ P["index"] = dict(title="Mordsteam – The personalised murder-mystery team even
 
 <section class="cta"><div class="wrap">
 <h2>One of you has something to hide.</h2>
-<p>Enter your teams and find out who.</p>
+<p>Find out who.</p>
 <a class="btn btn-ink" href="order.html">Order</a>
 </div></section>
 </main>''')
@@ -291,6 +287,8 @@ P["order"] = dict(title="Order – Mordsteam", robots="noindex", desc="Order cas
 <label class="check" id="zustimmungbox"><input type="checkbox" name="zustimmung"><span>Everyone we have entered by name knows about it and agrees to appear in the fictional case – including as victim or suspect. *</span></label>
 <label class="check" id="ab18box" hidden><input type="checkbox" name="ab18"><span>All participants are at least 18 years old (required for ARIA in Premium Plus). *</span></label>
 <label class="check ebcheck" id="ebbox" hidden><input type="checkbox" name="earlybird"><span><b>Early bird: <span class="ebp">40</span>% off.</b> I'd like the discount and am happy to give short feedback after the game and write a review. <a href="early-bird.html" target="_blank">Conditions</a></span></label>
+<label class="check" id="nofbbox"><input type="checkbox" name="no_feedback"><span>The day after the game we'll send you a short feedback request by email. Tick here if you'd rather not receive it.</span></label>
+<label class="check"><input type="checkbox" name="sofort"><span>I want you to begin performance immediately after payment (the game round is created right away). I acknowledge that as a consumer I thereby lose my right of withdrawal. *</span></label>
 <label class="check"><input type="checkbox" name="agb"><span>I accept the <a href="terms.html" target="_blank">terms</a> and have read the <a href="privacy.html" target="_blank">privacy policy</a>. *</span></label>
 <p class="formerr" id="err" role="alert" hidden></p>
 <div><button class="btn btn-red" type="submit" id="submit">Order and pay</button></div>
@@ -317,8 +315,8 @@ P["privacy"] = dict(title="Privacy policy – Mordsteam", desc="How Mordsteam ha
 <h2>2. Visiting the website</h2>
 <p>The website is delivered via Cloudflare (Cloudflare, Inc., USA, and affiliated companies). Technically necessary connection data such as IP address, time, page requested and browser identifier are processed to deliver the site securely and quickly (Art. 6(1)(f) GDPR). Cloudflare is certified under the EU-US Data Privacy Framework.</p>
 <p>We use no cookies, no tracking and no analytics tools. Fonts are hosted locally; no data is sent to Google.</p>
-<h2>3. Early bird feedback</h2>
-<p>If you choose the early bird discount, we will email you at your order address after the game and ask for feedback and a short review (Art. 6(1)(b) GDPR, part of the discount conditions). We only publish a review with your explicit consent and only under the name you release for it. You can object at any time.</p>
+<h2>3. Feedback after the game</h2>
+<p>The day after the game ends, we send the person who ordered a single email with a link to a feedback form (Art. 6(1)(f) GDPR – we want to improve our cases; for early bird orders part of the discount conditions, Art. 6(1)(b) GDPR). You can opt out of this email when ordering. We store your answers without reference to the people in the case. We only publish a review if you expressly agree in the form – anonymously or under the name you provide for it. You can withdraw your consent at any time by email; we will then remove the review from the website.</p>
 <h2>4. Order and payment</h2>
 <p>For an order we process the chosen package, number of teams, game language, your name, your email address, optionally phone and invoice company, and the details for personalising the case (company name, city, rooms, names, title and role of the people who appear in the case, optionally your logo). The purpose is performance of the contract (Art. 6(1)(b) GDPR). If you choose the fictional company, you don't provide any personal data for the personalisation.</p>
 <p>Payment and invoicing are handled by Stripe (Stripe Payments Europe, Ltd., Dublin, Ireland). Stripe receives your payment and billing data for this and processes it under its own responsibility; we never see card details. We keep invoice and payment data for as long as tax retention obligations require (in Austria usually seven years).</p>
@@ -352,13 +350,77 @@ P["imprint"] = dict(title="Imprint – Mordsteam", desc="Legal information about
 P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mordsteam.",
  body='''<main class="page"><div class="wrap prose">
 <h1>Terms and conditions</h1>
-<p class="lead">Our general terms and conditions will be published here before the shop opens.</p>
+<p class="small">Last updated: September 2026 · This is a translation for information. The <a href="/agb.html" hreflang="de">German version</a> is legally binding.</p>
+
+<h2>1. Provider and scope</h2>
+<p>The provider is Martin Kriegler, Mordsteam, Sportplatzgasse 16, 7152 Pamhagen, Austria, email: <a href="mailto:office@mordsteam.com">office@mordsteam.com</a> (“we”). These terms apply to all orders via mordsteam.com, from businesses as well as consumers (“you”). Deviating conditions only apply if we agree to them in writing. The version valid at the time of your order applies.</p>
+
+<h2>2. Our service</h2>
+<p>We provide a personalised, digital murder-mystery case to play together in teams (“game round”). The scope depends on the chosen package (Basic, Premium or Premium Plus) and the number of teams booked. After paying you receive an organiser code and a game code, which you use to open and start the game round in your browser. Nothing is shipped physically.</p>
+<ul>
+<li>The game round can be played for 12 months from purchase and can be started once. It then runs for the playing time stated in the package (plus up to 60 minutes of overtime) and ends.</li>
+<li>To play, each team needs an internet-enabled device with an up-to-date browser. We are not responsible for web filters or blocks by your IT; we recommend opening mordsteam.com/spiel on a company device beforehand.</li>
+<li>The case is entirely fictional. Names and details you enter are built into an invented story; the accusations in it are not meant seriously.</li>
+</ul>
+
+<h2>3. Conclusion of the contract</h2>
+<p>The presentation of the packages on the website is not a binding offer. By clicking “Order and pay” you make a binding offer. The contract is concluded as soon as payment has succeeded and we show you the codes or confirm them by email. The contract language is German; this English version is for information.</p>
+
+<h2>4. Prices, payment and discounts</h2>
+<ul>
+<li>All prices are final prices in euros per team. We are a small business; under § 6 (1) no. 27 of the Austrian VAT Act no VAT is charged.</li>
+<li>Payment is made in advance via our payment provider Stripe (e.g. card, Apple Pay, Google Pay). You receive the invoice by email.</li>
+<li>Discounts and vouchers (e.g. early bird) apply under the conditions published for them, cannot be combined and cannot be exchanged for cash. The <a href="early-bird.html">early bird conditions</a> form part of this contract if you choose the early bird discount.</li>
+</ul>
+
+<h2>5. Your details and obligations</h2>
+<ul>
+<li>You only enter names, roles and details of people who know about it and agree to appear in the fictional case – including as victim or suspect. You confirm this when ordering.</li>
+<li>You only upload a logo if you may use it for your internal team event. It appears exclusively on the case intranet of your game round.</li>
+<li>Details must not contain insulting, discriminatory or unlawful content. We may refuse such orders; in that case we refund any amount already paid.</li>
+<li>You are responsible for the accuracy of your details and the consent of the people named.</li>
+</ul>
+
+<h2>6. AI assistant ARIA (Premium Plus)</h2>
+<ul>
+<li>In the Premium Plus package, the finale includes an AI assistant (“ARIA”). Premium Plus is intended only for participants aged 18 and over; you confirm this when ordering.</li>
+<li>ARIA is labelled as an AI, only knows the invented world of the case and can make mistakes. Her answers are part of the game and not information or advice. Please don't enter real personal data in the chat.</li>
+<li>Each team can send up to 100 messages. If the AI is temporarily unavailable, ARIA shows an automatic extract with all the information needed to solve the case – the case remains solvable.</li>
+</ul>
+
+<h2>7. Rights of use</h2>
+<p>Cases, texts, graphics and software are protected by copyright. You receive the simple, non-transferable right to play your game round for internal use. You may not publish, pass on or reuse case content, solutions or codes for other rounds. You are welcome to share the winners' certificate and photos of your event.</p>
+
+<h2>8. Right of withdrawal for consumers</h2>
+<p>If you are a consumer, you generally have the right to withdraw from the contract within 14 days of its conclusion without giving reasons.</p>
+<p><b>Early expiry:</b> Our service is digital content that we provide immediately after payment. When ordering, you expressly agree that we begin performance before the withdrawal period expires and confirm your knowledge that you thereby lose your right of withdrawal. The right of withdrawal expires when we provide the codes and our email confirmation (§ 18 (1) no. 11 of the Austrian Distance and Off-Premises Contracts Act, FAGG).</p>
+<p><b>How to withdraw, where the right still exists:</b> Send us a clear statement, for example by email to <a href="mailto:office@mordsteam.com">office@mordsteam.com</a>. You may use this template but don't have to:</p>
+<blockquote class="small">To Martin Kriegler, Mordsteam, Sportplatzgasse 16, 7152 Pamhagen, Austria, office@mordsteam.com: I/we hereby withdraw from the contract concluded by me/us for the following service: … · Ordered on: … · Name: … · Address: … · Date: …</blockquote>
+<p>After an effective withdrawal we refund all payments within 14 days using the original means of payment.</p>
+
+<h2>9. Warranty and faults</h2>
+<p>The statutory warranty applies, for consumers under the Austrian Consumer Warranty Act (VGG). If something doesn't work as described, please let us know as soon as possible at <a href="mailto:office@mordsteam.com">office@mordsteam.com</a>. We will fix the fault or provide a new game round; if that is not possible, we refund the price in full or in part.</p>
+
+<h2>10. Liability</h2>
+<p>We are liable without limitation for intent and gross negligence and for personal injury. We are not liable to businesses for slight negligence; towards consumers, liability under the mandatory provisions of the Austrian Consumer Protection Act remains unaffected. Towards businesses our liability is also limited to the order value, as far as legally permitted. We are not liable for outages beyond our control (such as problems with your internet connection, your IT or third-party providers), but we're happy to help find a solution.</p>
+
+<h2>11. Storage and deletion</h2>
+<p>30 days after the end of the game round we delete the round including teams, personalisation and logo. A game round that has not been started expires 12 months after purchase; if it has not been played by then, there is no refund. Details are in the <a href="privacy.html">privacy policy</a>.</p>
+
+<h2>12. Complaints and dispute resolution</h2>
+<p>Please send complaints to <a href="mailto:office@mordsteam.com">office@mordsteam.com</a>; we'll get back to you as soon as we can. We are not obliged to take part in proceedings before a consumer arbitration body. In Austria, the <a href="https://www.ombudsstelle.at" target="_blank" rel="noopener">Internet Ombudsstelle</a> is responsible for disputes from online transactions.</p>
+
+<h2>13. Applicable law and jurisdiction</h2>
+<p>Austrian law applies, excluding the UN Convention on Contracts for the International Sale of Goods and conflict-of-law rules. Consumers retain the protection of mandatory provisions of the country in which they have their habitual residence. The place of jurisdiction for businesses is the court with subject-matter jurisdiction for 7152 Pamhagen.</p>
+
+<h2>14. Final provisions</h2>
+<p>If any provision of these terms is invalid, the rest remains valid. Towards businesses, the invalid provision is replaced by a rule that comes closest to its purpose.</p>
 </div></main>''')
 
 P["early-bird"] = dict(title="Early bird – Mordsteam", desc="Early bird: 40% off your first Mordsteam game – the conditions.",
  body='''<main class="page"><div class="wrap prose">
 <div class="eyebrow">We're live · Early bird</div>
-<h1>40% off your first game</h1>
+<h1 class="h1-page">40% off your first game</h1>
 <p class="lead">Mordsteam has just launched. Help us make our cases even better – and play your first case at 40% off.</p>
 <h2>How it works</h2>
 <ul>
@@ -367,7 +429,7 @@ P["early-bird"] = dict(title="Early bird – Mordsteam", desc="Early bird: 40% o
 </ul>
 <h2>What we ask in return</h2>
 <ul>
-<li>After your game we'll send you a short email. You give us honest feedback – it takes about 10 minutes.</li>
+<li>The day after your game we'll send you a short email with a feedback form. You give us honest feedback – it takes about 5 minutes.</li>
 <li>You write a short review. Whether and under which name we show it on mordsteam.com is up to you.</li>
 </ul>
 <h2>The fine print</h2>
@@ -377,6 +439,15 @@ P["early-bird"] = dict(title="Early bird – Mordsteam", desc="Early bird: 40% o
 <li>Valid while the offer runs. We'll announce the end date here and in the banner in advance. Orders placed before then keep the discount, even if you play later.</li>
 </ul>
 <p><a class="btn btn-red" href="order.html">Order now</a></p>
+</div></main>''')
+
+P["feedback"] = dict(title="Feedback – Mordsteam", robots="noindex, nofollow", desc="Feedback on your Mordsteam case.",
+ scripts='<script src="/assets/feedback.js"></script>',
+ body='''<main class="page"><div class="wrap">
+<div class="eyebrow">Feedback · Case 001</div>
+<h1 class="h1-page">How was your case?</h1>
+<p class="lead" id="fbintro"></p>
+<div id="fb"><p class="muted">Loading …</p></div>
 </div></main>''')
 
 P["contact"] = dict(title="Contact – Mordsteam", desc="How to reach Mordsteam.",

@@ -63,6 +63,8 @@
     $("#ab18box").hidden = paket() !== "plus";
     form.querySelectorAll("[data-real]").forEach((f) => (f.hidden = fk));
     $("#fiktivnote").hidden = !fk;
+    // Early Bird: Feedback ist Teil der Bedingungen – Abwahl der Feedback-Mail ausblenden
+    $("#nofbbox").hidden = !!(META.earlybird && form.earlybird.checked);
     $("#zustimmungbox").hidden = fk;
     // Schritte fortlaufend nummerieren (fiktiv: Firma, Opfer, Verdächtige entfallen)
     [...form.querySelectorAll("fieldset.step")].filter((f) => !f.hidden).forEach((f, i) => (f.querySelector("legend span").textContent = i + 1));
@@ -194,11 +196,12 @@
     const contact = { name: form.c_name.value.trim(), email: form.c_email.value.trim(), telefon: form.c_tel.value.trim(), rechnung_firma: form.c_firma.value.trim() };
     if (contact.name.length < 2) throw [T("Bitte deinen Namen angeben.", "Please enter your name."), form.c_name];
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw [T("Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."), form.c_email];
-    const consent = { ab18: form.ab18.checked, zustimmung: form.zustimmung.checked, agb: form.agb.checked, logo_rechte: form.logo_rechte.checked };
+    const consent = { sofort: form.sofort.checked, no_feedback: form.no_feedback.checked && !(META.earlybird && form.earlybird.checked), ab18: form.ab18.checked, zustimmung: form.zustimmung.checked, agb: form.agb.checked, logo_rechte: form.logo_rechte.checked };
     const fk = fiktiv();
     if (!fk && logoData && !consent.logo_rechte) throw [T("Bitte bestätigen, dass ihr das Logo verwenden dürft.", "Please confirm that you may use the logo."), form.logo_rechte];
     if (!fk && !consent.zustimmung) throw [T("Bitte bestätigen, dass alle genannten Personen einverstanden sind.", "Please confirm that everyone named has agreed."), form.zustimmung];
     if (paket() === "plus" && !form.ab18.checked) throw [T("Bitte bestätigen, dass alle Teilnehmenden mindestens 18 Jahre alt sind – oder Basis bzw. Premium wählen.", "Please confirm that all participants are at least 18 – or choose Basic or Premium."), form.ab18];
+    if (!consent.sofort) throw [T("Bitte bestätigen, dass wir sofort nach dem Bezahlen beginnen dürfen.", "Please confirm that we may begin immediately after payment."), form.sofort];
     if (!consent.agb) throw [T("Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."), form.agb];
     return { paket: paket(), teams: Number(form.teams.value), vars: fk ? {} : vars, land: form.land.value, contact, consent, logo: fk ? null : logoData, besetzung: fk ? "fiktiv" : "echt", earlybird: !!(META.earlybird && form.earlybird.checked), lang: form.lang.value === "en" ? "en" : "de", site: EN ? "en" : "de" };
   }

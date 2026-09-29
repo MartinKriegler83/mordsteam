@@ -24,6 +24,7 @@
       const list = await MS.api("GET", "admin/sessions", null, H());
       const ord = await MS.api("GET", "admin/orders", null, H()).catch(() => ({ orders: [] }));
       const st = await MS.api("GET", "admin/stats" + (statTests ? "?tests=1" : ""), null, H()).catch(() => ({ stats: {} }));
+      fb = await MS.api("GET", "admin/feedback", null, H()).catch(() => null);
       render(list.sessions, ord.orders, st.stats);
     } catch (e) {
       if (e.status === 401 || e.status === 503) { try { sessionStorage.removeItem("ms_admin"); } catch {} key = null; return keyView(e.status === 401 ? "Schlüssel falsch." : e.message); }
@@ -75,6 +76,26 @@
   }
 
   let statTests = true;
+  let fb = null, fbMsg = "";
+  // ---------- Feedback ----------
+  function feedbackPanel() {
+    if (!fb) return "";
+    const pub = { no: "nicht veröffentlichen", anon: "anonym erlaubt", name: "mit Namen erlaubt" };
+    const A = { best: "Am meisten Spaß", improve: "Verbessern", difficulty: "Schwierigkeit", duration: "Spielzeit", aria: "ARIA", tech: "Technik", players: "Personen", again: "Wieder spielen", call: "Gespräch" };
+    return `<div class="panel"><div class="eyebrow">Feedback nach dem Spiel</div>
+      <p class="small" style="margin:6px 0">Mailversand: <b>${fb.mail ? "eingerichtet" : "NICHT eingerichtet (RESEND_API_KEY / MAIL_FROM fehlen) – Links unten selbst verschicken"}</b> · Täglicher Lauf: <b>${fb.cron ? "CRON_KEY gesetzt" : "CRON_KEY fehlt"}</b></p>
+      <p style="margin:8px 0">${fb.due.length} Runde(n) beendet und noch ohne Feedback-Mail.</p>
+      <div class="actions-row"><button class="btn btn-line" id="fbrun">Fällige jetzt senden</button><button class="btn btn-line" id="fbforce">Test: auch heute beendete sofort</button></div>
+      ${fbMsg ? `<p class="small" style="margin-top:8px">${fbMsg}</p>` : ""}
+      ${fb.links.length ? `<p class="small" style="margin-top:10px"><b>Nicht per Mail zugestellt – Link selbst schicken:</b><br>${fb.links.map((l) => `${MS.esc(l.email || "")}: <a href="${l.link}" target="_blank" rel="noopener">${location.origin}${l.link}</a>`).join("<br>")}</p>` : ""}
+      <div class="list-sessions" style="margin-top:12px">${fb.feedback.length ? fb.feedback.map((f) => `<div class="sess">
+        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${"★".repeat(f.rating || 0)}${f.nps != null ? ` · Empfehlung ${f.nps}/10` : ""} · ${MS.esc(f.firma || "–")}</b><span class="chip ${f.approved ? "open" : ""}">${f.variant === "eb" ? "Early Bird" : "Standard"} · ${pub[f.publish]}</span></div>
+        <div class="small">${new Date(f.created_at).toLocaleString("de-AT")} · ${MS.esc(f.name || "")} · ${MS.esc(f.email || "")} · ${f.paket}${f.publish === "name" ? ` · Name: <b>${MS.esc(f.publish_name || "")}</b>` : ""}</div>
+        ${f.review ? `<p style="margin:8px 0"><i>„${MS.esc(f.review)}“</i></p>` : ""}
+        <div class="small">${Object.entries(f.answers).map(([k, v]) => `<b>${A[k] || k}:</b> ${MS.esc(v)}`).join("<br>")}</div>
+        ${f.publish !== "no" && f.review ? `<div style="margin-top:8px"><button class="tipbtn" data-fbok="${f.id}" data-v="${f.approved ? 0 : 1}">${f.approved ? "Von Startseite nehmen" : "Auf Startseite zeigen"}</button></div>` : ""}
+      </div>`).join("") : `<p class="muted">Noch kein Feedback.</p>`}</div></div>`;
+  }
   function statsPanel(stats) {
     const lab = { wer: "1 Wer", wann: "2 Wann", warum: "3 Konto", wo: "4 Mappe", helfer: "5 Helfer", fach: "6 Fach", pin: "7 PIN" };
     const f = (x) => (x && x.n ? `${x.median} <span class="muted">(${x.p25}–${x.p75})</span>` : "–");
@@ -142,6 +163,7 @@
         <p class="err">${MS.esc(err)}</p>
       </form></div>
       ${ordersPanel(orders)}
+      ${feedbackPanel()}
       ${statsPanel(stats)}
       <div class="panel"><div class="eyebrow">Alle Runden</div>
         <div class="list-sessions" style="margin-top:10px">${sessions.length ? sessions.map((s) => `<div class="sess">
@@ -171,6 +193,11 @@
     const ql = document.getElementById("qlang"), qd = document.getElementById("qland");
     if (ql) ql.onchange = () => (qLang = ql.value);
     if (qd) qd.onchange = () => (qLand = qd.value);
+    const fr = (force) => async () => { try { const d = await MS.api("POST", "admin/feedback-run", { force }, H()); fbMsg = `${d.sent.length} bearbeitet: ` + d.sent.map((x) => `${MS.esc(x.email || "")} ${x.sent ? "✓ gesendet" : "– nicht gesendet (Link oben)"}`).join(", "); } catch (e2) { fbMsg = e2.message; } load(); };
+    const b1 = document.getElementById("fbrun"), b2 = document.getElementById("fbforce");
+    if (b1) b1.onclick = fr(false);
+    if (b2) b2.onclick = fr(true);
+    root.querySelectorAll("[data-fbok]").forEach((b) => (b.onclick = async () => { await MS.api("POST", "admin/feedback-approve", { id: b.dataset.fbok, approved: b.dataset.v === "1" }, H()); load(); }));
     const stc = document.getElementById("stattests");
     if (stc) stc.onchange = () => { statTests = stc.checked; load(); };
     root.querySelectorAll("[data-ship]").forEach((b) => (b.onclick = async () => {
