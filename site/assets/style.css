@@ -465,3 +465,6 @@ p.small{font-size:14px;color:#5A5D66}
 /* Spielkarten: MORDSTEAM zweifarbig, roter Bindestrich, Variante schwarz */
 .game h3.gname .gp{color:var(--ink)}
 .game h3.gname .gd{color:var(--red);margin:0 .06em}
+/* Spielkarten: Variante 25 % größer, drei Leerzeichen Abstand, gemeinsame Grundlinie */
+.game h3.gname{font-size:clamp(17px,1.6vw,22px)}
+.game h3.gname .gp{font-size:1.25em;margin-left:.75em;vertical-align:baseline;color:var(--ink)}
