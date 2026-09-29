@@ -12,6 +12,7 @@ if [ "$CF_PAGES_BRANCH" = "main" ] && [ "$LAUNCH" != "true" ]; then
   # Die Spielplattform (/spiel/, nicht verlinkt, noindex) bleibt für Testrunden erreichbar.
   cp -r site/assets site/spiel site/_headers site/robots.txt site/favicon.ico site/site.webmanifest dist/
   cp teaser/index.html dist/index.html
+  cp teaser/impressum.html dist/impressum.html
 else
   echo "Modus: VOLLE SEITE"
   cp -r site/. dist/
