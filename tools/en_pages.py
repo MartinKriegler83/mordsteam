@@ -121,14 +121,6 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <p class="lead">After the strategy evening, your boss is found poisoned. A red folder is missing – with evidence that someone in the company is diverting money. At 12:00 noon it was due with the top boss – CEO, group chair or board. By then you need to know who did it.</p>
 <p><b>Everything happens in your company:</b></p>
 <div class="objects"><span>your top floor as the victim</span><span>your colleagues as suspects</span><span>your intranet</span><span>your logo</span></div>
-<ul class="list">
-<li>Act 1: Who? When? Where did the money go? Where is the folder?</li>
-<li>Premium: act 2 with new evidence and even trickier questions</li><li>Premium Plus: finale with ARIA, the AI assistant on your intranet – she helps with the last puzzle, but not every answer gets you further</li>
-<li>The culprit is always drawn at random from your group – different every round, nobody knows in advance</li>
-<li>Your own case intranet with your logo, full of clues</li>
-<li>Red herrings with a wink – nobody is shown up, and the victim survives</li>
-<li>Localised for your country: police, currency, number plates, bank details and cities – across Europe, North America and Australia</li>
-</ul>
 </div>
 <div class="clues" aria-label="Examples from the case file">
 <div class="clue"><small>ACCESS LOG</small><span>Who was where, and when?<br>??:?? · door ??? · badge ????</span></div>
@@ -136,6 +128,13 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <div class="clue dark"><small>CASE DESK</small><div class="codebox" aria-label="Four-digit solution code"><i>?</i><i>?</i><i>?</i><i>?</i></div><span class="hint">Enter your answers, solve the case, make the podium.</span></div>
 <div class="clue"><small>ARIA · AI ASSISTANT</small><span>Premium Plus only:<br>“How can I help you today?”</span></div>
 </div>
+<ul class="list case-points">
+<li>Act 1: Who? When? Where did the money go? Where is the folder?</li>
+<li>Premium: act 2 with new evidence and even trickier questions</li><li>Premium Plus: finale with ARIA, the AI assistant on your intranet – she helps with the last puzzle, but not every answer gets you further</li>
+<li>The culprit is always drawn at random from your group – different every round, nobody knows in advance</li>
+<li>Your own case intranet with your logo, full of clues</li>
+<li>Red herrings with a wink – nobody is shown up, and the victim survives</li>
+</ul>
 </div></section>
 
 <section id="packages" class="section"><div class="wrap stack">

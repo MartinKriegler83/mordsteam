@@ -437,3 +437,12 @@ p.small{font-size:14px;color:#5A5D66}
 .game .smark{top:-16px;right:14px;background:var(--card)}
 .game.live .smark{background:var(--card)}
 .games{row-gap:48px}
+/* Fall-Abschnitt: Notizen oben neben dem Text, Punkte darunter über zwei Spalten */
+.case-points{grid-column:1/-1;margin:0;padding-left:22px}
+.case-points li{break-inside:avoid;margin-bottom:10px}
+@media (min-width:900px){
+  .case .case-grid{align-items:start;row-gap:36px}
+  .case-points{columns:2;column-gap:72px;border-top:1px dashed var(--line);padding-top:28px}
+  .case .clues{margin-top:40px}
+}
+@media (min-width:900px){.case-points{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,auto);grid-auto-flow:column;column-gap:72px;row-gap:4px;columns:auto}}
