@@ -412,3 +412,40 @@ button.btn-big{margin-top:14px}
 /* Sprachumschalter */
 .langsw{margin-left:auto;background:transparent;border:1px solid rgba(243,239,230,.35);color:#F3EFE6;font:600 12px/1 var(--mono);letter-spacing:1px;padding:6px 9px;border-radius:4px;cursor:pointer}
 .langsw:hover{border-color:#F3EFE6}
+/* =====================================================================
+   Mordsteam Solo
+   ===================================================================== */
+.so-select{width:100%;font:inherit;font-size:17px;padding:12px 14px;border:0;border-bottom:2px solid var(--ink);background:#FBF8F0;border-radius:0;color:var(--ink)}
+.so-select:focus{outline:none;background:#FFF4CF;border-bottom-color:var(--red)}
+.so-done label{color:#5A5D66;font-weight:600}
+.so-ans{display:inline-block;margin-top:6px;background:#DDF1E3;color:#1F6B3A;font-weight:700;padding:4px 10px;border-radius:4px}
+.so-locked{opacity:.5}
+.ev .gel.neu{color:#1F6B3A;border-color:#1F6B3A}
+.so-result p{margin:0 0 10px}
+.so-result h3{font-family:var(--serif);font-size:22px;margin:26px 0 8px}
+.so-score{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:26px 0 10px}
+.so-score div{background:var(--paper-2);border-radius:4px;padding:12px;text-align:center}
+.so-score small{display:block;font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#5A5D66}
+.so-score b{font-family:var(--mono);font-size:26px}
+.so-pct{text-align:center;font-size:18px;margin:10px 0 0}
+.so-voucher{margin-top:22px;border:2px dashed var(--red);border-radius:6px;padding:16px;text-align:center;display:grid;gap:4px}
+.so-voucher small{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--red)}
+.so-voucher b{font-size:28px;letter-spacing:3px}
+.so-voucher span{font-size:14px;color:#5A5D66}
+.printonly{display:none}
+@media print{
+  @page{size:A4 landscape;margin:0}
+  .solo .noprint,.solo .bar,.solo .testbar,.solo .toast{display:none!important}
+  .solo .view{padding:0}.solo .view>.wrap{max-width:none;padding:0}
+  .printonly{display:block}
+  .so-cert{width:297mm;height:209mm;padding:14mm;background:#F3EFE6;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .so-cert-in{height:100%;border:3px solid #15171C;outline:1px solid #15171C;outline-offset:-10px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#15171C;padding:10mm}
+  .so-cert-brand{font-family:var(--serif);font-weight:900;font-size:30px;letter-spacing:2px}.so-cert-brand .so-sub{font-size:16px;letter-spacing:4px;margin-left:10px;vertical-align:middle}
+  .so-cert-eyebrow{font-family:var(--mono);letter-spacing:6px;text-transform:uppercase;color:#B3261E;margin:18px 0 6px}
+  .so-cert h1{font-family:var(--serif);font-weight:900;font-size:54px;margin:0 0 12px}
+  .so-cert p{font-size:19px;max-width:170mm}
+  .so-cert-row{display:flex;gap:18mm;margin-top:14mm}
+  .so-cert-row small{display:block;font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#5A5D66}
+  .so-cert-row b{font-family:var(--mono);font-size:24px}
+  .so-cert-foot{margin-top:14mm;font-family:var(--mono);font-size:12px;letter-spacing:2px;color:#5A5D66}
+}

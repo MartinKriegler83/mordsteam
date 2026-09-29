@@ -390,9 +390,9 @@ p.small{font-size:14px;color:#5A5D66}
 .tape{position:absolute;left:-6%;right:-6%;bottom:38px;background:#F2C230;color:var(--ink);font-family:var(--mono);font-weight:500;font-size:13px;letter-spacing:.32em;white-space:nowrap;overflow:hidden;padding:9px 0;transform:rotate(-2.4deg);box-shadow:0 8px 22px rgba(0,0,0,.4)}
 .tape span{display:inline-block;animation:tape 60s linear infinite}
 @keyframes tape{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.evid{position:absolute;width:34px;height:30px;background:#F2C230;color:var(--ink);clip-path:polygon(50% 0,100% 100%,0 100%);display:flex;align-items:flex-end;justify-content:center;font-family:var(--mono);font-weight:500;font-size:13px;padding-bottom:3px}
-.evid.e1{left:8%;top:30%}.evid.e2{right:9%;top:52%}.evid.e3{left:16%;bottom:108px}
-@media (max-width:700px){.evid{display:none}}
+.evm{position:absolute;width:34px;height:30px;background:#F2C230;color:var(--ink);clip-path:polygon(50% 0,100% 100%,0 100%);display:flex;align-items:flex-end;justify-content:center;font-family:var(--mono);font-weight:500;font-size:13px;padding-bottom:3px}
+.evm.e1{left:8%;top:30%}.evm.e2{right:9%;top:52%}.evm.e3{left:16%;bottom:108px}
+@media (max-width:700px){.evm{display:none}}
 @media (prefers-reduced-motion:reduce){.bh-lupe .dot,.tape span{animation:none}}
 /* Spiele-Karten */
 .games{display:grid;gap:26px;margin-top:34px}
@@ -430,7 +430,7 @@ p.small{font-size:14px;color:#5A5D66}
 .mode h3{font-family:var(--serif);font-size:22px;margin-bottom:6px}
 @media (min-width:900px){.ph .wrap{grid-template-columns:1.1fr .9fr}.modes{grid-template-columns:1fr 1fr}}
 .ph .soonstamp{align-self:flex-start}
-.evid.e1{left:4%;top:16%}
+.evm.e1{left:4%;top:16%}
 /* Spielkarten: Produktname wie das Logo, einzeilig */
 .game h3.gname{font-family:var(--serif);font-weight:900;font-size:clamp(20px,1.9vw,26px);letter-spacing:.02em;white-space:nowrap;padding-right:0;margin-top:6px;color:var(--ink)}
 .game h3.gname .wm-r,.game h3.gname .gp{color:var(--red)}

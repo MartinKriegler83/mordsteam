@@ -25,6 +25,7 @@
       const ord = await MS.api("GET", "admin/orders", null, H()).catch(() => ({ orders: [] }));
       const st = await MS.api("GET", "admin/stats" + (statTests ? "?tests=1" : ""), null, H()).catch(() => ({ stats: {} }));
       fb = await MS.api("GET", "admin/feedback", null, H()).catch(() => null);
+      soloList = await fetch("/api/solo/admin/list", { headers: H() }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
       render(list.sessions, ord.orders, st.stats);
     } catch (e) {
       if (e.status === 401 || e.status === 503) { try { sessionStorage.removeItem("ms_admin"); } catch {} key = null; return keyView(e.status === 401 ? "Schlüssel falsch." : e.message); }
@@ -77,6 +78,7 @@
 
   let statTests = true;
   let fb = null, fbMsg = "";
+  let soloMsg = "", soloList = null;
   // ---------- Feedback ----------
   function feedbackPanel() {
     if (!fb) return "";
@@ -139,6 +141,14 @@
         ${created.quick ? `<p class="small" style="margin-top:8px"><b>${TN[created.quick.tier]}, ${TMIN[created.quick.tier]} Min. · ${created.quick.land} · ${created.quick.lang.toUpperCase()}</b> · ${MS.esc(created.quick.firma)} (${MS.esc(created.quick.stadt)}) · Opfer: ${MS.esc(created.quick.opfer)} · Oberboss: ${MS.esc(created.quick.boss)} · Verdächtige: ${created.quick.people.map(MS.esc).join(", ")} · Täter/in: per Zufall (steht in der Auflösung)</p>
         <div class="actions-row" style="margin-top:10px"><a class="btn btn-ink" href="/spiel/leitung.html" target="_blank" rel="noopener">Organisator-Ansicht öffnen</a><a class="btn btn-line" href="/spiel/?code=${created.join_code}&lang=${created.quick.lang}" target="_blank" rel="noopener">Als Team beitreten</a></div>
         <p class="small" style="margin-top:8px">${created.quick.custom ? "Der Fall ist noch nicht geöffnet. In der Organisator-Ansicht zuerst „Fall öffnen“, dann Teams anmelden lassen und „Fall starten“." : "Der Fall ist geöffnet. Teams anmelden lassen, dann in der Organisator-Ansicht „Fall starten“."}</p>` : ""}</div>` : ""}
+      <div class="panel"><div class="eyebrow">Mordsteam Solo · Testcode</div>
+        <p style="margin:8px 0 14px">Legt einen Solo-Code „Nachtzug nach Venedig“ im Testmodus an (eigene Wertung, getrennt von echten Spielen; mit „+5 Min.“-Knopf).</p>
+        <div class="actions-row"><button class="btn btn-red" id="solonew">Solo-Testcode anlegen</button></div>
+        ${soloMsg ? `<div style="margin-top:12px">${soloMsg}</div>` : ""}
+        ${soloList && soloList.tickets.length ? `<details style="margin-top:12px"><summary>Letzte Solo-Codes (${soloList.tickets.length})</summary><table class="grid" style="margin-top:8px"><tr><th>Code</th><th>Name</th><th>Test</th><th>Durchgänge</th><th>Erste Zeit</th><th>Gutschein</th></tr>
+          ${soloList.tickets.map((x) => `<tr><td class="mono"><a href="/spiel/solo.html?c=${x.code}" target="_blank" rel="noopener">${x.code}</a></td><td>${MS.esc(x.name || "–")}</td><td>${x.test_mode ? "ja" : "nein"}</td><td>${x.runs}</td><td class="mono">${x.score ? MS.dur(x.score) : "–"}</td><td class="mono">${MS.esc(x.voucher || "–")}</td></tr>`).join("")}</table>
+          <p class="small">${soloList.scores.map((z) => `${z.test_mode ? "Test" : "Echt"}: ${z.n} Wertungen, Ø ${MS.dur(z.avg)}, Ø ${Number(z.hints).toFixed(1)} Hinweise, Ø ${Number(z.wrong).toFixed(1)} Fehlversuche`).join(" · ") || "Noch keine Wertungen."}</p></details>` : ""}
+      </div>
       <div class="panel"><div class="eyebrow">Schnelltest</div>
         <p style="margin:8px 0 14px">Ein Klick: Runde mit fiktiver Besetzung anlegen (Land und Spielsprache wählbar), Fall öffnen und dich als Organisator anmelden.</p>
         <div class="two" style="margin-bottom:12px"><div class="field"><label for="qlang">Spielsprache</label><select id="qlang">${meta.langs.map((l) => `<option value="${l}" ${l === qLang ? "selected" : ""}>${l === "en" ? "Englisch" : "Deutsch"}</option>`).join("")}</select></div>
@@ -200,6 +210,16 @@
       try { await quickTest(Number(b.dataset.quick)); err = ""; scrollTo(0, 0); } catch (e2) { err = e2.message; }
       load();
     }));
+    const sn = document.getElementById("solonew");
+    if (sn) sn.onclick = async () => {
+      sn.disabled = true;
+      try {
+        const r = await fetch("/api/solo/admin/ticket", { method: "POST", headers: { "content-type": "application/json", ...H() }, body: "{}" });
+        const d = await r.json(); if (!r.ok) throw new Error(d.error || "Fehler");
+        soloMsg = `<p style="margin:0">Solo-Code: <span class="bigcode" style="font-size:26px">${d.code}</span></p><p class="mono small">${location.origin}/spiel/solo.html?c=${d.code}</p><div class="actions-row" style="margin-top:8px"><a class="btn btn-ink" href="/spiel/solo.html?c=${d.code}" target="_blank" rel="noopener">Solo-Fall öffnen</a></div>`;
+      } catch (e2) { soloMsg = `<p class="err">${MS.esc(e2.message)}</p>`; }
+      load();
+    };
     const ql = document.getElementById("qlang"), qd = document.getElementById("qland");
     if (ql) ql.onchange = () => (qLang = ql.value);
     if (qd) qd.onchange = () => (qLand = qd.value);
