@@ -1,5 +1,5 @@
 // Aktionsbanner oben auf der Startseite (Early Bird). Ob die Aktion läuft, wie viel Rabatt und bis wann,
-// steuern die Cloudflare-Variablen EARLYBIRD_PROZENT und EARLYBIRD_BIS – ohne neuen Push.
+// steuern die Cloudflare-Variablen EARLYBIRD_PROZENT (0 = aus, Standard 40) und EARLYBIRD_BIS – nach einer Änderung einmal neu ausrollen.
 (function () {
   var bar = document.getElementById("ebbar");
   if (!bar) return;

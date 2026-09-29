@@ -4,9 +4,11 @@
 //   STRIPE_SECRET_KEY           sk_test_… (Vorschau) bzw. sk_live_… (Produktion)
 //   STRIPE_WEBHOOK_SECRET       whsec_… (Webhook-Endpunkt /api/shop/stripe-webhook)
 //   ORDER_FAKE_PAY=true         nur für Tests ohne Stripe: Bestellung gilt sofort als bezahlt
-//   EARLYBIRD_PROZENT=40         Early-Bird-Aktion an (Banner + Häkchen im Formular). Leer/gelöscht = Aktion aus.
+//   Early Bird ist standardmäßig AN (40 %, Banner + Häkchen im Formular).
+//   EARLYBIRD_PROZENT=0          Aktion aus (anderer Wert = anderer Prozentsatz)
 //   EARLYBIRD_BIS=2026-11-30     optional: letzter Tag der Aktion (Banner zeigt dann „nur noch bis …“)
-//   EARLYBIRD_COUPON=MORDSTEAM40 ID des Stripe-Gutscheins mit genau diesem Prozentsatz (Pflicht, sobald Stripe aktiv ist)
+//   EARLYBIRD_COUPON             optional: eigener Stripe-Gutschein. Ohne Angabe legt der Shop den Gutschein
+//                                „MORDSTEAM40“ (bzw. MORDSTEAM<Prozent>) beim ersten Bedarf selbst in Stripe an.
 //   RESEND_API_KEY, MAIL_FROM   optional: Bestätigungsmail über Resend (z. B. MAIL_FROM="Mordsteam <office@mordsteam.com>")
 import { CASES, json, fail, randomToken, viennaDate, randInt } from "../../../lib/game.js";
 import { migrate, createGameSession, normalizeVars, InputError } from "../../../lib/create.js";
@@ -42,7 +44,8 @@ export async function onRequest({ request, env, params }) {
 const shopOpen = (env) => String(env.SHOP_OPEN || "").toLowerCase() === "true";
 // Early Bird: läuft, solange EARLYBIRD_PROZENT gesetzt ist und EARLYBIRD_BIS (falls gesetzt) nicht vorbei ist
 function earlybird(env) {
-  const p = Math.round(Number(env.EARLYBIRD_PROZENT));
+  const raw = String(env.EARLYBIRD_PROZENT ?? "").trim();
+  const p = raw === "" ? 40 : Math.round(Number(raw));
   if (!(p > 0 && p < 100)) return null;
   const bis = /^\d{4}-\d{2}-\d{2}$/.test(String(env.EARLYBIRD_BIS || "")) ? env.EARLYBIRD_BIS : null;
   if (bis && viennaDate() > bis) return null;
@@ -123,7 +126,6 @@ async function bestellung(request, env) {
   // Early Bird: Häkchen gesetzt und Aktion läuft → Rabatt wird bei Stripe automatisch abgezogen (kein Code nötig)
   const eb = b.earlybird === true ? earlybird(env) : null;
   if (b.earlybird === true && !eb) throw new InputError(L(site, "Die Early-Bird-Aktion ist leider schon vorbei. Bitte das Häkchen entfernen.", "Sorry, the early bird offer has ended. Please untick the box."));
-  if (eb && env.STRIPE_SECRET_KEY && !env.EARLYBIRD_COUPON) throw new Error("EARLYBIRD_COUPON fehlt");
   if (eb) { contact.earlybird = eb.prozent; }
   const full = PRICES[paket] * teams;
   const amount = eb ? Math.round(full * (100 - eb.prozent) / 100) : full;
@@ -140,7 +142,7 @@ async function bestellung(request, env) {
     const cs = await stripe(env, "POST", "checkout/sessions", {
       mode: "payment",
       // Early Bird: Gutschein fix anhängen. Sonst Feld für eigene Codes (z. B. Friends-Codes) anbieten – Stripe erlaubt nicht beides.
-      ...(eb ? { discounts: [{ coupon: env.EARLYBIRD_COUPON }] } : { allow_promotion_codes: true }),
+      ...(eb ? { discounts: [{ coupon: await ebCoupon(env, eb.prozent) }] } : { allow_promotion_codes: true }),
       locale: site,
       customer_email: contact.email,
       client_reference_id: id,
@@ -285,6 +287,16 @@ ${c.earlybird ? `<p><b>Early Bird:</b> ${T("Danke, dass ihr uns helft! Nach dem 
     body: JSON.stringify({ from: env.MAIL_FROM, to: [c.email], reply_to: "office@mordsteam.com",
       subject: T(`Euer Mordsteam-Fall für ${vars.FIRMA} ist bereit`, `Your Mordsteam case for ${vars.FIRMA} is ready`), html }),
   });
+}
+
+// Early-Bird-Gutschein in Stripe: vorhandenen nehmen oder beim ersten Bedarf selbst anlegen (einmalig, x % Rabatt)
+async function ebCoupon(env, prozent) {
+  if (env.EARLYBIRD_COUPON) return env.EARLYBIRD_COUPON;
+  const id = `MORDSTEAM${prozent}`;
+  try { const c = await stripe(env, "GET", `coupons/${id}`); if (c && c.id && c.valid !== false) return c.id; } catch {}
+  try { await stripe(env, "POST", "coupons", { id, percent_off: prozent, duration: "once", name: `Early Bird ${prozent} %` }); }
+  catch (e) { const c = await stripe(env, "GET", `coupons/${id}`); if (!c || !c.id) throw e; }  // parallel angelegt
+  return id;
 }
 
 // ---------- Stripe-API ----------
