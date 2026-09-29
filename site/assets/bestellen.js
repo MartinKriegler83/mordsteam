@@ -61,6 +61,7 @@
     const fk = fiktiv();
     $("#plusnote").hidden = paket() !== "plus";
     $("#ab18box").hidden = paket() !== "plus";
+    $("#sofortbox").hidden = form.kunde.value !== "b2c";
     form.querySelectorAll("[data-real]").forEach((f) => (f.hidden = fk));
     $("#fiktivnote").hidden = !fk;
     // Early Bird: Feedback ist Teil der Bedingungen – Abwahl der Feedback-Mail ausblenden
@@ -202,7 +203,7 @@
     if (!fk && !consent.zustimmung) throw [T("Bitte bestätigen, dass alle genannten Personen einverstanden sind.", "Please confirm that everyone named has agreed."), form.zustimmung];
     if (paket() === "plus" && !form.ab18.checked) throw [T("Bitte bestätigen, dass alle Teilnehmenden mindestens 18 Jahre alt sind – oder Basis bzw. Premium wählen.", "Please confirm that all participants are at least 18 – or choose Basic or Premium."), form.ab18];
     if (!contact.kunde) throw [T("Bitte angeben, ob ihr als Unternehmen/Verein oder als Privatperson bestellt.", "Please tell us whether you are ordering as a company/club or as a private individual."), form.kunde[0]];
-    if (!consent.sofort) throw [T("Bitte bestätigen, dass wir sofort nach dem Bezahlen beginnen dürfen.", "Please confirm that we may begin immediately after payment."), form.sofort];
+    if (contact.kunde === "b2c" && !consent.sofort) throw [T("Bitte bestätigen, dass wir eure Spielrunde gleich nach dem Bezahlen anlegen dürfen.", "Please confirm that we may set up your game round right after payment."), form.sofort];
     if (!consent.agb) throw [T("Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."), form.agb];
     return { paket: paket(), teams: Number(form.teams.value), vars: fk ? {} : vars, land: form.land.value, contact, consent, logo: fk ? null : logoData, besetzung: fk ? "fiktiv" : "echt", earlybird: !!(META.earlybird && form.earlybird.checked), lang: form.lang.value === "en" ? "en" : "de", site: EN ? "en" : "de" };
   }
