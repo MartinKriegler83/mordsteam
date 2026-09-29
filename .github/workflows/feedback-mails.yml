@@ -1,0 +1,14 @@
+# Täglich um ca. 9 Uhr (Wien): fällige Feedback-Mails verschicken (Runden, die am Vortag oder früher beendet wurden).
+# Benötigt das Repository-Secret CRON_KEY (gleicher Wert wie die Cloudflare-Variable CRON_KEY).
+name: Feedback-Mails
+on:
+  schedule:
+    - cron: "15 7 * * *"
+  workflow_dispatch: {}
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fällige Feedback-Mails anstoßen
+        run: |
+          curl -fsS -X POST -H "x-cron-key: ${{ secrets.CRON_KEY }}" https://mordsteam.com/api/shop/cron
