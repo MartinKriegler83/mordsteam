@@ -363,3 +363,6 @@ p{margin:0}
 .review .rs{color:var(--red);letter-spacing:2px}
 .review p{margin:0;font-size:16px}
 .review small{color:#5A5D66;font-family:var(--mono);font-size:12px;letter-spacing:.5px}
+/* E-Mail-Adressen und Links nie mit Bindestrich trennen */
+a[href^="mailto:"],.prose a,.lead a{hyphens:none;-webkit-hyphens:none;overflow-wrap:anywhere}
+a[href^="mailto:"]{white-space:nowrap}

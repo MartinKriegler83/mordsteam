@@ -286,6 +286,8 @@ async function sendMail(env, o, s, origin) {
   const title = lang === "en" ? CASES[CASE_ID].EN.META.title : CASES[CASE_ID].META.title;
   const e = (x) => String(x).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
   const q = lang === "en" ? "&lang=en" : "";
+  const host = origin.replace(/^https?:\/\//, "");
+  const MIN = { basis: 50, premium: 70, plus: 90 };
   const html = `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#15171C">
 <div style="font-family:Georgia,serif;font-weight:900;font-size:22px;letter-spacing:.5px;margin-bottom:6px"><span style="color:#B3261E">MORDS</span><span style="color:#15171C">TEAM</span></div>
 <h2 style="font-family:Georgia,serif">${T("Euer Fall ist bereit.", "Your case is ready.")}</h2>
@@ -293,17 +295,17 @@ async function sendMail(env, o, s, origin) {
 <p>${T(`danke für eure Bestellung von <b>Fall 001 „${e(title)}“ – ${NAMES[o.paket] || o.paket}</b> für ${o.teams} Team${o.teams === 1 ? "" : "s"} bei ${e(vars.FIRMA)}. Spielbar ab sofort, 12 Monate lang – einmal startbar. Spielsprache: <b>${lang === "en" ? "Englisch" : "Deutsch"}</b>.`,
   `thank you for ordering <b>Case 001 “${e(title)}” – ${NAMES_EN[o.paket] || o.paket}</b> for ${o.teams} team${o.teams === 1 ? "" : "s"} at ${e(vars.FIRMA)}. Playable right away, for 12 months – it can be started once. Game language: <b>${lang === "en" ? "English" : "German"}</b>.`)}</p>
 <table style="border-collapse:collapse;margin:14px 0">
-<tr><td style="padding:6px 12px 6px 0">${T("Organisator-Code (nur für euch):", "Organiser code (just for you):")}</td><td style="font-family:monospace;font-size:18px"><b>${e(s.org_code)}</b></td></tr>
+<tr><td style="padding:6px 12px 6px 0">${T("Organisator-Code (nicht weitergeben):", "Organiser code (don't pass on):")}</td><td style="font-family:monospace;font-size:18px"><b>${e(s.org_code)}</b></td></tr>
 <tr><td style="padding:6px 12px 6px 0">${T("Spielcode für die Teams:", "Game code for the teams:")}</td><td style="font-family:monospace;font-size:18px"><b>${e(s.join_code)}</b></td></tr>
 </table>
-<p><b>${T("So geht's, wenn ihr spielen wollt:", "How it works when you want to play:")}</b></p>
+<p><b>${T("So läuft das Spiel", "How the game works")}</b></p>
 <ol>
-<li>${T("Organisator:", "Organiser: open")} <a href="${origin}/spiel/leitung.html${q ? "?lang=en" : ""}">${origin}/spiel/leitung.html</a>${T(" öffnen, mit dem Organisator-Code anmelden und „Fall öffnen“.", ", log in with the organiser code and click “Open case”.")}</li>
-<li>${T("Jedes Team öffnet", "Each team opens")} <a href="${origin}/spiel/?code=${e(s.join_code)}${q}">${origin}/spiel/?code=${e(s.join_code)}</a> ${T("auf einem Gerät und gibt einen Teamnamen ein.", "on one device and enters a team name.")}</li>
-<li>${T("Wenn alle bereit sind: „Fall starten“. Die Uhr läuft für alle gleichzeitig.", "When everyone is ready: “Start case”. The clock runs for everyone at the same time.")}</li>
+<li>${T("Wann immer ihr spielen wollt – auch gleich jetzt: Öffnet", "Whenever you want to play – even right now: open")} <a href="${origin}/spiel/leitung.html${q ? "?lang=en" : ""}">${host}/spiel/leitung.html</a>${T(", meldet euch mit dem Organisator-Code an und tippt auf „Fall öffnen“.", ", log in with the organiser code and tap “Open case”.")}</li>
+<li>${T("Jedes Team öffnet auf <b>einem</b> Gerät", "Each team opens")} <a href="${origin}/spiel/?code=${e(s.join_code)}${q}">${host}/spiel/?code=${e(s.join_code)}</a> ${T("und gibt einen Teamnamen ein.", "on <b>one</b> device and enters a team name.")}</li>
+<li>${T(`Sind alle angemeldet, startet ihr den Fall. Die Uhr läuft für alle gleichzeitig: ${MIN[o.paket] || 60} Minuten. Erst ab dem Start können sich weitere Geräte pro Team per QR-Code zum Mitlesen verbinden (im Tab „Einsatz“).`, `Once everyone has joined, start the case. The clock runs for everyone at the same time: ${MIN[o.paket] || 60} minutes. Only once the case has started can more devices per team follow along via QR code (in the “Briefing” tab).`)}</li>
 <li>${T("Haben alle Teams gelöst, endet die Runde automatisch und alle sehen Rangliste und Auflösung. Schafft es ein Team nicht in der Zeit, beendet ihr die Runde auf der Organisator-Seite selbst.", "Once all teams have solved it, the round ends automatically and everyone sees the ranking and the solution. If a team doesn't make it in time, end the round yourself on the organiser page.")}</li>
 </ol>
-<p><b>${T("Tipp:", "Tip:")}</b> ${T(`Öffnet ein paar Tage vorher ${origin}/spiel auf einem Firmengerät. Lädt die Seite, bremst euch kein Webfilter.`, `A few days before, open ${origin}/spiel on a company device. If the page loads, no web filter will get in your way.`)}</p>
+<p><b>${T("Tipp:", "Tip:")}</b> ${T(`Öffnet ein paar Tage vorher ${host}/spiel auf einem Firmengerät. Lädt die Seite, bremst euch kein Webfilter.`, `A few days before, open ${host}/spiel on a company device. If the page loads, no web filter will get in your way.`)}</p>
 ${c.earlybird ? `<p><b>Early Bird:</b> ${T("Danke, dass ihr uns helft! Nach dem Spiel melden wir uns für euer Feedback.", "Thanks for helping us! After the game we'll be in touch for your feedback.")}</p>` : ""}
 <p>${T("Die Rechnung kommt separat per Mail von unserem Zahlungsanbieter.", "The invoice will be sent separately by our payment provider.")}</p>
 <p>${T("Viel Spaß beim Ermitteln!", "Happy investigating!")}<br>Mordsteam</p>
