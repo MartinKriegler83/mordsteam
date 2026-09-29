@@ -104,6 +104,14 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <div><b>Play right away</b><span>straight after buying or whenever you like – in German or English</span></div>
 </div></section>
 
+<section id="whoisitfor" class="section"><div class="wrap">
+<div class="stack" style="margin-bottom:28px"><div class="eyebrow">Who it's for</div><h2 class="h2">Made for every team with secrets</h2></div>
+<div class="audience two">
+<div class="aud"><span class="status live">CASE 001 · BOOK NOW</span><h3>Companies</h3><ul class="list"><li>Team building and offsites</li><li>Onboarding new teams</li><li>Department and holiday parties</li></ul></div>
+<div class="aud"><span class="status plan">CASE 002 · COMING SOON</span><h3>Clubs</h3><ul class="list"><li>Club nights and anniversaries</li><li>Holiday parties and outings</li><li>Sports, music and cultural clubs</li></ul></div>
+</div>
+</div></section>
+
 <section id="how" class="section"><div class="wrap stack">
 <div class="eyebrow">How it works</div>
 <h2 class="h2">Three steps from form to crime scene</h2>
@@ -172,12 +180,6 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 </div></section>
 
 <section class="section duo"><div class="wrap">
-<div class="stack" style="margin-bottom:28px"><div class="eyebrow">Who it's for</div><h2 class="h2">Made for every team with secrets</h2></div>
-<div class="audience">
-<div class="aud"><span class="status live">CASE 001 · BOOK NOW</span><h3>Companies</h3><ul class="list"><li>Team building and offsites</li><li>Onboarding new teams</li><li>Department and holiday parties</li></ul></div>
-<div class="aud"><span class="status plan">COMING SOON</span><h3>Clubs</h3><ul class="list"><li>Club nights and anniversaries</li><li>Holiday parties and outings</li><li>Sports, music and cultural clubs</li></ul></div>
-<div class="aud"><span class="status plan">COMING SOON</span><h3>Friends</h3><ul class="list"><li>Milestone birthdays and game nights</li><li>Everyone on their own phone – at the same time or over the week</li><li><a href="friends.html">More about Mordsteam Friends →</a></li></ul></div>
-</div>
 <div class="privacy"><h2>Privacy, taken seriously</h2>
 <ul class="list"><li>Only names and roles, no emails or photos of your players</li><li>Case website and case desk protected and hidden from search engines</li><li>All data automatically deleted 30 days after the game</li><li>All suspects and the victim agree beforehand – you confirm this when ordering</li><li>Your logo only with confirmed permission – it appears only in your case intranet</li></ul>
 </div>
