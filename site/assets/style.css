@@ -370,3 +370,64 @@ a[href^="mailto:"]{white-space:nowrap}
 /* Kontaktformular / Kleingedrucktes */
 p.small{font-size:14px;color:#5A5D66}
 [hidden]{display:none!important}
+
+/* ================= Markenwelt: Startseite als Übersicht (Teams · Friends · Solo) ================= */
+.nav-desktop a[aria-current="page"]{color:var(--red);text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:2px}
+/* Marken-Hero */
+.bh{position:relative;overflow:hidden;background:var(--ink);color:var(--paper);padding:64px 0 128px}
+.bh::before{content:"";position:absolute;inset:0;background:radial-gradient(640px 460px at 50% 34%,rgba(255,236,190,.16),transparent 70%);pointer-events:none}
+.bh .wrap{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px}
+.bh-lupe{width:clamp(80px,13vw,124px);height:auto}
+.bh-lupe .dot{transform-origin:14px 14px;animation:bhpuls 3.2s ease-in-out infinite}
+@keyframes bhpuls{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.78)}}
+.bh h1{font-family:var(--serif);font-weight:900;font-size:clamp(50px,12.5vw,156px);line-height:.92;letter-spacing:.01em}
+.bh h1 .r{color:#E0463C}
+.bh .claim{font-family:var(--serif);font-style:italic;font-weight:700;font-size:clamp(22px,3.8vw,36px);line-height:1.15}
+.bh .sub{max-width:560px;color:#CFC9BC;font-size:17px}
+.bh .actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.btn-ghost{border:2px solid rgba(243,239,230,.55);color:var(--paper);padding:13px 22px}
+.btn-ghost:hover{border-color:var(--paper);color:#fff}
+.tape{position:absolute;left:-6%;right:-6%;bottom:38px;background:#F2C230;color:var(--ink);font-family:var(--mono);font-weight:500;font-size:13px;letter-spacing:.32em;white-space:nowrap;overflow:hidden;padding:9px 0;transform:rotate(-2.4deg);box-shadow:0 8px 22px rgba(0,0,0,.4)}
+.tape span{display:inline-block;animation:tape 60s linear infinite}
+@keyframes tape{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.evid{position:absolute;width:34px;height:30px;background:#F2C230;color:var(--ink);clip-path:polygon(50% 0,100% 100%,0 100%);display:flex;align-items:flex-end;justify-content:center;font-family:var(--mono);font-weight:500;font-size:13px;padding-bottom:3px}
+.evid.e1{left:8%;top:30%}.evid.e2{right:9%;top:52%}.evid.e3{left:16%;bottom:108px}
+@media (max-width:700px){.evid{display:none}}
+@media (prefers-reduced-motion:reduce){.bh-lupe .dot,.tape span{animation:none}}
+/* Spiele-Karten */
+.games{display:grid;gap:26px;margin-top:34px}
+.game{position:relative;background:var(--card);border:1px solid var(--line);border-radius:4px 12px 12px 12px;padding:30px 24px 24px;display:flex;flex-direction:column;gap:12px;box-shadow:0 14px 32px rgba(21,23,28,.08)}
+.game .tab{position:absolute;top:-25px;left:-1px;background:var(--folder);font-family:var(--mono);font-size:11px;letter-spacing:.25em;padding:5px 16px 6px;border-radius:8px 8px 0 0}
+.game.live{border:2px solid var(--ink)} .game.live .tab{background:var(--ink);color:var(--paper);left:-2px}
+.game h3{font-family:var(--serif);font-weight:900;font-size:30px;line-height:1.02;padding-right:92px}
+.game h3 span{color:var(--red)}
+.game .for{font-weight:600;font-size:17px}
+.game .meta{font-family:var(--mono);font-size:12px;color:#5A5D66;letter-spacing:.04em;border-top:1px dashed var(--line);padding-top:12px}
+.game .btn{margin-top:auto}
+.smark{position:absolute;top:22px;right:18px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.18em;border:2px solid currentColor;border-radius:3px;padding:4px 7px;transform:rotate(7deg);line-height:1.2;text-align:center}
+.smark.ok{color:#2E6B3A} .smark.soon{color:var(--red)}
+@media (min-width:900px){.games{grid-template-columns:1.12fr 1fr 1fr}}
+/* Unterseiten-Navigation (Teams) */
+.subnav{position:sticky;top:0;z-index:6;background:rgba(243,239,230,.95);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.subnav .wrap{display:flex;gap:20px;align-items:center;overflow-x:auto;height:50px;font-size:14px;font-weight:600;scrollbar-width:none}
+.subnav .wrap::-webkit-scrollbar{display:none}
+.subnav b{font-family:var(--serif);font-weight:900;white-space:nowrap}
+.subnav b span{color:var(--red)}
+.subnav a{text-decoration:none;white-space:nowrap}
+.subnav .btn{padding:8px 14px;min-height:0;margin-left:auto;font-size:14px}
+/* Coming-soon-Seiten */
+.ph{padding:56px 0 40px}
+.ph .wrap{display:grid;gap:36px;align-items:center}
+.ph h1{font-family:var(--serif);font-weight:900;font-size:clamp(44px,8vw,88px);line-height:.95}
+.ph h1 span{color:var(--red)}
+.ph .soonstamp{display:inline-block;font-family:var(--mono);font-size:13px;letter-spacing:.3em;color:var(--red);border:3px double var(--red);padding:6px 12px;transform:rotate(-3deg)}
+.teaser{background:var(--card);border:1px solid var(--line);padding:26px;transform:rotate(1deg);box-shadow:0 18px 40px rgba(21,23,28,.12);position:relative}
+.teaser .mast{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:#5A5D66;border-bottom:2px solid var(--ink);padding-bottom:8px;margin-bottom:14px}
+.teaser h2{font-family:var(--serif);font-weight:900;font-size:30px;line-height:1.05;margin-bottom:10px}
+.teaser p{color:var(--ink-2)}
+.modes{display:grid;gap:18px;margin-top:8px}
+.mode{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:22px}
+.mode h3{font-family:var(--serif);font-size:22px;margin-bottom:6px}
+@media (min-width:900px){.ph .wrap{grid-template-columns:1.1fr .9fr}.modes{grid-template-columns:1fr 1fr}}
+.ph .soonstamp{align-self:flex-start}
+.evid.e1{left:4%;top:16%}

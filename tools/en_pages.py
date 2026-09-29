@@ -2,20 +2,20 @@
 # Aufruf: python3 tools/en_pages.py  – danach site/en/*.html committen.
 import os, html
 ROOT = os.path.join(os.path.dirname(__file__), "..", "site")
-MAP = {"index": "index", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "contact": "kontakt", "early-bird": "earlybird", "feedback": "feedback", "withdraw": "widerruf"}
+MAP = {"index": "index", "teams": "teams", "friends": "friends", "solo": "solo", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "contact": "kontakt", "early-bird": "earlybird", "feedback": "feedback", "withdraw": "widerruf"}
 LOGO = '<svg width="30" height="30" viewBox="0 0 34 34" fill="none" stroke="#15171C" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg>'
 
 
 
-EBBAR = """<div class="promo" id="ebbar"><div class="wrap"><span class="tag">WE'RE LIVE</span><span>Early bird: <span class="ebp">40</span>% off your first game<span class="star">*</span><span class="ebbis"></span></span><a href="early-bird.html">*Conditions</a></div></div>"""
+EBBAR = """<div class="promo" id="ebbar"><div class="wrap"><span class="tag">EARLY BIRD</span><span><span class="ebp">40</span>% off your first Teams or Friends game<span class="star">*</span><span class="ebbis"></span></span><a href="early-bird.html">*Conditions</a></div></div>"""
 
-def page(name, title, desc, body, robots=None, scripts="", home=False):
+def page(name, title, desc, body, robots=None, scripts="", home=False, promo=False):
     de = MAP[name]
-    pre = "" if home else "index.html"
-    nav = f'''<a href="{pre}#how">How it works</a>
-<a href="{pre}#case">The case</a>
-<a href="{pre}#packages">Packages</a>
-<a href="{pre}#faq">FAQ</a>'''
+    cur = lambda k: ' aria-current="page"' if k == name else ''
+    nav = f'''<a href="teams.html"{cur("teams")}>Teams</a>
+<a href="friends.html"{cur("friends")}>Friends</a>
+<a href="solo.html"{cur("solo")}>Solo</a>
+<a href="teams.html#faq">FAQ</a>'''
     return f'''<!doctype html>
 <html lang="en">
 <head>
@@ -34,23 +34,24 @@ def page(name, title, desc, body, robots=None, scripts="", home=False):
 <link rel="manifest" href="/site.webmanifest">
 </head>
 <body>
-{EBBAR if home else ''}
+{EBBAR if (home or promo) else ''}
 <header class="header"><div class="wrap">
-<a class="logo" href="{'#top' if home else 'index.html'}" aria-label="Mordsteam home">
+<a class="logo" href="index.html" aria-label="Mordsteam home">
 {LOGO}
 <span class="wm-box"><span class="wm"><span class="wm-r">MORDS</span>TEAM</span></span>
 </a>
 <nav class="nav-desktop" aria-label="Main navigation">
 {nav}
 <a class="langlink" href="/{'' if de == 'index' else de + '.html'}" hreflang="de" lang="de" title="Deutsch">DE</a>
-<a class="btn btn-ink" href="order.html">Order</a>
+<a class="btn btn-ink" href="teams.html#packages">Play now</a>
 </nav>
 <details class="menu">
 <summary aria-label="Open menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15171C" stroke-width="2.2" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></summary>
 <nav aria-label="Menu">
+<a href="index.html">Home</a>
 {nav}
 <a href="/{'' if de == 'index' else de + '.html'}" hreflang="de" lang="de">Deutsch</a>
-<a class="btn btn-red" href="order.html">Order</a>
+<a class="btn btn-red" href="teams.html#packages">Play now</a>
 </nav>
 </details>
 </div></header>
@@ -66,14 +67,19 @@ def page(name, title, desc, body, robots=None, scripts="", home=False):
 '''
 
 P = {}
-P["index"] = dict(title="Mordsteam – The personalised murder-mystery team event", home=True, scripts='<script src="/assets/aktion.js"></script>',
- desc="A murder case starring your company, club or group of friends. 50 to 90 minutes, competing investigator teams, no game master needed.",
- body='''<main id="top">
+P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery team event for companies and clubs", promo=True, scripts='<script src="/assets/aktion.js"></script>',
+ desc="A murder case starring your team – for companies and clubs. 50 to 90 minutes, competing investigator teams, no game master needed.",
+ body='''<nav class="subnav" aria-label="Mordsteam Teams"><div class="wrap">
+<b><span>Mordsteam</span> Teams</b>
+<a href="#how">How it works</a><a href="#case">The case</a><a href="#packages">Packages</a><a href="#faq">FAQ</a>
+<a class="btn btn-red" href="order.html">Order</a>
+</div></nav>
+<main id="top">
 <section class="hero"><div class="wrap hero-grid">
 <div class="stack">
-<div class="eyebrow">Case file 001 · The murder-mystery team event</div>
+<div class="eyebrow">Mordsteam Teams · for companies &amp; clubs</div>
 <h1>Which one of you did it?</h1>
-<p class="lead">A murder case in which your company, club or group of friends plays the lead – with your names, your rooms and your in-jokes. You investigate in teams against each other – 50 minutes in the Basic package, 70 minutes with a second act in Premium, 90 minutes with an AI finale in Premium Plus. No agency, no actors: instructions and a digital case desk guide you through the case.</p>
+<p class="lead">The murder case in which your team plays the lead – with your names, your rooms and your in-jokes. Several teams investigate against each other, 50 to 90 minutes, no game master needed.</p>
 <div class="actions">
 <a class="btn btn-red" href="#packages">Set up a case for my team</a>
 <a class="btn-text" href="#how">How it works</a>
@@ -167,11 +173,11 @@ P["index"] = dict(title="Mordsteam – The personalised murder-mystery team even
 </div></section>
 
 <section class="section duo"><div class="wrap">
-<div class="stack" style="margin-bottom:28px"><div class="eyebrow">Who it's for</div><h2 class="h2">Made for every group with secrets</h2></div>
+<div class="stack" style="margin-bottom:28px"><div class="eyebrow">Who it's for</div><h2 class="h2">Made for every team with secrets</h2></div>
 <div class="audience">
 <div class="aud"><span class="status live">CASE 001 · BOOK NOW</span><h3>Companies</h3><ul class="list"><li>Team building and offsites</li><li>Onboarding new teams</li><li>Department and holiday parties</li></ul></div>
 <div class="aud"><span class="status plan">COMING SOON</span><h3>Clubs</h3><ul class="list"><li>Club nights and anniversaries</li><li>Holiday parties and outings</li><li>Sports, music and cultural clubs</li></ul></div>
-<div class="aud"><span class="status plan">COMING SOON</span><h3>Friends</h3><ul class="list"><li>Milestone birthdays</li><li>Cabin weekends and game nights</li><li>Stag and hen parties</li></ul></div>
+<div class="aud"><span class="status plan">COMING SOON</span><h3>Friends</h3><ul class="list"><li>Milestone birthdays and game nights</li><li>Everyone on their own phone – at the same time or over the week</li><li><a href="friends.html">More about Mordsteam Friends →</a></li></ul></div>
 </div>
 <div class="privacy"><h2>Privacy, taken seriously</h2>
 <ul class="list"><li>Only names and roles, no emails or photos of your players</li><li>Case website and case desk protected and hidden from search engines</li><li>All data automatically deleted 30 days after the game</li><li>All suspects and the victim agree beforehand – you confirm this when ordering</li><li>Your logo only with confirmed permission – it appears only in your case intranet</li></ul>
@@ -207,7 +213,134 @@ P["index"] = dict(title="Mordsteam – The personalised murder-mystery team even
 <section class="cta"><div class="wrap">
 <h2>One of you has something to hide.</h2>
 <p>Find out who.</p>
-<a class="btn btn-ink" href="order.html">Order</a>
+<a class="btn btn-ink" href="order.html">Order a case</a>
+</div></section>
+</main>''')
+
+P["index"] = dict(title="Mordsteam – Murder mysteries you solve yourselves", home=True, scripts='<script src="/assets/aktion.js"></script>',
+ desc="Personalised murder-mystery games to play: as a team event for companies and clubs, with friends or on your own. In the browser, no game master.",
+ body='''<main id="top">
+<section class="bh" aria-labelledby="bh-t"><div class="wrap">
+<svg class="bh-lupe" viewBox="0 0 34 34" aria-hidden="true"><g fill="none" stroke="#F3EFE6" stroke-width="3"><circle cx="14" cy="14" r="9"/><line x1="20.5" y1="20.5" x2="29" y2="29" stroke-linecap="round"/></g><circle class="dot" cx="14" cy="14" r="3.5" fill="#E0463C"/></svg>
+<h1 id="bh-t"><span class="r">MORDS</span>TEAM</h1>
+<p class="claim">Murder mysteries you solve yourselves.</p>
+<p class="sub">One case, your names, a culprit among you. As a team, with friends or on your own – right in the browser, no game master.</p>
+<div class="actions"><a class="btn btn-red" href="#games">Choose a case</a><a class="btn btn-ghost" href="#how">How it works</a></div>
+</div>
+<span class="evid e1" aria-hidden="true">1</span><span class="evid e2" aria-hidden="true">2</span><span class="evid e3" aria-hidden="true">3</span>
+<div class="tape" aria-hidden="true"><span>CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · </span></div>
+</section>
+
+<section id="games" class="section"><div class="wrap">
+<div class="stack"><div class="eyebrow">Three ways to the crime scene</div><h2 class="h2">Which case suits you?</h2></div>
+<div class="games">
+<article class="game live"><span class="tab">TEAMS</span><span class="smark ok">PLAY<br>NOW</span>
+<h3><span>Mordsteam</span> Teams</h3>
+<p class="for">The murder-mystery team event for companies and clubs.</p>
+<p>Your boss has been poisoned, the evidence is gone – and one of you did it. Several teams investigate against each other, with your names and your rooms.</p>
+<p class="meta">3–6 PER TEAM · ANY NUMBER OF TEAMS · 50–90 MIN · FROM €89 PER TEAM</p>
+<a class="btn btn-red" href="teams.html">Go to Mordsteam Teams</a>
+</article>
+<article class="game"><span class="tab">FRIENDS</span><span class="smark soon">COMING<br>SOON</span>
+<h3><span>Mordsteam</span> Friends</h3>
+<p class="for">The murder-mystery night for your friends.</p>
+<p>You are the suspects – with your real names and your little quirks. Everyone plays at the same time, or whenever they have time this week.</p>
+<p class="meta">4–8 INVESTIGATORS · EVERYONE ON THEIR OWN PHONE · 45–70 MIN</p>
+<a class="btn btn-line" href="friends.html">Find out more</a>
+</article>
+<article class="game"><span class="tab">SOLO</span><span class="smark soon">COMING<br>SOON</span>
+<h3><span>Mordsteam</span> Solo</h3>
+<p class="for">A case just for you.</p>
+<p>Thirty minutes, four suspects, one truth. The quick mystery in between – and the perfect taste of a team game.</p>
+<p class="meta">1 INVESTIGATOR · APPROX. 30 MIN · ANY TIME</p>
+<a class="btn btn-line" href="solo.html">Find out more</a>
+</article>
+</div>
+</div></section>
+
+<section id="how" class="section" style="background:var(--paper-2)"><div class="wrap stack">
+<div class="eyebrow">How it works</div>
+<h2 class="h2">From click to crime scene in three steps</h2>
+<div class="steps">
+<div class="step"><span class="num">1</span><div><h3>Choose and customise your case</h3><p>Pick a game, enter your names – or use a fictional cast. Chance decides who the culprit is. Not even we know.</p></div></div>
+<div class="step"><span class="num">2</span><div><h3>Get your codes instantly</h3><p>After payment you see your access codes right on screen. Play straight away or any time in the next 12 months.</p></div></div>
+<div class="step"><span class="num">3</span><div><h3>Investigate and solve</h3><p>Examine the evidence, connect the clues, enter your solution. At the end: the big reveal, the ranking and your certificate.</p></div></div>
+</div>
+</div></section>
+
+<section class="facts" aria-label="What makes Mordsteam"><div class="wrap">
+<div><b>Personalised</b><span>your names, your rooms, your in-jokes – or a fictional cast</span></div>
+<div><b>No game master</b><span>instructions and a digital case desk guide you through</span></div>
+<div><b>Play right away</b><span>on laptop, phone or tablet – in German or English</span></div>
+<div><b>Privacy</b><span>no cookies, no tracking, automatic deletion after the game</span></div>
+</div></section>
+
+<section id="bewertungen" class="section" hidden><div class="wrap stack">
+<div class="eyebrow">Reviews</div>
+<h2 class="h2">What investigator teams say</h2>
+<div class="reviews" id="reviews"></div>
+</div></section>
+
+<section class="cta"><div class="wrap">
+<h2>One of you has something to hide.</h2>
+<p>Find out who.</p>
+<a class="btn btn-ink" href="#games">Choose a case</a>
+</div></section>
+</main>''')
+
+P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night for your friends (coming soon)", promo=True, scripts='<script src="/assets/aktion.js"></script>',
+ desc="Mordsteam Friends: a mystery in which you are the suspects. At the same time or whenever each of you has time. Coming soon.",
+ body='''<main id="top">
+<section class="ph"><div class="wrap">
+<div class="stack">
+<span class="soonstamp">COMING SOON</span>
+<h1><span>Mordsteam</span><br>Friends</h1>
+<p class="lead">The murder-mystery night for your friends. You are the suspects – with your real names and your little quirks. And one of you did it.</p>
+<div class="actions" style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn btn-red" href="contact.html">Register interest</a><a class="btn btn-line" href="teams.html">Meanwhile: Mordsteam Teams</a></div>
+</div>
+<div class="teaser" aria-label="Preview of the first case">
+<div class="mast"><span>CASE · FRIENDS 001</span><span>SATURDAY, 7:40 AM</span></div>
+<h2>Last Round at the Chalet</h2>
+<p>A weekend in the mountains, a rented chalet, a landlord with an embarrassing vlog. On Saturday morning he is found dead in the sauna – the door bolted from outside. Every one of you had a reason.</p>
+</div>
+</div></section>
+<section class="section" style="background:var(--paper-2)"><div class="wrap stack">
+<div class="eyebrow">Two ways to play</div>
+<h2 class="h2">Together in the evening – or whenever each of you has time</h2>
+<div class="modes">
+<div class="mode"><h3>At the same time</h3><p>You sit together or meet on a video call. Everyone starts together, each investigates on their own phone, the clock runs the same for all.</p></div>
+<div class="mode"><h3>Over the week</h3><p>No date needed: everyone plays within 3, 5 or 7 days, whenever they like. You only see who has already investigated – the reveal and the ranking come for everyone at the same time.</p></div>
+</div>
+</div></section>
+<section class="facts" aria-label="Key facts"><div class="wrap">
+<div><b>4–8 investigators</b><span>each on their own, on their own device</span></div>
+<div><b>45 or 70 min</b><span>Mystery Night or Mystery Night Plus with an AI character</span></div>
+<div><b>Your names</b><span>with harmless quirks from a list – nobody is embarrassed</span></div>
+<div><b>No game master</b><span>everything runs automatically in the browser</span></div>
+</div></section>
+</main>''')
+
+P["solo"] = dict(title="Mordsteam Solo – a murder mystery just for you (coming soon)",
+ desc="Mordsteam Solo: a murder case for one person, about 30 minutes, right in the browser. Coming soon.",
+ body='''<main id="top">
+<section class="ph"><div class="wrap">
+<div class="stack">
+<span class="soonstamp">COMING SOON</span>
+<h1><span>Mordsteam</span><br>Solo</h1>
+<p class="lead">A case just for you. About thirty minutes, four suspects, one truth – the quick mystery in between.</p>
+<div class="actions" style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn btn-red" href="contact.html">Register interest</a><a class="btn btn-line" href="teams.html">Meanwhile: Mordsteam Teams</a></div>
+</div>
+<div class="teaser" aria-label="Preview of the first case">
+<div class="mast"><span>CASE · SOLO 001</span><span>NIGHT TRAIN, 2:14 AM</span></div>
+<h2>Night Train to Venice</h2>
+<p>In the sleeping car, an art dealer lies dead in his compartment. You happen to be on board, and the conductor asks for your help. You have until the train pulls into Venice.</p>
+</div>
+</div></section>
+<section class="facts" aria-label="Key facts"><div class="wrap">
+<div><b>1 investigator</b><span>just you, on your own device</span></div>
+<div><b>Approx. 30 min</b><span>the playing time is the train's remaining journey</span></div>
+<div><b>Different every time</b><span>who did it is decided anew for each case</span></div>
+<div><b>A taste of more</b><span>enjoyed it? Then bring Mordsteam to your team</span></div>
 </div></section>
 </main>''')
 
@@ -434,13 +567,13 @@ P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mor
 
 P["early-bird"] = dict(title="Early bird – Mordsteam", desc="Early bird: 40% off your first Mordsteam game – the conditions.",
  body='''<main class="page"><div class="wrap prose">
-<div class="eyebrow">We're live · Early bird</div>
-<h1 class="h1-page">40% off your first game</h1>
+<div class="eyebrow">Early bird</div>
+<h1 class="h1-page">40% off your first Teams or Friends game</h1>
 <p class="lead">Mordsteam has just launched. Help us make our cases even better – and play your first case at 40% off.</p>
 <h2>How it works</h2>
 <ul>
 <li>When ordering, tick the <b>early bird</b> box in the last step. The discount is deducted automatically at checkout – no code needed.</li>
-<li>Valid for all packages and any number of teams.</li>
+<li>Valid for Mordsteam Teams – all packages, any number of teams – and for Mordsteam Friends once it is available. Mordsteam Solo is excluded.</li>
 </ul>
 <h2>What we ask in return</h2>
 <ul>
@@ -453,7 +586,7 @@ P["early-bird"] = dict(title="Early bird – Mordsteam", desc="Early bird: 40% o
 <li>Cannot be combined with other vouchers.</li>
 <li>Valid while the offer runs. We'll announce the end date here and in the banner in advance. Orders placed before then keep the discount, even if you play later.</li>
 </ul>
-<p><a class="btn btn-red" href="order.html">Order now</a></p>
+<p><a class="btn btn-red" href="order.html">Order a Teams case</a></p>
 </div></main>''')
 
 P["feedback"] = dict(title="Feedback – Mordsteam", robots="noindex, nofollow", desc="Feedback on your Mordsteam case.",
@@ -510,7 +643,7 @@ P["withdraw"] = dict(title="Withdraw from contract – Mordsteam", desc="Withdra
 </div></main>''')
 
 for name, p in P.items():
-    out = page(name, p["title"], p["desc"], p["body"], p.get("robots"), p.get("scripts", ""), p.get("home", False))
+    out = page(name, p["title"], p["desc"], p["body"], p.get("robots"), p.get("scripts", ""), p.get("home", False), p.get("promo", False))
     with open(os.path.join(ROOT, "en", name + ".html"), "w") as f:
         f.write(out)
 print("ok", len(P))
