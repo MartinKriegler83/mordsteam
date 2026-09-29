@@ -7,6 +7,8 @@ LOGO = '<svg width="30" height="30" viewBox="0 0 34 34" fill="none" stroke="#151
 
 
 
+EBBAR = """<div class="promo" id="ebbar"><div class="wrap"><span class="tag">WE'RE LIVE</span><span>Early bird: <span class="ebp">40</span>% off your first game<span class="star">*</span><span class="ebbis"></span></span><a href="early-bird.html">*Conditions</a></div></div>"""
+
 def page(name, title, desc, body, robots=None, scripts="", home=False):
     de = MAP[name]
     pre = "" if home else "index.html"
@@ -32,7 +34,7 @@ def page(name, title, desc, body, robots=None, scripts="", home=False):
 <link rel="manifest" href="/site.webmanifest">
 </head>
 <body>
-{'<div class="promo" id="ebbar" hidden></div>' if home else ''}
+{EBBAR if home else ''}
 <header class="header"><div class="wrap">
 <a class="logo" href="{'#top' if home else 'index.html'}" aria-label="Mordsteam home">
 {LOGO}
