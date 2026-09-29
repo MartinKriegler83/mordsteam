@@ -59,7 +59,7 @@ def page(name, title, desc, body, robots=None, scripts="", home=False):
 <footer class="footer"><div class="wrap">
 <span class="brand"><span class="wm"><span class="wm-r">MORDS</span>TEAM</span></span>
 <nav aria-label="Legal"><a href="imprint.html">Imprint</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a></nav>
-<span>© 2026 Mordsteam</span>
+<span>© 2026 Mordsteam e.U.</span>
 </div></footer>
 </body>
 </html>
@@ -311,7 +311,7 @@ P["privacy"] = dict(title="Privacy policy – Mordsteam", desc="How Mordsteam ha
 <h1>Privacy policy</h1>
 <p class="small">This is a translation of our German privacy policy. In case of doubt, the <a href="/datenschutz.html" hreflang="de">German version</a> applies.</p>
 <h2>1. Controller</h2>
-<p>Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, Austria<br>Email: <a href="mailto:office@mordsteam.com">office@mordsteam.com</a></p>
+<p>Mordsteam e.U., owner Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, Austria<br>Email: <a href="mailto:office@mordsteam.com">office@mordsteam.com</a></p>
 <h2>2. Visiting the website</h2>
 <p>The website is delivered via Cloudflare (Cloudflare, Inc., USA, and affiliated companies). Technically necessary connection data such as IP address, time, page requested and browser identifier are processed to deliver the site securely and quickly (Art. 6(1)(f) GDPR). Cloudflare is certified under the EU-US Data Privacy Framework.</p>
 <p>We use no cookies, no tracking and no analytics tools. Fonts are hosted locally; no data is sent to Google.</p>
@@ -335,12 +335,21 @@ P["privacy"] = dict(title="Privacy policy – Mordsteam", desc="How Mordsteam ha
 P["imprint"] = dict(title="Imprint – Mordsteam", desc="Legal information about Mordsteam.",
  body='''<main class="page"><div class="wrap prose">
 <h1>Imprint</h1>
-<p>Information pursuant to § 5 of the Austrian E-Commerce Act and disclosure pursuant to § 25 of the Austrian Media Act. The <a href="/impressum.html" hreflang="de">German version</a> is legally binding.</p>
-<h2>Media owner and service provider</h2>
-<p>Martin Kriegler<br>Sportplatzgasse 16<br>7152 Pamhagen<br>Austria</p>
-<p>Email: <a href="mailto:office@mordsteam.com">office@mordsteam.com</a></p>
-<h2>General direction</h2>
-<p>Information about Mordsteam's murder-mystery team events.</p>
+<p>Information pursuant to § 5 of the Austrian E-Commerce Act, § 14 of the Austrian Commercial Code and § 63 of the Austrian Trade Act, and disclosure pursuant to § 25 of the Austrian Media Act. The <a href="/impressum.html" hreflang="de">German version</a> is legally binding.</p>
+<h2>Company</h2>
+<p><b>Mordsteam e.U.</b><br>Owner: Martin Kriegler<br>Legal form: registered sole proprietorship (eingetragenes Einzelunternehmen)</p>
+<p>Sportplatzgasse 16<br>7152 Pamhagen<br>Austria</p>
+<p>Email: <a href="mailto:office@mordsteam.com">office@mordsteam.com</a><!-- TELEFON --></p>
+<h2>Company register</h2>
+<p>Registered seat: Pamhagen<br>Company register number: <!-- FN -->to be added after registration<br>Register court: Landesgericht Eisenstadt</p>
+<h2>Business purpose</h2>
+<p>Development and online sale of digital murder-mystery and puzzle games for companies, clubs and private individuals.</p>
+<h2>VAT</h2>
+<p>Small business under § 6 (1) no. 27 of the Austrian VAT Act – no VAT is charged.<!-- UID --></p>
+<h2>Trade law</h2>
+<p><!-- GEWERBE -->Member of the Austrian Economic Chamber, Burgenland<br>Trade authority: Bezirkshauptmannschaft Neusiedl am See<br>Applicable law: Austrian Trade Act (Gewerbeordnung), available at <a href="https://www.ris.bka.gv.at">www.ris.bka.gv.at</a></p>
+<h2>Media owner and general direction</h2>
+<p>The media owner is Mordsteam e.U. (see above). This website provides information about Mordsteam's digital murder-mystery games and allows them to be ordered.</p>
 <h2>Liability for links</h2>
 <p>The operators of linked external pages are solely responsible for their content.</p>
 <h2>Copyright</h2>
@@ -353,7 +362,7 @@ P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mor
 <p class="small">Last updated: September 2026 · This is a translation for information. The <a href="/agb.html" hreflang="de">German version</a> is legally binding.</p>
 
 <h2>1. Provider and scope</h2>
-<p>The provider is Martin Kriegler, Mordsteam, Sportplatzgasse 16, 7152 Pamhagen, Austria, email: <a href="mailto:office@mordsteam.com">office@mordsteam.com</a> (“we”). These terms apply to all orders via mordsteam.com, from businesses as well as consumers (“you”). Deviating conditions only apply if we agree to them in writing. The version valid at the time of your order applies.</p>
+<p>The provider is Mordsteam e.U., owner Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, Austria, register court Landesgericht Eisenstadt, email: <a href="mailto:office@mordsteam.com">office@mordsteam.com</a> (“we”). These terms apply to all orders via mordsteam.com, from businesses as well as consumers (“you”). Deviating conditions only apply if we agree to them in writing. The version valid at the time of your order applies.</p>
 
 <h2>2. Our service</h2>
 <p>We provide a personalised, digital murder-mystery case to play together in teams (“game round”). The scope depends on the chosen package (Basic, Premium or Premium Plus) and the number of teams booked. After paying you receive an organiser code and a game code, which you use to open and start the game round in your browser. Nothing is shipped physically.</p>
@@ -395,7 +404,7 @@ P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mor
 <p>If you are a consumer, you generally have the right to withdraw from the contract within 14 days of its conclusion without giving reasons.</p>
 <p><b>Early expiry:</b> Our service is digital content that we provide immediately after payment. When ordering, you expressly agree that we begin performance before the withdrawal period expires and confirm your knowledge that you thereby lose your right of withdrawal. The right of withdrawal expires when we provide the codes and our email confirmation (§ 18 (1) no. 11 of the Austrian Distance and Off-Premises Contracts Act, FAGG).</p>
 <p><b>How to withdraw, where the right still exists:</b> Send us a clear statement, for example by email to <a href="mailto:office@mordsteam.com">office@mordsteam.com</a>. You may use this template but don't have to:</p>
-<blockquote class="small">To Martin Kriegler, Mordsteam, Sportplatzgasse 16, 7152 Pamhagen, Austria, office@mordsteam.com: I/we hereby withdraw from the contract concluded by me/us for the following service: … · Ordered on: … · Name: … · Address: … · Date: …</blockquote>
+<blockquote class="small">To Mordsteam e.U., Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, Austria, office@mordsteam.com: I/we hereby withdraw from the contract concluded by me/us for the following service: … · Ordered on: … · Name: … · Address: … · Date: …</blockquote>
 <p>After an effective withdrawal we refund all payments within 14 days using the original means of payment.</p>
 
 <h2>9. Warranty and faults</h2>
@@ -455,11 +464,12 @@ P["contact"] = dict(title="Contact – Mordsteam", desc="How to reach Mordsteam.
 <div class="eyebrow">Contact</div>
 <h1>Get in touch</h1>
 <div class="contactcard">
-<p class="cc-firm">Mordsteam</p>
+<p class="cc-firm">Mordsteam e.U.</p>
 <p>Martin Kriegler</p>
+<p>Sportplatzgasse 16, 7152 Pamhagen, Austria</p>
 <p><a class="cc-mail" href="mailto:office@mordsteam.com">office@mordsteam.com</a></p>
 </div>
-<p>Questions about a case, an order or your game round? Just write to us – we'll get back to you as soon as we can. You'll find our postal address in the <a href="imprint.html">imprint</a>.</p>
+<p>Questions about a case, an order or your game round? Just write to us – we'll get back to you as soon as we can. You'll find all company details in the <a href="imprint.html">imprint</a>.</p>
 </div></main>''')
 
 for name, p in P.items():
