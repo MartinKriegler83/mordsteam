@@ -125,10 +125,10 @@ P["index"] = dict(title="Mordsteam – The personalised murder-mystery team even
 </ul>
 </div>
 <div class="clues" aria-label="Examples from the case file">
-<div class="clue"><small>ACCESS LOG</small><span>22:47 · Executive office<br>Badge 4 ? ? ?</span></div>
-<div class="clue"><small>CATERING DELIVERY NOTE</small><span>Peppermint with honey<br>collected 21:?? · badge ????</span></div>
+<div class="clue"><small>ACCESS LOG</small><span>Who was where, and when?<br>??:?? · door ??? · badge ????</span></div>
+<div class="clue"><small>CATERING DELIVERY NOTE</small><span>“What would you like to drink?”<br>order ?? · collected ??:??</span></div>
 <div class="clue dark"><small>CASE DESK</small><div class="codebox" aria-label="Four-digit solution code"><i>?</i><i>?</i><i>?</i><i>?</i></div><span class="hint">Enter your answers, solve the case, make the podium.</span></div>
-<div class="clue"><small>ARIA · AI ASSISTANT</small><span>Premium Plus only:<br>“I know every appointment. Ask me!”</span></div>
+<div class="clue"><small>ARIA · AI ASSISTANT</small><span>Premium Plus only:<br>“How can I help you today?”</span></div>
 </div>
 </div></section>
 
