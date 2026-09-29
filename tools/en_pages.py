@@ -378,7 +378,7 @@ P["solo"] = dict(title="Mordsteam Solo – Night Train to Venice: a murder myste
 <li>Evidence in three stages – the next only after the right answer</li>
 <li>The killer is drawn for every playthrough, the evidence adapts</li>
 <li>Hints at the click of a button, each costs penalty minutes</li>
-<li>At the end: “faster than X %” of all investigators – no public leaderboard</li>
+<li>At the end: “faster than X %” of all investigators – how do you measure up?</li>
 <li>A stylish mystery with a wink – no blood, no shock effects</li>
 </ul>
 </div></section>
