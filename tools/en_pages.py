@@ -224,8 +224,8 @@ P["index"] = dict(title="Mordsteam – Murder mysteries you solve yourselves", h
 <svg class="bh-lupe" viewBox="0 0 34 34" aria-hidden="true"><g fill="none" stroke="#F3EFE6" stroke-width="3"><circle cx="14" cy="14" r="9"/><line x1="20.5" y1="20.5" x2="29" y2="29" stroke-linecap="round"/></g><circle class="dot" cx="14" cy="14" r="3.5" fill="#E0463C"/></svg>
 <h1 id="bh-t"><span class="r">MORDS</span>TEAM</h1>
 <p class="claim">Murder mysteries you solve yourselves.</p>
-<p class="sub">One case, your names, a culprit among you. As a team, with friends or on your own – right in the browser, no game master.</p>
-<div class="actions"><a class="btn btn-red" href="#games">Choose a case</a><a class="btn btn-ghost" href="#how">How it works</a></div>
+<p class="sub">One case, your names, a culprit among you. As a team, with friends or on your own – on any device, ready to go instantly.</p>
+<div class="actions"><a class="btn btn-red" href="#games">Choose a case</a><a class="btn btn-ghost" href="teams.html">For companies &amp; clubs</a></div>
 </div>
 <span class="evid e1" aria-hidden="true">1</span><span class="evid e2" aria-hidden="true">2</span><span class="evid e3" aria-hidden="true">3</span>
 <div class="tape" aria-hidden="true"><span>CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · CRIME SCENE · DO NOT CROSS · MORDSTEAM · </span></div>
@@ -235,38 +235,29 @@ P["index"] = dict(title="Mordsteam – Murder mysteries you solve yourselves", h
 <div class="stack"><div class="eyebrow">Three ways to the crime scene</div><h2 class="h2">Which case suits you?</h2></div>
 <div class="games">
 <article class="game live"><span class="tab">TEAMS</span><span class="smark ok">PLAY<br>NOW</span>
-<h3><span>Mordsteam</span> Teams</h3>
+<h3 class="gname"><span class="wm-r">MORDS</span>TEAM <span class="gp">TEAMS</span></h3>
 <p class="for">The murder-mystery team event for companies and clubs.</p>
 <p>Your boss has been poisoned, the evidence is gone – and one of you did it. Several teams investigate against each other, with your names and your rooms.</p>
-<p class="meta">3–6 PER TEAM · ANY NUMBER OF TEAMS · 50–90 MIN · FROM €89 PER TEAM</p>
+<p class="meta">3–6 PLAYERS PER TEAM · ANY NUMBER OF TEAMS · 50–90 MIN · FROM €89 PER TEAM</p>
 <a class="btn btn-red" href="teams.html">Go to Mordsteam Teams</a>
 </article>
 <article class="game"><span class="tab">FRIENDS</span><span class="smark soon">COMING<br>SOON</span>
-<h3><span>Mordsteam</span> Friends</h3>
+<h3 class="gname"><span class="wm-r">MORDS</span>TEAM <span class="gp">FRIENDS</span></h3>
 <p class="for">The murder-mystery night for your friends.</p>
 <p>You are the suspects – with your real names and your little quirks. Everyone plays at the same time, or whenever they have time this week.</p>
-<p class="meta">4–8 INVESTIGATORS · EVERYONE ON THEIR OWN PHONE · 45–70 MIN</p>
+<p class="meta">4–8 INVESTIGATORS · EVERYONE ON THEIR OWN DEVICE · 45–70 MIN · FROM €29 PER GROUP</p>
 <a class="btn btn-line" href="friends.html">Find out more</a>
 </article>
 <article class="game"><span class="tab">SOLO</span><span class="smark soon">COMING<br>SOON</span>
-<h3><span>Mordsteam</span> Solo</h3>
+<h3 class="gname"><span class="wm-r">MORDS</span>TEAM <span class="gp">SOLO</span></h3>
 <p class="for">A case just for you.</p>
 <p>Thirty minutes, four suspects, one truth. The quick mystery in between – and the perfect taste of a team game.</p>
-<p class="meta">1 INVESTIGATOR · APPROX. 30 MIN · ANY TIME</p>
+<p class="meta">1 INVESTIGATOR · APPROX. 30 MIN · ANY TIME · ANYWHERE · €8.90</p>
 <a class="btn btn-line" href="solo.html">Find out more</a>
 </article>
 </div>
 </div></section>
 
-<section id="how" class="section" style="background:var(--paper-2)"><div class="wrap stack">
-<div class="eyebrow">How it works</div>
-<h2 class="h2">From click to crime scene in three steps</h2>
-<div class="steps">
-<div class="step"><span class="num">1</span><div><h3>Choose and customise your case</h3><p>Pick a game, enter your names – or use a fictional cast. Chance decides who the culprit is. Not even we know.</p></div></div>
-<div class="step"><span class="num">2</span><div><h3>Get your codes instantly</h3><p>After payment you see your access codes right on screen. Play straight away or any time in the next 12 months.</p></div></div>
-<div class="step"><span class="num">3</span><div><h3>Investigate and solve</h3><p>Examine the evidence, connect the clues, enter your solution. At the end: the big reveal, the ranking and your certificate.</p></div></div>
-</div>
-</div></section>
 
 <section class="facts" aria-label="What makes Mordsteam"><div class="wrap">
 <div><b>Personalised</b><span>your names, your rooms, your in-jokes – or a fictional cast</span></div>

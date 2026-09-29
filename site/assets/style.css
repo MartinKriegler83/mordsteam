@@ -431,3 +431,9 @@ p.small{font-size:14px;color:#5A5D66}
 @media (min-width:900px){.ph .wrap{grid-template-columns:1.1fr .9fr}.modes{grid-template-columns:1fr 1fr}}
 .ph .soonstamp{align-self:flex-start}
 .evid.e1{left:4%;top:16%}
+/* Spielkarten: Produktname wie das Logo, einzeilig */
+.game h3.gname{font-family:var(--serif);font-weight:900;font-size:clamp(20px,1.9vw,26px);letter-spacing:.02em;white-space:nowrap;padding-right:0;margin-top:6px;color:var(--ink)}
+.game h3.gname .wm-r,.game h3.gname .gp{color:var(--red)}
+.game .smark{top:-16px;right:14px;background:var(--card)}
+.game.live .smark{background:var(--card)}
+.games{row-gap:48px}
