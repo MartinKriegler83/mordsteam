@@ -164,7 +164,7 @@ async function status(request, env) {
   // Falls der Webhook (noch) nicht angekommen ist: direkt bei Stripe nachfragen
   if (order.status === "pending" && order.stripe_session && env.STRIPE_SECRET_KEY) {
     const cs = await stripe(env, "GET", `checkout/sessions/${order.stripe_session}`);
-    if (cs.payment_status === "paid") {
+    if ((cs.payment_status === "paid" || cs.payment_status === "no_payment_required")) {
       await env.DB.prepare("UPDATE orders SET status='paid', paid_at=? WHERE id=? AND status='pending'").bind(Date.now(), order.id).run();
       await fulfill(env, order.id, u.origin);
     }
@@ -189,7 +189,7 @@ async function webhook(request, env) {
   if (ev.type === "checkout.session.completed" || ev.type === "checkout.session.async_payment_succeeded") {
     const cs = ev.data.object;
     const id = cs.metadata?.order_id || cs.client_reference_id;
-    if (id && cs.payment_status === "paid") {
+    if (id && (cs.payment_status === "paid" || cs.payment_status === "no_payment_required")) {
       await env.DB.prepare("UPDATE orders SET status='paid', paid_at=? WHERE id=? AND status='pending'").bind(Date.now(), id).run();
       await fulfill(env, id, new URL(request.url).origin);
     }
