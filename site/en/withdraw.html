@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Early bird – Mordsteam</title>
-<meta name="description" content="Early bird: 40% off your first Mordsteam game – the conditions.">
+<title>Withdraw from contract – Mordsteam</title>
+<meta name="description" content="Withdraw from a contract with Mordsteam (private individuals).">
 
-<link rel="alternate" hreflang="de" href="https://mordsteam.com/earlybird.html">
-<link rel="alternate" hreflang="en" href="https://mordsteam.com/en/early-bird.html">
+<link rel="alternate" hreflang="de" href="https://mordsteam.com/widerruf.html">
+<link rel="alternate" hreflang="en" href="https://mordsteam.com/en/withdraw.html">
 <link rel="stylesheet" href="/assets/style.css">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
@@ -27,7 +27,7 @@
 <a href="index.html#case">The case</a>
 <a href="index.html#packages">Packages</a>
 <a href="index.html#faq">FAQ</a>
-<a class="langlink" href="/earlybird.html" hreflang="de" lang="de" title="Deutsch">DE</a>
+<a class="langlink" href="/widerruf.html" hreflang="de" lang="de" title="Deutsch">DE</a>
 <a class="btn btn-ink" href="order.html">Order</a>
 </nav>
 <details class="menu">
@@ -37,34 +37,29 @@
 <a href="index.html#case">The case</a>
 <a href="index.html#packages">Packages</a>
 <a href="index.html#faq">FAQ</a>
-<a href="/earlybird.html" hreflang="de" lang="de">Deutsch</a>
+<a href="/widerruf.html" hreflang="de" lang="de">Deutsch</a>
 <a class="btn btn-red" href="order.html">Order</a>
 </nav>
 </details>
 </div></header>
 <main class="page"><div class="wrap prose">
-<div class="eyebrow">We're live · Early bird</div>
-<h1 class="h1-page">40% off your first game</h1>
-<p class="lead">Mordsteam has just launched. Help us make our cases even better – and play your first case at 40% off.</p>
-<h2>How it works</h2>
-<ul>
-<li>When ordering, tick the <b>early bird</b> box in the last step. The discount is deducted automatically at checkout – no code needed.</li>
-<li>Valid for all packages and any number of teams.</li>
-</ul>
-<h2>What we ask in return</h2>
-<ul>
-<li>The day after your game we'll send you a short email with a feedback form. You give us honest feedback – it takes about 5 minutes.</li>
-<li>You write a short review. Whether and under which name we show it on mordsteam.com is up to you.</li>
-</ul>
-<h2>The fine print</h2>
-<ul>
-<li>One discounted order per company or group, for your first game.</li>
-<li>Cannot be combined with other vouchers.</li>
-<li>Valid while the offer runs. We'll announce the end date here and in the banner in advance. Orders placed before then keep the discount, even if you play later.</li>
-</ul>
-<p><a class="btn btn-red" href="order.html">Order now</a></p>
+<div class="eyebrow">Withdrawal</div>
+<h1>Withdraw from contract</h1>
+<p>As a <b>private individual</b> you can withdraw from your contract with us here as long as the right of withdrawal exists: within 14 days of ordering and before the game round has been played and ended. Orders placed as a company, club or organisation have no statutory right of withdrawal. Details are in our <a href="terms.html#ruecktritt">terms, section 8</a>.</p>
+<p><button class="btn btn-red" type="button" id="wr-start">Withdraw from contract</button></p>
+<form id="wf" class="form" novalidate hidden>
+<div class="two">
+<div class="field"><label for="wf-nr">Order number</label><input id="wf-nr" name="nr" maxlength="12" autocomplete="off" required><span class="hint">8 characters, shown in the confirmation email.</span></div>
+<div class="field"><label for="wf-email">Email address used for the order</label><input id="wf-email" name="email" type="email" autocomplete="email" maxlength="200" required></div>
+</div>
+<div class="field"><label for="wf-name">Name</label><input id="wf-name" name="name" autocomplete="name" maxlength="120" required></div>
+<div class="field"><label for="wf-grund">Note <span class="opt">optional</span></label><textarea id="wf-grund" name="grund" rows="3" maxlength="1000"></textarea><span class="hint">You don't have to give a reason.</span></div>
+<p class="formerr" id="wferr" role="alert" hidden></p>
+<div><button class="btn btn-red" type="submit">Confirm withdrawal</button></div>
+<p class="small">By clicking “Confirm withdrawal” you send us your declaration of withdrawal for the order stated. You will immediately receive a confirmation by email with its content, date and time.</p>
+</form>
 </div></main>
-
+<script src="/assets/widerruf.js"></script>
 <footer class="footer"><div class="wrap">
 <span class="brand"><span class="wm"><span class="wm-r">MORDS</span>TEAM</span></span>
 <nav aria-label="Legal"><a href="imprint.html">Imprint</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a><a href="withdraw.html">Withdraw from contract</a></nav>

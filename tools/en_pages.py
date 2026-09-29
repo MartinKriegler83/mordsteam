@@ -2,7 +2,7 @@
 # Aufruf: python3 tools/en_pages.py  – danach site/en/*.html committen.
 import os, html
 ROOT = os.path.join(os.path.dirname(__file__), "..", "site")
-MAP = {"index": "index", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "contact": "kontakt", "early-bird": "earlybird", "feedback": "feedback"}
+MAP = {"index": "index", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "contact": "kontakt", "early-bird": "earlybird", "feedback": "feedback", "withdraw": "widerruf"}
 LOGO = '<svg width="30" height="30" viewBox="0 0 34 34" fill="none" stroke="#15171C" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg>'
 
 
@@ -58,7 +58,7 @@ def page(name, title, desc, body, robots=None, scripts="", home=False):
 {scripts}
 <footer class="footer"><div class="wrap">
 <span class="brand"><span class="wm"><span class="wm-r">MORDS</span>TEAM</span></span>
-<nav aria-label="Legal"><a href="imprint.html">Imprint</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a></nav>
+<nav aria-label="Legal"><a href="imprint.html">Imprint</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a><a href="withdraw.html">Withdraw from contract</a></nav>
 <span>© 2026 Mordsteam e.U.</span>
 </div></footer>
 </body>
@@ -280,6 +280,10 @@ P["order"] = dict(title="Order – Mordsteam", robots="noindex", desc="Order cas
 <div class="field"><label for="c_tel">Phone <span class="opt">optional</span></label><input id="c_tel" name="c_tel" type="tel" maxlength="40" autocomplete="tel"></div>
 <div class="field"><label for="c_firma">Company on the invoice <span class="opt">optional</span></label><input id="c_firma" name="c_firma" maxlength="120" autocomplete="organization"><span class="hint">You enter the billing address and VAT number when paying.</span></div>
 </div>
+<div class="field"><span class="label">You are ordering as *</span>
+<label class="check"><input type="radio" name="kunde" value="b2b"><span>Company, club or organisation</span></label>
+<label class="check"><input type="radio" name="kunde" value="b2c"><span>Private individual</span></label>
+<span class="hint">Private individuals have a statutory right of withdrawal (see <a href="terms.html#ruecktritt" target="_blank" rel="noopener">terms section 8</a>).</span></div>
 </fieldset>
 
 <fieldset class="step"><legend><span>6</span> Review and pay</legend>
@@ -319,7 +323,7 @@ P["privacy"] = dict(title="Privacy policy – Mordsteam", desc="How Mordsteam ha
 <p>The day after the game ends, we send the person who ordered a single email with a link to a feedback form (Art. 6(1)(f) GDPR – we want to improve our cases; for early bird orders part of the discount conditions, Art. 6(1)(b) GDPR). You can opt out of this email when ordering. We store your answers without reference to the people in the case. We only publish a review if you expressly agree in the form – anonymously or under the name you provide for it. You can withdraw your consent at any time by email; we will then remove the review from the website.</p>
 <h2>4. Order and payment</h2>
 <p>For an order we process the chosen package, number of teams, game language, your name, your email address, optionally phone and invoice company, and the details for personalising the case (company name, city, rooms, names, title and role of the people who appear in the case, optionally your logo). The purpose is performance of the contract (Art. 6(1)(b) GDPR). If you choose the fictional company, you don't provide any personal data for the personalisation.</p>
-<p>Payment and invoicing are handled by Stripe (Stripe Payments Europe, Ltd., Dublin, Ireland). Stripe receives your payment and billing data for this and processes it under its own responsibility; we never see card details. We send the order confirmation and the feedback email via the email service Resend (Resend, Inc., USA; sent via servers in the EU, safeguarded by EU standard contractual clauses). We keep invoice and payment data for as long as tax retention obligations require (in Austria usually seven years).</p>
+<p>Payment and invoicing are handled by Stripe (Stripe Payments Europe, Ltd., Dublin, Ireland). Stripe receives your payment and billing data for this and processes it under its own responsibility; we never see card details. If you withdraw from a contract, we process the order number, name, email address, time and any note to handle and document the withdrawal (Art. 6(1)(b) and (c) GDPR). We send the order confirmation and the feedback email via the email service Resend (Resend, Inc., USA; sent via servers in the EU, safeguarded by EU standard contractual clauses). We keep invoice and payment data for as long as tax retention obligations require (in Austria usually seven years).</p>
 <h2>5. Game round and case desk</h2>
 <p>For the game round we store the personalisation details, team names, times, answer attempts and hints in a database at Cloudflare. On the teams' devices only a login key is stored in the browser's local storage (no cookie, no tracking). 30 days after the game ends we delete the game round including teams, answer attempts, chat histories and logo – if a case is never played, 13 months after the order at the latest; the personal data of the personalisation is then removed from the order. To develop our cases further, we keep anonymous statistics (playing times, number of wrong attempts and hints per team) without names.</p>
 <h2>6. ARIA – AI assistant in the Premium Plus package</h2>
@@ -401,7 +405,7 @@ P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mor
 <h2>7. Rights of use</h2>
 <p>Cases, texts, graphics and software are protected by copyright. You receive the simple, non-transferable right to play your game round for internal use. You may not publish, pass on or reuse case content, solutions or codes for other rounds. You are welcome to share the winners' certificate and photos of your event.</p>
 
-<h2>8. Right of withdrawal for consumers</h2>
+<h2 id="ruecktritt">8. Right of withdrawal for consumers</h2>
 <p>This right of withdrawal applies to consumers only. If you order as a company, club or for your professional activity, there is no statutory right of withdrawal.</p>
 <p><b>Withdrawal period:</b> As a consumer you may withdraw from the contract within 14 days of its conclusion without giving reasons – unless the right of withdrawal has expired earlier.</p>
 <p><b>Immediate start and expiry:</b> When ordering, you expressly request that we begin performance immediately after payment (creating the game round, providing the codes) and confirm that you know you thereby lose your right of withdrawal. Our service is a game provided online. Insofar as it counts as digital content, the right of withdrawal expires when the codes are provided following our email confirmation (§ 18 (1) no. 11 FAGG). Insofar as it counts as a (digital) service, it expires once the game round has been fully performed, i.e. played and ended (§ 18 (1) no. 1 FAGG).</p>
@@ -484,6 +488,25 @@ P["contact"] = dict(title="Contact – Mordsteam", desc="How to reach Mordsteam.
 <div><button class="btn btn-red" type="submit">Send message</button></div>
 </form>
 <p class="small" style="margin-top:20px">You'll find all company details in the <a href="imprint.html">imprint</a>.</p>
+</div></main>''')
+
+P["withdraw"] = dict(title="Withdraw from contract – Mordsteam", desc="Withdraw from a contract with Mordsteam (private individuals).", scripts='<script src="/assets/widerruf.js"></script>',
+ body='''<main class="page"><div class="wrap prose">
+<div class="eyebrow">Withdrawal</div>
+<h1>Withdraw from contract</h1>
+<p>As a <b>private individual</b> you can withdraw from your contract with us here as long as the right of withdrawal exists: within 14 days of ordering and before the game round has been played and ended. Orders placed as a company, club or organisation have no statutory right of withdrawal. Details are in our <a href="terms.html#ruecktritt">terms, section 8</a>.</p>
+<p><button class="btn btn-red" type="button" id="wr-start">Withdraw from contract</button></p>
+<form id="wf" class="form" novalidate hidden>
+<div class="two">
+<div class="field"><label for="wf-nr">Order number</label><input id="wf-nr" name="nr" maxlength="12" autocomplete="off" required><span class="hint">8 characters, shown in the confirmation email.</span></div>
+<div class="field"><label for="wf-email">Email address used for the order</label><input id="wf-email" name="email" type="email" autocomplete="email" maxlength="200" required></div>
+</div>
+<div class="field"><label for="wf-name">Name</label><input id="wf-name" name="name" autocomplete="name" maxlength="120" required></div>
+<div class="field"><label for="wf-grund">Note <span class="opt">optional</span></label><textarea id="wf-grund" name="grund" rows="3" maxlength="1000"></textarea><span class="hint">You don't have to give a reason.</span></div>
+<p class="formerr" id="wferr" role="alert" hidden></p>
+<div><button class="btn btn-red" type="submit">Confirm withdrawal</button></div>
+<p class="small">By clicking “Confirm withdrawal” you send us your declaration of withdrawal for the order stated. You will immediately receive a confirmation by email with its content, date and time.</p>
+</form>
 </div></main>''')
 
 for name, p in P.items():

@@ -369,3 +369,4 @@ a[href^="mailto:"]{white-space:nowrap}
 
 /* Kontaktformular / Kleingedrucktes */
 p.small{font-size:14px;color:#5A5D66}
+[hidden]{display:none!important}

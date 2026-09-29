@@ -66,6 +66,7 @@ export async function onRequest(ctx) {
 async function loadSession(env, id) {
   const s = await env.DB.prepare("SELECT * FROM sessions WHERE id=?").bind(id).first();
   if (!s) return null;
+  if (s.status === "withdrawn") return null;   // widerrufene Runde: Codes gelten nicht mehr
   if (expired(s)) { await purgeSession(env, s.id); return null; }
   return refreshStatus(env, s);
 }
@@ -123,7 +124,7 @@ async function join(request, env) {
 // Spielcode prüfen, ohne anzumelden: Sprache der Runde für die Anmeldeseite
 async function codeInfo(request, env) {
   const code = String(new URL(request.url).searchParams.get("code") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-  const s = code && (await env.DB.prepare("SELECT lang FROM sessions WHERE join_code=?").bind(code).first());
+  const s = code && (await env.DB.prepare("SELECT lang FROM sessions WHERE join_code=? AND status <> 'withdrawn'").bind(code).first());
   return json({ found: !!s, lang: s && s.lang === "en" ? "en" : "de" });
 }
 

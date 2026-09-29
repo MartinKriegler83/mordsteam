@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kontakt – Mordsteam</title>
-<meta name="description" content="So erreicht ihr Mordsteam.">
-<link rel="alternate" hreflang="de" href="https://mordsteam.com/kontakt.html">
-<link rel="alternate" hreflang="en" href="https://mordsteam.com/en/contact.html">
+<title>Vertrag widerrufen – Mordsteam</title>
+<meta name="description" content="Widerruf eines Vertrags mit Mordsteam (für Privatpersonen).">
+<link rel="alternate" hreflang="de" href="https://mordsteam.com/widerruf.html">
+<link rel="alternate" hreflang="en" href="https://mordsteam.com/en/withdraw.html">
 <link rel="stylesheet" href="assets/style.css">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
@@ -42,27 +42,21 @@
 </div></header>
 
 <main class="page"><div class="wrap prose">
-<div class="eyebrow">Kontakt</div>
-<h1>Schreibt uns</h1>
-<div class="contactcard">
-<p class="cc-firm">Mordsteam e.U.</p>
-<p>Martin Kriegler</p>
-<p>Sportplatzgasse 16, 7152 Pamhagen, Österreich</p>
-<p><a class="cc-mail" href="mailto:office@mordsteam.com">office@mordsteam.com</a></p>
-</div>
-<p>Fragen zu einem Fall, zur Bestellung oder zu eurer Spielrunde? Schreibt uns – über das Formular oder per E-Mail. Wir melden uns so schnell wie möglich.</p>
-<form id="kf" class="form" novalidate>
+<div class="eyebrow">Widerruf</div>
+<h1>Vertrag widerrufen</h1>
+<p>Hier könnt ihr als <b>Privatperson</b> euren Vertrag mit uns widerrufen, solange das Rücktrittsrecht besteht: innerhalb von 14 Tagen ab der Bestellung und bevor die Spielrunde gespielt und beendet ist. Für Bestellungen als Unternehmen, Verein oder Organisation besteht kein gesetzliches Rücktrittsrecht. Details stehen in unseren <a href="agb.html#ruecktritt">AGB, Punkt 8</a>.</p>
+<p><button class="btn btn-red" type="button" id="wr-start">Vertrag widerrufen</button></p>
+<form id="wf" class="form" novalidate hidden>
 <div class="two">
-<div class="field"><label for="kf-name">Name</label><input id="kf-name" name="name" autocomplete="name" maxlength="100" required></div>
-<div class="field"><label for="kf-email">E-Mail</label><input id="kf-email" name="email" type="email" autocomplete="email" maxlength="200" required></div>
+<div class="field"><label for="wf-nr">Bestellnummer</label><input id="wf-nr" name="nr" maxlength="12" autocomplete="off" required><span class="hint">8 Zeichen, steht in der Bestätigungsmail.</span></div>
+<div class="field"><label for="wf-email">E-Mail-Adresse der Bestellung</label><input id="wf-email" name="email" type="email" autocomplete="email" maxlength="200" required></div>
 </div>
-<div class="field"><label for="kf-msg">Nachricht</label><textarea id="kf-msg" name="message" rows="6" maxlength="5000" required></textarea></div>
-<div class="hp" aria-hidden="true"><label for="kf-web">Website</label><input id="kf-web" name="website" tabindex="-1" autocomplete="off"></div>
-<p class="small">Eure Angaben verwenden wir nur, um eure Anfrage zu beantworten. Mehr dazu in der <a href="datenschutz.html">Datenschutzerklärung</a>.</p>
-<p class="formerr" id="kferr" role="alert" hidden></p>
-<div><button class="btn btn-red" type="submit">Nachricht senden</button></div>
+<div class="field"><label for="wf-name">Name</label><input id="wf-name" name="name" autocomplete="name" maxlength="120" required></div>
+<div class="field"><label for="wf-grund">Anmerkung <span class="opt">optional</span></label><textarea id="wf-grund" name="grund" rows="3" maxlength="1000"></textarea><span class="hint">Einen Grund müsst ihr nicht angeben.</span></div>
+<p class="formerr" id="wferr" role="alert" hidden></p>
+<div><button class="btn btn-red" type="submit">Widerruf bestätigen</button></div>
+<p class="small">Mit „Widerruf bestätigen“ schickt ihr uns eure Widerrufserklärung für die angegebene Bestellung. Ihr erhaltet sofort eine Bestätigung per E-Mail mit Inhalt, Datum und Uhrzeit.</p>
 </form>
-<p class="small" style="margin-top:20px">Alle Unternehmensangaben findet ihr im <a href="impressum.html">Impressum</a>.</p>
 </div></main>
 
 <footer class="footer"><div class="wrap">
@@ -70,6 +64,6 @@
 <nav aria-label="Rechtliches"><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a><a href="agb.html">AGB</a><a href="kontakt.html">Kontakt</a><a href="widerruf.html">Vertrag widerrufen</a></nav>
 <span>© 2026 Mordsteam e.U.</span>
 </div></footer>
-<script src="assets/kontakt.js"></script>
+<script src="assets/widerruf.js"></script>
 </body>
 </html>

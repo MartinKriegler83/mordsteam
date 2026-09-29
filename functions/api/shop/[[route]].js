@@ -15,6 +15,7 @@ import { migrate, createGameSession, normalizeVars, InputError } from "../../../
 import { COUNTRIES, COUNTRY_ORDER, randomCast, castToEnglish } from "../../../lib/countries.js";
 import { runFeedbackMails, feedbackInfo, saveFeedback, publicReviews } from "../../../lib/feedback.js";
 import { handleContact } from "../../../lib/contact.js";
+import { handleWithdraw, orderNo } from "../../../lib/withdraw.js";
 
 // Sprache der Webseite (Fehlermeldungen, Stripe, Mail) – getrennt von der Spielsprache
 const L = (lang, de, en) => (lang === "en" ? en : de);
@@ -34,11 +35,12 @@ export async function onRequest({ request, env, params }) {
   const method = request.method;
   try {
     await migrate(env);
-    if (route === "meta" && method === "GET") return meta(env, request);
-    if (route === "stripe-webhook" && method === "POST") return webhook(request, env);
-    if (route === "status" && method === "GET") return status(request, env);
-    if (route === "bestellung" && method === "POST") return bestellung(request, env);
-    if (route === "kontakt" && method === "POST") return handleContact(request, env);
+    if (route === "meta" && method === "GET") return await meta(env, request);
+    if (route === "stripe-webhook" && method === "POST") return await webhook(request, env);
+    if (route === "status" && method === "GET") return await status(request, env);
+    if (route === "bestellung" && method === "POST") return await bestellung(request, env);
+    if (route === "kontakt" && method === "POST") return await handleContact(request, env);
+    if (route === "widerruf" && method === "POST") return await handleWithdraw(request, env);
     // Feedback nach dem Spiel
     if (route === "feedback" && method === "GET") {
       const f = await feedbackInfo(env, new URL(request.url).searchParams.get("f"));
@@ -130,6 +132,8 @@ async function bestellung(request, env) {
   const k = b.contact || {};
   const s = (x, max = 120) => String(x ?? "").trim().slice(0, max);
   const contact = { name: s(k.name), email: s(k.email, 160).toLowerCase(), telefon: s(k.telefon, 40), rechnung_firma: s(k.rechnung_firma) };
+  if (!['b2b', 'b2c'].includes(k.kunde)) throw new InputError(L(site, "Bitte angeben, ob ihr als Unternehmen/Verein oder als Privatperson bestellt.", "Please tell us whether you are ordering as a company/club or as a private individual."));
+  contact.kunde = k.kunde;
   if (contact.name.length < 2) throw new InputError(L(site, "Bitte deinen Namen angeben.", "Please enter your name."));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError(L(site, "Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."));
   const c = b.consent || {};
@@ -224,7 +228,7 @@ async function status(request, env) {
   }
   const ct = JSON.parse(order.contact || "{}");
   const out = { status: order.status, paket: order.paket, teams: order.teams, event_date: order.event_date, amount_cents: order.amount_cents,
-    firma: JSON.parse(order.vars).FIRMA, lang: ct.lang || "de", land: JSON.parse(order.vars).LAND || "AT", earlybird: ct.earlybird || 0 };
+    firma: JSON.parse(order.vars).FIRMA, lang: ct.lang || "de", land: JSON.parse(order.vars).LAND || "AT", earlybird: ct.earlybird || 0, nr: orderNo(order.id), kunde: ct.kunde || "" };
   if (order.status === "fulfilled" && order.session_id) {
     const s = await env.DB.prepare("SELECT join_code, org_code FROM sessions WHERE id=?").bind(order.session_id).first();
     if (s) Object.assign(out, s);
@@ -318,11 +322,12 @@ ${c.earlybird ? `<p><b>Early Bird:</b> ${T("Danke, dass ihr uns helft! Nach dem 
 <hr style="border:0;border-top:1px solid #DDD5C4;margin:24px 0 14px">
 <div style="font-size:12.5px;color:#5A5D66;line-height:1.5">
 <b>${T("Vertragsbestätigung", "Contract confirmation")}</b><br>
+${T("Bestellnummer", "Order number")}: ${orderNo(o.id)}<br>
 ${T("Anbieter", "Provider")}: Mordsteam e.U., ${T("Inhaber", "owner")} Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, ${T("Österreich", "Austria")}, office@mordsteam.com${COMPANY_FN ? `, FN ${COMPANY_FN}` : ""}, ${T("Firmenbuchgericht", "register court")} Landesgericht Eisenstadt<br>
 ${T("Leistung", "Service")}: ${T(`Personalisierter digitaler Krimi-Fall „${e(title)}“, Paket ${NAMES[o.paket] || o.paket}, ${o.teams} Team${o.teams === 1 ? "" : "s"}, Spielsprache ${lang === "en" ? "Englisch" : "Deutsch"}; spielbar 12 Monate ab Kauf, einmal startbar.`, `Personalised digital murder-mystery case “${e(title)}”, package ${NAMES_EN[o.paket] || o.paket}, ${o.teams} team${o.teams === 1 ? "" : "s"}, game language ${lang === "en" ? "English" : "German"}; playable for 12 months from purchase, can be started once.`)}<br>
 ${T("Preis", "Price")}: ${(o.amount_cents / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 })} € ${T("(Endpreis; Kleinunternehmer, keine USt gemäß § 6 Abs. 1 Z 27 UStG). Bezahlt über Stripe.", "(final price; small business, no VAT under § 6 (1) no. 27 UStG). Paid via Stripe.")}<br>
 ${T("Es gelten unsere AGB", "Our terms apply")}: <a href="${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}">${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}</a><br>
-${T("Ihr habt bei der Bestellung ausdrücklich verlangt, dass wir sofort nach dem Bezahlen mit der Ausführung beginnen, und bestätigt, dass ihr als Verbraucher dadurch euer Rücktrittsrecht verliert. Es erlischt mit dieser Bestätigung und der Bereitstellung der Codes (§ 18 Abs. 1 Z 11 FAGG), spätestens aber, sobald die Spielrunde gespielt und beendet ist (§ 18 Abs. 1 Z 1 FAGG). Für Unternehmen besteht kein gesetzliches Rücktrittsrecht.", "When ordering, you expressly requested that we begin performance immediately after payment and confirmed that as a consumer you thereby lose your right of withdrawal. It expires with this confirmation and the provision of the codes (§ 18 (1) no. 11 FAGG), but at the latest once the game round has been played and ended (§ 18 (1) no. 1 FAGG). Companies have no statutory right of withdrawal.")}
+${T("Ihr habt bei der Bestellung ausdrücklich verlangt, dass wir sofort nach dem Bezahlen mit der Ausführung beginnen, und bestätigt, dass ihr als Verbraucher dadurch euer Rücktrittsrecht verliert. Es erlischt mit dieser Bestätigung und der Bereitstellung der Codes (§ 18 Abs. 1 Z 11 FAGG), spätestens aber, sobald die Spielrunde gespielt und beendet ist (§ 18 Abs. 1 Z 1 FAGG). Für Unternehmen besteht kein gesetzliches Rücktrittsrecht.", "When ordering, you expressly requested that we begin performance immediately after payment and confirmed that as a consumer you thereby lose your right of withdrawal. It expires with this confirmation and the provision of the codes (§ 18 (1) no. 11 FAGG), but at the latest once the game round has been played and ended (§ 18 (1) no. 1 FAGG). Companies have no statutory right of withdrawal.")}${c.kunde !== "b2b" ? `<br>${T("Widerruf (nur Privatpersonen, solange das Rücktrittsrecht besteht)", "Withdrawal (private individuals only, while the right of withdrawal exists)")}: <a href="${origin}${site === "en" ? "/en/withdraw.html" : "/widerruf.html"}?nr=${orderNo(o.id)}">${T("Vertrag widerrufen", "Withdraw from contract")}</a>` : ""}
 </div></div>`;
   await fetch("https://api.resend.com/emails", {
     method: "POST",
