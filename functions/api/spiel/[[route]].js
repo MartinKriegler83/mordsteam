@@ -52,6 +52,7 @@ export async function onRequest(ctx) {
       if (route === "admin/stats" && method === "GET") return adminStats(request, env);
       if (route === "admin/order-shipped" && method === "POST") return adminShipped(request, env);
       if (route === "admin/feedback" && method === "GET") return adminFeedback(env);
+      if (route === "admin/export" && method === "GET") return adminExport(request, env);
       if (route === "admin/feedback-run" && method === "POST") { const b = await body(request); return json({ sent: await runFeedbackMails(env, new URL(request.url).origin, { force: !!b.force }) }); }
       if (route === "admin/feedback-approve" && method === "POST") { const b = await body(request); await migrateFeedback(env); await env.DB.prepare("UPDATE feedback SET approved=? WHERE id=?").bind(b.approved ? 1 : 0, String(b.id || "")).run(); return json({ ok: true }); }
     }
@@ -610,6 +611,28 @@ async function adminStats(request, env) {
   }
   return json({ tests, stats: out });
 }
+// Buchhaltung: bezahlte Bestellungen als CSV (Spalten wie im Tabellenblatt „Einnahmen“), Excel-tauglich (; und Komma)
+async function adminExport(request, env) {
+  try { await env.DB.prepare("ALTER TABLE orders ADD COLUMN invoice_no TEXT").run(); } catch {}
+  const u = new URL(request.url);
+  const von = u.searchParams.get("von") || "2000-01-01", bis = u.searchParams.get("bis") || "2999-12-31";
+  const from = Date.parse(von + "T00:00:00+02:00"), to = Date.parse(bis + "T23:59:59+02:00");
+  const { results } = await env.DB.prepare(
+    "SELECT * FROM orders WHERE status IN ('paid','fulfilling','fulfilled') AND paid_at BETWEEN ? AND ? ORDER BY paid_at").bind(from, to).all();
+  const P = { basis: "Basis", premium: "Premium", plus: "Premium Plus" };
+  const q = (x) => { const t = String(x ?? ""); return /[;"\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+  const d = (ms) => new Intl.DateTimeFormat("de-AT", { timeZone: "Europe/Vienna", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(ms));
+  const lines = [["Datum (bezahlt)", "Rechnungsnr. (Stripe)", "Bestell-ID", "Kunde / Firma", "Paket", "Teams", "Early Bird", "Betrag bezahlt (€)", "davon USt (€)", "Zahlungsweg", "Bemerkung"].join(";")];
+  for (const o of results) {
+    const c = JSON.parse(o.contact || "{}");
+    const firma = c.rechnung_firma || (c.fiktiv ? "" : (JSON.parse(o.vars || "{}").FIRMA || ""));
+    lines.push([d(o.paid_at), o.invoice_no || "", o.id.slice(0, 8), [c.name, firma].filter(Boolean).join(" / "), P[o.paket] || o.paket, o.teams,
+      c.earlybird ? "Ja" : "Nein", (o.amount_cents / 100).toFixed(2).replace(".", ","), "0,00", o.stripe_session ? "Stripe" : "Test (ohne Zahlung)", ""].map(q).join(";"));
+  }
+  return new Response("\ufeff" + lines.join("\r\n"), { headers: { "content-type": "text/csv; charset=utf-8",
+    "content-disposition": `attachment; filename="mordsteam-einnahmen-${von}-bis-${bis}.csv"`, "cache-control": "no-store" } });
+}
+
 // Feedback: eingegangene Bögen und fällige bzw. nicht zustellbare Feedback-Mails
 async function adminFeedback(env) {
   await migrateFeedback(env);

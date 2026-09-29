@@ -112,7 +112,12 @@
     const lbl = { pending: "offen", paid: "bezahlt", fulfilling: "in Arbeit", fulfilled: "bezahlt · Runde angelegt" };
     const paid = orders.filter((o) => o.status !== "pending");
     const toShip = [];
+    const y = new Date().getFullYear();
     return `<div class="panel"><div class="eyebrow">Bestellungen</div>
+      <div class="actions-row" style="margin:8px 0;align-items:end;flex-wrap:wrap;gap:8px">
+        <label class="small">von <input type="date" id="exvon" value="${y}-01-01"></label>
+        <label class="small">bis <input type="date" id="exbis" value="${y}-12-31"></label>
+        <button class="btn btn-line" id="exbtn" type="button">Einnahmen exportieren (CSV)</button></div>
       <p style="margin:8px 0">${paid.length} bezahlt · Umsatz ${eur(paid.reduce((a, o) => a + o.amount_cents, 0))}</p>
       <div class="list-sessions">${orders.length ? orders.map((o) => {
         const c = o.contact || {}, l = c.liefer;
@@ -198,6 +203,14 @@
     if (b1) b1.onclick = fr(false);
     if (b2) b2.onclick = fr(true);
     root.querySelectorAll("[data-fbok]").forEach((b) => (b.onclick = async () => { await MS.api("POST", "admin/feedback-approve", { id: b.dataset.fbok, approved: b.dataset.v === "1" }, H()); load(); }));
+    const exb = document.getElementById("exbtn");
+    if (exb) exb.onclick = async () => {
+      const v = document.getElementById("exvon").value, b2 = document.getElementById("exbis").value;
+      const r = await fetch(`/api/spiel/admin/export?von=${v}&bis=${b2}`, { headers: H() });
+      if (!r.ok) { alert("Export fehlgeschlagen."); return; }
+      const a2 = document.createElement("a"); a2.href = URL.createObjectURL(await r.blob()); a2.download = `mordsteam-einnahmen-${v}-bis-${b2}.csv`;
+      document.body.append(a2); a2.click(); a2.remove();
+    };
     const stc = document.getElementById("stattests");
     if (stc) stc.onchange = () => { statTests = stc.checked; load(); };
     root.querySelectorAll("[data-ship]").forEach((b) => (b.onclick = async () => {

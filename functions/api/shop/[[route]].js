@@ -213,6 +213,7 @@ async function status(request, env) {
     const cs = await stripe(env, "GET", `checkout/sessions/${order.stripe_session}`);
     if ((cs.payment_status === "paid" || cs.payment_status === "no_payment_required")) {
       await env.DB.prepare("UPDATE orders SET status='paid', paid_at=? WHERE id=? AND status='pending'").bind(Date.now(), order.id).run();
+      await recordPayment(env, order.id, cs);
       await fulfill(env, order.id, u.origin);
     }
     order = await env.DB.prepare("SELECT * FROM orders WHERE id=?").bind(order.id).first();
@@ -238,6 +239,7 @@ async function webhook(request, env) {
     const id = cs.metadata?.order_id || cs.client_reference_id;
     if (id && (cs.payment_status === "paid" || cs.payment_status === "no_payment_required")) {
       await env.DB.prepare("UPDATE orders SET status='paid', paid_at=? WHERE id=? AND status='pending'").bind(Date.now(), id).run();
+      await recordPayment(env, id, cs);
       await fulfill(env, id, new URL(request.url).origin);
     }
   }
@@ -324,6 +326,19 @@ ${T("Ihr habt bei der Bestellung ausdrücklich zugestimmt, dass wir sofort nach 
     body: JSON.stringify({ from: env.MAIL_FROM, to: [c.email], reply_to: "office@mordsteam.com",
       subject: T(`Euer Mordsteam-Fall für ${vars.FIRMA} ist bereit`, `Your Mordsteam case for ${vars.FIRMA} is ready`), html }),
   });
+}
+
+// Für die Buchhaltung: tatsächlich bezahlter Betrag (nach Rabatt) und Stripe-Rechnungsnummer speichern
+async function recordPayment(env, id, cs) {
+  try {
+    for (const q of ["ALTER TABLE orders ADD COLUMN invoice_no TEXT"]) { try { await env.DB.prepare(q).run(); } catch {} }
+    if (cs && Number.isFinite(cs.amount_total)) await env.DB.prepare("UPDATE orders SET amount_cents=? WHERE id=?").bind(cs.amount_total, id).run();
+    const invId = cs && (typeof cs.invoice === "string" ? cs.invoice : cs.invoice?.id);
+    if (invId) {
+      const inv = await stripe(env, "GET", `invoices/${invId}`);
+      if (inv && inv.number) await env.DB.prepare("UPDATE orders SET invoice_no=? WHERE id=?").bind(inv.number, id).run();
+    }
+  } catch { /* Buchhaltungsdaten dürfen die Bestellung nie blockieren */ }
 }
 
 // Early-Bird-Gutschein in Stripe: vorhandenen nehmen oder beim ersten Bedarf selbst anlegen (einmalig, x % Rabatt)
