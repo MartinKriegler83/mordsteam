@@ -456,3 +456,9 @@ p.small{font-size:14px;color:#5A5D66}
   #fuerwen,#whoisitfor{padding-bottom:16px}
 }
 #fuerwen,#whoisitfor{padding-bottom:8px}
+/* Fall 001: weniger Luft zwischen Schlagworten und den Punkten */
+@media (min-width:900px){
+  .case .case-grid{row-gap:0}
+  .case-points{margin-top:8px;padding-top:22px}
+}
+@media (min-width:900px){.case-points{margin-top:28px}}
