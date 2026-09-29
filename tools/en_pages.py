@@ -386,20 +386,20 @@ P["solo"] = dict(title="Mordsteam Solo – Night Train to Venice: a murder myste
 <section id="price" class="section"><div class="wrap stack">
 <div class="eyebrow">Price</div>
 <h2 class="h2">One case, one price</h2>
-<p class="lead">No subscription, no account: buy, get your code, start playing. And if you enjoyed it, there's a voucher for the big team game on top.</p>
+<p class="lead">No subscription, no account: buy, get your code, start playing. And if you enjoyed it, there's a voucher for a game with friends or your team on top.</p>
 <div class="pack-grid">
 <div class="pack featured">
 <span class="badge">SOLO 001</span>
 <h3>Night Train to Venice</h3><p class="sub">30 minutes · 1 person</p>
 <p class="price">€8.90</p><p class="per">buy once, play as often as you like with a different killer</p>
-<ul class="list"><li>13 pieces of evidence, 4 suspects, 3 questions</li><li>Killer drawn anew for every playthrough</li><li>Hints at the click of a button</li><li>Result “faster than X %” on your first playthrough</li><li>Certificate with your name to print or save as PDF</li><li>€5 voucher for a Mordsteam Teams game</li></ul>
+<ul class="list"><li>13 pieces of evidence, 4 suspects, 3 questions</li><li>Killer drawn anew for every playthrough</li><li>Hints at the click of a button</li><li>Result “faster than X %” on your first playthrough</li><li>Certificate with your name to print or save as PDF</li><li>€5 voucher for a Friends or Teams game</li></ul>
 <span class="btn btn-red" aria-disabled="true" style="opacity:.6;cursor:default">Available soon</span>
 </div>
 <div class="pack">
-<span class="badge">MORE THAN JUST YOU?</span>
+<span class="badge">WANT MORE?</span>
 <h3>With friends or as a team</h3><p class="sub">the same puzzle thrill, only together</p>
 <p class="price">from €29</p><p class="per">Friends for 4–8 people, Teams for companies and clubs</p>
-<ul class="list"><li><b>Mordsteam Friends:</b> the mystery night with friends, everyone on their own phone</li><li><b>Mordsteam Teams:</b> the personalised case with your names and rooms</li><li>Your Solo voucher is valid for a Teams game</li></ul>
+<ul class="list"><li><b>Mordsteam Friends:</b> the mystery night with friends, everyone on their own phone</li><li><b>Mordsteam Teams:</b> the personalised case with your names and rooms</li><li>Your Solo voucher is valid for a Friends or Teams game</li></ul>
 <a class="btn btn-line" href="friends.html">See Friends</a>
 <a class="btn-text" href="teams.html" style="margin-top:10px">To Mordsteam Teams →</a>
 </div>
@@ -419,7 +419,7 @@ P["solo"] = dict(title="Mordsteam Solo – Night Train to Venice: a murder myste
 <details><summary>What does “faster than X %” mean?</summary><p>Your final time (time played plus penalty minutes) is compared with all other investigators who solved the case for the first time. There is no public leaderboard, nobody sees your name.</p></details>
 <details><summary>Can I play the case again?</summary><p>Yes, as often as you like. A different killer is drawn for each playthrough, and the matching evidence changes too. Only your first playthrough counts for the comparison.</p></details>
 <details><summary>Can I give Solo as a gift?</summary><p>Yes. Just pass on the code. The name that appears in the story and on the certificate is only entered by the person who plays.</p></details>
-<details><summary>What is the €5 voucher?</summary><p>Whoever solves the case for the first time gets a €5 voucher code for a Mordsteam Teams game at the end – for the next team event at work or in your club, for example.</p></details>
+<details><summary>What is the €5 voucher?</summary><p>Whoever solves the case for the first time gets a €5 voucher code for a Mordsteam Friends or Teams game at the end – for the next mystery night with friends or the team event at work or in your club.</p></details>
 <details><summary>Do I need an app or an account?</summary><p>No. Solo runs right in the browser on phone, tablet or laptop. All you need is your code.</p></details>
 <details><summary>May I use Google or AI?</summary><p>Please don't. The case is built so you solve it with your wits and the evidence – everything you need is in the file. A matter of honour among investigators.</p></details>
 <details><summary>From what age?</summary><p>The case is written for adults – a mystery with a wink, no blood and no shock effects. Teenagers who enjoy crime stories will do fine too.</p></details>

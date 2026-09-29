@@ -206,7 +206,7 @@
       <h3>Die Auflösung</h3>
       <p><b>Täter/in: ${esc(r.culprit)}</b> · Tatzeit 01:31 · Versteck: ${esc(r.item)}</p>
       <p>${esc(r.text)}</p>
-      ${r.voucher ? `<div class="so-voucher"><small>Dein Gutschein für ein Mordsteam-Teams-Spiel</small><b class="mono">${esc(r.voucher)}</b><span>5 € Rabatt · einlösbar beim Bestellen eines Teams-Spiels</span></div>` : ""}
+      ${r.voucher ? `<div class="so-voucher"><small>Dein Gutschein für ein Friends- oder Teams-Spiel</small><b class="mono">${esc(r.voucher)}</b><span>5 € Rabatt · einlösbar beim Bestellen von Mordsteam Friends oder Teams</span></div>` : ""}
       <div class="actions-row" style="margin-top:22px">${solved && S.first_play ? `<button type="button" class="btn btn-red" id="print">Urkunde drucken / als PDF speichern</button>` : ""}
         <button type="button" class="btn btn-line" id="again">Nochmal spielen – anderer Täter</button></div>
       <p class="small" style="margin-top:10px">Beim nächsten Durchgang wird ein anderer Täter ausgelost. Einige Beweisstücke ändern sich. Er zählt nicht für die Wertung.</p>
