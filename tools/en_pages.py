@@ -2,15 +2,10 @@
 # Aufruf: python3 tools/en_pages.py  – danach site/en/*.html committen.
 import os, html
 ROOT = os.path.join(os.path.dirname(__file__), "..", "site")
-MAP = {"index": "index", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "pilot": "pilot", "thanks": "danke", "contact": "kontakt"}
+MAP = {"index": "index", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "contact": "kontakt", "early-bird": "earlybird"}
 LOGO = '<svg width="30" height="30" viewBox="0 0 34 34" fill="none" stroke="#15171C" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg>'
 
-PILOTBAR = """<div class="pilot"><div class="wrap">
-<span class="tag">PILOT PHASE</span>
-<span>We're looking for pilot companies for case 001 – you play at a special price and give us feedback.</span>
-<a href="pilot.html">Apply as a pilot company</a>
-</div></div>
-"""
+
 
 def page(name, title, desc, body, robots=None, scripts="", home=False):
     de = MAP[name]
@@ -37,7 +32,7 @@ def page(name, title, desc, body, robots=None, scripts="", home=False):
 <link rel="manifest" href="/site.webmanifest">
 </head>
 <body>
-{PILOTBAR if home else ''}
+{'<div class="promo" id="ebbar" hidden></div>' if home else ''}
 <header class="header"><div class="wrap">
 <a class="logo" href="{'#top' if home else 'index.html'}" aria-label="Mordsteam home">
 {LOGO}
@@ -69,7 +64,7 @@ def page(name, title, desc, body, robots=None, scripts="", home=False):
 '''
 
 P = {}
-P["index"] = dict(title="Mordsteam – The personalised murder-mystery team event", home=True,
+P["index"] = dict(title="Mordsteam – The personalised murder-mystery team event", home=True, scripts='<script src="/assets/aktion.js"></script>',
  desc="A murder case starring your company, club or group of friends. 50 to 90 minutes, competing investigator teams, no game master needed.",
  body='''<main id="top">
 <section class="hero"><div class="wrap hero-grid">
@@ -116,8 +111,8 @@ P["index"] = dict(title="Mordsteam – The personalised murder-mystery team even
 <h2 class="h2">A case for every group</h2>
 <p class="lead">Each case is written for a particular kind of group. More cases are on the way.</p>
 <div class="cases">
-<a class="case-card" href="#case"><div class="meta"><span>CASE 001 · FOR COMPANIES</span><span class="status live">PILOT PHASE</span></div><h3>The Red Folder</h3><p>A poison attack on your top floor, a missing folder and a handover to the top boss at 12:00 noon. Someone from your group did it.</p></a>
-<div class="case-card upcoming"><div class="meta"><span>MORE CASES</span><span class="status plan">IN PREPARATION</span></div><h3>For clubs and groups of friends</h3><p>The next cases are in the works. Sign up via the pilot request and you'll be the first to know.</p></div>
+<a class="case-card" href="#case"><div class="meta"><span>CASE 001 · FOR COMPANIES</span><span class="status live">BOOK NOW</span></div><h3>The Red Folder</h3><p>A poison attack on your top floor, a missing folder and a handover to the top boss at 12:00 noon. Someone from your group did it.</p></a>
+<div class="case-card upcoming"><div class="meta"><span>MORE CASES</span><span class="status plan">IN PREPARATION</span></div><h3>For clubs and groups of friends</h3><p>The next cases are in the works. <a href="contact.html">Write to us</a> if you'd like to be the first to know.</p></div>
 </div>
 </div></section>
 
@@ -182,7 +177,7 @@ P["index"] = dict(title="Mordsteam – The personalised murder-mystery team even
 <section class="section duo"><div class="wrap">
 <div class="stack" style="margin-bottom:28px"><div class="eyebrow">Who it's for</div><h2 class="h2">Made for every group with secrets</h2></div>
 <div class="audience">
-<div class="aud"><span class="status live">CASE 001 · PILOT PHASE</span><h3>Companies</h3><ul class="list"><li>Team building and offsites</li><li>Onboarding new teams</li><li>Department and holiday parties</li></ul></div>
+<div class="aud"><span class="status live">CASE 001 · BOOK NOW</span><h3>Companies</h3><ul class="list"><li>Team building and offsites</li><li>Onboarding new teams</li><li>Department and holiday parties</li></ul></div>
 <div class="aud"><span class="status plan">IN PREPARATION</span><h3>Clubs</h3><ul class="list"><li>Club nights and anniversaries</li><li>Holiday parties and outings</li><li>Sports, music and cultural clubs</li></ul></div>
 <div class="aud"><span class="status plan">PLANNED</span><h3>Friends</h3><ul class="list"><li>Milestone birthdays</li><li>Cabin weekends and game nights</li><li>Stag and hen parties</li></ul></div>
 </div>
@@ -293,6 +288,7 @@ P["order"] = dict(title="Order – Mordsteam", robots="noindex", desc="Order cas
 <div class="summary" id="summary"></div>
 <label class="check" id="zustimmungbox"><input type="checkbox" name="zustimmung"><span>Everyone we have entered by name knows about it and agrees to appear in the fictional case – including as victim or suspect. *</span></label>
 <label class="check" id="ab18box" hidden><input type="checkbox" name="ab18"><span>All participants are at least 18 years old (required for ARIA in Premium Plus). *</span></label>
+<label class="check ebcheck" id="ebbox" hidden><input type="checkbox" name="earlybird"><span><b>Early bird: <span class="ebp">40</span>% off.</b> I'd like the discount and am happy to give short feedback after the game and write a review. <a href="early-bird.html" target="_blank">Conditions</a></span></label>
 <label class="check"><input type="checkbox" name="agb"><span>I accept the <a href="terms.html" target="_blank">terms</a> and have read the <a href="privacy.html" target="_blank">privacy policy</a>. *</span></label>
 <p class="formerr" id="err" role="alert" hidden></p>
 <div><button class="btn btn-red" type="submit" id="submit">Order and pay</button></div>
@@ -319,8 +315,8 @@ P["privacy"] = dict(title="Privacy policy – Mordsteam", desc="How Mordsteam ha
 <h2>2. Visiting the website</h2>
 <p>The website is delivered via Cloudflare (Cloudflare, Inc., USA, and affiliated companies). Technically necessary connection data such as IP address, time, page requested and browser identifier are processed to deliver the site securely and quickly (Art. 6(1)(f) GDPR). Cloudflare is certified under the EU-US Data Privacy Framework.</p>
 <p>We use no cookies, no tracking and no analytics tools. Fonts are hosted locally; no data is sent to Google.</p>
-<h2>3. Pilot application</h2>
-<p>If you submit the “Apply for a pilot place” form, we store the type and name of your group (company, club or group of friends), your name, email, optionally phone, country, team size, occasion, preferred period and your message. The purpose is to process your application and arrange a pilot date (Art. 6(1)(b) GDPR, pre-contractual measures). The data is stored in a Cloudflare data store and deleted after 12 months at the latest, earlier if you ask us to.</p>
+<h2>3. Early bird feedback</h2>
+<p>If you choose the early bird discount, we will email you at your order address after the game and ask for feedback and a short review (Art. 6(1)(b) GDPR, part of the discount conditions). We only publish a review with your explicit consent and only under the name you release for it. You can object at any time.</p>
 <h2>4. Order and payment</h2>
 <p>For an order we process the chosen package, number of teams, game language, your name, your email address, optionally phone and invoice company, and the details for personalising the case (company name, city, rooms, names, title and role of the people who appear in the case, optionally your logo). The purpose is performance of the contract (Art. 6(1)(b) GDPR). If you choose the fictional company, you don't provide any personal data for the personalisation.</p>
 <p>Payment and invoicing are handled by Stripe (Stripe Payments Europe, Ltd., Dublin, Ireland). Stripe receives your payment and billing data for this and processes it under its own responsibility; we never see card details. We keep invoice and payment data for as long as tax retention obligations require (in Austria usually seven years).</p>
@@ -354,43 +350,31 @@ P["imprint"] = dict(title="Imprint – Mordsteam", desc="Legal information about
 P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mordsteam.",
  body='''<main class="page"><div class="wrap prose">
 <h1>Terms and conditions</h1>
-<p class="lead">We will publish our general terms and conditions when the order system launches. During the pilot phase, the individually agreed conditions apply.</p>
+<p class="lead">Our general terms and conditions will be published here before the shop opens.</p>
 </div></main>''')
 
-P["pilot"] = dict(title="Apply for a pilot place – Mordsteam", desc="Apply for a pilot place for case 001 and play the personalised murder-mystery team event at a special price.",
- body='''<main class="page"><div class="wrap">
-<div class="eyebrow">Pilot phase · Case 001</div>
-<h1>Apply for a pilot place</h1>
-<p class="lead">We're testing case 001 “The Red Folder” with a few company teams before the shop opens. You play at a special price, we get your honest feedback. Clubs and groups of friends: sign up too – we'll get in touch as soon as your case is ready.</p>
-
-<form class="form" method="post" action="/api/pilot">
-<input type="hidden" name="lang" value="en">
-<div class="field"><label for="gruppe">We are *</label>
-<select id="gruppe" name="gruppe" required><option value="">Please choose</option><option value="eine Firma">a company</option><option value="ein Verein">a club</option><option value="ein Freundeskreis">a group of friends</option><option value="etwas anderes">something else</option></select></div>
-<div class="two">
-<div class="field"><label for="firma">Name of the company, club or group *</label><input id="firma" name="firma" required maxlength="120" autocomplete="organization"></div>
-<div class="field"><label for="name">Your name *</label><input id="name" name="name" required maxlength="120" autocomplete="name"></div>
-</div>
-<div class="two">
-<div class="field"><label for="email">Email *</label><input id="email" name="email" type="email" required maxlength="160" autocomplete="email"></div>
-<div class="field"><label for="telefon">Phone</label><input id="telefon" name="telefon" type="tel" maxlength="40" autocomplete="tel"><span class="hint">optional</span></div>
-</div>
-<div class="two">
-<div class="field"><label for="land">Country *</label><input id="land" name="land" required maxlength="40" autocomplete="country-name"></div>
-<div class="field"><label for="teamgroesse">Group size *</label>
-<select id="teamgroesse" name="teamgroesse" required><option value="">Please choose</option><option value="4–6 Personen">4–6 people</option><option value="7–12 Personen">7–12 people</option><option value="13–30 Personen">13–30 people</option><option value="31–60 Personen">31–60 people</option></select></div>
-</div>
-<div class="two">
-<div class="field"><label for="anlass">Occasion</label>
-<select id="anlass" name="anlass"><option value="">Please choose</option><option>Team building day</option><option>Offsite / retreat</option><option>Onboarding</option><option>Department or holiday party</option><option>Club night / anniversary</option><option>Birthday / private party</option><option>Other occasion</option></select></div>
-<div class="field"><label for="zeitraum">Preferred period</label><input id="zeitraum" name="zeitraum" maxlength="80" placeholder="e.g. November or Q1 2027"></div>
-</div>
-<div class="field"><label for="nachricht">Anything else we should know?</label><textarea id="nachricht" name="nachricht" maxlength="2000"></textarea></div>
-<div class="hp" aria-hidden="true"><label for="website">Website</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
-<label class="check"><input type="checkbox" name="datenschutz" value="ja" required><span>I have read the <a href="privacy.html">privacy policy</a> and agree that my details are stored to process the pilot application. *</span></label>
-<div><button class="btn btn-red" type="submit">Send application</button></div>
-<p class="hint" style="font-size:14px;color:#5A5D66">* Required fields. Please don't enter any employee data – we only need that when you order.</p>
-</form>
+P["early-bird"] = dict(title="Early bird – Mordsteam", desc="Early bird: 40% off your first Mordsteam game – the conditions.",
+ body='''<main class="page"><div class="wrap prose">
+<div class="eyebrow">We're live · Early bird</div>
+<h1>40% off your first game</h1>
+<p class="lead">Mordsteam has just launched. Help us make our cases even better – and play your first case at 40% off.</p>
+<h2>How it works</h2>
+<ul>
+<li>When ordering, tick the <b>early bird</b> box in the last step. The discount is deducted automatically at checkout – no code needed.</li>
+<li>Valid for all packages and any number of teams.</li>
+</ul>
+<h2>What we ask in return</h2>
+<ul>
+<li>After your game we'll send you a short email. You give us honest feedback – it takes about 10 minutes.</li>
+<li>You write a short review. Whether and under which name we show it on mordsteam.com is up to you.</li>
+</ul>
+<h2>The fine print</h2>
+<ul>
+<li>One discounted order per company or group, for your first game.</li>
+<li>Cannot be combined with other vouchers.</li>
+<li>Valid while the offer runs. We'll announce the end date here and in the banner in advance. Orders placed before then keep the discount, even if you play later.</li>
+</ul>
+<p><a class="btn btn-red" href="order.html">Order now</a></p>
 </div></main>''')
 
 P["contact"] = dict(title="Contact – Mordsteam", desc="How to reach Mordsteam.",
@@ -403,14 +387,6 @@ P["contact"] = dict(title="Contact – Mordsteam", desc="How to reach Mordsteam.
 <p><a class="cc-mail" href="mailto:office@mordsteam.com">office@mordsteam.com</a></p>
 </div>
 <p>Questions about a case, an order or your game round? Just write to us – we'll get back to you as soon as we can. You'll find our postal address in the <a href="imprint.html">imprint</a>.</p>
-</div></main>''')
-
-P["thanks"] = dict(title="Thank you – Mordsteam", robots="noindex", desc="Your application has arrived.",
- body='''<main class="page"><div class="wrap">
-<div class="eyebrow">File opened</div>
-<h1>Thank you, your application has arrived.</h1>
-<p class="lead">We'll get back to you by email in the next few days. Until then: nobody leaves the building.</p>
-<p style="margin-top:28px"><a class="btn btn-ink" href="index.html">Back to the home page</a></p>
 </div></main>''')
 
 for name, p in P.items():

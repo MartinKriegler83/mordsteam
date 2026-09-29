@@ -30,11 +30,11 @@ p{margin:0}
 .section{padding:56px 0}
 .stack{display:flex;flex-direction:column;gap:20px}
 
-/* Pilot */
-.pilot{background:var(--ink);color:var(--paper);font-size:14px}
-.pilot .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 14px;padding-top:10px;padding-bottom:10px;text-align:center}
+/* Aktionsbanner oben */
+.promo{background:var(--ink);color:var(--paper);font-size:14px}
+.promo .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 14px;padding-top:10px;padding-bottom:10px;text-align:center}
 .tag{font-family:var(--mono);font-size:11px;letter-spacing:2px;background:var(--red);color:#fff;padding:3px 8px}
-.pilot a{color:var(--paper);font-weight:600}
+.promo a{color:var(--paper);font-weight:600}
 
 /* Header */
 .header{border-bottom:1px solid #D8D1C2}
@@ -335,3 +335,4 @@ p{margin:0}
 .contactcard p{margin:0 0 6px}
 .contactcard .cc-firm{font-family:var(--serif);font-weight:900;font-size:22px}
 .contactcard .cc-mail{font-weight:600;color:var(--red)}
+.promo .star{color:#E0463C}

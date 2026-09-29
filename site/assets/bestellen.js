@@ -18,7 +18,7 @@
     RAUM_TATORT: [T("Büro der Chefin / des Chefs *", "The boss's office *"), T("der Tatort", "the crime scene")],
   };
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
-  const eur = (c) => EN ? "€" + (c / 100).toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + " €";
+  const eur = (c) => { const o = { minimumFractionDigits: c % 100 ? 2 : 0, maximumFractionDigits: 2 }; return EN ? "€" + (c / 100).toLocaleString("en-GB", o) : (c / 100).toLocaleString("de-AT", o) + " €"; };
   const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const fmtDate = (d) => { if (!d) return "–"; const [y, m, t] = d.split("-"); return EN ? `${Number(t)} ${MONTHS[Number(m) - 1]} ${y}` : `${Number(t)}.${Number(m)}.${y}`; };
   const paket = () => form.paket.value;
@@ -67,7 +67,9 @@
     // Schritte fortlaufend nummerieren (fiktiv: Firma, Opfer, Verdächtige entfallen)
     [...form.querySelectorAll("fieldset.step")].filter((f) => !f.hidden).forEach((f, i) => (f.querySelector("legend span").textContent = i + 1));
     const n = Number($("#teams").value);
-    const sum = META.prices[paket()] * n;
+    const full = META.prices[paket()] * n;
+    const eb = META.earlybird && form.earlybird.checked ? META.earlybird.prozent : 0;
+    const sum = Math.round(full * (100 - eb) / 100);
     $("#pb-text").textContent = `${TN[paket()].split(",")[0]} · ${n} Team${n > 1 ? "s" : ""}`;
     $("#pb-sum").textContent = eur(sum);
     const v = (k) => (form["v_" + k]?.value || "").trim();
@@ -80,6 +82,7 @@
       ${fk ? `<dt>${T("Besetzung", "Cast")}</dt><dd>${T("Fiktive Firma mit erfundenen Figuren", "Fictional company with invented characters")}</dd>` : `<dt>${T("Firma", "Company")}</dt><dd>${esc(v("FIRMA") || "–")}</dd>
       <dt>${T("Opfer", "Victim")}</dt><dd>${esc(v("OPFER") || "–")}</dd>
       <dt>${T("Verdächtige", "Suspects")}</dt><dd>${[...Array(p ? 6 : 5)].map((_, i) => esc(v("S" + (i + 1)) || "–")).join(", ")}</dd>`}
+      ${eb ? `<dt>Early Bird</dt><dd>−${eb} % (−${eur(full - sum)})</dd>` : ""}
       <dt class="tot">${T("Gesamt", "Total")}</dt><dd class="tot">${eur(sum)}</dd></dl>`;
   }
 
@@ -197,7 +200,7 @@
     if (!fk && !consent.zustimmung) throw [T("Bitte bestätigen, dass alle genannten Personen einverstanden sind.", "Please confirm that everyone named has agreed."), form.zustimmung];
     if (paket() === "plus" && !form.ab18.checked) throw [T("Bitte bestätigen, dass alle Teilnehmenden mindestens 18 Jahre alt sind – oder Basis bzw. Premium wählen.", "Please confirm that all participants are at least 18 – or choose Basic or Premium."), form.ab18];
     if (!consent.agb) throw [T("Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."), form.agb];
-    return { paket: paket(), teams: Number(form.teams.value), vars: fk ? {} : vars, land: form.land.value, contact, consent, logo: fk ? null : logoData, besetzung: fk ? "fiktiv" : "echt", lang: form.lang.value === "en" ? "en" : "de", site: EN ? "en" : "de" };
+    return { paket: paket(), teams: Number(form.teams.value), vars: fk ? {} : vars, land: form.land.value, contact, consent, logo: fk ? null : logoData, besetzung: fk ? "fiktiv" : "echt", earlybird: !!(META.earlybird && form.earlybird.checked), lang: form.lang.value === "en" ? "en" : "de", site: EN ? "en" : "de" };
   }
 
   async function submit(ev) {
@@ -232,6 +235,8 @@
     build();
     restore();
     $("#closed").hidden = META.open;
+    if (META.earlybird) { $("#ebbox").hidden = false; form.querySelectorAll(".ebp").forEach((x) => (x.textContent = META.earlybird.prozent)); }
+    else form.earlybird.checked = false;
     $("#cancelled").hidden = !new URLSearchParams(location.search).has("abgebrochen");
     update();
     form.addEventListener("input", () => { update(); save(); });

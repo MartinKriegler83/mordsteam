@@ -92,15 +92,13 @@
     const paid = orders.filter((o) => o.status !== "pending");
     const toShip = [];
     return `<div class="panel"><div class="eyebrow">Bestellungen</div>
-      <p style="margin:8px 0">${paid.length} bezahlt · Umsatz ${eur(paid.reduce((a, o) => a + o.amount_cents, 0))}${toShip.length ? ` · <b style="color:var(--red)">${toShip.length} Premium-Kuvert-Versand offen</b>` : ""}</p>
+      <p style="margin:8px 0">${paid.length} bezahlt · Umsatz ${eur(paid.reduce((a, o) => a + o.amount_cents, 0))}</p>
       <div class="list-sessions">${orders.length ? orders.map((o) => {
         const c = o.contact || {}, l = c.liefer;
         return `<div class="sess">
           <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${MS.esc(o.firma || "–")}</b><span class="chip ${o.status === "fulfilled" ? "open" : ""}">${lbl[o.status] || o.status}</span></div>
-          <div class="mono">${new Date(o.created_at).toLocaleString("de-AT")} · ${({ basis: "Basis", premium: "PREMIUM", plus: "PREMIUM PLUS" })[o.paket] || o.paket} · ${o.teams} Teams · ${eur(o.amount_cents)} · Spieltag ${o.event_date}${o.join_code ? ` · Spielcode ${o.join_code} · Organisator ${o.org_code}` : ""}</div>
-          <div class="small">${MS.esc(c.name || "")} · <a href="mailto:${MS.esc(c.email || "")}">${MS.esc(c.email || "")}</a>${c.telefon ? " · " + MS.esc(c.telefon) : ""}${c.rechnung_firma ? " · Rechnung: " + MS.esc(c.rechnung_firma) : ""}${c.lang ? " · Spielsprache " + c.lang.toUpperCase() : ""}${c.site ? " · Seite " + c.site.toUpperCase() : ""}${c.fiktiv ? " · fiktiv" : ""}</div>
-          ${l ? `<div class="small"><b>Kuverts an:</b> ${MS.esc(l.name)}, ${MS.esc(l.strasse)}, ${MS.esc(l.plz)} ${MS.esc(l.ort)}, ${MS.esc(l.land)} · Karte-Code: ${MS.esc(meta.card_code)}
-            ${o.status !== "pending" ? (o.shipped_at ? ` · <b>versendet ${new Date(o.shipped_at).toLocaleDateString("de-AT")}</b> <button class="tipbtn" data-ship="${o.id}" data-undo="1">rückgängig</button>` : ` <button class="tipbtn" data-ship="${o.id}">Als versendet markieren</button>`) : ""}</div>` : ""}
+          <div class="mono">${new Date(o.created_at).toLocaleString("de-AT")} · ${({ basis: "Basis", premium: "PREMIUM", plus: "PREMIUM PLUS" })[o.paket] || o.paket} · ${o.teams} Teams · ${eur(o.amount_cents)} · gekauft ${o.event_date}${o.join_code ? ` · Spielcode ${o.join_code} · Organisator ${o.org_code}` : ""}</div>
+          <div class="small">${MS.esc(c.name || "")} · <a href="mailto:${MS.esc(c.email || "")}">${MS.esc(c.email || "")}</a>${c.telefon ? " · " + MS.esc(c.telefon) : ""}${c.rechnung_firma ? " · Rechnung: " + MS.esc(c.rechnung_firma) : ""}${c.lang ? " · Spielsprache " + c.lang.toUpperCase() : ""}${c.site ? " · Seite " + c.site.toUpperCase() : ""}${c.fiktiv ? " · fiktiv" : ""}${c.earlybird ? ` · <b style="color:var(--red)">EARLY BIRD −${c.earlybird} % (Feedback einholen!)</b>` : ""}</div>
         </div>`;
       }).join("") : `<p class="muted">Noch keine Bestellungen.</p>`}</div></div>`;
   }
@@ -125,7 +123,7 @@
       <form id="nf" class="form">
         <div class="two">
           <div class="field"><label for="label">Bezeichnung (intern)</label><input id="label" name="label" placeholder="z. B. Test Freunde"></div>
-          <div class="field"><label for="event_date">Spieltag</label><input id="event_date" name="event_date" type="date" value="${today}" required></div>
+          <div class="field"><label for="event_date">Datum (intern)</label><input id="event_date" name="event_date" type="date" value="${today}" required></div>
         </div>
         <div class="two">
           <div class="field"><label for="max_teams">Gebuchte Teams</label><input id="max_teams" name="max_teams" type="number" min="1" max="15" value="3"></div>
@@ -148,7 +146,7 @@
       <div class="panel"><div class="eyebrow">Alle Runden</div>
         <div class="list-sessions" style="margin-top:10px">${sessions.length ? sessions.map((s) => `<div class="sess">
           <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${MS.esc(s.label || s.id)}</b><span class="chip ${({ open: "open", running: "run", finished: "fin" })[s.status] || ""}">${s.status}</span></div>
-          <div class="mono">Spieltag ${s.event_date} · Teams ${s.teams} · Spielcode ${s.join_code} · Organisator ${s.org_code}${s.test_mode ? " · TEST" : ""}${s.premium ? " · " + TN[s.premium].toUpperCase() : ""} · ${s.land || "AT"} · ${(s.lang || "de").toUpperCase()}</div>
+          <div class="mono">Angelegt ${s.event_date} · Teams ${s.teams} · Spielcode ${s.join_code} · Organisator ${s.org_code}${s.test_mode ? " · TEST" : ""}${s.premium ? " · " + TN[s.premium].toUpperCase() : ""} · ${s.land || "AT"} · ${(s.lang || "de").toUpperCase()}</div>
           <div><button class="tipbtn" data-del="${s.id}">Löschen</button></div></div>`).join("") : `<p class="muted">Noch keine Runden.</p>`}</div></div>
     </div>`;
     document.getElementById("nf").onsubmit = async (e) => {

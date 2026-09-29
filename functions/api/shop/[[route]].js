@@ -4,6 +4,9 @@
 //   STRIPE_SECRET_KEY           sk_test_… (Vorschau) bzw. sk_live_… (Produktion)
 //   STRIPE_WEBHOOK_SECRET       whsec_… (Webhook-Endpunkt /api/shop/stripe-webhook)
 //   ORDER_FAKE_PAY=true         nur für Tests ohne Stripe: Bestellung gilt sofort als bezahlt
+//   EARLYBIRD_PROZENT=40         Early-Bird-Aktion an (Banner + Häkchen im Formular). Leer/gelöscht = Aktion aus.
+//   EARLYBIRD_BIS=2026-11-30     optional: letzter Tag der Aktion (Banner zeigt dann „nur noch bis …“)
+//   EARLYBIRD_COUPON=MORDSTEAM40 ID des Stripe-Gutscheins mit genau diesem Prozentsatz (Pflicht, sobald Stripe aktiv ist)
 //   RESEND_API_KEY, MAIL_FROM   optional: Bestätigungsmail über Resend (z. B. MAIL_FROM="Mordsteam <office@mordsteam.com>")
 import { CASES, json, fail, randomToken, viennaDate, randInt } from "../../../lib/game.js";
 import { migrate, createGameSession, normalizeVars, InputError } from "../../../lib/create.js";
@@ -37,6 +40,14 @@ export async function onRequest({ request, env, params }) {
 }
 
 const shopOpen = (env) => String(env.SHOP_OPEN || "").toLowerCase() === "true";
+// Early Bird: läuft, solange EARLYBIRD_PROZENT gesetzt ist und EARLYBIRD_BIS (falls gesetzt) nicht vorbei ist
+function earlybird(env) {
+  const p = Math.round(Number(env.EARLYBIRD_PROZENT));
+  if (!(p > 0 && p < 100)) return null;
+  const bis = /^\d{4}-\d{2}-\d{2}$/.test(String(env.EARLYBIRD_BIS || "")) ? env.EARLYBIRD_BIS : null;
+  if (bis && viennaDate() > bis) return null;
+  return { prozent: p, bis };
+}
 const addDays = (dateStr, d) => { const t = new Date(dateStr + "T12:00:00Z"); t.setUTCDate(t.getUTCDate() + d); return t.toISOString().slice(0, 10); };
 
 function meta(env, request) {
@@ -49,6 +60,7 @@ function meta(env, request) {
   names.sort((a, b) => a[1].localeCompare(b[1], site));
   return json({
     open: shopOpen(env),
+    earlybird: earlybird(env),
     fall: site === "en" ? c.EN.META.title : c.META.title,
     fiktiv: !!c.FICTIONS,
     laender: [...names, xx],
@@ -108,7 +120,13 @@ async function bestellung(request, env) {
 
   const id = crypto.randomUUID();
   const token = randomToken(16);
-  const amount = PRICES[paket] * teams;
+  // Early Bird: Häkchen gesetzt und Aktion läuft → Rabatt wird bei Stripe automatisch abgezogen (kein Code nötig)
+  const eb = b.earlybird === true ? earlybird(env) : null;
+  if (b.earlybird === true && !eb) throw new InputError(L(site, "Die Early-Bird-Aktion ist leider schon vorbei. Bitte das Häkchen entfernen.", "Sorry, the early bird offer has ended. Please untick the box."));
+  if (eb && env.STRIPE_SECRET_KEY && !env.EARLYBIRD_COUPON) throw new Error("EARLYBIRD_COUPON fehlt");
+  if (eb) { contact.earlybird = eb.prozent; }
+  const full = PRICES[paket] * teams;
+  const amount = eb ? Math.round(full * (100 - eb.prozent) / 100) : full;
   await env.DB.prepare(
     "INSERT INTO orders (id, token, created_at, status, paket, teams, amount_cents, event_date, vars, contact, logo) VALUES (?,?,?,'pending',?,?,?,?,?,?,?)"
   ).bind(id, token, Date.now(), paket, teams, amount, date, JSON.stringify(vars), JSON.stringify(contact), logo).run();
@@ -121,7 +139,8 @@ async function bestellung(request, env) {
   if (env.STRIPE_SECRET_KEY) {
     const cs = await stripe(env, "POST", "checkout/sessions", {
       mode: "payment",
-      allow_promotion_codes: true,                 // Gutscheine, z. B. Pilotrabatt
+      // Early Bird: Gutschein fix anhängen. Sonst Feld für eigene Codes (z. B. Friends-Codes) anbieten – Stripe erlaubt nicht beides.
+      ...(eb ? { discounts: [{ coupon: env.EARLYBIRD_COUPON }] } : { allow_promotion_codes: true }),
       locale: site,
       customer_email: contact.email,
       client_reference_id: id,
@@ -172,7 +191,7 @@ async function status(request, env) {
   }
   const ct = JSON.parse(order.contact || "{}");
   const out = { status: order.status, paket: order.paket, teams: order.teams, event_date: order.event_date, amount_cents: order.amount_cents,
-    firma: JSON.parse(order.vars).FIRMA, lang: ct.lang || "de", land: JSON.parse(order.vars).LAND || "AT" };
+    firma: JSON.parse(order.vars).FIRMA, lang: ct.lang || "de", land: JSON.parse(order.vars).LAND || "AT", earlybird: ct.earlybird || 0 };
   if (order.status === "fulfilled" && order.session_id) {
     const s = await env.DB.prepare("SELECT join_code, org_code FROM sessions WHERE id=?").bind(order.session_id).first();
     if (s) Object.assign(out, s);
@@ -257,6 +276,7 @@ async function sendMail(env, o, s, origin) {
 <li>${T("Haben alle Teams gelöst, endet die Runde automatisch und alle sehen Rangliste und Auflösung. Schafft es ein Team nicht in der Zeit, beendet ihr die Runde auf der Organisator-Seite selbst.", "Once all teams have solved it, the round ends automatically and everyone sees the ranking and the solution. If a team doesn't make it in time, end the round yourself on the organiser page.")}</li>
 </ol>
 <p><b>${T("Tipp:", "Tip:")}</b> ${T(`Öffnet ein paar Tage vorher ${origin}/spiel auf einem Firmengerät. Lädt die Seite, bremst euch kein Webfilter.`, `A few days before, open ${origin}/spiel on a company device. If the page loads, no web filter will get in your way.`)}</p>
+${c.earlybird ? `<p><b>Early Bird:</b> ${T("Danke, dass ihr uns helft! Nach dem Spiel melden wir uns für euer Feedback.", "Thanks for helping us! After the game we'll be in touch for your feedback.")}</p>` : ""}
 <p>${T("Die Rechnung kommt separat per Mail von unserem Zahlungsanbieter.", "The invoice will be sent separately by our payment provider.")}</p>
 <p>${T("Viel Spaß beim Ermitteln!", "Happy investigating!")}<br>Mordsteam</p></div>`;
   await fetch("https://api.resend.com/emails", {
