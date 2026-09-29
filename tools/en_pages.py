@@ -2,7 +2,7 @@
 # Aufruf: python3 tools/en_pages.py  – danach site/en/*.html committen.
 import os, html
 ROOT = os.path.join(os.path.dirname(__file__), "..", "site")
-MAP = {"index": "index", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "pilot": "pilot", "thanks": "danke"}
+MAP = {"index": "index", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "pilot": "pilot", "thanks": "danke", "contact": "kontakt"}
 LOGO = '<svg width="30" height="30" viewBox="0 0 34 34" fill="none" stroke="#15171C" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg>'
 
 PILOTBAR = """<div class="pilot"><div class="wrap">
@@ -61,7 +61,7 @@ def page(name, title, desc, body, robots=None, scripts="", home=False):
 {scripts}
 <footer class="footer"><div class="wrap">
 <span class="brand"><span class="wm"><span class="wm-r">MORDS</span>TEAM</span></span>
-<nav aria-label="Legal"><a href="imprint.html">Imprint</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="mailto:office@mordsteam.com">Contact</a><a href="/{'' if de == 'index' else de + '.html'}" hreflang="de" lang="de">Deutsch</a></nav>
+<nav aria-label="Legal"><a href="imprint.html">Imprint</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a></nav>
 <span>© 2026 Mordsteam</span>
 </div></footer>
 </body>
@@ -391,6 +391,18 @@ P["pilot"] = dict(title="Apply for a pilot place – Mordsteam", desc="Apply for
 <div><button class="btn btn-red" type="submit">Send application</button></div>
 <p class="hint" style="font-size:14px;color:#5A5D66">* Required fields. Please don't enter any employee data – we only need that when you order.</p>
 </form>
+</div></main>''')
+
+P["contact"] = dict(title="Contact – Mordsteam", desc="How to reach Mordsteam.",
+ body='''<main class="page"><div class="wrap prose">
+<div class="eyebrow">Contact</div>
+<h1>Get in touch</h1>
+<div class="contactcard">
+<p class="cc-firm">Mordsteam</p>
+<p>Martin Kriegler</p>
+<p><a class="cc-mail" href="mailto:office@mordsteam.com">office@mordsteam.com</a></p>
+</div>
+<p>Questions about a case, an order or your game round? Just write to us – we'll get back to you as soon as we can. You'll find our postal address in the <a href="imprint.html">imprint</a>.</p>
 </div></main>''')
 
 P["thanks"] = dict(title="Thank you – Mordsteam", robots="noindex", desc="Your application has arrived.",
