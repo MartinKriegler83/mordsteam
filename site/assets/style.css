@@ -322,3 +322,12 @@ p{margin:0}
 .langlink{font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:1px;border:1px solid currentColor;border-radius:4px;padding:5px 8px;opacity:.75}
 .langlink:hover{opacity:1}
 .hero{overflow-x:clip}
+.field .label{font-weight:600}
+.whenbox{margin:0;padding:12px 14px;border:1px dashed var(--line, #cfc7b8);border-radius:6px;font-size:15px;line-height:1.45}
+/* Wortmarke: MORDS in Rot, TEAM in Schwarz (auf dunklem Grund: helleres Rot, TEAM in Creme) */
+.wm{white-space:nowrap}
+.logo .wm-box,.logo .wm-box span{font-family:var(--serif);font-weight:900;letter-spacing:.5px}
+.logo .wm{color:var(--ink)}
+.wm .wm-r,.logo .wm .wm-r{color:var(--red)}
+.footer .wm,.bar .wm{color:var(--paper)}
+.footer .wm .wm-r,.bar .wm .wm-r{color:#E0463C}

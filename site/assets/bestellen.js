@@ -66,10 +66,6 @@
     $("#zustimmungbox").hidden = fk;
     // Schritte fortlaufend nummerieren (fiktiv: Firma, Opfer, Verdächtige entfallen)
     [...form.querySelectorAll("fieldset.step")].filter((f) => !f.hidden).forEach((f, i) => (f.querySelector("legend span").textContent = i + 1));
-    const min = META.earliest;
-    const d = $("#event_date");
-    d.min = min;
-    $("#datehint").textContent = T(`Frühestens ${fmtDate(min)}. Der Spielcode ist sofort nach dem Bezahlen da.`, `${fmtDate(min)} at the earliest. You get the game code right after paying.`);
     const n = Number($("#teams").value);
     const sum = META.prices[paket()] * n;
     $("#pb-text").textContent = `${TN[paket()].split(",")[0]} · ${n} Team${n > 1 ? "s" : ""}`;
@@ -80,7 +76,7 @@
       <dt>${T("Spielsprache", "Game language")}</dt><dd>${esc(form.lang.options[form.lang.selectedIndex].text)}</dd>
       <dt>${T("Land", "Country")}</dt><dd>${esc(form.land.options[form.land.selectedIndex]?.text || "")}</dd>
       <dt>Teams</dt><dd>${n} × ${eur(META.prices[paket()])}</dd>
-      <dt>${T("Spieltag", "Game day")}</dt><dd>${esc(fmtDate(d.value))}</dd>
+      <dt>${T("Spielbar", "Playable")}</dt><dd>${T("sofort nach dem Bezahlen, 12 Monate lang, einmal startbar", "right after paying, for 12 months, can be started once")}</dd>
       ${fk ? `<dt>${T("Besetzung", "Cast")}</dt><dd>${T("Fiktive Firma mit erfundenen Figuren", "Fictional company with invented characters")}</dd>` : `<dt>${T("Firma", "Company")}</dt><dd>${esc(v("FIRMA") || "–")}</dd>
       <dt>${T("Opfer", "Victim")}</dt><dd>${esc(v("OPFER") || "–")}</dd>
       <dt>${T("Verdächtige", "Suspects")}</dt><dd>${[...Array(p ? 6 : 5)].map((_, i) => esc(v("S" + (i + 1)) || "–")).join(", ")}</dd>`}
@@ -191,9 +187,6 @@
 
     }
 
-    const date = form.event_date.value;
-    if (!date) throw [T("Bitte einen Spieltag wählen.", "Please choose a game day."), form.event_date];
-    if (date < META.earliest) throw [T(`Der Spieltag muss frühestens ${fmtDate(META.earliest)} sein.`, `The game day must be ${fmtDate(META.earliest)} or later.`), form.event_date];
 
     const contact = { name: form.c_name.value.trim(), email: form.c_email.value.trim(), telefon: form.c_tel.value.trim(), rechnung_firma: form.c_firma.value.trim() };
     if (contact.name.length < 2) throw [T("Bitte deinen Namen angeben.", "Please enter your name."), form.c_name];
@@ -204,7 +197,7 @@
     if (!fk && !consent.zustimmung) throw [T("Bitte bestätigen, dass alle genannten Personen einverstanden sind.", "Please confirm that everyone named has agreed."), form.zustimmung];
     if (paket() === "plus" && !form.ab18.checked) throw [T("Bitte bestätigen, dass alle Teilnehmenden mindestens 18 Jahre alt sind – oder Basis bzw. Premium wählen.", "Please confirm that all participants are at least 18 – or choose Basic or Premium."), form.ab18];
     if (!consent.agb) throw [T("Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."), form.agb];
-    return { paket: paket(), teams: Number(form.teams.value), event_date: date, vars: fk ? {} : vars, land: form.land.value, contact, consent, logo: fk ? null : logoData, besetzung: fk ? "fiktiv" : "echt", lang: form.lang.value === "en" ? "en" : "de", site: EN ? "en" : "de" };
+    return { paket: paket(), teams: Number(form.teams.value), vars: fk ? {} : vars, land: form.land.value, contact, consent, logo: fk ? null : logoData, besetzung: fk ? "fiktiv" : "echt", lang: form.lang.value === "en" ? "en" : "de", site: EN ? "en" : "de" };
   }
 
   async function submit(ev) {

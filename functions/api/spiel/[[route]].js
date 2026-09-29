@@ -102,7 +102,7 @@ async function join(request, env) {
   const lg = session ? langOf(session) : hLang(request);
   if (!session) return fail(L(lg, "Diesen Spielcode gibt es nicht.", "This game code doesn't exist."), 404);
   if (name.length < 2) return fail(L(lg, "Bitte einen Teamnamen mit mindestens 2 Zeichen eingeben.", "Please enter a team name with at least 2 characters."));
-  if (session.status === "created") return fail(L(lg, "Der Fall ist noch nicht freigeschaltet. Euer Organisator öffnet ihn am Spieltag.", "The case hasn't been unlocked yet. Your organiser opens it on the day of the game."), 403);
+  if (session.status === "created") return fail(L(lg, "Der Fall ist noch nicht freigeschaltet. Euer Organisator öffnet ihn, sobald es losgeht.", "The case hasn't been unlocked yet. Your organiser opens it when it's time to start."), 403);
   if (session.status === "finished") return fail(L(lg, "Diese Spielrunde ist bereits beendet.", "This game round has already ended."), 403);
   const count = await env.DB.prepare("SELECT COUNT(*) AS n FROM teams WHERE session_id=?").bind(session.id).first();
   const maxTeams = session.max_teams || RULES.maxTeams;
@@ -448,7 +448,8 @@ async function leitungLogin(request, env) {
 }
 
 function mayOpen(session) {
-  return !!session.test_mode || viennaDate() === session.event_date;
+  // Ein gekaufter Fall lässt sich jederzeit öffnen (auch gleich nach dem Kauf) – starten kann man ihn nur einmal.
+  return true;
 }
 
 async function leitungState({ env, session }) {

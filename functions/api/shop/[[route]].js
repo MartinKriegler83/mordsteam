@@ -72,10 +72,9 @@ async function bestellung(request, env) {
   const teams = Math.round(Number(b.teams));
   if (!(teams >= 1 && teams <= 15)) throw new InputError(L(site, "Bitte 1 bis 15 Teams wählen.", "Please choose 1 to 15 teams."));
   const today = viennaDate();
-  const date = String(b.event_date || "");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new InputError(L(site, "Bitte einen Spieltag wählen.", "Please choose a game day."));
-  if (date < addDays(today, LEAD_DAYS)) throw new InputError(L(site, "Der Spieltag muss frühestens morgen sein.", "The game day must be tomorrow at the earliest."));
-  if (date > addDays(today, 365)) throw new InputError(L(site, "Der Spieltag darf höchstens ein Jahr in der Zukunft liegen.", "The game day can be at most one year ahead."));
+  // Kein Spieltag mehr: spielbar sofort nach dem Kauf, 12 Monate lang, einmal startbar. event_date = Kaufdatum.
+  const date = today;
+  const validUntil = addDays(today, 365);
   const land = COUNTRY_ORDER.includes(b.land) ? b.land : "AT";
   // Fiktive Besetzung: handverlesen (AT/DE/CH) oder per Generator mit typischen Namen und Städten des Landes
   const F = (CASES[CASE_ID].FICTIONS || {})[land] || [];
@@ -134,12 +133,12 @@ async function bestellung(request, env) {
         quantity: teams,
         price_data: { currency: "eur", unit_amount: PRICES[paket],
           product_data: { name: L(site, `Mordsteam Fall 001 „${title}“ – ${NAMES[paket]}`, `Mordsteam Case 001 “${title}” – ${NAMES_EN[paket]}`),
-            description: L(site, `Pro Team · Spieltag ${date} · Spielsprache ${langName}`, `Per team · game day ${date} · game language ${langName}`) } },
+            description: L(site, `Pro Team · sofort spielbar, gültig bis ${validUntil} · Spielsprache ${langName}`, `Per team · playable right away, valid until ${validUntil} · game language ${langName}`) } },
       }],
       metadata: { order_id: id },
       payment_intent_data: { metadata: { order_id: id } },
       invoice_creation: { enabled: true, invoice_data: {
-        description: L(site, `Personalisierter Krimi-Fall für ${teams} Team${teams === 1 ? "" : "s"}, Spieltag ${date}.`, `Personalised murder-mystery case for ${teams} team${teams === 1 ? "" : "s"}, game day ${date}.`),
+        description: L(site, `Personalisierter Krimi-Fall für ${teams} Team${teams === 1 ? "" : "s"}, einmal spielbar bis ${validUntil}.`, `Personalised murder-mystery case for ${teams} team${teams === 1 ? "" : "s"}, playable once until ${validUntil}.`),
         footer: L(site, "Umsatzsteuerfrei aufgrund der Kleinunternehmerregelung gemäß § 6 Abs. 1 Z 27 UStG.", "VAT exempt under the Austrian small business scheme (§ 6 (1) no. 27 UStG)."),
         metadata: { order_id: id },
         ...(contact.rechnung_firma ? { custom_fields: [{ name: L(site, "Firma", "Company"), value: contact.rechnung_firma.slice(0, 30) }] } : {}),
@@ -241,15 +240,16 @@ async function sendMail(env, o, s, origin) {
   const e = (x) => String(x).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
   const q = lang === "en" ? "&lang=en" : "";
   const html = `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#15171C">
+<div style="font-family:Georgia,serif;font-weight:900;font-size:22px;letter-spacing:.5px;margin-bottom:6px"><span style="color:#B3261E">MORDS</span><span style="color:#15171C">TEAM</span></div>
 <h2 style="font-family:Georgia,serif">${T("Euer Fall ist bereit.", "Your case is ready.")}</h2>
 <p>${T("Hallo", "Hi")} ${e(c.name)},</p>
-<p>${T(`danke für eure Bestellung von <b>Fall 001 „${e(title)}“ – ${NAMES[o.paket] || o.paket}</b> für ${o.teams} Team${o.teams === 1 ? "" : "s"} bei ${e(vars.FIRMA)}. Spieltag: <b>${e(o.event_date)}</b>. Spielsprache: <b>${lang === "en" ? "Englisch" : "Deutsch"}</b>.`,
-  `thank you for ordering <b>Case 001 “${e(title)}” – ${NAMES_EN[o.paket] || o.paket}</b> for ${o.teams} team${o.teams === 1 ? "" : "s"} at ${e(vars.FIRMA)}. Game day: <b>${e(o.event_date)}</b>. Game language: <b>${lang === "en" ? "English" : "German"}</b>.`)}</p>
+<p>${T(`danke für eure Bestellung von <b>Fall 001 „${e(title)}“ – ${NAMES[o.paket] || o.paket}</b> für ${o.teams} Team${o.teams === 1 ? "" : "s"} bei ${e(vars.FIRMA)}. Spielbar ab sofort, 12 Monate lang – einmal startbar. Spielsprache: <b>${lang === "en" ? "Englisch" : "Deutsch"}</b>.`,
+  `thank you for ordering <b>Case 001 “${e(title)}” – ${NAMES_EN[o.paket] || o.paket}</b> for ${o.teams} team${o.teams === 1 ? "" : "s"} at ${e(vars.FIRMA)}. Playable right away, for 12 months – it can be started once. Game language: <b>${lang === "en" ? "English" : "German"}</b>.`)}</p>
 <table style="border-collapse:collapse;margin:14px 0">
 <tr><td style="padding:6px 12px 6px 0">${T("Organisator-Code (nur für euch):", "Organiser code (just for you):")}</td><td style="font-family:monospace;font-size:18px"><b>${e(s.org_code)}</b></td></tr>
 <tr><td style="padding:6px 12px 6px 0">${T("Spielcode für die Teams:", "Game code for the teams:")}</td><td style="font-family:monospace;font-size:18px"><b>${e(s.join_code)}</b></td></tr>
 </table>
-<p><b>${T("So geht's am Spieltag:", "How it works on the day:")}</b></p>
+<p><b>${T("So geht's, wenn ihr spielen wollt:", "How it works when you want to play:")}</b></p>
 <ol>
 <li>${T("Organisator:", "Organiser: open")} <a href="${origin}/spiel/leitung.html${q ? "?lang=en" : ""}">${origin}/spiel/leitung.html</a>${T(" öffnen, mit dem Organisator-Code anmelden und „Fall öffnen“.", ", log in with the organiser code and click “Open case”.")}</li>
 <li>${T("Jedes Team öffnet", "Each team opens")} <a href="${origin}/spiel/?code=${e(s.join_code)}${q}">${origin}/spiel/?code=${e(s.join_code)}</a> ${T("auf einem Gerät und gibt einen Teamnamen ein.", "on one device and enters a team name.")}</li>

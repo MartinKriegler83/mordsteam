@@ -41,7 +41,7 @@ def page(name, title, desc, body, robots=None, scripts="", home=False):
 <header class="header"><div class="wrap">
 <a class="logo" href="{'#top' if home else 'index.html'}" aria-label="Mordsteam home">
 {LOGO}
-<span>MORDSTEAM</span>
+<span class="wm-box"><span class="wm"><span class="wm-r">MORDS</span>TEAM</span></span>
 </a>
 <nav class="nav-desktop" aria-label="Main navigation">
 {nav}
@@ -60,7 +60,7 @@ def page(name, title, desc, body, robots=None, scripts="", home=False):
 {body}
 {scripts}
 <footer class="footer"><div class="wrap">
-<span class="brand">MORDSTEAM</span>
+<span class="brand"><span class="wm"><span class="wm-r">MORDS</span>TEAM</span></span>
 <nav aria-label="Legal"><a href="imprint.html">Imprint</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="mailto:office@mordsteam.com">Contact</a><a href="/{'' if de == 'index' else de + '.html'}" hreflang="de" lang="de">Deutsch</a></nav>
 <span>© 2026 Mordsteam</span>
 </div></footer>
@@ -98,7 +98,7 @@ P["index"] = dict(title="Mordsteam – The personalised murder-mystery team even
 <div><b>50 to 90 min</b><span>Basic with one act, Premium with a second act, Premium Plus with a finale with an AI assistant</span></div>
 <div><b>3–6 per team</b><span>as many teams as you like, investigating against each other</span></div>
 <div><b>Self-guided</b><span>instructions and a case desk instead of a host</span></div>
-<div><b>German or English</b><span>you choose the game language when you order</span></div>
+<div><b>Play right away</b><span>straight after buying or whenever you like – in German or English</span></div>
 </div></section>
 
 <section id="how" class="section"><div class="wrap stack">
@@ -187,7 +187,7 @@ P["index"] = dict(title="Mordsteam – The personalised murder-mystery team even
 <div class="aud"><span class="status plan">PLANNED</span><h3>Friends</h3><ul class="list"><li>Milestone birthdays</li><li>Cabin weekends and game nights</li><li>Stag and hen parties</li></ul></div>
 </div>
 <div class="privacy"><h2>Privacy, taken seriously</h2>
-<ul class="list"><li>Only names and roles, no emails or photos of your players</li><li>Case website and case desk protected and hidden from search engines</li><li>All data automatically deleted 30 days after the event</li><li>All suspects and the victim agree beforehand – you confirm this when ordering</li><li>Your logo only with confirmed permission – it appears only in your case intranet</li></ul>
+<ul class="list"><li>Only names and roles, no emails or photos of your players</li><li>Case website and case desk protected and hidden from search engines</li><li>All data automatically deleted 30 days after the game</li><li>All suspects and the victim agree beforehand – you confirm this when ordering</li><li>Your logo only with confirmed permission – it appears only in your case intranet</li></ul>
 </div>
 </div></section>
 
@@ -200,13 +200,13 @@ P["index"] = dict(title="Mordsteam – The personalised murder-mystery team even
 <details><summary>Who is the culprit?</summary><p>Always someone from your group – drawn at random, new every round. Not even the organiser knows in advance, and neither does the culprit. Everyone who appears in the case should have agreed beforehand.</p></details>
 <details><summary>Can we play in English?</summary><p>Yes. You choose the game language (German or English) when you order – independently of the language of this website. The whole case, the intranet, the case desk and ARIA then speak that language.</p></details>
 <details><summary>Which countries does the case work in?</summary><p>The case is localised for your country: police, currency, number plates, bank details, phone numbers and cities fit – for the countries of Europe as well as the USA, Canada, Australia and New Zealand. For all other countries we set it in a fictional place.</p></details>
-<details><summary>What do we need to play?</summary><p>One smartphone, tablet or laptop with internet per team – for the case file, answer entry and ranking. More devices per team are welcome.</p></details>
-<details><summary>Can we use AI or Google?</summary><p>Please don't. The case is built to be solved with brainpower – AI and search engines only spoil the fun. A matter of honour among detectives.</p></details>
-<details><summary>How gruesome is it?</summary><p>Not at all. It's a poisoning without blood and with a wink – and your boss survives. At the reveal, the victim can even confront the culprit in person.</p></details>
+<details><summary>What do we need to play?</summary><p>One laptop, tablet or smartphone with internet per team – for the case file, intranet, answer entry and ranking. Up to 5 more devices per team can follow along via QR code. That's all you need.</p></details>
+<details><summary>Can we use AI or Google?</summary><p>Please don't – with one exception: ARIA, the AI assistant in the game (Premium Plus only), helps you in the grand finale. Otherwise the case is built to be solved with brainpower – outside AI and search engines only spoil the fun. A matter of honour among detectives.</p></details>
+<details><summary>How gruesome is it?</summary><p>Not at all. A crime story with a wink – no blood, no shock effects, and nobody is shown up.</p></details>
 <details><summary>Do we have to enter real names?</summary><p>No. It's most fun with your real colleagues and rooms – but you can also choose a fictional company with invented characters. Then you don't enter any names when ordering.</p></details>
 <details><summary>What age is it for?</summary><p>Our cases are written for adults – with a poisoning, fraud and dark humour. Premium Plus with the AI assistant ARIA is intended for participants aged 18 and over. If younger people play along, for example apprentices, choose Basic or Premium: no AI runs there.</p></details>
 <details><summary>Our IT blocks AI tools – will ARIA still work?</summary><p>Usually, yes. Your devices only connect to mordsteam.com; ARIA runs via our server and only knows the invented world of the case. We don't send real names from your personalisation to the AI provider but replace them with placeholders first. If your policies prohibit AI applications altogether, check briefly with your IT or choose Premium without ARIA. Tip for all packages: open mordsteam.com/spiel on a company device beforehand – then you know no web filter will get in the way.</p></details>
-<details><summary>How quickly do we get the case?</summary><p>Immediately, in all three packages. After paying you see your game code right on the screen, and you can play from the next day. Everything is digital, nothing is shipped.</p></details>
+<details><summary>How quickly do we get the case?</summary><p>Immediately, in all three packages. After paying you see your game code right on the screen and can start straight away – or any time in the next 12 months. Each case can be started once. Everything is digital, nothing is shipped.</p></details>
 <details><summary>Do we get an invoice?</summary><p>Yes, automatically by email – with the company address and VAT number you enter when paying.</p></details>
 </div>
 </div></section>
@@ -228,7 +228,7 @@ P["order"] = dict(title="Order – Mordsteam", robots="noindex", desc="Order cas
 <div class="note" id="cancelled" hidden>The payment was cancelled. Your entries are still here – you can simply try again.</div>
 <form class="form" id="order" novalidate>
 
-<fieldset class="step"><legend><span>1</span> Package and date</legend>
+<fieldset class="step"><legend><span>1</span> Package and teams</legend>
 <div class="pick" role="radiogroup" aria-label="Package">
 <label class="pickcard"><input type="radio" name="paket" value="basis" checked><span><b>Basic</b><small>50 minutes<br>Act 1 with four questions</small><em>€89 per team</em></span></label>
 <label class="pickcard"><input type="radio" name="paket" value="premium"><span><b>Premium</b><small>70 minutes<br>Act 1 + act 2 with two more, even trickier tasks</small><em>€119 per team</em></span></label>
@@ -238,7 +238,7 @@ P["order"] = dict(title="Order – Mordsteam", robots="noindex", desc="Order cas
 <div class="two">
 <div class="field"><label for="teams">Number of teams *</label>
 <select id="teams" name="teams"></select><span class="hint">3 to 6 people per team is ideal. Each team needs one device.</span></div>
-<div class="field"><label for="event_date">Game day *</label><input id="event_date" name="event_date" type="date" required><span class="hint" id="datehint"></span></div>
+<div class="field"><span class="label">When do you play?</span><p class="whenbox">Whenever you like: right after paying or any time in the next 12 months. Each case can be started once.</p></div>
 </div>
 </fieldset>
 
@@ -322,13 +322,13 @@ P["privacy"] = dict(title="Privacy policy – Mordsteam", desc="How Mordsteam ha
 <h2>3. Pilot application</h2>
 <p>If you submit the “Apply for a pilot place” form, we store the type and name of your group (company, club or group of friends), your name, email, optionally phone, country, team size, occasion, preferred period and your message. The purpose is to process your application and arrange a pilot date (Art. 6(1)(b) GDPR, pre-contractual measures). The data is stored in a Cloudflare data store and deleted after 12 months at the latest, earlier if you ask us to.</p>
 <h2>4. Order and payment</h2>
-<p>For an order we process the chosen package, number of teams, game day, game language, your name, your email address, optionally phone and invoice company, and the details for personalising the case (company name, city, rooms, names, title and role of the people who appear in the case, optionally your logo). The purpose is performance of the contract (Art. 6(1)(b) GDPR). If you choose the fictional company, you don't provide any personal data for the personalisation.</p>
+<p>For an order we process the chosen package, number of teams, game language, your name, your email address, optionally phone and invoice company, and the details for personalising the case (company name, city, rooms, names, title and role of the people who appear in the case, optionally your logo). The purpose is performance of the contract (Art. 6(1)(b) GDPR). If you choose the fictional company, you don't provide any personal data for the personalisation.</p>
 <p>Payment and invoicing are handled by Stripe (Stripe Payments Europe, Ltd., Dublin, Ireland). Stripe receives your payment and billing data for this and processes it under its own responsibility; we never see card details. We keep invoice and payment data for as long as tax retention obligations require (in Austria usually seven years).</p>
 <h2>5. Game round and case desk</h2>
-<p>For the game round we store the personalisation details, team names, times, answer attempts and hints in a database at Cloudflare. On the teams' devices only a login key is stored in the browser's local storage (no cookie, no tracking). 30 days after the game day we delete the game round including teams, answer attempts, chat histories and logo; the personal data of the personalisation is then removed from the order. To develop our cases further, we keep anonymous statistics (playing times, number of wrong attempts and hints per team) without names.</p>
+<p>For the game round we store the personalisation details, team names, times, answer attempts and hints in a database at Cloudflare. On the teams' devices only a login key is stored in the browser's local storage (no cookie, no tracking). 30 days after the game ends we delete the game round including teams, answer attempts, chat histories and logo – if a case is never played, 13 months after the order at the latest; the personal data of the personalisation is then removed from the order. To develop our cases further, we keep anonymous statistics (playing times, number of wrong attempts and hints per team) without names.</p>
 <h2>6. ARIA – AI assistant in the Premium Plus package</h2>
 <p>In the Premium Plus package, teams can chat with ARIA, an AI assistant on the case intranet, in the finale. What the teams write in the chat is sent together with the invented case data (calendar, intranet) to our AI provider Anthropic so that ARIA can reply (Art. 6(1)(b) GDPR). We replace the real names from the personalisation (company, people, rooms) with placeholders before sending and only reinsert them in the reply – even if they are typed into the chat. The teams' devices only connect to mordsteam.com, not directly to the AI provider. Anthropic processes the data as a processor, does not use it to train its models and deletes inputs and outputs after 30 days by default. The transfer to the USA is based on certification under the EU-US Data Privacy Framework or on EU standard contractual clauses.</p>
-<p>Please don't enter real personal data in the chat – ARIA doesn't need it and only knows the world of the game. Each team can send at most 100 messages. We store the chat history with the game round and delete it 30 days after the game day. ARIA is labelled as an AI; her answers may contain errors.</p>
+<p>Please don't enter real personal data in the chat – ARIA doesn't need it and only knows the world of the game. Each team can send at most 100 messages. We store the chat history with the game round and delete it 30 days after the game ends. ARIA is labelled as an AI; her answers may contain errors.</p>
 <h2>7. Email contact</h2>
 <p>If you email us, we process your details to answer your enquiry (Art. 6(1)(b) or (f) GDPR). Our emails are processed via Apple iCloud.</p>
 <h2>8. Your rights</h2>
