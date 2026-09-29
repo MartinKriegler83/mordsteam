@@ -2,11 +2,19 @@
 (function () {
   const t = MS.t;
   const root = document.getElementById("root");
-  const token = MS.get("ms_team");
-  if (!token) { root.innerHTML = `<p class="wrap err" style="padding-top:24px">${t("Auf diesem Gerät ist kein Team angemeldet.", "No team is registered on this device.")}</p>`; return; }
-  MS.api("GET", "state", null, { "x-team": token }).then((S) => {
+  const token = MS.get("ms_team"), orgIdx = MS.qs("org"), orgToken = MS.get("ms_org");
+  // Organisator: Urkunde eines beliebigen Teams (Index in der Rangliste)
+  const load = orgIdx !== null && orgToken
+    ? MS.api("GET", "leitung/state", null, { "x-leitung": orgToken }).then((L) => {
+        const r = L.ranking[Number(orgIdx)];
+        if (!r) throw new Error(t("Dieses Team gibt es nicht.", "This team does not exist."));
+        return { lang: L.lang, solved: r.solved, solved_at: r.solved_at || Date.now(), team: r.name, ranking: L.ranking, fall: L.fall, firma: L.firma, score_ms: r.score_ms, penalty_min: r.penalty_min };
+      })
+    : token ? MS.api("GET", "state", null, { "x-team": token }) : null;
+  if (!load) { root.innerHTML = `<p class="wrap err" style="padding-top:24px">${orgIdx !== null ? t("Bitte zuerst in der Organisator-Ansicht anmelden.", "Please log in to the organiser view first.") : t("Auf diesem Gerät ist kein Team angemeldet.", "No team is registered on this device.")}</p>`; return; }
+  load.then((S) => {
     if (S.lang) MS.setLang(S.lang);
-    if (!S.solved) { root.innerHTML = `<p class="wrap" style="padding-top:24px">${t("Die Urkunde gibt es, sobald euer Team den Fall gelöst hat.", "The certificate is available once your team has solved the case.")}</p>`; return; }
+    if (!S.solved) { root.innerHTML = `<p class="wrap" style="padding-top:24px">${t("Die Urkunde gibt es, sobald das Team den Fall gelöst hat.", "The certificate is available once the team has solved the case.")}</p>`; return; }
     const place = (S.ranking.find((r) => r.name === S.team) || {}).rank;
     const total = S.ranking.length;
     const btn = document.getElementById("save");

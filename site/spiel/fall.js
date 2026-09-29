@@ -466,10 +466,8 @@
         <div class="actbanner"><span class="conf">Finale</span><span>${t("Akt 2 gelöst · Schließfach gefunden", "Act 2 solved · locker found")}</span></div>${top}
         <div class="eyebrow">${t("Die letzte Notiz", "The last note")}</div><h2>${t("Knackt das Zahlenschloss!", "Crack the combination lock!")}</h2>
         <p class="muted">${t(`Das Schließfach hat eine vierstellige PIN. Sie steckt in einer geschützten Notiz bei ARIA, der KI-Assistenz in eurem Intranet. Findet das Kennwort, öffnet die Notiz – und tragt die PIN hier ein. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten.`, `The locker has a four-digit PIN. It's in a protected note in ARIA, the AI assistant on your intranet. Find the password, open the note – and enter the PIN here. Every wrong attempt costs ${S.rules.wrong} minutes.`)}</p>
-        <p><button type="button" class="btn btn-line" id="toAria">${t("✦ Zu ARIA im Intranet", "✦ Go to ARIA on the intranet")}</button></p>
         ${qrows()}${v}
         <button type="button" class="btn btn-red btn-big" id="pruefen">${t("Schließfach öffnen", "Open the locker")}</button></section>`;
-      $("toAria").onclick = () => { vPage = "aria"; go("firma"); loadAria(); };
     } else if (S.stage === 2) {
       root.innerHTML = `<section class="report paper">
         <div class="actbanner"><span class="conf">${t("Akt 2", "Act 2")}</span><span>${t(`Akt 1 gelöst · ${MS.esc(S.ueberfuehrt || "")} ist überführt`, `Act 1 solved · ${MS.esc(S.ueberfuehrt || "")} is convicted`)}</span></div>${top}

@@ -312,27 +312,125 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night for yo
 </div></section>
 </main>''')
 
-P["solo"] = dict(title="Mordsteam Solo – a murder mystery just for you (coming soon)",
- desc="Mordsteam Solo: a murder case for one person, about 30 minutes, right in the browser. Coming soon.",
- body='''<main id="top">
-<section class="ph"><div class="wrap">
+P["solo"] = dict(title="Mordsteam Solo – Night Train to Venice: a murder mystery just for you",
+ desc="A body in the sleeping car, four suspects and 30 minutes to Udine: Mordsteam Solo is the murder mystery for one person – on phone, tablet or laptop, for €8.90.",
+ body='''<nav class="subnav" aria-label="Mordsteam Solo"><div class="wrap">
+<b><span>Mordsteam</span> Solo</b>
+<a href="#how">How it works</a><a href="#case">Solo 001</a><a href="#price">Price</a><a href="#faq">FAQ</a>
+<a class="btn btn-red" href="#price">Buy</a>
+</div></nav>
+<main id="top">
+<section class="hero"><div class="wrap hero-grid">
 <div class="stack">
-<span class="soonstamp">COMING SOON</span>
-<h1><span>Mordsteam</span><br>Solo</h1>
-<p class="lead">A case just for you. About thirty minutes, four suspects, one truth – the quick mystery in between.</p>
-<div class="actions" style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn btn-red" href="contact.html">Register interest</a><a class="btn btn-line" href="teams.html">Meanwhile: Mordsteam Teams</a></div>
+<div class="eyebrow">Mordsteam Solo · just for you</div>
+<h1>Who did it on the night train?</h1>
+<p class="lead">A body in the sleeping car, four suspects, 30 minutes to Udine. The murder mystery for one person: read the evidence, check the alibis, convict the killer – on your phone, tablet or laptop, whenever and wherever you like.</p>
+<div class="actions">
+<a class="btn btn-red" href="#price">Buy the case – €8.90</a>
+<a class="btn-text" href="#how">How it works</a>
 </div>
-<div class="teaser" aria-label="Preview of the first case">
-<div class="mast"><span>CASE · SOLO 001</span><span>NIGHT TRAIN, 2:14 AM</span></div>
-<h2>Night Train to Venice</h2>
-<p>In the sleeping car, an art dealer lies dead in his compartment. You happen to be on board, and the conductor asks for your help. You have until the train pulls into Venice.</p>
+</div>
+<div class="file" aria-hidden="true">
+<div class="folder"></div>
+<div class="sheet">
+<div class="mast"><span>LA SERENISSIMA · VIENNA – VENICE</span><span>2:15 AM</span></div>
+<div class="headline">Art dealer dead in compartment 4</div>
+<p>Sleeping car 327, just past Villach. A sleeping pill in the cognac, a forgery in the suitcase. Four fellow passengers had a motive – and only one had the opportunity.</p>
+<div class="chips"><span>4 suspects</span><span>13 pieces of evidence</span><span>3 questions</span><span>1 investigator: you</span></div>
+</div>
+<div class="stamp"><div><small>MORDSTEAM · SOLO 001</small><strong>UNSOLVED</strong><small>UDINE ARR. 2:45 AM</small></div></div>
 </div>
 </div></section>
+
 <section class="facts" aria-label="Key facts"><div class="wrap">
 <div><b>1 investigator</b><span>just you, on your own device</span></div>
 <div><b>Approx. 30 min</b><span>the playing time is the train's remaining journey</span></div>
-<div><b>Different every time</b><span>who did it is decided anew for each case</span></div>
-<div><b>A taste of more</b><span>enjoyed it? Then bring Mordsteam to your team</span></div>
+<div><b>Different every time</b><span>the killer is drawn anew for every playthrough</span></div>
+<div><b>Play right away</b><span>code straight after purchase, valid for 12 months</span></div>
+</div></section>
+
+<section id="how" class="section"><div class="wrap stack">
+<div class="eyebrow">How it works</div>
+<h2 class="h2">Three steps from purchase to certificate</h2>
+<div class="steps">
+<div class="step"><span class="num">1</span><div><h3>Get your code</h3><p>After paying you get your game code on screen and by email. Start right away or any time within the next 12 months – also as a gift: the name is only entered by whoever plays.</p></div></div>
+<div class="step"><span class="num">2</span><div><h3>Investigate</h3><p>The clock runs from the start. You begin at the crime scene, and every correct answer unlocks new evidence. Stuck? Hints are one click away – for penalty minutes.</p></div></div>
+<div class="step"><span class="num">3</span><div><h3>Convict</h3><p>Time of the crime, killer, hiding place of the painting: once you have all three, you see your final time, how much faster you were than the others – and get your certificate with your name.</p></div></div>
+</div>
+</div></section>
+
+<section id="case" class="section case"><div class="wrap case-grid">
+<div class="stack">
+<div class="eyebrow">Solo 001 · Night Train to Venice</div>
+<h2 class="h2">The conductor knocks. “You read crime novels, don't you?”</h2>
+<p class="lead">Night train from Vienna to Venice, 2:15 am. The art dealer Viktor Hallwachs lies dead in his compartment, and the painting in his suitcase is a copy. At 2:45 am the police board in Udine – by then you want to be able to tell them who did it.</p>
+<p><b>Four fellow passengers, four motives:</b></p>
+<div class="objects"><span>the business partner</span><span>the nephew</span><span>the journalist</span><span>the conductor</span></div>
+</div>
+<div class="clues" aria-label="Examples from the case file">
+<div class="clue"><small>DOOR LOG COMPARTMENT 4</small><span>Who let whom in?<br>??:?? · opened · inside</span></div>
+<div class="clue"><small>DINING CAR RECEIPT</small><span>“Table 3, two teas”<br>paid ??:??</span></div>
+<div class="clue dark"><small>YOUR INVESTIGATION</small><div class="codebox" aria-label="Three questions"><i>1</i><i>2</i><i>3</i></div><span class="hint">Time, killer, hiding place – before Udine.</span></div>
+<div class="clue"><small>WI-FI LOG</small><span>Which phone was where?<br>AP 327 · ??:?? to ??:??</span></div>
+</div>
+<ul class="list case-points">
+<li>Three questions that build on each other: time, killer, hiding place</li>
+<li>Evidence in three stages – the next only after the right answer</li>
+<li>The killer is drawn for every playthrough, the evidence adapts</li>
+<li>Hints at the click of a button, each costs penalty minutes</li>
+<li>At the end: “faster than X %” of all investigators – no public leaderboard</li>
+<li>A stylish mystery with a wink – no blood, no shock effects</li>
+</ul>
+</div></section>
+
+<section id="price" class="section"><div class="wrap stack">
+<div class="eyebrow">Price</div>
+<h2 class="h2">One case, one price</h2>
+<p class="lead">No subscription, no account: buy, get your code, start playing. And if you enjoyed it, there's a voucher for the big team game on top.</p>
+<div class="pack-grid">
+<div class="pack featured">
+<span class="badge">SOLO 001</span>
+<h3>Night Train to Venice</h3><p class="sub">approx. 30 minutes · 1 person</p>
+<p class="price">€8.90</p><p class="per">buy once, play as often as you like with a different killer</p>
+<ul class="list"><li>13 pieces of evidence, 4 suspects, 3 questions</li><li>Killer drawn anew for every playthrough</li><li>Hints at the click of a button</li><li>Result “faster than X %” on your first playthrough</li><li>Certificate with your name to print or save as PDF</li><li>€5 voucher for a Mordsteam Teams game</li></ul>
+<span class="btn btn-red" aria-disabled="true" style="opacity:.6;cursor:default">Available soon</span>
+</div>
+<div class="pack">
+<span class="badge">MORE THAN JUST YOU?</span>
+<h3>With friends or as a team</h3><p class="sub">the same puzzle thrill, only together</p>
+<p class="price">from €29</p><p class="per">Friends for 4–8 people, Teams for companies and clubs</p>
+<ul class="list"><li><b>Mordsteam Friends:</b> the mystery night with friends, everyone on their own phone</li><li><b>Mordsteam Teams:</b> the personalised case with your names and rooms</li><li>Your Solo voucher is valid for a Teams game</li></ul>
+<a class="btn btn-line" href="friends.html">See Friends</a>
+<a class="btn-text" href="teams.html" style="margin-top:10px">To Mordsteam Teams →</a>
+</div>
+</div>
+<div class="devicebox">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="14" height="10" rx="1.5"/><path d="M1 17h16"/><rect x="17" y="8" width="6" height="12" rx="1.2"/><path d="M19.5 17.5h1"/></svg>
+<p><b>Playable on phone, tablet or laptop.</b> Right in the browser, no app and no account. A stable internet connection is all you need – ideal for the train, the lunch break or an evening on the sofa.</p>
+</div>
+</div></section>
+
+<section id="faq" class="section faq"><div class="wrap faq-grid">
+<div class="stack"><div class="eyebrow">FAQ</div><h2 class="h2">Any questions?</h2></div>
+<div>
+<details><summary>How long does the case take?</summary><p>About 30 minutes – that's how long the train needs to Udine. The clock keeps running if you need longer: you can still solve the case, your final time just gets longer.</p></details>
+<details><summary>Can I pause?</summary><p>No. The clock starts when you click “Start investigation” and keeps running. Until then, take as long as you like: the code is valid for 12 months. If you close the window during the game, your code takes you back – but the clock will have kept running.</p></details>
+<details><summary>How do the hints work?</summary><p>Each question has three hints, from a gentle nudge to almost the answer. They cost 2, 3 and 5 penalty minutes. A wrong answer costs 3 minutes, and you can try again straight away.</p></details>
+<details><summary>What does “faster than X %” mean?</summary><p>Your final time (time played plus penalty minutes) is compared with all other investigators who solved the case for the first time. There is no public leaderboard, nobody sees your name.</p></details>
+<details><summary>Can I play the case again?</summary><p>Yes, as often as you like. A different killer is drawn for each playthrough, and the matching evidence changes too. Only your first playthrough counts for the comparison.</p></details>
+<details><summary>Can I give Solo as a gift?</summary><p>Yes. Just pass on the code. The name that appears in the story and on the certificate is only entered by the person who plays.</p></details>
+<details><summary>What is the €5 voucher?</summary><p>Whoever solves the case for the first time gets a €5 voucher code for a Mordsteam Teams game at the end – for the next team event at work or in your club, for example.</p></details>
+<details><summary>Do I need an app or an account?</summary><p>No. Solo runs right in the browser on phone, tablet or laptop. All you need is your code.</p></details>
+<details><summary>May I use Google or AI?</summary><p>Please don't. The case is built so you solve it with your wits and the evidence – everything you need is in the file. A matter of honour among investigators.</p></details>
+<details><summary>From what age?</summary><p>The case is written for adults – a mystery with a wink, no blood and no shock effects. Teenagers who enjoy crime stories will do fine too.</p></details>
+<details><summary>Is Solo available in English?</summary><p>Not yet. Solo 001 is currently available in German; the English version will follow.</p></details>
+</div>
+</div></section>
+
+<section class="cta"><div class="wrap">
+<h2>At 2:45 am the train stops in Udine.</h2>
+<p>By then you'll know who did it.</p>
+<a class="btn btn-ink" href="#price">Buy the case – €8.90</a>
 </div></section>
 </main>''')
 
