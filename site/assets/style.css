@@ -448,3 +448,11 @@ p.small{font-size:14px;color:#5A5D66}
 @media (min-width:900px){.case-points{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,auto);grid-auto-flow:column;column-gap:72px;row-gap:4px;columns:auto}}
 @media (min-width:760px){.audience.two{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .duo .wrap>.privacy:first-child{margin-top:0}
+/* Einheitliche, etwas engere Abstände (Desktop) */
+@media (min-width:900px){
+  .section{padding:72px 0}
+  .hero{padding:64px 0 72px}
+  .cta .wrap{padding-top:80px;padding-bottom:80px}
+  #fuerwen,#whoisitfor{padding-bottom:16px}
+}
+#fuerwen,#whoisitfor{padding-bottom:8px}
