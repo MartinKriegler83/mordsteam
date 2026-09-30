@@ -381,7 +381,7 @@ p.small{font-size:14px;color:#5A5D66}
 .bh-lupe .dot{transform-origin:14px 14px;animation:bhpuls 3.2s ease-in-out infinite}
 @keyframes bhpuls{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.78)}}
 .bh h1{font-family:var(--serif);font-weight:900;font-size:clamp(50px,12.5vw,156px);line-height:.92;letter-spacing:.01em}
-.bh h1 .r{color:var(--red)}
+.bh h1 .r{color:#E0463C}
 .bh .claim{font-family:var(--serif);font-style:italic;font-weight:700;font-size:clamp(22px,3.8vw,36px);line-height:1.15}
 .bh .sub{max-width:560px;color:#CFC9BC;font-size:17px}
 .bh .actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:10px}
