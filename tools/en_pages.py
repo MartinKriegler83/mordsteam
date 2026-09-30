@@ -16,8 +16,7 @@ def page(name, title, desc, body, robots=None, scripts="", home=False, promo=Fal
     cur = lambda k: ' aria-current="page"' if k == name else ''
     nav = f'''<a href="teams.html"{cur("teams")}>Teams</a>
 <a href="friends.html"{cur("friends")}>Friends</a>
-<a href="solo.html"{cur("solo")}>Solo</a>
-<a href="teams.html#faq">FAQ</a>'''
+<a href="solo.html"{cur("solo")}>Solo</a>'''
     return f'''<!doctype html>
 <html lang="en">
 <head>
@@ -264,11 +263,10 @@ P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=Tru
 </div></section>
 
 
-<section class="facts" aria-label="What makes Mordsteam"><div class="wrap">
+<section class="facts three" aria-label="What makes Mordsteam"><div class="wrap">
 <div><b>Personalised</b><span>your names, your rooms, your in-jokes – or a fictional cast</span></div>
-<div><b>No game master</b><span>instructions and a digital case desk guide you through</span></div>
+<div><b>Digital game guidance</b><span>instructions and a digital case desk guide you through</span></div>
 <div><b>Play right away</b><span>on laptop, phone or tablet – in German or English</span></div>
-<div><b>Privacy</b><span>no cookies, no tracking, automatic deletion after the game</span></div>
 </div></section>
 
 <section id="bewertungen" class="section" data-ort="home" hidden><div class="wrap stack">

@@ -337,7 +337,7 @@ p{margin:0}
 .contactcard .cc-mail{font-weight:600;color:var(--red)}
 .promo .star{color:#E0463C}
 /* Seitentitel, die in eine Zeile passen sollen (Early Bird, Feedback) */
-.page h1.h1-page{font-size:min(46px,5.7vw);white-space:nowrap;margin-top:10px}
+.page h1.h1-page{font-size:clamp(28px,5.7vw,46px);margin-top:10px;text-wrap:balance;overflow-wrap:break-word}
 /* Feedbackbogen */
 .fb-q .label{font-weight:600}
 .fb-stars{display:flex;gap:6px}
@@ -480,3 +480,6 @@ p.small{font-size:14px;color:#5A5D66}
 .fr-person input:focus,.fr-person select:focus{outline:3px solid rgba(179,38,30,.35);border-color:var(--red)}
 
 .pack .is-soon{opacity:.5;cursor:default;pointer-events:none}
+
+.facts.three .wrap{grid-template-columns:1fr}
+@media (min-width:700px){.facts.three .wrap{grid-template-columns:repeat(3,minmax(0,1fr))}}
