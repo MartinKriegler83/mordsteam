@@ -11,6 +11,8 @@ EBBAR = """<div class="promo" id="ebbar"><div class="wrap"><span class="tag">EAR
 
 def page(name, title, desc, body, robots=None, scripts="", home=False, promo=False):
     de = MAP[name]
+    # „Play now“: auf Teams/Solo zu den eigenen Optionen, sonst zur Spielauswahl auf der Startseite
+    play = {"index": "#games", "teams": "#packages", "solo": "#price", "solo-buy": "#solo"}.get(name, "index.html#games")
     cur = lambda k: ' aria-current="page"' if k == name else ''
     nav = f'''<a href="teams.html"{cur("teams")}>Teams</a>
 <a href="friends.html"{cur("friends")}>Friends</a>
@@ -43,7 +45,7 @@ def page(name, title, desc, body, robots=None, scripts="", home=False, promo=Fal
 <nav class="nav-desktop" aria-label="Main navigation">
 {nav}
 <a class="langlink" href="/{'' if de == 'index' else de + '.html'}" hreflang="de" lang="de" title="Deutsch">DE</a>
-<a class="btn btn-ink" href="teams.html#packages">Play now</a>
+<a class="btn btn-ink" href="{play}">Play now</a>
 </nav>
 <details class="menu">
 <summary aria-label="Open menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15171C" stroke-width="2.2" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></summary>
@@ -51,7 +53,7 @@ def page(name, title, desc, body, robots=None, scripts="", home=False, promo=Fal
 <a href="index.html">Home</a>
 {nav}
 <a href="/{'' if de == 'index' else de + '.html'}" hreflang="de" lang="de">Deutsch</a>
-<a class="btn btn-red" href="teams.html#packages">Play now</a>
+<a class="btn btn-red" href="{play}">Play now</a>
 </nav>
 </details>
 </div></header>
@@ -62,6 +64,7 @@ def page(name, title, desc, body, robots=None, scripts="", home=False, promo=Fal
 <nav aria-label="Legal"><a href="imprint.html">Imprint</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a><a href="withdraw.html">Withdraw from contract</a></nav>
 <span>© 2026 Mordsteam e.U.</span>
 </div></footer>
+<script src="/assets/menu.js" defer></script>
 </body>
 </html>
 '''
