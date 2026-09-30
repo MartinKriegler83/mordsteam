@@ -2,7 +2,7 @@
 # Aufruf: python3 tools/en_pages.py  – danach site/en/*.html committen.
 import os, html
 ROOT = os.path.join(os.path.dirname(__file__), "..", "site")
-MAP = {"index": "index", "teams": "teams", "friends": "friends", "solo": "solo", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "contact": "kontakt", "early-bird": "earlybird", "feedback": "feedback", "withdraw": "widerruf"}
+MAP = {"index": "index", "teams": "teams", "friends": "friends", "solo": "solo", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "contact": "kontakt", "early-bird": "earlybird", "feedback": "feedback", "withdraw": "widerruf", "solo-buy": "solo-kaufen"}
 LOGO = '<svg width="30" height="30" viewBox="0 0 34 34" fill="none" stroke="#15171C" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg>'
 
 
@@ -317,7 +317,7 @@ P["solo"] = dict(title="Mordsteam Solo – Night Train to Venice: a murder myste
  body='''<nav class="subnav" aria-label="Mordsteam Solo"><div class="wrap">
 <b><span>Mordsteam</span> Solo</b>
 <a href="#how">How it works</a><a href="#case">Solo 001</a><a href="#price">Price</a><a href="#faq">FAQ</a>
-<a class="btn btn-red" href="#price">Buy</a>
+<a class="btn btn-red" href="solo-buy.html">Buy</a>
 </div></nav>
 <main id="top">
 <section class="hero"><div class="wrap hero-grid">
@@ -326,7 +326,7 @@ P["solo"] = dict(title="Mordsteam Solo – Night Train to Venice: a murder myste
 <h1>Who did it on the night train?</h1>
 <p class="lead">A body in the sleeping car, four suspects, 30 minutes to Udine. The murder mystery for one person: read the evidence, check the alibis, convict the killer – on your phone, tablet or laptop, whenever and wherever you like.</p>
 <div class="actions">
-<a class="btn btn-red" href="#price">Buy the case – €8.90</a>
+<a class="btn btn-red" href="solo-buy.html">Buy the case – €8.90</a>
 <a class="btn-text" href="#how">How it works</a>
 </div>
 </div>
@@ -393,7 +393,7 @@ P["solo"] = dict(title="Mordsteam Solo – Night Train to Venice: a murder myste
 <h3>Night Train to Venice</h3><p class="sub">30 minutes · 1 person</p>
 <p class="price">€8.90</p><p class="per">buy once, play as often as you like with a different killer</p>
 <ul class="list"><li>13 pieces of evidence, 4 suspects, 3 questions</li><li>Killer drawn anew for every playthrough</li><li>Hints at the click of a button</li><li>Result “faster than X %” on your first playthrough</li><li>Certificate with your name to print or save as PDF</li><li>€5 voucher for a Friends or Teams game</li></ul>
-<span class="btn btn-red" aria-disabled="true" style="opacity:.6;cursor:default">Available soon</span>
+<a class="btn btn-red" href="solo-buy.html">Buy the case – €8.90</a>
 </div>
 <div class="pack">
 <span class="badge">WANT MORE?</span>
@@ -430,9 +430,40 @@ P["solo"] = dict(title="Mordsteam Solo – Night Train to Venice: a murder myste
 <section class="cta"><div class="wrap">
 <h2>At 2:45 am the train stops in Udine.</h2>
 <p>By then you'll know who did it.</p>
-<a class="btn btn-ink" href="#price">Buy the case – €8.90</a>
+<a class="btn btn-ink" href="solo-buy.html">Buy the case – €8.90</a>
 </div></section>
 </main>''')
+
+P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy Mordsteam Solo 001 “Night Train to Venice”: €8.90, code right away on screen and by email.",
+ scripts='<script src="/assets/solo-kaufen.js"></script>',
+ body='''<main class="page shop"><div class="wrap">
+<div class="eyebrow">Order · Mordsteam Solo 001</div>
+<h1>Night Train to Venice</h1>
+<p class="lead">A murder mystery for one person, 30 minutes. You pay €8.90 and get your code right away on screen and by email. The case itself is currently available in German.</p>
+<div class="note" id="closed" hidden>Orders are not open yet. You can look at the form, but not submit it yet.</div>
+<div class="note" id="cancelled" hidden>The payment was cancelled. You can simply try again.</div>
+<form class="form" id="solo" novalidate>
+<fieldset class="step"><legend><span>1</span> Your details</legend>
+<div class="two">
+<div class="field"><label for="c_name">Your name *</label><input id="c_name" name="c_name" maxlength="120" autocomplete="name"></div>
+<div class="field"><label for="c_email">Email *</label><input id="c_email" name="c_email" type="email" maxlength="160" autocomplete="email"><span class="hint">We'll send your code and invoice here.</span></div>
+</div>
+<p class="hint">A gift? No problem: the name that appears in the story and on the certificate is only entered by whoever plays.</p>
+<div class="field"><span class="label">You are ordering as *</span>
+<label class="check"><input type="radio" name="kunde" value="b2c"><span>Private individual</span></label>
+<label class="check"><input type="radio" name="kunde" value="b2b"><span>Company, club or organisation</span></label>
+<span class="hint">Private individuals have the statutory right of withdrawal (see <a href="terms.html#ruecktritt" target="_blank" rel="noopener">terms section 8</a>).</span></div>
+</fieldset>
+<fieldset class="step"><legend><span>2</span> Review and pay</legend>
+<div class="summary"><div class="sumrow"><span>Mordsteam Solo 001 “Night Train to Venice” · 30 minutes · game language German</span><b>€8.90</b></div><p class="small">Final price. Code valid for 12 months, replayable any number of times with a different killer. VAT exempt (small business scheme).</p></div>
+<label class="check" id="sofortbox" hidden><input type="checkbox" name="sofort"><span>I expressly request that you provide my code right after payment – I can still play whenever I like. I am aware that as a private individual I thereby lose my right of withdrawal (at the latest once the case has been played). *</span></label>
+<label class="check"><input type="checkbox" name="agb"><span>I accept the <a href="terms.html" target="_blank">terms</a> and have read the <a href="privacy.html" target="_blank">privacy policy</a>. *</span></label>
+<p class="formerr" id="err" role="alert" hidden></p>
+<div><button class="btn btn-red" type="submit" id="submit">Order with obligation to pay – €8.90</button></div>
+<p class="hint small">Payment is handled securely by Stripe (card, Apple Pay, Google Pay and more). You'll see your code right afterwards.</p>
+</fieldset>
+</form>
+</div></main>''')
 
 P["order"] = dict(title="Order – Mordsteam", robots="noindex", desc="Order case 001 “The Red Folder”: enter your details, pay, get your game code immediately.",
  scripts='<div class="pricebar" id="pricebar"><div class="wrap"><span id="pb-text"></span><strong id="pb-sum"></strong></div></div>\n<script src="/assets/bestellen.js"></script>',
@@ -519,7 +550,7 @@ P["order"] = dict(title="Order – Mordsteam", robots="noindex", desc="Order cas
 <label class="check"><input type="checkbox" name="agb"><span>I accept the <a href="terms.html" target="_blank">terms</a> and have read the <a href="privacy.html" target="_blank">privacy policy</a>. *</span></label>
 <p class="formerr" id="err" role="alert" hidden></p>
 <div><button class="btn btn-red" type="submit" id="submit">Order and pay</button></div>
-<p class="hint small">Payment is handled securely by Stripe (card, Apple Pay, Google Pay and more). You see the game code, instructions and organiser code right afterwards. No VAT charged (Austrian small business scheme). Prices in euros.</p>
+<p class="hint small">Payment is handled securely by Stripe (card, Apple Pay, Google Pay and more). You see the game code, instructions and organiser code right afterwards. No VAT charged (Austrian small business scheme). Prices in euros. You enter a voucher code (e.g. from Mordsteam Solo) in the payment step – it cannot be combined with the early bird discount.</p>
 </fieldset>
 </form>
 </div></main>''')
@@ -594,7 +625,7 @@ P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mor
 <h2>2. Our service</h2>
 <p>We provide digital murder-mystery games that you play online in your browser – depending on the game, together in teams, as a group or on your own (“game round”). What exactly is included follows from the description of the chosen game when ordering: game, package or variant, number of teams or players, playing time and, where applicable, personalisation. After payment you receive access codes with which you open and start the game round. Nothing is delivered physically.</p>
 <ul>
-<li>The game round is playable for 12 months from purchase and can be started once. It then runs for the playing time or time window stated in the description and ends.</li>
+<li>The game round is playable for 12 months from purchase. How often it can be started is stated in the game description: Teams and Friends rounds can be started once, Solo cases can be replayed any number of times (with a newly drawn killer). A started round runs for the stated playing time or chosen time window and ends.</li>
 <li>To play you need an internet-enabled device with an up-to-date browser. We are not responsible for web filters or blocks by your IT; we recommend opening mordsteam.com/spiel beforehand on the intended device.</li>
 <li>All cases are entirely fictional. Names and details you enter are built into a fictional story; the accusations made in it are not meant seriously.</li>
 </ul>

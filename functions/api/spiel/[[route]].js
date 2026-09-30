@@ -7,6 +7,7 @@ import {
 } from "../../../lib/game.js";
 
 import { migrate, createGameSession, InputError } from "../../../lib/create.js";
+import { logAI, opsSummary } from "../../../lib/ops.js";
 import { migrateFeedback, dueFeedback, runFeedbackMails } from "../../../lib/feedback.js";
 import { localize, countryOf, COUNTRIES, COUNTRY_ORDER, randomCast, castToEnglish } from "../../../lib/countries.js";
 
@@ -53,6 +54,7 @@ export async function onRequest(ctx) {
       if (route === "admin/order-shipped" && method === "POST") return adminShipped(request, env);
       if (route === "admin/feedback" && method === "GET") return adminFeedback(env);
       if (route === "admin/export" && method === "GET") return adminExport(request, env);
+      if (route === "admin/ops" && method === "GET") return json(await opsSummary(env));
       if (route === "admin/feedback-run" && method === "POST") { const b = await body(request); return json({ sent: await runFeedbackMails(env, new URL(request.url).origin, { force: !!b.force }) }); }
       if (route === "admin/feedback-approve" && method === "POST") { const b = await body(request); await migrateFeedback(env); await env.DB.prepare("UPDATE feedback SET approved=? WHERE id=?").bind(b.approved ? 1 : 0, String(b.id || "")).run(); return json({ ok: true }); }
     }
@@ -360,7 +362,7 @@ async function ariaChat({ request, env, team, session }) {
   await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, now, "user", text).run();
   const x = ariaX(session);
   const ps = ariaPseudo(x);
-  let reply;
+  let reply, logged = false;
   try {
     if (!env.ANTHROPIC_API_KEY) throw new Error("kein Schlüssel");
     const hist = (await ariaMsgs(env, team)).filter((m) => m.role === "user" || m.role === "assistant").slice(-ARIA_LIMITS.history);
@@ -382,10 +384,13 @@ async function ariaChat({ request, env, team, session }) {
       signal: AbortSignal.timeout(20000),
     });
     const d = await r.json();
+    logged = true;
+    await logAI(env, d.usage, r.ok);
     if (!r.ok) throw new Error(d.error?.message || String(r.status));
     reply = ps.show((d.content || []).filter((p) => p.type === "text").map((p) => p.text).join("").trim()).slice(0, 1200);
     if (!reply) throw new Error("leer");
   } catch (e) {
+    if (!logged && env.ANTHROPIC_API_KEY) await logAI(env, null, false);   // Zeitüberschreitung, Netzwerkfehler
     reply = c.ARIA.fallback(x);
   }
   await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, Date.now(), "assistant", reply).run();
@@ -579,9 +584,10 @@ async function adminCreate(request, env) {
   }
 }
 async function adminOrders(env) {
-  const { results } = await env.DB.prepare(
-    "SELECT o.id, o.created_at, o.status, o.paket, o.teams, o.amount_cents, o.event_date, o.contact, o.paid_at, o.shipped_at, json_extract(o.vars,'$.FIRMA') AS firma, s.join_code, s.org_code FROM orders o LEFT JOIN sessions s ON s.id=o.session_id ORDER BY o.created_at DESC LIMIT 200"
-  ).all();
+  const base = "SELECT o.id, o.created_at, o.status, o.paket, o.teams, o.amount_cents, o.event_date, o.contact, o.paid_at, o.shipped_at, json_extract(o.vars,'$.FIRMA') AS firma, s.join_code, s.org_code";
+  const tail = " FROM orders o LEFT JOIN sessions s ON s.id=o.session_id ORDER BY o.created_at DESC LIMIT 200";
+  const { results } = await env.DB.prepare(base + ", (SELECT t.code FROM solo_tickets t WHERE t.order_id=o.id) AS solo_code" + tail).all()
+    .catch(() => env.DB.prepare(base + tail).all());
   return json({ orders: results.map((o) => ({ ...o, contact: JSON.parse(o.contact || "{}") })) });
 }
 // Statistik: Zeiten je Paket (Median und Quartile), Lösungsquote, Fehlversuche je Frage
@@ -620,7 +626,7 @@ async function adminExport(request, env) {
   const from = Date.parse(von + "T00:00:00+02:00"), to = Date.parse(bis + "T23:59:59+02:00");
   const { results } = await env.DB.prepare(
     "SELECT * FROM orders WHERE status IN ('paid','fulfilling','fulfilled') AND paid_at BETWEEN ? AND ? ORDER BY paid_at").bind(from, to).all();
-  const P = { basis: "Basis", premium: "Premium", plus: "Premium Plus" };
+  const P = { basis: "Basis", premium: "Premium", plus: "Premium Plus", solo: "Solo 001 Nachtzug" };
   const q = (x) => { const t = String(x ?? ""); return /[;"\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
   const d = (ms) => new Intl.DateTimeFormat("de-AT", { timeZone: "Europe/Vienna", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(ms));
   const lines = [["Datum (bezahlt)", "Rechnungsnr. (Stripe)", "Bestell-ID", "Kunde / Firma", "Paket", "Teams", "Early Bird", "Betrag bezahlt (€)", "davon USt (€)", "Zahlungsweg", "Bemerkung"].join(";")];

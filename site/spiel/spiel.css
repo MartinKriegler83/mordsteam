@@ -449,3 +449,28 @@ button.btn-big{margin-top:14px}
   .so-cert-row b{font-family:var(--mono);font-size:24px}
   .so-cert-foot{margin-top:14mm;font-family:var(--mono);font-size:12px;letter-spacing:2px;color:#5A5D66}
 }
+/* =====================================================================
+   Admin: Tabs, Ampel, Balken
+   ===================================================================== */
+.admtabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:2px solid var(--line);margin-bottom:-6px}
+.admtabs button{font:inherit;font-weight:600;font-size:14.5px;background:none;border:0;border-bottom:3px solid transparent;padding:10px 12px;cursor:pointer;color:var(--ink-2);min-height:44px;margin-bottom:-2px}
+.admtabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--red)}
+.admtabs .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);vertical-align:middle;margin-left:2px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-top:12px}
+.tile{position:relative;overflow:hidden;border-radius:8px;padding:12px 14px 16px;background:var(--paper);border-left:6px solid #1F6B3A}
+.tile.yellow{border-left-color:#E0A800;background:#FFF8E1}.tile.red{border-left-color:var(--red);background:#FBE3E0}
+.tile small{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:1.3px;text-transform:uppercase;color:#5A5D66}
+.tile b{display:block;font-family:var(--mono);font-size:26px;line-height:1.2;margin:4px 0 2px}
+.tile span{font-size:13px;color:#5A5D66}
+.tile i{position:absolute;left:0;bottom:0;height:4px;background:currentColor;opacity:.35}
+.tile.green i{color:#1F6B3A}.tile.yellow i{color:#B38600}.tile.red i{color:var(--red)}
+.two-col{display:grid;gap:22px}
+@media (min-width:800px){.two-col{grid-template-columns:1fr 1fr}}
+.checks{list-style:none;padding:0;margin:10px 0;display:grid;gap:6px}
+.checks li{padding:6px 10px;border-radius:6px;background:var(--paper)}
+.checks li.ok{color:#1F6B3A}.checks li.no{color:#5A5D66}.checks li.bad{color:#fff;background:var(--red);font-weight:700}
+.bars{display:flex;align-items:flex-end;gap:3px;height:110px;margin-top:12px;border-bottom:1px solid var(--line)}
+.bars div{flex:1;height:100%;display:flex;align-items:flex-end}
+.bars i{display:block;width:100%;background:var(--red);border-radius:2px 2px 0 0;min-height:1px}
+.bars div:hover i{background:var(--ink)}
+.bars-axis{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:#5A5D66;margin-top:4px}

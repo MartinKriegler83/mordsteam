@@ -26,6 +26,7 @@
       const st = await MS.api("GET", "admin/stats" + (statTests ? "?tests=1" : ""), null, H()).catch(() => ({ stats: {} }));
       fb = await MS.api("GET", "admin/feedback", null, H()).catch(() => null);
       soloList = await fetch("/api/solo/admin/list", { headers: H() }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      ops = await MS.api("GET", "admin/ops", null, H()).catch(() => null);
       render(list.sessions, ord.orders, st.stats);
     } catch (e) {
       if (e.status === 401 || e.status === 503) { try { sessionStorage.removeItem("ms_admin"); } catch {} key = null; return keyView(e.status === 401 ? "Schlüssel falsch." : e.message); }
@@ -78,7 +79,75 @@
 
   let statTests = true;
   let fb = null, fbMsg = "";
-  let soloMsg = "", soloList = null;
+  let soloMsg = "", soloList = null, ops = null, last = [[], [], {}];
+  let tab = "uebersicht";
+  try { tab = sessionStorage.getItem("ms_admtab") || "uebersicht"; } catch {}
+  const TABS = [["uebersicht", "Übersicht"], ["finanzen", "Bestellungen & Finanzen"], ["runden", "Spielrunden & Tests"], ["statistik", "Spielstatistik"], ["system", "Kapazität & System"], ["feedback", "Feedback"]];
+  const tabBar = () => `<nav class="admtabs" role="tablist">${TABS.map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${l}${k === "system" && ops && (ops.errors.today || ops.alerts.some((a) => Date.now() - a.at < 86400000)) ? ' <span class="dot"></span>' : ""}</button>`).join("")}</nav>`;
+  const eur = (c) => (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+  const usd = (x) => (x || 0).toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " $";
+  const n0 = (x) => (x || 0).toLocaleString("de-AT");
+  // Ampel: grün unter 70 %, gelb bis 90 %, rot darüber
+  function tile(label, val, lim, sub, fmt = n0) {
+    const r = lim > 0 ? val / lim : 0;
+    const cls = lim > 0 ? (r >= 0.9 ? "red" : r >= 0.7 ? "yellow" : "green") : "green";
+    return `<div class="tile ${cls}"><small>${label}</small><b>${fmt(val)}</b><span>${lim > 0 ? `von ${fmt(lim)} (${Math.round(r * 100)} %)` : sub || "kein Limit"}</span>${lim > 0 ? `<i style="width:${Math.min(100, Math.round(r * 100))}%"></i>` : ""}</div>`;
+  }
+  const WARNTXT = (k) => k.replace(/^mail-day-.*/, "Mails am Tag").replace(/^mail-month-.*/, "Mails im Monat").replace(/^ai-err-.*/, "KI-Fehler").replace(/^ai-.*/, "KI-Budget").replace(/^req-.*/, "Server-Aufrufe").replace(/^err-.*/, "Serverfehler");
+  function overviewPanel(orders) {
+    if (!ops) return `<div class="panel"><p class="err">Betriebsdaten konnten nicht geladen werden.</p></div>`;
+    const L = ops.limits, C = ops.configured;
+    const paid = orders.filter((o) => o.status !== "pending" && o.status !== "withdrawn");
+    const mon = paid.filter((o) => new Date(o.created_at).toISOString().slice(0, 7) === ops.month);
+    const chk = (ok, txt, warn) => `<li class="${ok ? "ok" : warn ? "bad" : "no"}">${ok ? "✓" : warn ? "!" : "–"} ${txt}</li>`;
+    return `<div class="panel"><div class="eyebrow">Ampel · heute ${ops.today}</div>
+      <div class="tiles">
+        ${tile("Mails heute", ops.mail.today, L.mail_day, "kein Tageslimit")}
+        ${tile("Mails im Monat", ops.mail.month, L.mail_month)}
+        ${tile("KI-Kosten im Monat", ops.ai.month_cost, L.ai_budget, "", usd)}
+        ${tile("Server-Aufrufe heute", ops.hits.today, L.req_day, "Workers Paid: kein Tageslimit")}
+        <div class="tile ${ops.errors.today > 10 ? "red" : ops.errors.today ? "yellow" : "green"}"><small>Fehler heute</small><b>${ops.errors.today}</b><span>Warnung ab 11</span></div>
+        <div class="tile green"><small>Umsatz im Monat</small><b>${eur(mon.reduce((a, o) => a + o.amount_cents, 0))}</b><span>${mon.length} Bestellung(en)</span></div>
+      </div></div>
+      <div class="two-col">
+      <div class="panel"><div class="eyebrow">Einrichtung dieser Umgebung</div><ul class="checks">
+        ${chk(C.mail, "Mailversand (Resend)")}${chk(C.ai, "Claude-API für ARIA")}${chk(C.stripe, C.stripe_live ? "Stripe LIVE" : "Stripe (Testmodus)")}
+        ${chk(C.shop_open, "Shop offen (SHOP_OPEN)")}${C.fake_pay ? chk(false, "ORDER_FAKE_PAY ist AN – nie in Produktion!", true) : ""}</ul>
+        <p class="small">Limits: Mails ${L.mail_day || "∞"}/Tag, ${L.mail_month || "∞"}/Monat · Aufrufe ${L.req_day ? n0(L.req_day) + "/Tag" : "ohne Tageslimit"} · KI-Budget ${L.ai_budget} $/Monat. Warnmail an office@ ab 70 %.</p></div>
+      <div class="panel"><div class="eyebrow">Letzte Warnungen</div>${ops.alerts.length ? `<ul class="list small">${ops.alerts.slice(0, 6).map((a) => `<li>${new Date(a.at).toLocaleString("de-AT")} · ${WARNTXT(a.key)}</li>`).join("")}</ul>` : `<p class="muted">Keine Warnungen.</p>`}</div>
+      </div>
+      <div class="panel"><div class="eyebrow">Letzte Bestellungen</div>${orders.length ? `<table class="grid small"><tr><th>Zeit</th><th>Kunde</th><th>Produkt</th><th>Betrag</th><th>Status</th></tr>${orders.slice(0, 5).map((o) => `<tr><td>${new Date(o.created_at).toLocaleString("de-AT")}</td><td>${MS.esc((o.contact || {}).name || "")}</td><td>${o.paket === "solo" ? "Solo" : `${({ basis: "Basis", premium: "Premium", plus: "Premium Plus" })[o.paket] || o.paket} · ${o.teams} Teams`}</td><td>${eur(o.amount_cents)}</td><td>${o.status}</td></tr>`).join("")}</table>` : `<p class="muted">Noch keine Bestellungen.</p>`}</div>`;
+  }
+  // Balken für die letzten 30 Tage
+  function bars(rows, key, fmt = n0) {
+    const map = Object.fromEntries(rows.map((r) => [r.day, r[key] || 0]));
+    const days = [];
+    for (let i = 29; i >= 0; i--) days.push(new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Vienna" }).format(new Date(Date.now() - i * 86400000)));
+    const max = Math.max(1, ...days.map((d) => map[d] || 0));
+    return `<div class="bars">${days.map((d) => `<div title="${d}: ${fmt(map[d] || 0)}"><i style="height:${Math.round(((map[d] || 0) / max) * 100)}%"></i></div>`).join("")}</div><div class="bars-axis"><span>${days[0].slice(5)}</span><span>max ${fmt(max)}</span><span>heute</span></div>`;
+  }
+  function systemPanel() {
+    if (!ops) return `<div class="panel"><p class="err">Betriebsdaten konnten nicht geladen werden.</p></div>`;
+    const K = { bestellung: "Bestellbestätigung", solo: "Solo-Bestellung", feedback: "Feedback", kontakt: "Kontaktformular", widerruf: "Widerruf (Kunde)", "widerruf-office": "Widerruf (an office)" };
+    const A = { "spiel-abfrage": "Spielgeräte fragen Stand ab (hochgerechnet)", spiel: "Spiel (Aktionen)", aria: "ARIA-Chat", solo: "Solo", shop: "Shop & Formulare", stripe: "Stripe-Webhook", admin: "Admin", sonstiges: "Sonstiges" };
+    return `<div class="panel"><div class="eyebrow">Mails · letzte 30 Tage</div>${bars(ops.mail.days, "n")}
+      <table class="grid small" style="margin-top:12px"><tr><th>Art (dieser Monat)</th><th>Versuche</th><th>Zugestellt</th></tr>${ops.mail.kinds.filter((k) => k.kind !== "warnung").map((k) => `<tr><td>${K[k.kind] || k.kind}</td><td>${k.n}</td><td>${k.ok}${k.ok < k.n ? ` <b style="color:var(--red)">(${k.n - k.ok} fehlgeschlagen)</b>` : ""}</td></tr>`).join("") || `<tr><td colspan="3" class="muted">Noch keine Mails.</td></tr>`}</table>
+      <p class="small"><a href="https://resend.com/emails" target="_blank" rel="noopener">Resend öffnen</a> · Tarif ändern: Resend → Settings → Billing</p></div>
+    <div class="panel"><div class="eyebrow">Claude-API (ARIA) · letzte 30 Tage, Kosten in $</div>${bars(ops.ai.days, "cost_usd", usd)}
+      <p style="margin-top:12px">Dieser Monat: <b>${n0(ops.ai.month_calls)}</b> Antworten · <b>${usd(ops.ai.month_cost)}</b> · ${n0(ops.ai.month_input)} Eingabe- / ${n0(ops.ai.month_output)} Ausgabe-Token${ops.ai.month_errors ? ` · <b style="color:var(--red)">${ops.ai.month_errors} Fehler</b>` : ""}</p>
+      <p class="small">Kosten berechnet mit ${ops.price.input} $ / ${ops.price.output} $ je Million Eingabe-/Ausgabe-Token (Haiku 4.5). Guthaben nachsehen: <a href="https://platform.claude.com/settings/billing" target="_blank" rel="noopener">Claude Console → Billing</a>.</p></div>
+    <div class="panel"><div class="eyebrow">Server-Aufrufe · letzte 30 Tage</div>${bars(ops.hits.days, "n")}
+      <table class="grid small" style="margin-top:12px"><tr><th>Bereich (dieser Monat)</th><th>Aufrufe</th></tr>${ops.hits.areas.map((a) => `<tr><td>${A[a.area] || a.area}</td><td>${n0(a.n)}</td></tr>`).join("") || `<tr><td colspan="2" class="muted">Noch keine Daten.</td></tr>`}</table>
+      <p class="small">Gezählt werden Aufrufe des Servers (Spiel, Shop, Formulare). Seitenaufrufe der Website zeigt <a href="https://dash.cloudflare.com/?to=/:account/web-analytics" target="_blank" rel="noopener">Cloudflare Web Analytics</a>.</p></div>
+    <div class="panel"><div class="eyebrow">Serverfehler · letzte 50</div>${ops.errors.list.length ? `<table class="grid small"><tr><th>Zeit</th><th>Bereich</th><th>Code</th><th>Meldung</th></tr>${ops.errors.list.map((e) => `<tr><td>${new Date(e.at).toLocaleString("de-AT")}</td><td>${MS.esc(e.area)}</td><td>${e.status}</td><td class="mono" style="font-size:12px;word-break:break-word">${MS.esc(e.msg)}</td></tr>`).join("")}</table>` : `<p class="muted">Keine Fehler.</p>`}</div>`;
+  }
+  function soloStatsPanel() {
+    if (!soloList) return "";
+    const row = (z) => `<tr><td>${z.test_mode ? "Test" : "Echt"}</td><td>${z.n}</td><td class="mono">${MS.dur(z.avg)}</td><td>${Number(z.hints).toFixed(1)}</td><td>${Number(z.wrong).toFixed(1)}</td></tr>`;
+    return `<div class="panel"><div class="eyebrow">Mordsteam Solo · Nachtzug nach Venedig (erste Durchgänge)</div>
+      <table class="grid small"><tr><th>Art</th><th>Gelöst</th><th>Ø Endzeit</th><th>Ø Hinweise</th><th>Ø Fehlversuche</th></tr>${soloList.scores.map(row).join("") || `<tr><td colspan="5" class="muted">Noch keine Wertungen.</td></tr>`}</table>
+      <p class="small">Endzeit = Spielzeit + Strafminuten. Richtwert: 30 Minuten.</p></div>`;
+  }
   // ---------- Feedback ----------
   function feedbackPanel() {
     if (!fb) return "";
@@ -124,17 +193,19 @@
       <div class="list-sessions">${orders.length ? orders.map((o) => {
         const c = o.contact || {}, l = c.liefer;
         return `<div class="sess">
-          <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${MS.esc(o.firma || "–")}</b><span class="chip ${o.status === "fulfilled" ? "open" : ""}">${lbl[o.status] || o.status}</span></div>
-          <div class="mono">${new Date(o.created_at).toLocaleString("de-AT")} · ${({ basis: "Basis", premium: "PREMIUM", plus: "PREMIUM PLUS" })[o.paket] || o.paket} · ${o.teams} Teams · ${eur(o.amount_cents)} · gekauft ${o.event_date}${o.join_code ? ` · Spielcode ${o.join_code} · Organisator ${o.org_code}` : ""}</div>
+          <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${o.paket === "solo" ? "Mordsteam Solo" : MS.esc(o.firma || "–")}</b><span class="chip ${o.status === "fulfilled" ? "open" : ""}">${o.paket === "solo" && o.status === "fulfilled" ? "bezahlt · Code erstellt" : lbl[o.status] || o.status}</span></div>
+          <div class="mono">${new Date(o.created_at).toLocaleString("de-AT")} · ${o.paket === "solo" ? `SOLO · ${eur(o.amount_cents)}${o.solo_code ? ` · Solo-Code ${o.solo_code}` : ""}` : `${({ basis: "Basis", premium: "PREMIUM", plus: "PREMIUM PLUS" })[o.paket] || o.paket} · ${o.teams} Teams · ${eur(o.amount_cents)} · gekauft ${o.event_date}${o.join_code ? ` · Spielcode ${o.join_code} · Organisator ${o.org_code}` : ""}`}</div>
           <div class="small">${MS.esc(c.name || "")} · <a href="mailto:${MS.esc(c.email || "")}">${MS.esc(c.email || "")}</a>${c.telefon ? " · " + MS.esc(c.telefon) : ""}${c.rechnung_firma ? " · Rechnung: " + MS.esc(c.rechnung_firma) : ""}${c.lang ? " · Spielsprache " + c.lang.toUpperCase() : ""}${c.site ? " · Seite " + c.site.toUpperCase() : ""}${c.kunde ? " · " + (c.kunde === "b2c" ? "Privat" : "Firma/Verein") : ""}${c.fiktiv ? " · fiktiv" : ""}${c.earlybird ? ` · <b style="color:var(--red)">EARLY BIRD −${c.earlybird} % (Feedback einholen!)</b>` : ""}</div>
         </div>`;
       }).join("") : `<p class="muted">Noch keine Bestellungen.</p>`}</div></div>`;
   }
 
   function render(sessions, orders = [], stats = {}) {
+    last = [sessions, orders, stats];
     const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Vienna" }).format(new Date());
     root.innerHTML = `<div class="stack" style="gap:22px;max-width:980px">
-      ${created ? `<div class="panel" style="border-color:var(--red)"><div class="eyebrow">Runde angelegt</div>
+      ${tabBar()}
+      ${tab === "runden" ? `${created ? `<div class="panel" style="border-color:var(--red)"><div class="eyebrow">Runde angelegt</div>
         <p style="margin:8px 0">Spielcode für Teams: <span class="bigcode" style="font-size:26px">${created.join_code}</span></p>
         <p>Organisator-Code: <b class="mono" style="font-size:20px">${created.org_code}</b></p>
         <p class="mono small">Teams: ${location.origin}/spiel/?code=${created.join_code}<br>Organisator: ${location.origin}/spiel/leitung.html</p>
@@ -146,7 +217,7 @@
         <div class="actions-row"><button class="btn btn-red" id="solonew">Solo-Testcode anlegen</button></div>
         ${soloMsg ? `<div style="margin-top:12px">${soloMsg}</div>` : ""}
         ${soloList && soloList.tickets.length ? `<details style="margin-top:12px"><summary>Letzte Solo-Codes (${soloList.tickets.length})</summary><table class="grid" style="margin-top:8px"><tr><th>Code</th><th>Name</th><th>Test</th><th>Durchgänge</th><th>Erste Zeit</th><th>Gutschein</th></tr>
-          ${soloList.tickets.map((x) => `<tr><td class="mono"><a href="/spiel/solo.html?c=${x.code}" target="_blank" rel="noopener">${x.code}</a></td><td>${MS.esc(x.name || "–")}</td><td>${x.test_mode ? "ja" : "nein"}</td><td>${x.runs}</td><td class="mono">${x.score ? MS.dur(x.score) : "–"}</td><td class="mono">${MS.esc(x.voucher || "–")}</td></tr>`).join("")}</table>
+          ${soloList.tickets.map((x) => `<tr><td class="mono"><a href="/spiel/solo.html?c=${x.code}" target="_blank" rel="noopener">${x.code}</a></td><td>${MS.esc(x.name || "–")}</td><td>${x.test_mode ? "ja" : "nein"}</td><td>${x.runs}</td><td class="mono">${x.score ? MS.dur(x.score) : "–"}</td><td class="mono">${MS.esc(x.voucher || "–")}${x.voucher ? (x.voucher_synced ? " ✓ Stripe" : " (nicht in Stripe)") : ""}</td></tr>`).join("")}</table>
           <p class="small">${soloList.scores.map((z) => `${z.test_mode ? "Test" : "Echt"}: ${z.n} Wertungen, Ø ${MS.dur(z.avg)}, Ø ${Number(z.hints).toFixed(1)} Hinweise, Ø ${Number(z.wrong).toFixed(1)} Fehlversuche`).join(" · ") || "Noch keine Wertungen."}</p></details>` : ""}
       </div>
       <div class="panel"><div class="eyebrow">Schnelltest</div>
@@ -176,17 +247,21 @@
           : `<input id="f_${f.key}" name="${f.key}" placeholder="${MS.esc(f.example)}" maxlength="80">`}</div>`).join("")}</div>
         <div><button class="btn btn-red" type="submit">Runde anlegen</button></div>
         <p class="err">${MS.esc(err)}</p>
-      </form></div>
-      ${ordersPanel(orders)}
-      ${feedbackPanel()}
-      ${statsPanel(stats)}
-      <div class="panel"><div class="eyebrow">Alle Runden</div>
+      </form></div>` : ""}
+      ${tab === "uebersicht" ? overviewPanel(orders) : ""}
+      ${tab === "finanzen" ? ordersPanel(orders) : ""}
+      ${tab === "statistik" ? statsPanel(stats) + soloStatsPanel() : ""}
+      ${tab === "system" ? systemPanel() : ""}
+      ${tab === "feedback" ? feedbackPanel() : ""}
+      ${tab === "runden" ? `<div class="panel"><div class="eyebrow">Alle Runden</div>
         <div class="list-sessions" style="margin-top:10px">${sessions.length ? sessions.map((s) => `<div class="sess">
           <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${MS.esc(s.label || s.id)}</b><span class="chip ${({ open: "open", running: "run", finished: "fin" })[s.status] || ""}">${s.status}</span></div>
           <div class="mono">Angelegt ${s.event_date} · Teams ${s.teams} · Spielcode ${s.join_code} · Organisator ${s.org_code}${s.test_mode ? " · TEST" : ""}${s.premium ? " · " + TN[s.premium].toUpperCase() : ""} · ${s.land || "AT"} · ${(s.lang || "de").toUpperCase()}</div>
-          <div><button class="tipbtn" data-del="${s.id}">Löschen</button></div></div>`).join("") : `<p class="muted">Noch keine Runden.</p>`}</div></div>
+          <div><button class="tipbtn" data-del="${s.id}">Löschen</button></div></div>`).join("") : `<p class="muted">Noch keine Runden.</p>`}</div></div>` : ""}
     </div>`;
-    document.getElementById("nf").onsubmit = async (e) => {
+    root.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => { tab = b.dataset.tab; try { sessionStorage.setItem("ms_admtab", tab); } catch {} render(...last); }));
+    const nfEl = document.getElementById("nf");
+    if (nfEl) nfEl.onsubmit = async (e) => {
       e.preventDefault();
       const f = e.target, vars = {};
       for (const fl of meta.fields) vars[fl.key] = f.elements[fl.key].value;

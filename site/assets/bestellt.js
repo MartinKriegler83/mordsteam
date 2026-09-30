@@ -33,11 +33,22 @@
       '</ol><p><b>'+T("Tipp:","Tip:")+'</b> '+T('Öffnet ein paar Tage vorher '+esc(location.host)+'/spiel auf einem Firmengerät. Lädt die Seite, bremst euch kein Webfilter.','A few days before, open '+esc(location.host)+'/spiel on a company device. If the page loads, no web filter will get in your way.')+'</p><p>'+T('Die Rechnung kommt per E-Mail von unserem Zahlungsanbieter Stripe. Fragen? ','The invoice will be emailed by our payment provider Stripe. Questions? ')+MAIL+'</p>'+(d.nr?'<p class="small">'+T('Bestellnummer','Order number')+': <b>'+esc(d.nr)+'</b></p>':'')+'</div>'+
       '');
   }
+  function soloDone(d){
+    var link=location.origin+"/spiel/solo.html?c="+d.solo_code;
+    show('<div class="eyebrow">'+T("Bezahlt · Mordsteam Solo","Paid · Mordsteam Solo")+'</div>'+
+      '<h1>'+T("Der Nachtzug wartet.","The night train is waiting.")+'</h1>'+
+      '<p class="lead">'+T('Dein Code für „Nachtzug nach Venedig“ ist 12 Monate gültig. Wir haben ihn dir auch per E-Mail geschickt.','Your code for “Night Train to Venice” (game language German) is valid for 12 months. We have also emailed it to you.')+'</p>'+
+      '<div class="codes"><div class="codecard dark"><small>'+T("DEIN SOLO-CODE","YOUR SOLO CODE")+'</small><div class="code">'+esc(d.solo_code)+'</div><p>'+T("Als Geschenk einfach Code oder Link weitergeben – den Namen gibt ein, wer spielt.","As a gift, just pass on the code or link – the name is entered by whoever plays.")+'</p></div></div>'+
+      '<p style="margin:22px 0"><a class="btn btn-red" href="'+esc(link)+'">'+T("Fall öffnen","Open the case")+'</a></p>'+
+      '<div class="prose"><p>'+T('Die Uhr startet erst, wenn du auf „Ermittlung starten“ tippst – dann hast du 30 Minuten bis Udine. Link zum Spielen: ','The clock only starts when you tap “Start investigation” – then you have 30 minutes to Udine. Link to play: ')+'<a href="'+esc(link)+'">'+esc(link.replace(/^https?:\/\//,""))+'</a></p>'+
+      '<p>'+T('Die Rechnung kommt per E-Mail von unserem Zahlungsanbieter Stripe. Fragen? ','The invoice will be emailed by our payment provider Stripe. Questions? ')+MAIL+'</p>'+(d.nr?'<p class="small">'+T('Bestellnummer','Order number')+': <b>'+esc(d.nr)+'</b></p>':'')+'</div>');
+  }
   function poll(){
     if(!o||!k){show('<h1>'+T("Bestellung nicht gefunden","Order not found")+'</h1><p class="lead">'+T("Der Link ist unvollständig. Schreibt uns an ","The link is incomplete. Write to us at ")+MAIL+'.</p>');return;}
     fetch("/api/shop/status?o="+encodeURIComponent(o)+"&k="+encodeURIComponent(k)).then(function(r){return r.json().then(function(d){return [r,d];});}).then(function(x){
       var r=x[0], d=x[1];
       if(!r.ok){show('<h1>'+T("Bestellung nicht gefunden","Order not found")+'</h1><p class="lead">'+esc(d.error||"")+' '+T("Schreibt uns an ","Write to us at ")+MAIL+'.</p>');return;}
+      if(d.produkt==="solo"&&d.status==="fulfilled"&&d.solo_code) return soloDone(d);
       if(d.status==="fulfilled"&&d.join_code) return done(d);
       if(++tries>40){show('<div class="eyebrow">'+T("Bestellung","Order")+'</div><h1>'+T("Zahlung wird noch bestätigt","Payment is still being confirmed")+'</h1><p class="lead">'+T("Das dauert ungewöhnlich lange. Ladet die Seite in ein paar Minuten neu – oder schreibt uns an "+MAIL+". Ihr bezahlt sicher nicht doppelt.","This is taking unusually long. Reload the page in a few minutes – or write to us at "+MAIL+". You definitely won't be charged twice.")+'</p>');return;}
       setTimeout(poll,tries<10?1500:4000);

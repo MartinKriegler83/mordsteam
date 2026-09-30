@@ -468,3 +468,5 @@ p.small{font-size:14px;color:#5A5D66}
 /* Spielkarten: Variante 25 % größer, drei Leerzeichen Abstand, gemeinsame Grundlinie */
 .game h3.gname{font-size:clamp(17px,1.6vw,22px)}
 .game h3.gname .gp{font-size:1.25em;margin-left:.75em;vertical-align:baseline;color:var(--ink)}
+.summary .sumrow{display:flex;justify-content:space-between;gap:14px;align-items:baseline;font-size:16px;margin-bottom:6px}
+.summary .sumrow b{font-family:var(--mono);font-size:20px;white-space:nowrap}
