@@ -5,7 +5,7 @@
   const root = $("root"), clock = $("clock"), tabs = $("tabs");
   const esc = MS.esc, pad = (n) => String(n).padStart(2, "0");
   let code = (MS.qs("c") || MS.qs("code") || MS.get("ms_solo_code") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-  let token = null, S = null, off = 0, tab = "akte", openDoc = null, busy = false, verdict = null, armed = false, giveArmed = false;
+  let token = null, S = null, off = 0, tab = "einsatz", openDoc = null, busy = false, verdict = null, armed = false, giveArmed = false;
   let seen = new Set(JSON.parse(MS.get("ms_solo_seen") || "[]"));
 
   async function api(method, path, body) {
@@ -40,26 +40,39 @@
     briefingView(t);
   }
 
-  // ---------- Einsatzauftrag ----------
+  // ---------- Vor dem Start: Ermittlername (die Uhr steht noch) ----------
   function briefingView(t, err) {
     tabs.hidden = true; clock.innerHTML = "";
     const b = t.briefing, needName = !t.name;
-    const text = needName ? b.text.replace(/\{NAME\}, e/, "E") : b.text.replace(/\{NAME\}/g, esc(t.name));
     root.innerHTML = `<section class="brief"><div class="paper">
       <div class="brief-top"><span class="eyebrow">${esc(b.eyebrow)}</span><span class="conf">Solo · ${t.limit_min} Min.</span></div>
-      <h1>${b.title}</h1><p class="sub">${text}</p>
-      <ol class="steps">${b.steps.map((s, i) => `<li><span class="n">${i + 1}</span><div><b>${esc(s[0])}</b><span>${esc(s[1])}</span></div></li>`).join("")}</ol>
-      <form id="sf" class="form">
+      <h1>${b.title}</h1>
+      <form id="sf" class="form" style="margin-top:22px">
       ${needName ? `<div class="field"><label for="nm">Dein Ermittlername</label><input id="nm" required maxlength="40" autocomplete="nickname" placeholder="z. B. Martina Huber"><span class="small">Steht in der Geschichte und auf deiner Urkunde.</span></div>` : ""}
-      <p class="small">Die Uhr startet mit dem Klick und lässt sich nicht anhalten. Fair Play: keine KI, keine Suchmaschine – der Fall ist mit Köpfchen lösbar.</p>
-      <button class="btn btn-red btn-big" type="submit">Ermittlung starten</button><p class="err" role="alert">${err ? esc(err) : ""}</p></form>
+      <p class="small">Als Nächstes liest du deinen Einsatz und die Spielregeln. Die Uhr startet erst, wenn du die Akte oder die Fragen öffnest.</p>
+      <button class="btn btn-red btn-big" type="submit">Weiter zum Einsatz</button><p class="err" role="alert">${err ? esc(err) : ""}</p></form>
     </div></section>`;
     $("sf").onsubmit = async (e) => {
       e.preventDefault();
       const btn = e.target.querySelector("button"); btn.disabled = true;
-      try { const d = await api("POST", "start", { code, name: needName ? $("nm").value : undefined }); token = d.token; seen = new Set(); MS.set("ms_solo_seen", "[]"); tab = "akte"; await refresh(); scrollTo(0, 0); }
+      try { const d = await api("POST", "start", { code, name: needName ? $("nm").value : undefined }); token = d.token; seen = new Set(); MS.set("ms_solo_seen", "[]"); tab = "einsatz"; await refresh(); scrollTo(0, 0); }
       catch (e2) { briefingView(t, e2.message); }
     };
+  }
+
+  // ---------- Einsatz: Geschichte und Regeln (erster Reiter) ----------
+  function einsatzView() {
+    const b = S.briefing;
+    root.innerHTML = `<section class="brief"><div class="paper">
+      <div class="brief-top"><span class="eyebrow">${esc(b.eyebrow)}</span><span class="conf">Solo · ${S.limit_min} Min.</span></div>
+      <h1>${b.title}</h1><p class="sub">${b.text}${S.begun ? " Die Uhr oben läuft bereits." : ""}</p>
+      <ol class="steps">${b.steps.map((x, i) => `<li><span class="n">${i + 1}</span><div><b>${esc(x[0])}</b><span>${esc(x[1])}</span></div></li>`).join("")}</ol>
+      <h2 class="qhead">Deine drei Fragen</h2>
+      <div class="qcards">${S.questions.map((q) => `<div><i>${pad(q.nr)}</i><span>${esc(q.label)}</span></div>`).join("")}</div>
+      ${S.begun ? "" : `<p class="small" style="margin-bottom:12px">Die Uhr startet, sobald du die Akte oder die Fragen öffnest, und lässt sich dann nicht mehr anhalten.</p>`}
+      <button type="button" class="btn btn-red btn-big" id="toAkte">${S.begun ? "Zur Akte →" : "Akte öffnen – die Uhr startet →"}</button>
+    </div></section>`;
+    $("toAkte").onclick = () => go("akte");
   }
 
   // ---------- Stand laden ----------
@@ -79,17 +92,35 @@
     tabs.querySelectorAll("[data-tab]").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === tab));
     const unseen = S.docs.filter((d) => !seen.has(d.id)).length;
     $("newbadge").hidden = !unseen; $("newbadge").textContent = unseen;
+    if (!S.begun) tab = "einsatz";
+    if (tab === "einsatz") return einsatzView();
     if (tab === "fragen") return fragenView();
     return openDoc !== null ? docView() : akteView();
   }
   // Beim Wechsel zwischen Akte und Fragen bleibt das zuletzt geöffnete Beweisstück offen (wie bei Fall 001)
-  function go(t) { tab = t; render(); scrollTo(0, 0); }
+  async function go(t) {
+    // Erster Wechsel vom Einsatz zur Akte oder zu den Fragen startet die Uhr
+    if (t !== "einsatz" && S && !S.begun && !S.ended) {
+      if (busy) return;
+      busy = true;
+      try { const d = await api("POST", "begin"); tab = t; await refresh(d); }
+      catch (e) { toast(esc(e.message)); }
+      busy = false; scrollTo(0, 0); return;
+    }
+    tab = t; render(); scrollTo(0, 0);
+  }
   tabs.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => go(b.dataset.tab)));
 
   // ---------- Uhr ----------
   function tick() {
     if (!S) return;
     if (S.ended) { clock.innerHTML = ""; return; }
+    if (!S.begun) {
+      $("fallname").textContent = `Zug ${pad(Math.floor(S.train_start / 60))}:${pad(S.train_start % 60)} · ${S.title}`;
+      clock.className = "clock";
+      clock.innerHTML = `<span class="clk"><span class="clk-label">Uhr steht</span><b class="clk-time">${MS.dur(S.limit_min * 60000)}</b></span>`;
+      return;
+    }
     const now = Date.now() + off, el = now - S.started_at, left = S.limit_min * 60000 - el;
     const tm = S.train_start + Math.floor(el / 60000), train = `${pad(Math.floor(tm / 60) % 24)}:${pad(tm % 60)}`;
     const pen = S.penalty_min ? `<span class="pen">+${S.penalty_min} Min. Strafe</span>` : "";
@@ -140,7 +171,7 @@
     let field = "";
     if (q) field = q.type === "select"
       ? `<select id="ans" class="so-select"><option value="">Bitte wählen …</option>${q.options.map((o) => `<option value="${esc(o[0])}">${esc(o[1])}</option>`).join("")}</select>`
-      : `<input id="ans" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="hh:mm" maxlength="5">`;
+      : `<input id="ans" type="text" inputmode="numeric" pattern="[0-9:]*" autocomplete="off" spellcheck="false" placeholder="hh:mm" maxlength="5" class="so-time"><span class="small">Nur die vier Ziffern tippen – der Doppelpunkt kommt von selbst.</span>`;
     const cost = q && q.next_hint_cost;
     root.innerHTML = `<section class="report paper">
       <div class="eyebrow">Ermittlung · ${done.length} von ${S.questions.length} gelöst</div>
@@ -156,7 +187,15 @@
       <p style="margin-top:26px;text-align:right">${giveArmed ? `<span class="small">Wirklich aufgeben? Du siehst dann die Auflösung${S.first_play ? " und kommst nicht in die Wertung" : ""}.</span> <button type="button" class="btn btn-ink" id="give">Ja, Auflösung zeigen</button> <button type="button" class="linkbtn" id="giveno">Weiter ermitteln</button>` : `<button type="button" class="linkbtn" id="give">Aufgeben und Auflösung ansehen</button>`}</p>
     </section>`;
     const inp = $("ans");
-    if (inp && q.type === "time") inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("check").click(); } });
+    if (inp && q.type === "time") {
+      inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("check").click(); } });
+      inp.addEventListener("input", (e) => {
+        const dg = inp.value.replace(/[^0-9]/g, "").slice(0, 4);
+        // beim Löschen den Doppelpunkt nicht sofort wieder einsetzen
+        const del = e.inputType && e.inputType.startsWith("delete");
+        inp.value = dg.length > 2 || (dg.length === 2 && !del) ? dg.slice(0, 2) + ":" + dg.slice(2) : dg;
+      });
+    }
     if ($("check")) $("check").onclick = () => answer(q, inp.value);
     if ($("hint")) $("hint").onclick = async () => {
       if (!armed) { armed = true; return fragenView(); }
@@ -175,6 +214,14 @@
   async function answer(q, value) {
     if (busy) return;
     if (!String(value || "").trim()) { verdict = { cls: "warn", html: q.type === "select" ? "Bitte eine Antwort auswählen." : "Bitte eine Uhrzeit eingeben." }; return fragenView(); }
+    if (q.type === "time") {
+      // unvollständige Eingabe nicht werten (keine Strafminuten für Tippfehler)
+      const dg = String(value).replace(/[^0-9]/g, "");
+      if (dg.length !== 4 || Number(dg.slice(0, 2)) > 23 || Number(dg.slice(2)) > 59) {
+        verdict = { cls: "warn", html: "Bitte die Uhrzeit vollständig als hh:mm eingeben, z. B. 23:05." }; fragenView();
+        const i = $("ans"); if (i) { i.value = String(value); i.focus(); } return;
+      }
+    }
     busy = true; $("check").disabled = true; $("check").textContent = "Wird geprüft …";
     try {
       const d = await api("POST", "answer", { key: q.key, value });
@@ -275,7 +322,7 @@
     if ($("png")) $("png").onclick = () => certificate("png", r);
     if ($("again")) $("again").onclick = async () => {
       $("again").disabled = true;
-      try { const d = await api("POST", "start", { code, replay: true }); token = d.token; seen = new Set(); MS.set("ms_solo_seen", "[]"); tab = "akte"; openDoc = null; verdict = null; await refresh(); scrollTo(0, 0); }
+      try { const d = await api("POST", "start", { code, replay: true }); token = d.token; seen = new Set(); MS.set("ms_solo_seen", "[]"); tab = "einsatz"; openDoc = null; verdict = null; await refresh(); scrollTo(0, 0); }
       catch (e) { $("again").disabled = false; $("again").insertAdjacentHTML("afterend", `<p class="err">${esc(e.message)}</p>`); }
     };
   }

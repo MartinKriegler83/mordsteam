@@ -1,6 +1,6 @@
 // Cloudflare Pages Function: /api/solo/* – Mordsteam Solo (Einzelfälle)
 import { json, fail } from "../../../lib/game.js";
-import { soloTicketInfo, soloStart, soloState, soloHint, soloAnswer, soloGiveUp, soloForward, soloAdmin, soloFeedback } from "../../../lib/solo.js";
+import { soloTicketInfo, soloStart, soloState, soloHint, soloAnswer, soloGiveUp, soloBegin, soloForward, soloAdmin, soloFeedback } from "../../../lib/solo.js";
 
 export async function onRequest({ request, env, params }) {
   if (!env.DB) return fail("Datenbank nicht eingerichtet.", 500);
@@ -10,6 +10,7 @@ export async function onRequest({ request, env, params }) {
     if (route === "ticket" && m === "GET") return await soloTicketInfo(env, new URL(request.url));
     if (route === "start" && m === "POST") return await soloStart(request, env);
     if (route === "state" && m === "GET") return await soloState(request, env);
+    if (route === "begin" && m === "POST") return await soloBegin(request, env);
     if (route === "hint" && m === "POST") return await soloHint(request, env);
     if (route === "answer" && m === "POST") return await soloAnswer(request, env);
     if (route === "aufgeben" && m === "POST") return await soloGiveUp(request, env);

@@ -486,3 +486,5 @@ button.btn-big{margin-top:14px}
 .chipbtn.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .fbpub{margin-top:20px;padding-top:6px;border-top:1px dashed #CFC7B6}
 .tipbtn.on{background:#DDF1E3;border-color:#1F6B3A;color:#1F6B3A}
+.so-time{font-family:var(--mono);font-size:22px;letter-spacing:3px;max-width:150px}
+.so-time + .small{display:block;margin-top:6px}
