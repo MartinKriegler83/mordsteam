@@ -28,7 +28,7 @@ const COMPANY_FN = "";
 export const PRICES = { basis: 8900, premium: 11900, plus: 14900 };   // Cent pro Team, Endpreise
 export const SOLO_PRICE = 890;                                        // Mordsteam Solo 001, Endpreis
 const TIER = { basis: 0, premium: 1, plus: 2 };
-const NAMES = { basis: "Basis (50 Min.)", premium: "Premium (70 Min.)", plus: "Premium Plus (90 Min.)" };
+const NAMES = { basis: "Basic (50 Min.)", premium: "Premium (70 Min.)", plus: "Premium Plus (90 Min.)" };
 const NAMES_EN = { basis: "Basic (50 min)", premium: "Premium (70 min)", plus: "Premium Plus (90 min)" };
 const LEAD_DAYS = 1;                                                  // alles digital: spielbar ab morgen
 const CASE_ID = "fall-001";
@@ -148,7 +148,7 @@ async function bestellung(request, env) {
   contact.lang = lang;
   contact.site = site;
   if (!fiktiv && !c.zustimmung) throw new InputError(L(site, "Bitte bestätigen, dass alle genannten Personen einverstanden sind.", "Please confirm that everyone named has agreed."));
-  if (paket === "plus" && !c.ab18) throw new InputError(L(site, "Premium Plus mit ARIA ist für Teilnehmende ab 18 Jahren. Bitte bestätigen oder Basis bzw. Premium wählen.", "Premium Plus with ARIA is for participants aged 18 and over. Please confirm or choose Basic or Premium."));
+  if (paket === "plus" && !c.ab18) throw new InputError(L(site, "Premium Plus mit ARIA ist für Teilnehmende ab 18 Jahren. Bitte bestätigen oder Basic bzw. Premium wählen.", "Premium Plus with ARIA is for participants aged 18 and over. Please confirm or choose Basic or Premium."));
   // Sofortiger Beginn: ausdrückliches Verlangen + Kenntnis vom Verlust des Rücktrittsrechts (§ 18 Abs. 1 Z 1 und Z 11 FAGG)
   if (contact.kunde === "b2c") {
     if (!c.sofort) throw new InputError(L(site, "Bitte bestätigen, dass wir eure Spielrunde gleich nach dem Bezahlen anlegen dürfen.", "Please confirm that we may set up your game round right after payment."));

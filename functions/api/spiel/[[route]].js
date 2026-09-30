@@ -660,7 +660,7 @@ async function adminExport(request, env) {
   const from = Date.parse(von + "T00:00:00+02:00"), to = Date.parse(bis + "T23:59:59+02:00");
   const { results } = await env.DB.prepare(
     "SELECT * FROM orders WHERE status IN ('paid','fulfilling','fulfilled') AND paid_at BETWEEN ? AND ? ORDER BY paid_at").bind(from, to).all();
-  const P = { basis: "Basis", premium: "Premium", plus: "Premium Plus", solo: "Solo 001 Nachtzug" };
+  const P = { basis: "Basic", premium: "Premium", plus: "Premium Plus", solo: "Solo 001 Nachtzug" };
   const q = (x) => { const t = String(x ?? ""); return /[;"\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
   const d = (ms) => new Intl.DateTimeFormat("de-AT", { timeZone: "Europe/Vienna", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(ms));
   const lines = [["Datum (bezahlt)", "Rechnungsnr. (Stripe)", "Bestell-ID", "Kunde / Firma", "Paket", "Teams", "Early Bird", "Betrag bezahlt (€)", "davon USt (€)", "Zahlungsweg", "Bemerkung"].join(";")];

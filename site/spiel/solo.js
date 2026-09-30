@@ -7,6 +7,9 @@
   let code = (MS.qs("c") || MS.qs("code") || MS.get("ms_solo_code") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
   let token = null, S = null, off = 0, tab = "einsatz", openDoc = null, busy = false, verdict = null, armed = false, giveArmed = false;
   let seen = new Set(JSON.parse(MS.get("ms_solo_seen") || "[]"));
+  // Texte je Fall – ohne Angabe gelten die von Solo 001 (Nachtzug)
+  const U = () => Object.assign({ clock: "Zug", until: "bis Udine", late: "Polizei wartet", stamp: "NACHTZUG", fb: "den Nachtzug",
+    cert: "und den Täter überführt, bevor der Zug in Udine hielt.", caseNo: "SOLO 001", stages: { 2: "Neue Beweisstücke: Belege und Protokolle", 3: "Neue Beweisstücke: das Gemälde" } }, (S && S.ui) || {});
 
   async function api(method, path, body) {
     const r = await fetch("/api/solo/" + path, { method, headers: { "content-type": "application/json", ...(token ? { "x-solo": token } : {}) }, body: body ? JSON.stringify(body) : undefined });
@@ -68,7 +71,7 @@
       <div class="brief-top"><span class="eyebrow">${esc(b.eyebrow)}</span><span class="conf">Solo · ${S.limit_min} Min.</span></div>
       <h1>${b.title}</h1><p class="sub">${b.text}${S.begun ? " Die Uhr oben läuft bereits." : ""}</p>
       <ol class="steps">${b.steps.map((x, i) => `<li><span class="n">${i + 1}</span><div><b>${esc(x[0])}</b><span>${esc(x[1])}</span></div></li>`).join("")}</ol>
-      <h2 class="qhead">Deine drei Fragen</h2>
+      <h2 class="qhead">Deine ${["", "eine", "zwei", "drei", "vier", "fünf"][S.questions.length] || S.questions.length} Fragen</h2>
       <div class="qcards">${S.questions.map((q) => `<div><i>${pad(q.nr)}</i><span>${esc(q.label)}</span></div>`).join("")}</div>
       ${S.begun ? "" : `<p class="small" style="margin-bottom:12px">Die Uhr startet, sobald du die Akte oder die Fragen öffnest, und lässt sich dann nicht mehr anhalten.</p>`}
       <button type="button" class="btn btn-red btn-big" id="toAkte">${S.begun ? "Zur Akte →" : "Akte öffnen – die Uhr startet →"}</button>
@@ -81,7 +84,8 @@
     try { S = d || (await api("GET", "state")); }
     catch (e) { if (e.status === 401) { token = null; return codeView(e.message); } root.innerHTML = `<p class="err">${esc(e.message)}</p>`; return; }
     off = S.now - Date.now();
-    $("pname").textContent = S.name || "Nachtzug nach Venedig";
+    $("pname").textContent = S.name || S.title;
+    document.title = "Mordsteam Solo – " + S.title;
     $("fallname").textContent = "Solo · " + S.title;
     $("testbar").hidden = !S.test || S.ended;
     render();
@@ -93,7 +97,10 @@
     tabs.querySelectorAll("[data-tab]").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === tab));
     const unseen = S.docs.filter((d) => !seen.has(d.id)).length;
     $("newbadge").hidden = !unseen; $("newbadge").textContent = unseen;
+    $("vtab").hidden = !S.verhoer;
+    $("vbadge").hidden = !(S.verhoer && S.verhoer.open && !MS.get("ms_solo_v_" + S.code + "_" + S.started_at));
     if (!S.begun) tab = "einsatz";
+    if (tab === "verhoer" && S.verhoer) return verhoerView();
     if (tab === "einsatz") return einsatzView();
     if (tab === "fragen") return fragenView();
     return openDoc !== null ? docView() : akteView();
@@ -117,7 +124,7 @@
     if (!S) return;
     if (S.ended) { clock.innerHTML = ""; return; }
     if (!S.begun) {
-      $("fallname").textContent = `Zug ${pad(Math.floor(S.train_start / 60))}:${pad(S.train_start % 60)} · ${S.title}`;
+      $("fallname").textContent = `${U().clock} ${pad(Math.floor(S.train_start / 60))}:${pad(S.train_start % 60)} · ${S.title}`;
       clock.className = "clock";
       clock.innerHTML = `<span class="clk"><span class="clk-label">Uhr steht</span><b class="clk-time">${MS.dur(S.limit_min * 60000)}</b></span>`;
       return;
@@ -125,20 +132,19 @@
     const now = Date.now() + off, el = now - S.started_at, left = S.limit_min * 60000 - el;
     const tm = S.train_start + Math.floor(el / 60000), train = `${pad(Math.floor(tm / 60) % 24)}:${pad(tm % 60)}`;
     const pen = S.penalty_min ? `<span class="pen">+${S.penalty_min} Min. Strafe</span>` : "";
-    $("fallname").textContent = `Zug ${train} · ${S.title}`;
+    $("fallname").textContent = `${U().clock} ${train} · ${S.title}`;
     clock.className = "clock" + (left <= 0 ? " late" : left < 5 * 60000 ? " urgent" : "");
-    clock.innerHTML = `<span class="clk"><span class="clk-label">${left > 0 ? "bis Udine" : "Polizei wartet"}</span><b class="clk-time">${MS.dur(left > 0 ? left : el)}</b>${pen}</span>`;
+    clock.innerHTML = `<span class="clk"><span class="clk-label">${left > 0 ? U().until : U().late}</span><b class="clk-time">${MS.dur(left > 0 ? left : el)}</b>${pen}</span>`;
   }
   setInterval(tick, 1000);
 
   // ---------- Akte ----------
   const kindClass = (d) => ({ Notiz: "k-note", Beleg: "k-receipt", Systemauszug: "k-sys", Liste: "k-mail", Befund: "k-mail", Protokoll: "k-note", Fundstück: "k-press" })[d.kk || d.kind] || "";
   const ROT = [-1.4, 0.9, -0.5, 1.2, -1, 0.6, -0.2, 1.4];
-  const STAGE_TITLE = { 2: "Neue Beweisstücke: Belege und Protokolle", 3: "Neue Beweisstücke: das Gemälde" };
   function akteView() {
     const read = S.docs.filter((d) => seen.has(d.id)).length;
     root.innerHTML = `<div class="deskhead"><h2>Fallakte</h2><span>${read} / ${S.docs.length} gelesen</span></div>
-      <div class="evid">${S.docs.map((d, i) => `${d.stage >= 2 && (i === 0 || S.docs[i - 1].stage !== d.stage) ? `<div class="actdiv"><span class="conf">Frage ${d.stage - 1} gelöst</span><b>${STAGE_TITLE[d.stage]}</b></div>` : ""}
+      <div class="evid">${S.docs.map((d, i) => `${d.stage >= 2 && (i === 0 || S.docs[i - 1].stage !== d.stage) ? `<div class="actdiv"><span class="conf">Frage ${d.stage - 1} gelöst</span><b>${U().stages[d.stage] || "Neue Beweisstücke"}</b></div>` : ""}
         <button type="button" class="ev ${kindClass(d)} ${seen.has(d.id) ? "seen" : ""}" data-doc="${i}" style="--r:${ROT[i % ROT.length]}deg">
         <span class="ev-nr">Nr. ${pad(i + 1)}</span><span class="kind">${esc(d.kind)}</span><span class="ttl">${esc(d.title)}</span>${seen.has(d.id) ? `<span class="gel">Gelesen</span>` : `<span class="gel neu">Neu</span>`}</button>`).join("")}</div>
       <p class="ondesk small" style="margin-top:22px;text-align:center">Mit jeder richtigen Antwort kommen neue Beweisstücke dazu. <button type="button" class="linkbtn ondesk" id="toQ" style="color:var(--paper)">Zu den Fragen →</button></p>`;
@@ -163,6 +169,40 @@
     if ($("toQ2")) $("toQ2").onclick = () => go("fragen");
   }
 
+  // ---------- Solo Plus: Verhörraum ----------
+  let V = null, vSel = null, vBusy = false, vErr = "";
+  async function verhoerView() {
+    MS.set("ms_solo_v_" + S.code + "_" + S.started_at, "1"); $("vbadge").hidden = true;
+    if (!S.verhoer.open) {
+      root.innerHTML = `<section class="report paper"><div class="eyebrow">Plus · Verhörraum</div><h2>Noch verschlossen</h2>
+        <p class="muted">Der Verhörraum öffnet, sobald du Frage ${S.verhoer.from_question} gelöst hast. Dann befragst du die Verdächtigen selbst – ${S.verhoer.max} Fragen hast du.</p></section>`;
+      return;
+    }
+    if (!V) { try { V = await api("GET", "verhoer"); } catch (e) { root.innerHTML = `<p class="err">${esc(e.message)}</p>`; return; } }
+    if (vSel === null) vSel = V.suspects[0].key;
+    const left = V.max - V.used, th = V.threads[vSel] || [], who = V.suspects.find((x) => x.key === vSel);
+    root.innerHTML = `<section class="report paper fr-verhoer">
+      <div class="eyebrow">Plus · Verhörraum · KI</div>
+      <h2>Wen willst du verhören?</h2>
+      <p class="muted">Die Verdächtigen werden von einer KI gespielt und kennen nur die erfundene Welt des Falls. Einer von ihnen lügt. ${V.ended ? "Der Fall ist abgeschlossen – hier kannst du die Gespräche nachlesen." : `Du hast noch <b>${left} von ${V.max}</b> Fragen.`}</p>
+      <div class="fr-suspects">${V.suspects.map((x) => `<button type="button" class="chipbtn ${x.key === vSel ? "on" : ""}" data-sus="${x.key}">${esc(x.name)}${(V.threads[x.key] || []).length ? " ·" + V.threads[x.key].filter((m) => m.role === "user").length : ""}</button>`).join("")}</div>
+      <div class="fr-thread" id="thread">${th.length ? th.map((m) => `<div class="fr-msg ${m.role === "user" ? "q" : "a"}"><small>${m.role === "user" ? "Du" : esc(who.name) + " · KI"}</small>${m.text}</div>`).join("") : `<p class="small muted">Noch keine Fragen an ${esc(who.name)}. Tipp: Frag, wo ${esc(who.name.split(" ").pop())} während des Feuerwerks war.</p>`}${vBusy ? `<div class="fr-msg a typing"><small>${esc(who.name)} · KI</small>…</div>` : ""}</div>
+      ${V.ended ? "" : left > 0 ? `<form id="vf" class="fr-ask"><input id="vq" maxlength="${V.max_chars}" autocomplete="off" placeholder="Deine Frage an ${esc(who.name)} …" ${vBusy ? "disabled" : ""}><button class="btn btn-red" type="submit" ${vBusy ? "disabled" : ""}>Fragen</button></form>` : `<p class="note">Du hast alle Fragen gestellt. Die Hinweise zur Frage helfen dir weiter.</p>`}
+      ${vErr ? `<p class="err">${esc(vErr)}</p>` : ""}
+      <p class="small" style="margin-top:14px"><button type="button" class="linkbtn" id="toQv">Zu den Fragen →</button></p>
+    </section>`;
+    const t = $("thread"); if (t) t.scrollTop = t.scrollHeight;
+    root.querySelectorAll("[data-sus]").forEach((b) => (b.onclick = () => { vSel = b.dataset.sus; vErr = ""; verhoerView(); }));
+    $("toQv").onclick = () => go("fragen");
+    if ($("vf")) $("vf").onsubmit = async (e) => {
+      e.preventDefault();
+      const text = $("vq").value.trim(); if (!text || vBusy) return;
+      vBusy = true; vErr = ""; V.threads[vSel] = [...(V.threads[vSel] || []), { role: "user", text: esc(text) }]; verhoerView();
+      try { V = await api("POST", "verhoer", { suspect: vSel, text }); } catch (e2) { vErr = e2.message; V.threads[vSel].pop(); }
+      vBusy = false; if (tab === "verhoer") verhoerView();
+    };
+  }
+
   // ---------- Fragen ----------
   function fragenView() {
     const q = S.questions.find((x) => x.status === "open");
@@ -172,6 +212,7 @@
     let field = "";
     if (q) field = q.type === "select"
       ? `<select id="ans" class="so-select"><option value="">Bitte wählen …</option>${q.options.map((o) => `<option value="${esc(o[0])}">${esc(o[1])}</option>`).join("")}</select>`
+      : q.type === "code" ? `<input id="ans" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" spellcheck="false" placeholder="0000" maxlength="4" class="so-time">`
       : `<input id="ans" type="text" inputmode="numeric" pattern="[0-9:]*" autocomplete="off" spellcheck="false" placeholder="hh:mm" maxlength="5" class="so-time"><span class="small">Nur die vier Ziffern tippen – der Doppelpunkt kommt von selbst.</span>`;
     const cost = q && q.next_hint_cost;
     root.innerHTML = `<section class="report paper">
@@ -188,6 +229,10 @@
       <p style="margin-top:26px;text-align:right">${giveArmed ? `<span class="small">Wirklich aufgeben? Du siehst dann die Auflösung${S.first_play ? " und kommst nicht in die Wertung" : ""}.</span> <button type="button" class="btn btn-ink" id="give">Ja, Auflösung zeigen</button> <button type="button" class="linkbtn" id="giveno">Weiter ermitteln</button>` : `<button type="button" class="linkbtn" id="give">Aufgeben und Auflösung ansehen</button>`}</p>
     </section>`;
     const inp = $("ans");
+    if (inp && q.type === "code") {
+      inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("check").click(); } });
+      inp.addEventListener("input", () => { inp.value = inp.value.replace(/[^0-9]/g, "").slice(0, 4); });
+    }
     if (inp && q.type === "time") {
       inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("check").click(); } });
       inp.addEventListener("input", (e) => {
@@ -214,7 +259,11 @@
 
   async function answer(q, value) {
     if (busy) return;
-    if (!String(value || "").trim()) { verdict = { cls: "warn", html: q.type === "select" ? "Bitte eine Antwort auswählen." : "Bitte eine Uhrzeit eingeben." }; return fragenView(); }
+    if (!String(value || "").trim()) { verdict = { cls: "warn", html: q.type === "select" ? "Bitte eine Antwort auswählen." : q.type === "code" ? "Bitte den Code eingeben." : "Bitte eine Uhrzeit eingeben." }; return fragenView(); }
+    if (q.type === "code" && String(value).replace(/[^0-9]/g, "").length !== 4) {
+      verdict = { cls: "warn", html: "Bitte alle vier Ziffern eingeben." }; fragenView();
+      const i = $("ans"); if (i) { i.value = String(value); i.focus(); } return;
+    }
     if (q.type === "time") {
       // unvollständige Eingabe nicht werten (keine Strafminuten für Tippfehler)
       const dg = String(value).replace(/[^0-9]/g, "");
@@ -231,7 +280,9 @@
         verdict = null;
         openDoc = null;          // neue Beweisstücke: zurück zur Akte führt in die Übersicht
         await refresh(d);
-        if (!d.ended) { verdict = { cls: "good", html: `<strong>Richtig!</strong>Frage ${q.nr} ist gelöst. Neue Beweisstücke liegen in deiner Akte.` }; fragenView(); toast(`📁 Neue Beweisstücke in deiner Akte <b>Ansehen</b>`); }
+        const vNow = S.verhoer && S.verhoer.open && q.nr === S.verhoer.from_question;
+        if (vNow) V = null;
+        if (!d.ended) { verdict = { cls: "good", html: `<strong>Richtig!</strong>Frage ${q.nr} ist gelöst. Neue Beweisstücke liegen in deiner Akte.${vNow ? " Und der Verhörraum ist offen." : ""}` }; fragenView(); toast(vNow ? `🗣️ Der Verhörraum ist offen <b>Ansehen</b>` : `📁 Neue Beweisstücke in deiner Akte <b>Ansehen</b>`); }
         scrollTo(0, 0);
       } else {
         verdict = { cls: "bad", html: `<strong>Leider falsch.</strong>+${d.penalty} Minuten Strafzeit. Schau dir die Beweisstücke noch einmal an.` };
@@ -257,7 +308,7 @@
       <div class="field"><label for="fbrn">Anmerkung <span class="opt">optional, nur für uns</span></label><textarea id="fbrn" maxlength="1000" rows="2"></textarea></div>
       <p class="err" id="fbrerr" hidden></p><button type="button" class="btn btn-red" id="fbrsend">Senden</button></section>` : "";
     const initial = askInitial ? `<section class="report paper so-fb" id="fbi">
-      <div class="eyebrow">Dein Feedback${S.first_play ? "" : " zum ersten Spiel"}</div><h3 style="margin-top:6px">Wie fandest du den Nachtzug?</h3>
+      <div class="eyebrow">Dein Feedback${S.first_play ? "" : " zum ersten Spiel"}</div><h3 style="margin-top:6px">Wie fandest du ${esc(U().fb)}?</h3>
       <p class="muted">Zwei Klicks, die uns sehr helfen – neue Fälle bauen wir aus eurem Feedback.</p>
       <div class="stars" role="radiogroup" aria-label="Sterne">${[1, 2, 3, 4, 5].map((n) => `<button type="button" data-star="${n}" aria-label="${n} von 5 Sternen">★</button>`).join("")}</div>
       <div class="field"><span class="label">Wie schwer war der Fall?</span>${chips("diff", ["zu leicht", "genau richtig", "zu schwer"])}</div>
@@ -304,13 +355,13 @@
     const rp = S.replay || { left: 0 };
     const until = rp.until ? new Intl.DateTimeFormat("de-AT", { dateStyle: "long" }).format(new Date(rp.until)) : "";
     root.innerHTML = `<section class="report paper so-result">
-      <div class="solved"><div class="bigstamp ${solved ? "" : "grey"}"><div><small>MORDSTEAM SOLO · NACHTZUG</small><strong>${solved ? "FALL GELÖST" : "AKTE GESCHLOSSEN"}</strong><small>${esc((S.name || "").toUpperCase())}</small></div></div></div>
+      <div class="solved"><div class="bigstamp ${solved ? "" : "grey"}"><div><small>MORDSTEAM SOLO · ${esc(U().stamp)}</small><strong>${solved ? "FALL GELÖST" : "AKTE GESCHLOSSEN"}</strong><small>${esc((S.name || "").toUpperCase())}</small></div></div></div>
       ${solved ? `<div class="so-score"><div><small>Endzeit</small><b>${MS.dur(r.score_ms)}</b></div><div><small>Gespielt</small><b>${MS.dur(r.played_ms)}</b></div><div><small>Strafminuten</small><b>${S.penalty_min}</b></div></div>
         <p class="so-pct">${pctLine}</p>` : `<p class="so-pct">${S.first_play ? "Diesmal hat es nicht gereicht – hier ist die Auflösung." : "Hier ist die Auflösung."}</p>`}
       <h3>Die Auflösung</h3>
-      <p><b>Täter/in: ${esc(r.culprit)}</b> · Tatzeit ${esc(r.zeit || "01:31")} · Versteck: ${esc(r.item)}</p>
+      <p>${r.summary ? `<b>${esc(r.summary)}</b>` : `<b>Täter/in: ${esc(r.culprit)}</b> · Tatzeit ${esc(r.zeit || "01:31")} · Versteck: ${esc(r.item)}`}</p>
       <p>${esc(r.text)}</p>
-      ${r.voucher ? `<div class="so-voucher"><small>Dein Gutschein für ein Friends- oder Teams-Spiel</small><b class="mono">${esc(r.voucher)}</b><span>5 € Rabatt · einlösbar beim Bestellen von Mordsteam Friends oder Teams (im Bezahlschritt)</span><button type="button" class="btn btn-line" id="copyv">Code kopieren</button></div>` : ""}
+      ${r.voucher ? `<div class="so-voucher"><small>Dein Gutschein für ein Friends- oder Teams-Spiel</small><b class="mono">${esc(r.voucher)}</b><span>5 € Rabatt auf ein Friends- oder Teams-Spiel · im Bezahlschritt eingeben · 1 Gutschein pro Bestellung, nicht mit Early Bird kombinierbar</span><button type="button" class="btn btn-line" id="copyv">Code kopieren</button></div>` : ""}
       ${solved && S.first_play ? `<div class="actions-row" style="margin-top:22px"><button type="button" class="btn btn-red" id="pdf">Urkunde als PDF speichern</button><button type="button" class="btn btn-line" id="png">Urkunde als Bild</button></div><p class="small" style="margin-top:6px">A4 im Querformat – zum Ausdrucken oder Teilen.</p>` : ""}
       ${rp.left > 0 ? `<div class="actions-row" style="margin-top:18px"><button type="button" class="btn btn-line" id="again">Nochmal spielen – anderer Täter</button></div>
       <p class="small" style="margin-top:8px">Noch ${rp.left} ${rp.left === 1 ? "Wiederholung" : "Wiederholungen"} möglich${until ? `, bis ${until}` : ""}. Jedes Mal wird ein anderer Täter ausgelost, einige Beweisstücke ändern sich. Wiederholungen zählen nicht für die Wertung.</p>`
@@ -323,7 +374,7 @@
     if ($("png")) $("png").onclick = () => certificate("png", r);
     if ($("again")) $("again").onclick = async () => {
       $("again").disabled = true;
-      try { const d = await api("POST", "start", { code, replay: true }); token = d.token; seen = new Set(); MS.set("ms_solo_seen", "[]"); tab = "einsatz"; openDoc = null; verdict = null; await refresh(); scrollTo(0, 0); }
+      try { const d = await api("POST", "start", { code, replay: true }); token = d.token; seen = new Set(); MS.set("ms_solo_seen", "[]"); tab = "einsatz"; openDoc = null; verdict = null; V = null; vSel = null; await refresh(); scrollTo(0, 0); }
       catch (e) { $("again").disabled = false; $("again").insertAdjacentHTML("afterend", `<p class="err">${esc(e.message)}</p>`); }
     };
   }
@@ -350,8 +401,8 @@
     g.textAlign = "center";
     g.fillStyle = RED; g.font = `600 36px ${mono}`; g.fillText(spaced("URKUNDE"), W / 2, 420);
     g.fillStyle = INK; fit(S.name, `900 SIZE ${serif}`, 170, W - 500); g.fillText(S.name, W / 2, 620);
-    g.font = `400 50px ${sans}`; g.fillText("hat den Fall „Nachtzug nach Venedig“ gelöst", W / 2, 760);
-    g.fillText("und den Täter überführt, bevor der Zug in Udine hielt.", W / 2, 830);
+    g.font = `400 50px ${sans}`; g.fillText(`hat den Fall „${S.title}“ gelöst`, W / 2, 760);
+    g.fillText(U().cert, W / 2, 830);
     const date = new Intl.DateTimeFormat("de-AT", { dateStyle: "long" }).format(new Date(S.started_at + (r.played_ms || 0)));
     const cols = [["ENDZEIT", MS.dur(r.score_ms)], ...(r.pct !== null && r.pct !== undefined ? [["SCHNELLER ALS", r.pct + " %"]] : []), ["DATUM", date]];
     const cw = 560, x0 = W / 2 - (cols.length * cw) / 2 + cw / 2;
@@ -359,7 +410,7 @@
     // Stempel
     g.save(); g.translate(W - 470, H - 360); g.rotate(-0.12); g.strokeStyle = RED; g.fillStyle = RED;
     g.lineWidth = 9; g.strokeRect(-250, -95, 500, 190); g.lineWidth = 3; g.strokeRect(-232, -77, 464, 154);
-    g.font = `700 24px ${mono}`; g.fillText(spaced("MORDSTEAM · SOLO 001"), 0, -32); g.font = `900 70px ${serif}`; g.fillText("GELÖST", 0, 40); g.restore();
+    g.font = `700 24px ${mono}`; g.fillText(spaced("MORDSTEAM · " + U().caseNo), 0, -32); g.font = `900 70px ${serif}`; g.fillText("GELÖST", 0, 40); g.restore();
     g.fillStyle = MUT; g.font = `400 30px ${mono}`; g.fillText(spaced("mordsteam.com"), W / 2, H - 170);
     const base = "Mordsteam-Urkunde-" + (S.name.replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "") || "Solo");
     const blob = kind === "pdf" ? await pdfFromCanvas(c) : await new Promise((ok) => c.toBlob(ok, "image/png"));

@@ -161,7 +161,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <a class="btn btn-line" href="order.html?paket=basis">Order Basic</a>
 </div>
 <div class="pack featured">
-<span class="badge">OUR RECOMMENDATION</span>
+<span class="badge">THE CLASSIC</span>
 <h3>Premium</h3><p class="sub">70 minutes · two acts</p>
 <p class="price">€119 per team</p><p class="per">around €24 per person in teams of 5</p>
 <ul class="list"><li>Everything in Basic</li><li>Act 2 with new evidence and two more, even trickier questions</li><li>Six suspects instead of five</li></ul>
@@ -210,6 +210,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <details><summary>What age is it for?</summary><p>Our cases are written for adults – with a poisoning, fraud and dark humour. Premium Plus with the AI assistant ARIA is intended for participants aged 18 and over. If younger people play along, for example apprentices, choose Basic or Premium: no AI runs there.</p></details>
 <details><summary>Our IT blocks AI tools – will ARIA still work?</summary><p>Usually, yes. Your devices only connect to mordsteam.com; ARIA runs via our server and only knows the invented world of the case. We don't send real names from your personalisation to the AI provider but replace them with placeholders first. If your policies prohibit AI applications altogether, check briefly with your IT or choose Premium without ARIA. Tip for all packages: open mordsteam.com/spiel on a company device beforehand – then you know no web filter will get in the way.</p></details>
 <details><summary>How quickly do we get the case?</summary><p>Immediately, in all three packages. After paying you see your game code right on the screen and can start straight away – or any time in the next 12 months. Each case can be started once. Everything is digital, nothing is shipped.</p></details>
+<details><summary>Can we use a voucher?</summary><p>Yes: enter the €5 voucher from Mordsteam Solo in the payment step. One voucher per order, not combinable with the early bird discount.</p></details>
 <details><summary>Do we get an invoice?</summary><p>Yes, automatically by email – with the company address and VAT number you enter when paying.</p></details>
 </div>
 </div></section>
@@ -221,13 +222,13 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 </div></section>
 </main>''')
 
-P["index"] = dict(title="Mordsteam – Murder mysteries you solve yourselves", home=True, scripts='<script src="/assets/aktion.js"></script>',
+P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=True, scripts='<script src="/assets/aktion.js"></script>',
  desc="Personalised murder-mystery games to play: as a team event for companies and clubs, with friends or on your own. In the browser, no game master.",
  body='''<main id="top">
 <section class="bh" aria-labelledby="bh-t"><div class="wrap">
 <svg class="bh-lupe" viewBox="0 0 34 34" aria-hidden="true"><g fill="none" stroke="#F3EFE6" stroke-width="3"><circle cx="14" cy="14" r="9"/><line x1="20.5" y1="20.5" x2="29" y2="29" stroke-linecap="round"/></g><circle class="dot" cx="14" cy="14" r="3.5" fill="#E0463C"/></svg>
 <h1 id="bh-t"><span class="r">MORDS</span>TEAM</h1>
-<p class="claim">Murder mysteries you solve yourselves.</p>
+<p class="claim">Today, you’re the detectives.</p>
 <p class="sub">One case, your names, a culprit among you. As a team, with friends or on your own – on any device, ready to go instantly.</p>
 <div class="actions"><a class="btn btn-red" href="#games">Choose a case</a><a class="btn btn-ghost" href="teams.html">For companies &amp; clubs</a></div>
 </div>
@@ -370,14 +371,14 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <p class="lead">No subscription, no sign-up: order, share the link, start playing. You pay once for everyone – with 8 people that's just over €6 per person.</p>
 <div class="pack-grid">
 <div class="pack featured">
-<span class="badge">FRIENDS 001</span>
+<span class="badge">BASIC</span>
 <h3>Mystery Night</h3><p class="sub">45 minutes · 4–8 people</p>
 <p class="price">from €29</p><p class="per">€29 for up to 4 people, +€5 per extra person (€49 for 8)</p>
 <ul class="list"><li>“Last Round at the Chalet” with your names and quirks</li><li>13 pieces of evidence, 3 questions, culprit drawn at random</li><li>At the same time or over 3, 5 or 7 days</li><li>Joint reveal with ranking</li><li>A fun award for everyone</li><li>Playable for 12 months, can be started once</li></ul>
 <a class="btn btn-red" href="friends-buy.html">Order the mystery night</a>
 </div>
 <div class="pack">
-<span class="badge">NEW · WITH AI</span>
+<span class="badge">PREMIUM · WITH AI</span>
 <h3>Mystery Night Plus</h3><p class="sub">70 minutes · with AI interrogation room</p>
 <p class="price">from €49</p><p class="per">€49 for up to 4 people, +€8 per extra person</p>
 <ul class="list"><li>Everything in the Mystery Night</li><li><b>The interrogation room:</b> question your friends – played by AI, with their names and quirks</li><li>12 questions per person, spread across all doubles as you like</li><li>The culprit's double lies – only those who interrogate them solve the finale</li><li>For players aged 18 and over</li></ul>
@@ -407,7 +408,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <details><summary>Does the organiser play too?</summary><p>Of course! Just add yourself to the group. You only need the organiser page to share the link and start – you won't see the culprit there either.</p></details>
 <details><summary>Can people spoil the solution for each other?</summary><p>In theory, yes – but whoever helps others makes their own ranking worse. Anyone who has finished only sees “solved”, not the solution. The culprit, the reveal and the times come for everyone together.</p></details>
 <details><summary>Do we need an app or an account?</summary><p>No. Friends runs right in the browser on phone, tablet or laptop. Everyone only needs the invitation link.</p></details>
-<details><summary>Can I use a voucher?</summary><p>Yes: enter the €5 voucher from Mordsteam Solo in the payment step. It can't be combined with the early bird discount.</p></details>
+<details><summary>Can I use a voucher?</summary><p>Yes: enter the €5 voucher from Mordsteam Solo in the payment step. One voucher per order, not combinable with the early bird discount.</p></details>
 <details><summary>What is the AI interrogation room in Mystery Night Plus?</summary><p>Once you have solved question 2, the interrogation room opens: each of your friends has an AI double with their name and quirk that you can question via chat – you have 12 questions. The culprit's double lies and has an excuse ready that you need for the finale. The AI only knows the invented world of the case; real names never go to the AI provider – we replace them with placeholders first.</p></details>
 <details><summary>Is Friends available in English?</summary><p>Not yet. Friends 001 is currently available in German; the English version will follow.</p></details>
 </div>
@@ -544,23 +545,29 @@ P["solo"] = dict(title="Mordsteam Solo – Night Train to Venice: a murder myste
 
 <section id="price" class="section"><div class="wrap stack">
 <div class="eyebrow">Price</div>
-<h2 class="h2">One case, one price</h2>
-<p class="lead">No subscription, no account: buy, get your code, start playing. And if you enjoyed it, there's a voucher for a game with friends or your team on top.</p>
-<div class="pack-grid">
+<h2 class="h2">Three cases just for you</h2>
+<p class="lead">No subscription, no account: buy, get your code, start playing. Every Solo case comes with a €5 voucher for a game with friends or your team.</p>
+<div class="pack-grid three">
 <div class="pack featured">
-<span class="badge">SOLO 001</span>
-<h3>Night Train to Venice</h3><p class="sub">30 minutes · 1 person</p>
+<span class="badge">BASIC</span>
+<h3>Night Train to Venice</h3><p class="sub">Solo 001 · 30 minutes · 1 person</p>
 <p class="price">€8.90</p><p class="per">buy once, replay up to three times with a different killer</p>
 <ul class="list"><li>16 pieces of evidence, 5 suspects, 3 questions</li><li>Killer drawn anew for every playthrough</li><li>Hints at the click of a button</li><li>Result “faster than X %” on your first playthrough</li><li>Certificate with your name to print or save as PDF</li><li>€5 voucher for a Friends or Teams game</li></ul>
 <a class="btn btn-red" href="solo-buy.html">Buy the case – €8.90</a>
 </div>
 <div class="pack">
-<span class="badge">WANT MORE?</span>
-<h3>With friends or as a team</h3><p class="sub">the same puzzle thrill, only together</p>
-<p class="price">from €29</p><p class="per">Friends for 4–8 people, Teams for companies and clubs</p>
-<ul class="list"><li><b>Mordsteam Friends:</b> the mystery night with friends, everyone on their own phone</li><li><b>Mordsteam Teams:</b> the personalised case with your names and rooms</li><li>Your Solo voucher is valid for a Friends or Teams game</li></ul>
-<a class="btn btn-line" href="friends.html">See Friends</a>
-<a class="btn-text" href="teams.html" style="margin-top:10px">To Mordsteam Teams →</a>
+<span class="badge">BASIC</span>
+<h3>Applause for a Dead Man</h3><p class="sub">Solo 002 · 30 minutes · 1 person</p>
+<p class="price">€8.90</p><p class="per">Opening night at a Vienna theatre – and the star doesn't get up again</p>
+<ul class="list"><li>New case, new puzzles: poison, fingerprints and a locked locker</li><li>Killer drawn anew for every playthrough</li><li>Hints at the click of a button</li><li>Certificate with your name</li><li>€5 voucher for a Friends or Teams game</li></ul>
+<span class="btn btn-line is-soon" aria-disabled="true">Coming soon</span>
+</div>
+<div class="pack">
+<span class="badge">PREMIUM · WITH AI</span>
+<h3>The Last Vintage</h3><p class="sub">Solo Plus · 45 minutes · 1 person</p>
+<p class="price">€15.90</p><p class="per">Death at a wine festival in the Wachau</p>
+<ul class="list"><li><b>The interrogation room:</b> question the suspects yourself – they answer live, played by AI</li><li>One of them is lying – find the contradiction</li><li>Killer drawn anew for every playthrough</li><li>Certificate with your name</li><li>€5 voucher for a Friends or Teams game</li><li>Ages 18 and over</li></ul>
+<span class="btn btn-line is-soon" aria-disabled="true">Coming soon</span>
 </div>
 </div>
 <div class="devicebox">
@@ -584,7 +591,7 @@ P["solo"] = dict(title="Mordsteam Solo – Night Train to Venice: a murder myste
 <details><summary>What does “faster than X %” mean?</summary><p>Your final time (time played plus penalty minutes) is compared with all other investigators who solved the case for the first time. There is no public leaderboard, nobody sees your name.</p></details>
 <details><summary>Can I play the case again?</summary><p>Yes, up to three times within 30 days of your first playthrough. A different killer is drawn for each playthrough, and the matching evidence changes too. Only your first playthrough counts for the comparison.</p></details>
 <details><summary>Can I give Solo as a gift?</summary><p>Yes. Just pass on the code. The name that appears in the story and on the certificate is only entered by the person who plays.</p></details>
-<details><summary>What is the €5 voucher?</summary><p>Whoever solves the case for the first time gets a €5 voucher code for a Mordsteam Friends or Teams game at the end – for the next mystery night with friends or the team event at work or in your club.</p></details>
+<details><summary>What is the €5 voucher?</summary><p>Every Solo case gives you a €5 voucher code after your first playthrough – solved or not. Redeem it in the payment step when ordering Mordsteam Friends or Teams. One voucher per order; it can't be combined with the early bird or other offers and can't be exchanged for cash.</p></details>
 <details><summary>Do I need an app or an account?</summary><p>No. Solo runs right in the browser on phone, tablet or laptop. All you need is your code.</p></details>
 <details><summary>May I use Google or AI?</summary><p>Please don't. The case is built so you solve it with your wits and the evidence – everything you need is in the file. A matter of honour among investigators.</p></details>
 <details><summary>From what age?</summary><p>The case is written for adults – a mystery with a wink, no blood and no shock effects. Teenagers who enjoy crime stories will do fine too.</p></details>
@@ -811,6 +818,7 @@ P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mor
 <li>All prices are final prices in euros. We are a small business; under § 6 (1) no. 27 of the Austrian VAT Act no VAT is charged.</li>
 <li>Payment is made in advance via our payment provider Stripe (e.g. card, Apple Pay, Google Pay). You receive the invoice by email.</li>
 <li>Discounts and vouchers (e.g. early bird) apply under the conditions published for them, cannot be combined and cannot be exchanged for cash. The <a href="early-bird.html">early bird conditions</a> form part of this contract if you choose the early bird discount.</li>
+<li>Solo voucher: every Mordsteam Solo case you buy comes with a €5 voucher code after your first playthrough. It can be redeemed once, only on an order of Mordsteam Friends or Teams (not on Solo cases). One voucher per order; it cannot be combined with the early bird or other offers.</li>
 </ul>
 
 <h2>5. Your details and obligations</h2>

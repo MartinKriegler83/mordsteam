@@ -12,7 +12,7 @@
   var MAIL='<a href="mailto:office@mordsteam.com">office@mordsteam.com</a>';
   function done(d){
     try{localStorage.removeItem("ms_order_draft");}catch(e){}
-    var TN=EN?{basis:"Basic",premium:"Premium",plus:"Premium Plus"}:{basis:"Basis",premium:"Premium",plus:"Premium Plus"}, MIN={basis:50,premium:70,plus:90};
+    var TN=EN?{basis:"Basic",premium:"Premium",plus:"Premium Plus"}:{basis:"Basic",premium:"Premium",plus:"Premium Plus"}, MIN={basis:50,premium:70,plus:90};
     var gl=d.lang==="en"?"&lang=en":"";
     var link=location.origin+"/spiel/?code="+d.join_code+gl, org="/spiel/leitung.html"+(d.lang==="en"?"?lang=en":"");
     var langName=d.lang==="en"?T("Englisch","English"):T("Deutsch","German");

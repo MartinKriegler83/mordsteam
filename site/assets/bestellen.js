@@ -24,7 +24,7 @@
   const paket = () => form.paket.value;
   const premium = () => paket() !== "basis";
   const fiktiv = () => form.besetzung.value === "fiktiv";
-  const TN = EN ? { basis: "Basic, 50 minutes", premium: "Premium, 70 minutes", plus: "Premium Plus, 90 minutes" } : { basis: "Basis, 50 Minuten", premium: "Premium, 70 Minuten", plus: "Premium Plus, 90 Minuten" };
+  const TN = EN ? { basis: "Basic, 50 minutes", premium: "Premium, 70 minutes", plus: "Premium Plus, 90 minutes" } : { basis: "Basic, 50 Minuten", premium: "Premium, 70 Minuten", plus: "Premium Plus, 90 Minuten" };
   const field = (key) => META.fields.find((f) => f.key === key);
 
   function input(key, label, hint, cls = "") {
@@ -201,7 +201,7 @@
     const fk = fiktiv();
     if (!fk && logoData && !consent.logo_rechte) throw [T("Bitte bestätigen, dass ihr das Logo verwenden dürft.", "Please confirm that you may use the logo."), form.logo_rechte];
     if (!fk && !consent.zustimmung) throw [T("Bitte bestätigen, dass alle genannten Personen einverstanden sind.", "Please confirm that everyone named has agreed."), form.zustimmung];
-    if (paket() === "plus" && !form.ab18.checked) throw [T("Bitte bestätigen, dass alle Teilnehmenden mindestens 18 Jahre alt sind – oder Basis bzw. Premium wählen.", "Please confirm that all participants are at least 18 – or choose Basic or Premium."), form.ab18];
+    if (paket() === "plus" && !form.ab18.checked) throw [T("Bitte bestätigen, dass alle Teilnehmenden mindestens 18 Jahre alt sind – oder Basic bzw. Premium wählen.", "Please confirm that all participants are at least 18 – or choose Basic or Premium."), form.ab18];
     if (!contact.kunde) throw [T("Bitte angeben, ob ihr als Unternehmen/Verein oder als Privatperson bestellt.", "Please tell us whether you are ordering as a company/club or as a private individual."), form.kunde[0]];
     if (contact.kunde === "b2c" && !consent.sofort) throw [T("Bitte bestätigen, dass wir eure Spielrunde gleich nach dem Bezahlen anlegen dürfen.", "Please confirm that we may set up your game round right after payment."), form.sofort];
     if (!consent.agb) throw [T("Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."), form.agb];
