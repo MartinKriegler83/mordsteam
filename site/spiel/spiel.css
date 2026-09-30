@@ -474,3 +474,4 @@ button.btn-big{margin-top:14px}
 .bars i{display:block;width:100%;background:var(--red);border-radius:2px 2px 0 0;min-height:1px}
 .bars div:hover i{background:var(--ink)}
 .bars-axis{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:#5A5D66;margin-top:4px}
+.so-voucher .btn{justify-self:center;margin-top:8px}

@@ -336,7 +336,7 @@ P["solo"] = dict(title="Mordsteam Solo – Night Train to Venice: a murder myste
 <div class="mast"><span>LA SERENISSIMA · VIENNA – VENICE</span><span>2:15 AM</span></div>
 <div class="headline">Art dealer dead in compartment 4</div>
 <p>Sleeping car 327, just past Villach. A sleeping pill in the cognac, a forgery in the suitcase. Four fellow passengers had a motive – and only one had the opportunity.</p>
-<div class="chips"><span>4 suspects</span><span>13 pieces of evidence</span><span>3 questions</span><span>1 investigator: you</span></div>
+<div class="chips"><span>4 suspects</span><span>15 pieces of evidence</span><span>3 questions</span><span>1 investigator: you</span></div>
 </div>
 <div class="stamp"><div><small>MORDSTEAM · SOLO 001</small><strong>UNSOLVED</strong><small>UDINE ARR. 2:45 AM</small></div></div>
 </div>
@@ -391,8 +391,8 @@ P["solo"] = dict(title="Mordsteam Solo – Night Train to Venice: a murder myste
 <div class="pack featured">
 <span class="badge">SOLO 001</span>
 <h3>Night Train to Venice</h3><p class="sub">30 minutes · 1 person</p>
-<p class="price">€8.90</p><p class="per">buy once, play as often as you like with a different killer</p>
-<ul class="list"><li>13 pieces of evidence, 4 suspects, 3 questions</li><li>Killer drawn anew for every playthrough</li><li>Hints at the click of a button</li><li>Result “faster than X %” on your first playthrough</li><li>Certificate with your name to print or save as PDF</li><li>€5 voucher for a Friends or Teams game</li></ul>
+<p class="price">€8.90</p><p class="per">buy once, replay up to three times with a different killer</p>
+<ul class="list"><li>15 pieces of evidence, 4 suspects, 3 questions</li><li>Killer drawn anew for every playthrough</li><li>Hints at the click of a button</li><li>Result “faster than X %” on your first playthrough</li><li>Certificate with your name to print or save as PDF</li><li>€5 voucher for a Friends or Teams game</li></ul>
 <a class="btn btn-red" href="solo-buy.html">Buy the case – €8.90</a>
 </div>
 <div class="pack">
@@ -417,7 +417,7 @@ P["solo"] = dict(title="Mordsteam Solo – Night Train to Venice: a murder myste
 <details><summary>Can I pause?</summary><p>No. The clock starts when you click “Start investigation” and keeps running. Until then, take as long as you like: the code is valid for 12 months. If you close the window during the game, your code takes you back – but the clock will have kept running.</p></details>
 <details><summary>How do the hints work?</summary><p>Each question has three hints, from a gentle nudge to almost the answer. They cost 2, 3 and 5 penalty minutes. A wrong answer costs 3 minutes, and you can try again straight away.</p></details>
 <details><summary>What does “faster than X %” mean?</summary><p>Your final time (time played plus penalty minutes) is compared with all other investigators who solved the case for the first time. There is no public leaderboard, nobody sees your name.</p></details>
-<details><summary>Can I play the case again?</summary><p>Yes, as often as you like. A different killer is drawn for each playthrough, and the matching evidence changes too. Only your first playthrough counts for the comparison.</p></details>
+<details><summary>Can I play the case again?</summary><p>Yes, up to three times within 30 days of your first playthrough. A different killer is drawn for each playthrough, and the matching evidence changes too. Only your first playthrough counts for the comparison.</p></details>
 <details><summary>Can I give Solo as a gift?</summary><p>Yes. Just pass on the code. The name that appears in the story and on the certificate is only entered by the person who plays.</p></details>
 <details><summary>What is the €5 voucher?</summary><p>Whoever solves the case for the first time gets a €5 voucher code for a Mordsteam Friends or Teams game at the end – for the next mystery night with friends or the team event at work or in your club.</p></details>
 <details><summary>Do I need an app or an account?</summary><p>No. Solo runs right in the browser on phone, tablet or laptop. All you need is your code.</p></details>
@@ -455,7 +455,7 @@ P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy
 <span class="hint">Private individuals have the statutory right of withdrawal (see <a href="terms.html#ruecktritt" target="_blank" rel="noopener">terms section 8</a>).</span></div>
 </fieldset>
 <fieldset class="step"><legend><span>2</span> Review and pay</legend>
-<div class="summary"><div class="sumrow"><span>Mordsteam Solo 001 “Night Train to Venice” · 30 minutes · game language German</span><b>€8.90</b></div><p class="small">Final price. Code valid for 12 months, replayable any number of times with a different killer. VAT exempt (small business scheme).</p></div>
+<div class="summary"><div class="sumrow"><span>Mordsteam Solo 001 “Night Train to Venice” · 30 minutes · game language German</span><b>€8.90</b></div><p class="small">Final price. Code valid for 12 months, then replayable up to three times with a different killer. VAT exempt (small business scheme).</p></div>
 <label class="check" id="sofortbox" hidden><input type="checkbox" name="sofort"><span>I expressly request that you provide my code right after payment – I can still play whenever I like. I am aware that as a private individual I thereby lose my right of withdrawal (at the latest once the case has been played). *</span></label>
 <label class="check"><input type="checkbox" name="agb"><span>I accept the <a href="terms.html" target="_blank">terms</a> and have read the <a href="privacy.html" target="_blank">privacy policy</a>. *</span></label>
 <p class="formerr" id="err" role="alert" hidden></p>
@@ -626,7 +626,7 @@ P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mor
 <h2>2. Our service</h2>
 <p>We provide digital murder-mystery games that you play online in your browser – depending on the game, together in teams, as a group or on your own (“game round”). What exactly is included follows from the description of the chosen game when ordering: game, package or variant, number of teams or players, playing time and, where applicable, personalisation. After payment you receive access codes with which you open and start the game round. Nothing is delivered physically.</p>
 <ul>
-<li>The game round is playable for 12 months from purchase. How often it can be started is stated in the game description: Teams and Friends rounds can be started once, Solo cases can be replayed any number of times (with a newly drawn killer). A started round runs for the stated playing time or chosen time window and ends.</li>
+<li>The game round is playable for 12 months from purchase. How often it can be started is stated in the game description: Teams and Friends rounds can be started once, Solo cases can be replayed up to three times within 30 days of the first playthrough (with a newly drawn killer). A started round runs for the stated playing time or chosen time window and ends.</li>
 <li>To play you need an internet-enabled device with an up-to-date browser. We are not responsible for web filters or blocks by your IT; we recommend opening mordsteam.com/spiel beforehand on the intended device.</li>
 <li>All cases are entirely fictional. Names and details you enter are built into a fictional story; the accusations made in it are not meant seriously.</li>
 </ul>
