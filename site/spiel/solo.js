@@ -193,6 +193,59 @@
   }
 
   // ---------- Ergebnis und Urkunde ----------
+  // ---------- Feedback: gezielt nach dem ersten Spiel und (einmal) nach einer Wiederholung ----------
+  const chips = (key, list) => `<div class="chips-row">${list.map((x) => `<button type="button" class="chipbtn" data-${key}="${x}">${x}</button>`).join("")}</div>`;
+  function fbHtml() {
+    const fb = S.feedback || {};
+    const askReplay = !S.first_play && !fb.replay, askInitial = !fb.initial;
+    if (!askReplay && !askInitial) return "";
+    const parts = String(S.name || "").trim().split(/\s+/).filter(Boolean);
+    const vor = parts[0] || "", ini = parts.length > 1 ? `${vor} ${parts[parts.length - 1][0].toUpperCase()}.` : "";
+    const replay = askReplay ? `<section class="report paper so-fb" id="fbr">
+      <div class="eyebrow">Kurze Frage zu deiner Wiederholung</div><h3 style="margin-top:6px">Wie war es beim zweiten Mal?</h3>
+      <div class="field"><span class="label">Mit dem Wissen aus dem ersten Spiel war der Fall …</span>${chips("leicht", ["viel zu leicht", "noch spannend", "genauso knifflig"])}</div>
+      <div class="field"><span class="label">Hat sich das Nochmal-Spielen gelohnt?</span>${chips("lohnt", ["ja", "geht so", "nein"])}</div>
+      <div class="field"><label for="fbrn">Anmerkung <span class="opt">optional, nur für uns</span></label><textarea id="fbrn" maxlength="1000" rows="2"></textarea></div>
+      <p class="err" id="fbrerr" hidden></p><button type="button" class="btn btn-red" id="fbrsend">Senden</button></section>` : "";
+    const initial = askInitial ? `<section class="report paper so-fb" id="fbi">
+      <div class="eyebrow">Dein Feedback${S.first_play ? "" : " zum ersten Spiel"}</div><h3 style="margin-top:6px">Wie fandest du den Nachtzug?</h3>
+      <p class="muted">Zwei Klicks, die uns sehr helfen – neue Fälle bauen wir aus eurem Feedback.</p>
+      <div class="stars" role="radiogroup" aria-label="Sterne">${[1, 2, 3, 4, 5].map((n) => `<button type="button" data-star="${n}" aria-label="${n} von 5 Sternen">★</button>`).join("")}</div>
+      <div class="field"><span class="label">Wie schwer war der Fall?</span>${chips("diff", ["zu leicht", "genau richtig", "zu schwer"])}</div>
+      <div class="field"><label for="fbimp">Was sollen wir besser machen? <span class="opt">optional, nur für uns</span></label><textarea id="fbimp" maxlength="1500" rows="2"></textarea></div>
+      <div class="fbpub"><div class="field"><label for="fbrev">Ein paar Worte für andere Ermittler?</label><span class="hint">Über ein nettes Feedback freuen wir uns besonders. Optional.</span><textarea id="fbrev" maxlength="600" rows="3" placeholder="Was hat dir gefallen?"></textarea></div>
+      <div class="field"><span class="label">Dürfen wir deine Worte auf mordsteam.com zeigen?</span>
+        ${vor ? `<label class="check"><input type="radio" name="pub" value="vorname"><span>Ja, als „${esc(vor)}“</span></label>` : ""}
+        ${ini ? `<label class="check"><input type="radio" name="pub" value="initial"><span>Ja, als „${esc(ini)}“</span></label>` : ""}
+        <label class="check"><input type="radio" name="pub" value="anon"><span>Ja, aber anonym</span></label>
+        <label class="check"><input type="radio" name="pub" value="no" checked><span>Nein, nur für euch</span></label></div></div>
+      <p class="err" id="fbierr" hidden></p><button type="button" class="btn btn-red" id="fbisend">Feedback senden</button></section>` : "";
+    return replay + initial;
+  }
+  function bindFeedback() {
+    const pick = {};
+    root.querySelectorAll("[data-star],[data-diff],[data-leicht],[data-lohnt]").forEach((b) => (b.onclick = () => {
+      const key = ["star", "diff", "leicht", "lohnt"].find((k) => b.dataset[k] !== undefined);
+      pick[key] = b.dataset[key];
+      if (key === "star") root.querySelectorAll("[data-star]").forEach((x) => x.classList.toggle("on", Number(x.dataset.star) <= Number(pick.star)));
+      else root.querySelectorAll(`[data-${key}]`).forEach((x) => x.classList.toggle("on", x === b));
+    }));
+    const thanks = (id) => { $(id).innerHTML = `<div class="eyebrow">Feedback</div><h3 style="margin-top:6px">Danke!</h3><p class="muted">Dein Feedback ist angekommen.</p>`; };
+    if ($("fbrsend")) $("fbrsend").onclick = async () => {
+      if (!pick.leicht && !pick.lohnt) { $("fbrerr").textContent = "Bitte wähle mindestens eine Antwort."; $("fbrerr").hidden = false; return; }
+      $("fbrsend").disabled = true;
+      try { await api("POST", "feedback", { kind: "replay", leicht: pick.leicht || "", lohnt: pick.lohnt || "", notiz: $("fbrn").value }); S.feedback.replay = true; thanks("fbr"); }
+      catch (e) { $("fbrerr").textContent = e.message; $("fbrerr").hidden = false; $("fbrsend").disabled = false; }
+    };
+    if ($("fbisend")) $("fbisend").onclick = async () => {
+      if (!pick.star) { $("fbierr").textContent = "Bitte wähle 1 bis 5 Sterne."; $("fbierr").hidden = false; return; }
+      $("fbisend").disabled = true;
+      const pub = (root.querySelector("input[name=pub]:checked") || {}).value || "no";
+      try { await api("POST", "feedback", { kind: "initial", rating: Number(pick.star), difficulty: pick.diff || "", improve: $("fbimp").value, review: $("fbrev").value, publish: pub }); S.feedback.initial = true; thanks("fbi"); }
+      catch (e) { $("fbierr").textContent = e.message; $("fbierr").hidden = false; $("fbisend").disabled = false; }
+    };
+  }
+
   function resultView() {
     const r = S.result || {};
     const solved = S.solved;
@@ -214,32 +267,8 @@
       <p class="small" style="margin-top:8px">Noch ${rp.left} ${rp.left === 1 ? "Wiederholung" : "Wiederholungen"} möglich${until ? `, bis ${until}` : ""}. Jedes Mal wird ein anderer Täter ausgelost, einige Beweisstücke ändern sich. Wiederholungen zählen nicht für die Wertung.</p>`
       : `<p class="small" style="margin-top:18px">${S.replay && S.replay.until && Date.now() > S.replay.until ? "Der Zeitraum für Wiederholungen ist vorbei." : "Du hast den Fall mit allen Tätern gespielt."} Weitere Ermittlungen warten – allein, mit Freunden oder im Team: <a href="/">mordsteam.com</a></p>`}
     </section>
-    ${S.feedback_done ? "" : `<section class="report paper so-fb" id="fb">
-      <div class="eyebrow">Dein Feedback</div><h3 style="margin-top:6px">Wie war der Nachtzug?</h3>
-      <p class="muted">Zwei Klicks, die uns sehr helfen. Neue Fälle bauen wir aus eurem Feedback.</p>
-      <div class="stars" role="radiogroup" aria-label="Sterne">${[1, 2, 3, 4, 5].map((n) => `<button type="button" data-star="${n}" aria-label="${n} von 5 Sternen">★</button>`).join("")}</div>
-      <div class="field"><span class="label">Wie schwer war der Fall?</span><div class="chips-row">${["zu leicht", "genau richtig", "zu schwer"].map((x) => `<button type="button" class="chipbtn" data-diff="${x}">${x}</button>`).join("")}</div></div>
-      <div class="field"><label for="fbrev">Dein Satz zum Fall <span class="opt">optional</span></label><textarea id="fbrev" maxlength="600" rows="3" placeholder="Was hat dir gefallen?"></textarea></div>
-      <div class="field"><label for="fbimp">Was sollen wir besser machen? <span class="opt">optional, wird nie veröffentlicht</span></label><textarea id="fbimp" maxlength="1500" rows="2"></textarea></div>
-      <div class="field"><span class="label">Dürfen wir deinen Satz auf mordsteam.com zeigen?</span>
-        <label class="check"><input type="radio" name="pub" value="name"><span>Ja, mit meinem Vornamen</span></label>
-        <label class="check"><input type="radio" name="pub" value="anon"><span>Ja, aber anonym</span></label>
-        <label class="check"><input type="radio" name="pub" value="no" checked><span>Nein, nur für euch</span></label></div>
-      <p class="err" id="fberr" hidden></p>
-      <button type="button" class="btn btn-red" id="fbsend">Feedback senden</button>
-    </section>`}`;
-    let stars = 0, diff = "";
-    root.querySelectorAll("[data-star]").forEach((b) => (b.onclick = () => { stars = Number(b.dataset.star); root.querySelectorAll("[data-star]").forEach((x) => x.classList.toggle("on", Number(x.dataset.star) <= stars)); }));
-    root.querySelectorAll("[data-diff]").forEach((b) => (b.onclick = () => { diff = b.dataset.diff; root.querySelectorAll("[data-diff]").forEach((x) => x.classList.toggle("on", x === b)); }));
-    if ($("fbsend")) $("fbsend").onclick = async () => {
-      if (!stars) { $("fberr").textContent = "Bitte wähle 1 bis 5 Sterne."; $("fberr").hidden = false; return; }
-      $("fbsend").disabled = true;
-      const pub = (root.querySelector("input[name=pub]:checked") || {}).value || "no";
-      try {
-        await api("POST", "feedback", { rating: stars, difficulty: diff, review: $("fbrev").value, improve: $("fbimp").value, publish: pub, publish_name: (S.name || "").split(/\s+/)[0] });
-        $("fb").innerHTML = `<div class="eyebrow">Dein Feedback</div><h3 style="margin-top:6px">Danke!</h3><p class="muted">Dein Feedback ist angekommen.</p>`;
-      } catch (e) { $("fberr").textContent = e.message; $("fberr").hidden = false; $("fbsend").disabled = false; }
-    };
+    ${fbHtml()}`;
+    bindFeedback();
     if ($("copyv")) $("copyv").onclick = async () => { try { await navigator.clipboard.writeText(r.voucher); $("copyv").textContent = "Kopiert ✓"; } catch { $("copyv").textContent = r.voucher; } };
     if ($("pdf")) $("pdf").onclick = () => certificate("pdf", r);
     if ($("png")) $("png").onclick = () => certificate("png", r);

@@ -484,3 +484,4 @@ button.btn-big{margin-top:14px}
 .chips-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
 .chipbtn{font:inherit;font-size:14px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--paper);cursor:pointer;min-height:40px}
 .chipbtn.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.fbpub{margin-top:20px;padding-top:6px;border-top:1px dashed #CFC7B6}
