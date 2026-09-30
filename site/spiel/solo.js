@@ -181,6 +181,7 @@
       armed = false;
       if (d.correct) {
         verdict = null;
+        openDoc = null;          // neue Beweisstücke: zurück zur Akte führt in die Übersicht
         await refresh(d);
         if (!d.ended) { verdict = { cls: "good", html: `<strong>Richtig!</strong>Frage ${q.nr} ist gelöst. Neue Beweisstücke liegen in deiner Akte.` }; fragenView(); toast(`📁 Neue Beweisstücke in deiner Akte <b>Ansehen</b>`); }
         scrollTo(0, 0);
@@ -265,7 +266,7 @@
       ${solved && S.first_play ? `<div class="actions-row" style="margin-top:22px"><button type="button" class="btn btn-red" id="pdf">Urkunde als PDF speichern</button><button type="button" class="btn btn-line" id="png">Urkunde als Bild</button></div><p class="small" style="margin-top:6px">A4 im Querformat – zum Ausdrucken oder Teilen.</p>` : ""}
       ${rp.left > 0 ? `<div class="actions-row" style="margin-top:18px"><button type="button" class="btn btn-line" id="again">Nochmal spielen – anderer Täter</button></div>
       <p class="small" style="margin-top:8px">Noch ${rp.left} ${rp.left === 1 ? "Wiederholung" : "Wiederholungen"} möglich${until ? `, bis ${until}` : ""}. Jedes Mal wird ein anderer Täter ausgelost, einige Beweisstücke ändern sich. Wiederholungen zählen nicht für die Wertung.</p>`
-      : `<p class="small" style="margin-top:18px">${S.replay && S.replay.until && Date.now() > S.replay.until ? "Der Zeitraum für Wiederholungen ist vorbei." : "Du hast den Fall mit allen Tätern gespielt."} Weitere Ermittlungen warten – allein, mit Freunden oder im Team: <a href="/">mordsteam.com</a></p>`}
+      : `<p class="small" style="margin-top:18px">${S.replay && S.replay.until && Date.now() > S.replay.until ? "Der Zeitraum für Wiederholungen ist vorbei." : "Du hast alle Wiederholungen genutzt."} Weitere Ermittlungen warten – allein, mit Freunden oder im Team: <a href="/">mordsteam.com</a></p>`}
     </section>
     ${fbHtml()}`;
     bindFeedback();
