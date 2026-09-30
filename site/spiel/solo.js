@@ -16,7 +16,7 @@
   }
   function toast(html, ms = 4200) {
     const t = $("toast"); t.innerHTML = `<button type="button">${html}</button>`; t.hidden = false;
-    t.querySelector("button").onclick = () => { t.hidden = true; go("akte"); };
+    t.querySelector("button").onclick = () => { t.hidden = true; openDoc = null; go("akte"); };
     clearTimeout(toast.h); toast.h = setTimeout(() => (t.hidden = true), ms);
   }
 
@@ -82,7 +82,8 @@
     if (tab === "fragen") return fragenView();
     return openDoc !== null ? docView() : akteView();
   }
-  function go(t) { tab = t; openDoc = null; render(); scrollTo(0, 0); }
+  // Beim Wechsel zwischen Akte und Fragen bleibt das zuletzt geöffnete Beweisstück offen (wie bei Fall 001)
+  function go(t) { tab = t; render(); scrollTo(0, 0); }
   tabs.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => go(b.dataset.tab)));
 
   // ---------- Uhr ----------
