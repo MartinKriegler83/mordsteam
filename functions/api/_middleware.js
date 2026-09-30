@@ -5,11 +5,12 @@ import { countHit, logError } from "../../lib/ops.js";
 
 function areaOf(path) {
   const p = path.replace(/^\/api\//, "");
-  if (/^spiel\/(state|leitung\/state|aria)$/.test(p) || /^solo\/state$/.test(p)) return ["spiel-abfrage", 10];
-  if (p.startsWith("spiel/admin/") || p.startsWith("solo/admin/")) return ["admin", 1];
+  if (/^spiel\/(state|leitung\/state|aria)$/.test(p) || /^(solo|friends)\/(state|org)$/.test(p)) return ["spiel-abfrage", 10];
+  if (p.startsWith("spiel/admin/") || p.startsWith("solo/admin/") || p.startsWith("friends/admin/")) return ["admin", 1];
   if (p === "spiel/aria/chat") return ["aria", 1];
   if (p.startsWith("spiel/")) return ["spiel", 1];
   if (p.startsWith("solo/")) return ["solo", 1];
+  if (p.startsWith("friends/")) return ["friends", 1];
   if (p === "shop/stripe-webhook") return ["stripe", 1];
   if (p.startsWith("shop/")) return ["shop", 1];
   return ["sonstiges", 1];

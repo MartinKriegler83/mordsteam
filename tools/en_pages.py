@@ -2,7 +2,7 @@
 # Aufruf: python3 tools/en_pages.py  – danach site/en/*.html committen.
 import os, html
 ROOT = os.path.join(os.path.dirname(__file__), "..", "site")
-MAP = {"index": "index", "teams": "teams", "friends": "friends", "solo": "solo", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "contact": "kontakt", "early-bird": "earlybird", "feedback": "feedback", "withdraw": "widerruf", "solo-buy": "solo-kaufen"}
+MAP = {"index": "index", "teams": "teams", "friends": "friends", "solo": "solo", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "contact": "kontakt", "early-bird": "earlybird", "feedback": "feedback", "withdraw": "widerruf", "solo-buy": "solo-kaufen", "friends-buy": "friends-kaufen"}
 LOGO = '<svg width="30" height="30" viewBox="0 0 34 34" fill="none" stroke="#15171C" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg>'
 
 
@@ -12,7 +12,7 @@ EBBAR = """<div class="promo" id="ebbar"><div class="wrap"><span class="tag">EAR
 def page(name, title, desc, body, robots=None, scripts="", home=False, promo=False):
     de = MAP[name]
     # „Play now“: auf Teams/Solo zu den eigenen Optionen, sonst zur Spielauswahl auf der Startseite
-    play = {"index": "#games", "teams": "#packages", "solo": "#price", "solo-buy": "#solo"}.get(name, "index.html#games")
+    play = {"index": "#games", "teams": "#packages", "solo": "#price", "solo-buy": "#solo", "friends": "#price", "friends-buy": "#friends"}.get(name, "index.html#games")
     cur = lambda k: ' aria-current="page"' if k == name else ''
     nav = f'''<a href="teams.html"{cur("teams")}>Teams</a>
 <a href="friends.html"{cur("friends")}>Friends</a>
@@ -245,19 +245,19 @@ P["index"] = dict(title="Mordsteam – Murder mysteries you solve yourselves", h
 <p class="meta">3–6 PLAYERS PER TEAM · ANY NUMBER OF TEAMS · 50–90 MIN · FROM €89 PER TEAM</p>
 <a class="btn btn-red" href="teams.html">Go to Mordsteam Teams</a>
 </article>
-<article class="game"><span class="tab">FRIENDS</span><span class="smark soon">COMING<br>SOON</span>
+<article class="game live"><span class="tab">FRIENDS</span><span class="smark ok">PLAY<br>NOW</span>
 <h3 class="gname"><span class="wm-r">MORDS</span>TEAM<span class="gp">FRIENDS</span></h3>
 <p class="for">The murder-mystery night for your friends.</p>
 <p>You are the suspects – with your real names and your little quirks. Everyone plays at the same time, or whenever they have time this week.</p>
-<p class="meta">4–8 INVESTIGATORS · EVERYONE ON THEIR OWN DEVICE · 45–70 MIN · FROM €29 PER GROUP</p>
-<a class="btn btn-line" href="friends.html">Find out more</a>
+<p class="meta">4–8 INVESTIGATORS · EVERYONE ON THEIR OWN DEVICE · 45 MIN · FROM €29 PER GROUP</p>
+<a class="btn btn-red" href="friends.html">Go to Mordsteam Friends</a>
 </article>
-<article class="game"><span class="tab">SOLO</span><span class="smark soon">COMING<br>SOON</span>
+<article class="game live"><span class="tab">SOLO</span><span class="smark ok">PLAY<br>NOW</span>
 <h3 class="gname"><span class="wm-r">MORDS</span>TEAM<span class="gp">SOLO</span></h3>
 <p class="for">A case just for you.</p>
 <p>Thirty minutes, five suspects, one truth. The quick mystery in between – and the perfect taste of a team game.</p>
 <p class="meta">1 INVESTIGATOR · 30 MIN · ANY TIME · ANYWHERE · €8.90</p>
-<a class="btn btn-line" href="solo.html">Find out more</a>
+<a class="btn btn-red" href="solo.html">Go to Mordsteam Solo</a>
 </article>
 </div>
 </div></section>
@@ -283,37 +283,187 @@ P["index"] = dict(title="Mordsteam – Murder mysteries you solve yourselves", h
 </div></section>
 </main>''')
 
-P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night for your friends (coming soon)", promo=True, scripts='<script src="/assets/aktion.js"></script>',
- desc="Mordsteam Friends: a mystery in which you are the suspects. At the same time or whenever each of you has time. Coming soon.",
- body='''<main id="top">
-<section class="ph"><div class="wrap">
+P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where one of you did it", promo=True, scripts='<script src="/assets/aktion.js"></script>',
+ desc="Mordsteam Friends: the murder-mystery night for 4–8 friends. You are the suspects, everyone investigates on their own phone – together or over the week. From €29.",
+ body='''<nav class="subnav" aria-label="Mordsteam Friends"><div class="wrap">
+<b><span>Mordsteam</span> Friends</b>
+<a href="#how">How it works</a><a href="#case">Friends 001</a><a href="#price">Price</a><a href="#faq">FAQ</a>
+<a class="btn btn-red" href="friends-buy.html">Order</a>
+</div></nav>
+<main id="top">
+<section class="hero"><div class="wrap hero-grid">
 <div class="stack">
-<span class="soonstamp">COMING SOON</span>
-<h1><span>Mordsteam</span><br>Friends</h1>
-<p class="lead">The murder-mystery night for your friends. You are the suspects – with your real names and your little quirks. And one of you did it.</p>
-<div class="actions" style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn btn-red" href="contact.html">Register interest</a><a class="btn btn-line" href="teams.html">Meanwhile: Mordsteam Teams</a></div>
+<div class="eyebrow">Mordsteam Friends · for 4–8 friends</div>
+<h1>One of you did it.</h1>
+<p class="lead">The murder-mystery night for your friends: you are the suspects – with your real names and your little quirks. Everyone investigates on their own phone, on the same evening or spread over the week. And in the end it's clear who did it.</p>
+<div class="actions">
+<a class="btn btn-red" href="friends-buy.html">Order the mystery night – from €29</a>
+<a class="btn-text" href="#how">How it works</a>
 </div>
-<div class="teaser" aria-label="Preview of the first case">
-<div class="mast"><span>CASE · FRIENDS 001</span><span>SATURDAY, 7:40 AM</span></div>
-<h2>Last Round at the Chalet</h2>
-<p>A weekend in the mountains, a rented chalet, a landlord with an embarrassing vlog. On Saturday morning he is found dead in the sauna – the door bolted from outside. Every one of you had a reason.</p>
+<p class="small">The case itself is currently available in German.</p>
+</div>
+<div class="file" aria-hidden="true">
+<div class="folder"></div>
+<div class="sheet">
+<div class="mast"><span>ZIRBENBLICK CHALET · 1,640 M</span><span>SATURDAY, 7:40 AM</span></div>
+<div class="headline">Landlord found dead in the sauna</div>
+<p>A weekend in the mountains, a rented chalet, a landlord with an embarrassing vlog. In the morning he lies dead in the sauna – the door bolted from outside. Every one of you had a reason.</p>
+<div class="chips"><span>4–8 suspects: you</span><span>13 pieces of evidence</span><span>3 questions</span><span>45 minutes</span></div>
+</div>
+<div class="stamp"><div><small>MORDSTEAM · FRIENDS 001</small><strong>UNSOLVED</strong><small>HELICOPTER AT 8:25 AM</small></div></div>
 </div>
 </div></section>
+
+<section class="facts" aria-label="Key facts"><div class="wrap">
+<div><b>4–8 investigators</b><span>each on their own phone, tablet or laptop</span></div>
+<div><b>45 min</b><span>until the mountain rescue helicopter lands</span></div>
+<div><b>Your names</b><span>with harmless quirks from a list – nobody is embarrassed</span></div>
+<div><b>No game master</b><span>everything runs automatically in the browser, no app, no account</span></div>
+</div></section>
+
+<section id="how" class="section"><div class="wrap stack">
+<div class="eyebrow">How it works</div>
+<h2 class="h2">Three steps to the reveal</h2>
+<div class="steps">
+<div class="step"><span class="num">1</span><div><h3>Enter your group</h3><p>When ordering, you enter 4 to 8 first names and pick a quirk for each person – “snores like a chainsaw”, “dances while cooking” and so on. The game draws the culprit. Nobody knows in advance, not even the culprit.</p></div></div>
+<div class="step"><span class="num">2</span><div><h3>Share the link</h3><p>You get one invitation link for the group. Everyone opens it on their own device and taps their name. Play at the same time on one evening – together or on a video call – or over 3, 5 or 7 days, whenever each of you has time.</p></div></div>
+<div class="step"><span class="num">3</span><div><h3>Investigate and reveal</h3><p>Everyone investigates on their own: read the evidence, check alibis, solve three questions. Once everyone is done, the reveal comes for all at the same time – with a ranking, the culprit's confession and a fun award for everyone.</p></div></div>
+</div>
+</div></section>
+
 <section class="section" style="background:var(--paper-2)"><div class="wrap stack">
 <div class="eyebrow">Two ways to play</div>
 <h2 class="h2">Together in the evening – or whenever each of you has time</h2>
 <div class="modes">
-<div class="mode"><h3>At the same time</h3><p>You sit together or meet on a video call. Everyone starts together, each investigates on their own phone, the clock runs the same for all.</p></div>
-<div class="mode"><h3>Over the week</h3><p>No date needed: everyone plays within 3, 5 or 7 days, whenever they like. You only see who has already investigated – the reveal and the ranking come for everyone at the same time.</p></div>
+<div class="mode"><h3>At the same time</h3><p>You sit together or meet on a video call. The organiser starts the case for everyone, each investigates on their own phone, the clock runs the same for all. Then: joint reveal and ranking.</p></div>
+<div class="mode"><h3>Over the week</h3><p>No date needed: everyone plays within 3, 5 or 7 days, whenever they like. You only see who has already investigated – the reveal and the ranking come for everyone at the same time. Until then: keep quiet!</p></div>
 </div>
 </div></section>
-<section class="facts" aria-label="Key facts"><div class="wrap">
-<div><b>4–8 investigators</b><span>each on their own, on their own device</span></div>
-<div><b>45 or 70 min</b><span>Mystery Night or Mystery Night Plus with an AI character</span></div>
-<div><b>Your names</b><span>with harmless quirks from a list – nobody is embarrassed</span></div>
-<div><b>No game master</b><span>everything runs automatically in the browser</span></div>
+
+<section id="case" class="section case"><div class="wrap case-grid">
+<div class="stack">
+<div class="eyebrow">Friends 001 · Last Round at the Chalet</div>
+<h2 class="h2">“Ferdl! In the sauna! Dead!”</h2>
+<p class="lead">A weekend at the Zirbenblick chalet. In the evening, landlord Ferdl proudly shows you the trailer for his new vlog – with a secretly filmed clip of every one of you. In the morning he lies dead in the sauna. The road is snowed in, the helicopter lands in 45 minutes. By then it must be clear who did it.</p>
+<p><b>The suspects – that's you, for example:</b></p>
+<div class="objects"><span>snores like a chainsaw</span><span>sings in the shower</span><span>secretly eats other people's chocolate</span><span>can't lose at cards</span><span>dances while cooking</span><span>is afraid of cows</span></div>
+</div>
+<div class="clues" aria-label="Examples from the case file">
+<div class="clue"><small>SAUNA CONTROL</small><span>Setpoint 95 → 110 °C<br>??:?? · outside panel</span></div>
+<div class="clue"><small>SCORE PAD, KITCHEN</small><span>“Round 4 – three of us”<br>Who was missing?</span></div>
+<div class="clue dark"><small>YOUR INVESTIGATION</small><div class="codebox" aria-label="Three questions"><i>1</i><i>2</i><i>3</i></div><span class="hint">Time, culprit, hiding place – before the helicopter.</span></div>
+<div class="clue"><small>CHALET APP</small><span>Motion on the stairs · ??:??<br>Who wasn't in bed?</span></div>
+</div>
+<ul class="list case-points">
+<li>You are the suspects – with your names, rooms and quirks</li>
+<li>The culprit is drawn at random; everyone finds out at the reveal</li>
+<li>Three questions that build on each other – new evidence after each correct answer</li>
+<li>Hints at the click of a button, each costs penalty minutes</li>
+<li>Ranking by time plus penalty minutes – and a fun award for everyone</li>
+<li>A stylish mystery with a wink – no gore, no shock effects</li>
+</ul>
+</div></section>
+
+<section id="price" class="section"><div class="wrap stack">
+<div class="eyebrow">Price</div>
+<h2 class="h2">One price for the whole group</h2>
+<p class="lead">No subscription, no sign-up: order, share the link, start playing. You pay once for everyone – with 8 people that's just over €6 per person.</p>
+<div class="pack-grid">
+<div class="pack featured">
+<span class="badge">FRIENDS 001</span>
+<h3>Mystery Night</h3><p class="sub">45 minutes · 4–8 people</p>
+<p class="price">from €29</p><p class="per">€29 for up to 4 people, +€5 per extra person (€49 for 8)</p>
+<ul class="list"><li>“Last Round at the Chalet” with your names and quirks</li><li>13 pieces of evidence, 3 questions, culprit drawn at random</li><li>At the same time or over 3, 5 or 7 days</li><li>Joint reveal with ranking</li><li>A fun award for everyone</li><li>Playable for 12 months, can be started once</li></ul>
+<a class="btn btn-red" href="friends-buy.html">Order the mystery night</a>
+</div>
+<div class="pack">
+<span class="badge" style="background:var(--ink)">COMING SOON</span>
+<h3>Mystery Night Plus</h3><p class="sub">70 minutes · with AI interrogation room</p>
+<p class="price">from €49</p><p class="per">€49 for up to 4 people, +€8 per extra person</p>
+<ul class="list"><li>Everything in the Mystery Night</li><li><b>The interrogation room:</b> question your friends – played by AI, with their names and quirks</li><li>The culprit's double lies – but will they slip up?</li><li>Finale with a fourth question</li></ul>
+<a class="btn btn-line" href="contact.html">Let me know</a>
+</div>
+</div>
+<div class="devicebox">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="14" height="10" rx="1.5"/><path d="M1 17h16"/><rect x="17" y="8" width="6" height="12" rx="1.2"/><path d="M19.5 17.5h1"/></svg>
+<p><b>Everyone plays on their own device.</b> Phone, tablet or laptop, right in the browser, no app and no account. With the invitation link anyone can switch to another device, even mid-case.</p>
+</div>
+</div></section>
+
+<section id="bewertungen" class="section" data-produkt="friends" hidden><div class="wrap stack">
+<div class="eyebrow">Reviews</div>
+<h2 class="h2">What investigators say</h2>
+<div class="reviews" id="reviews"></div>
+</div></section>
+
+<section id="faq" class="section faq"><div class="wrap faq-grid">
+<div class="stack"><div class="eyebrow">FAQ</div><h2 class="h2">Questions?</h2></div>
+<div>
+<details><summary>Who is the culprit?</summary><p>One of you – drawn at random when the round is set up. Nobody knows in advance, not the organiser and not the culprit: they investigate like everyone else and may find out it was them. Everyone learns it together at the reveal.</p></details>
+<details><summary>How long does the case take?</summary><p>45 minutes – that's how long the mountain rescue helicopter needs. The clock keeps running if someone takes longer; their final time is just longer. The ranking counts playing time plus penalty minutes.</p></details>
+<details><summary>At the same time or over the week – which is better?</summary><p>At the same time is ideal for an evening together, also on a video call: the organiser starts for everyone, then you reveal together. Over the week suits you if you can't find a date: everyone plays within 3, 5 or 7 days, and the reveal comes for everyone at the same time.</p></details>
+<details><summary>What if someone can't play?</summary><p>They remain a suspect in the story – the case stays just as solvable for the others. In the ranking they appear as “didn't play”. In the weekly mode the reveal then comes at the end of the time window.</p></details>
+<details><summary>Which quirks are there?</summary><p>16 affectionately harmless quirks to choose from, from “sings in the shower” to “talks to plants”. There is deliberately no free text – so nobody gets embarrassed. Please only enter people who want to play with their name and quirk.</p></details>
+<details><summary>Does the organiser play too?</summary><p>Of course! Just add yourself to the group. You only need the organiser page to share the link and start – you won't see the culprit there either.</p></details>
+<details><summary>Can people spoil the solution for each other?</summary><p>In theory, yes – but whoever helps others makes their own ranking worse. Anyone who has finished only sees “solved”, not the solution. The culprit, the reveal and the times come for everyone together.</p></details>
+<details><summary>Do we need an app or an account?</summary><p>No. Friends runs right in the browser on phone, tablet or laptop. Everyone only needs the invitation link.</p></details>
+<details><summary>Can I use a voucher?</summary><p>Yes: enter the €5 voucher from Mordsteam Solo in the payment step. It can't be combined with the early bird discount.</p></details>
+<details><summary>Is Friends available in English?</summary><p>Not yet. Friends 001 is currently available in German; the English version will follow.</p></details>
+</div>
+</div></section>
+
+<section class="cta"><div class="wrap">
+<h2>At 8:25 am the helicopter lands.</h2>
+<p>By then you'll know which of you did it.</p>
+<a class="btn btn-ink" href="friends-buy.html">Order the mystery night – from €29</a>
 </div></section>
 </main>''')
+
+P["friends-buy"] = dict(title="Order Friends – Mordsteam", robots="noindex", desc="Order Mordsteam Friends 001 “Last Round at the Chalet”: the mystery night for 4–8 friends from €29, invitation link right away.",
+ scripts='<script src="/assets/friends-kaufen.js"></script>',
+ body='''<main class="page shop"><div class="wrap">
+<div class="eyebrow">Order · Mordsteam Friends 001</div>
+<h1>Last Round at the Chalet</h1>
+<p class="lead">The mystery night for 4–8 friends, 45 minutes, everyone on their own device. After payment you get the invitation link for the group and your organiser page right away – on screen and by email. The case itself is currently available in German.</p>
+<div class="note" id="closed" hidden>Orders are not open yet. You can look at the form, but not submit it yet.</div>
+<div class="note" id="cancelled" hidden>The payment was cancelled. You can simply try again.</div>
+<form class="form" id="friends" novalidate>
+<fieldset class="step"><legend><span>1</span> Your group</legend>
+<div class="field"><label for="n">How many are playing? *</label><select id="n" name="n"><option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option></select>
+<span class="hint">Add yourself if you're playing. The game draws the culprit – you'll only find out at the reveal too.</span></div>
+<div id="people" class="fr-people"></div>
+<p class="hint">First names are enough; if two share a first name, add an initial (e.g. “Anna B.”). The quirk is a harmless running gag in the case – there is deliberately no free text.</p>
+<label class="check"><input type="checkbox" name="zustimmung"><span>Everyone named knows about it and agrees to play in the fictional case with their name and the chosen quirk – including as a suspect or culprit. *</span></label>
+</fieldset>
+<fieldset class="step"><legend><span>2</span> How do you want to play?</legend>
+<label class="check"><input type="radio" name="mode" value="live" checked><span><b>At the same time</b> – you play on the same evening, together or on a video call. You start the case for everyone.</span></label>
+<label class="check"><input type="radio" name="mode" value="week"><span><b>Over the week</b> – everyone plays when they have time. The reveal comes for everyone together.</span></label>
+<div class="field" id="daysbox" hidden><label for="days">Time window</label><select id="days" name="days"><option value="3">3 days</option><option value="5">5 days</option><option value="7" selected>7 days</option></select><span class="hint">The days start when you tap start on your organiser page – not with the purchase.</span></div>
+</fieldset>
+<fieldset class="step"><legend><span>3</span> Your details</legend>
+<div class="two">
+<div class="field"><label for="c_name">Your name *</label><input id="c_name" name="c_name" maxlength="120" autocomplete="name"></div>
+<div class="field"><label for="c_email">Email *</label><input id="c_email" name="c_email" type="email" maxlength="160" autocomplete="email"><span class="hint">We'll send the links and the invoice here.</span></div>
+</div>
+<div class="field"><span class="label">You are ordering as *</span>
+<label class="check"><input type="radio" name="kunde" value="b2c"><span>Private individual</span></label>
+<label class="check"><input type="radio" name="kunde" value="b2b"><span>Company, club or organisation</span></label>
+<span class="hint">Private individuals have the statutory right of withdrawal (see <a href="terms.html#ruecktritt" target="_blank" rel="noopener">terms section 8</a>).</span></div>
+</fieldset>
+<fieldset class="step"><legend><span>4</span> Review and pay</legend>
+<div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Friends 001 “Last Round at the Chalet” · 6 people · 45 minutes · game language German</span><b id="sumprice">€39.00</b></div>
+<div class="sumrow" id="ebrow" hidden><span>Early bird −<span class="ebp">40</span>%</span><b id="ebprice"></b></div>
+<p class="small">Final price for the whole group: €29 for up to 4 people, +€5 per extra person. Playable for 12 months, can be started once. VAT exempt (small business scheme).</p></div>
+<label class="check" id="ebbox" hidden><input type="checkbox" name="earlybird"><span><b>Early bird: <span class="ebp">40</span>% off</b> your first game. In return: after the reveal you give us short feedback in the game (<a href="early-bird.html" target="_blank" rel="noopener">conditions</a>).</span></label>
+<p class="hint" id="voucherhint">Voucher code, e.g. from Mordsteam Solo? Enter it in the next step when paying.</p>
+<label class="check" id="sofortbox" hidden><input type="checkbox" name="sofort"><span>I expressly request that you set up our round and provide the links right after payment – we can still play whenever we like. I am aware that as a private individual I thereby lose my right of withdrawal (at the latest with the joint reveal). *</span></label>
+<label class="check"><input type="checkbox" name="agb"><span>I accept the <a href="terms.html" target="_blank">terms</a> and have read the <a href="privacy.html" target="_blank">privacy policy</a>. *</span></label>
+<p class="formerr" id="err" role="alert" hidden></p>
+<div><button class="btn btn-red" type="submit" id="submit">Order and pay – €39.00</button></div>
+<p class="hint small">Payment is handled securely by Stripe (card, Apple Pay, Google Pay and more). You'll see the links right afterwards.</p>
+</fieldset>
+</form>
+</div></main>''')
 
 P["solo"] = dict(title="Mordsteam Solo – Night Train to Venice: a murder mystery just for you", scripts='<script src="/assets/aktion.js"></script>',
  desc="A body in the sleeping car, five suspects and 30 minutes to Udine: Mordsteam Solo is the murder mystery for one person – on phone, tablet or laptop, for €8.90.",
@@ -586,12 +736,14 @@ P["privacy"] = dict(title="Privacy policy – Mordsteam", desc="How Mordsteam ha
 <h2>3. Feedback after the game</h2>
 <p>The day after the game ends, we send the person who ordered a single email with a link to a feedback form (Art. 6(1)(f) GDPR – we want to improve our cases; for early bird orders part of the discount conditions, Art. 6(1)(b) GDPR). You can opt out of this email when ordering. We store your answers without reference to the people in the case. We only publish a review if you expressly agree in the form – anonymously or under the name you provide for it. You can withdraw your consent at any time by email; we will then remove the review from the website.</p>
 <p>After a Teams round ends, we ask on every game device – voluntarily and without names – how the game was (stars, difficulty, optionally comments and a few words for the website). This is stored with the team name and round, without further personal data. The words are only published with express consent – anonymously or with the first name you enter – and only after we approve them (Art. 6(1)(a) GDPR).</p>
+<p>For Mordsteam Friends, we ask every player right in the browser after the joint reveal for feedback (stars, difficulty, optionally comments and a few words for the website). This is voluntary. It is stored with the first name from the round; the words are only published with express consent – anonymously or with the first name – and only after we approve them (Art. 6(1)(a) GDPR).</p>
 <p>For Mordsteam Solo, we ask for your feedback right in the browser at the end of the game (stars, difficulty, optionally a sentence and suggestions for improvement). This is voluntary. It is stored with your player name; your words are only published if you expressly agree – anonymously, with your first name or with your first name and the initial of your surname – and only after we approve them. After a replay we briefly ask once how it went; we never publish these answers.</p>
 <h2>4. Order and payment</h2>
 <p>For an order we process the chosen game with package or variant, the number of teams or players, the game language, your name, your email address, whether you order as a company or private individual, optionally phone and invoice company, and the details for personalising the case where the game provides for it (e.g. company or group name, place, rooms, names, title, role or quirks of the people who appear in the case, optionally your logo). The purpose is performance of the contract (Art. 6(1)(b) GDPR). If you choose a fictional cast, you don't provide any personal data for the personalisation.</p>
 <p>Payment and invoicing are handled by Stripe (Stripe Payments Europe, Ltd., Dublin, Ireland). Stripe receives your payment and billing data for this and processes it under its own responsibility; we never see card details. If you withdraw from a contract, we process the order number, name, email address, time and any note to handle and document the withdrawal (Art. 6(1)(b) and (c) GDPR). We send the order confirmation and the feedback email via the email service Resend (Resend, Inc., USA; sent via servers in the EU, safeguarded by EU standard contractual clauses). We keep invoice and payment data for as long as tax retention obligations require (in Austria usually seven years).</p>
 <h2>5. Game round</h2>
 <p>For the game round we store the personalisation details, the names of the teams or players, times, answer attempts and hints used in a database at Cloudflare. On the players' devices only a login key is stored in the browser's local storage (no cookie, no tracking). 30 days after the game ends we delete the game round including game progress, answer attempts, chat histories and, where applicable, logo – if a case is never played, 13 months after the order at the latest; the personal data of the personalisation is then removed from the order. To develop our cases further, we keep anonymous statistics (e.g. playing times, number of wrong attempts and hints) without names.</p>
+<p><b>Mordsteam Friends:</b> The person ordering enters the first names of the players and one quirk each from a fixed list, and confirms that everyone agrees. We only use this information to set up the fictional case for the group (Art. 6(1)(b) GDPR). Whoever picks their name via the invitation link gets their own game progress; the others in the group only see who has joined or finished, and only see the ranking and times at the joint reveal. The names are stored only in the game round, not in the order. 30 days after the reveal we delete the round including names and game progress, a round that is never revealed 13 months after the order at the latest.</p>
 <h2>6. AI characters in the game</h2>
 <p>In some games or variants you can chat with an AI-controlled character (stated in the game description). What you write in the chat is sent together with the invented case data to our AI provider Anthropic so that the character can reply (Art. 6(1)(b) GDPR). We replace the real names from the personalisation (e.g. company, people, rooms) with placeholders before sending and only reinsert them in the reply – even if they are typed into the chat. The players' devices only connect to mordsteam.com, not directly to the AI provider. Anthropic processes the data as a processor, does not use it to train its models and deletes inputs and outputs after 30 days by default. The transfer to the USA is based on certification under the EU-US Data Privacy Framework or on EU standard contractual clauses.</p>
 <p>Please don't enter real personal data in the chat – the AI character doesn't need it and only knows the world of the game. The number of messages per game round is limited. We store the chat history with the game round and delete it 30 days after the game ends. AI characters are labelled as AI; their answers may contain errors.</p>
@@ -638,6 +790,7 @@ P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mor
 <p>We provide digital murder-mystery games that you play online in your browser – depending on the game, together in teams, as a group or on your own (“game round”). What exactly is included follows from the description of the chosen game when ordering: game, package or variant, number of teams or players, playing time and, where applicable, personalisation. After payment you receive access codes with which you open and start the game round. Nothing is delivered physically.</p>
 <ul>
 <li>The game round is playable for 12 months from purchase. How often it can be started is stated in the game description: Teams and Friends rounds can be started once, Solo cases can be replayed up to three times within 30 days of the first playthrough (with a newly drawn killer). A started round runs for the stated playing time or chosen time window and ends.</li>
+<li>With Mordsteam Friends, every person entered plays on their own device via the invitation link. Anyone who doesn't play remains a suspect in the case; the round stays solvable for the others. The round ends with the joint reveal – once everyone has finished, at the latest when the playing time or the chosen time window is over.</li>
 <li>To play you need an internet-enabled device with an up-to-date browser. We are not responsible for web filters or blocks by your IT; we recommend opening mordsteam.com/spiel beforehand on the intended device.</li>
 <li>All cases are entirely fictional. Names and details you enter are built into a fictional story; the accusations made in it are not meant seriously.</li>
 </ul>
@@ -674,7 +827,7 @@ P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mor
 <h2 id="ruecktritt">8. Right of withdrawal for consumers</h2>
 <p>This right of withdrawal applies to consumers only. If you order as a company, club or for your professional activity, there is no statutory right of withdrawal.</p>
 <p><b>Withdrawal period:</b> As a consumer you may withdraw from the contract within 14 days of its conclusion without giving reasons – unless the right of withdrawal has expired earlier.</p>
-<p><b>Immediate start and expiry:</b> When ordering as a private individual, you expressly request that we set up your game round and provide the codes right after payment – you still play whenever you like – and confirm that you know you thereby lose your right of withdrawal. Our service is a game provided online. Insofar as it counts as digital content, the right of withdrawal expires when the codes are provided following our email confirmation (§ 18 (1) no. 11 FAGG). Insofar as it counts as a (digital) service, it expires once the game round has been fully performed, i.e. played and ended (§ 18 (1) no. 1 FAGG).</p>
+<p><b>Immediate start and expiry:</b> When ordering as a private individual, you expressly request that we set up your game round and provide the codes right after payment – you still play whenever you like – and confirm that you know you thereby lose your right of withdrawal. Our service is a game provided online. Insofar as it counts as digital content, the right of withdrawal expires when the codes are provided following our email confirmation (§ 18 (1) no. 11 FAGG). Insofar as it counts as a (digital) service, it expires once the game round has been fully performed, i.e. played and ended (§ 18 (1) no. 1 FAGG); for Mordsteam Friends that is the joint reveal.</p>
 <p><b>Withdrawal before the game ends:</b> If you withdraw before the right has expired, we refund all payments within 14 days using the original means of payment. If the game round has not been started, we refund the full price. If it has already been started, you pay a proportionate amount for the service provided up to the withdrawal (§ 16 FAGG), because you expressly requested the immediate start. It is based on the playing time elapsed up to the withdrawal in relation to the total playing time of the booked variant; setting up and personalising the game round has already been fully performed.</p>
 <p><b>How to withdraw:</b> Use the “Withdraw from contract” function on our website or send us a clear statement, e.g. by email to <a href="mailto:office@mordsteam.com">office@mordsteam.com</a>. To meet the deadline it is sufficient to send the statement before the period expires. You may use this model form, but you don't have to:</p>
 <blockquote class="small">To Mordsteam e.U., Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, Austria, office@mordsteam.com: I/we hereby withdraw from the contract concluded by me/us for the following service: … · Ordered on: … · Order number: … · Name: … · Address: … · Date: …</blockquote>
@@ -706,11 +859,11 @@ P["early-bird"] = dict(title="Early bird – Mordsteam", desc="Early bird: 40% o
 <h2>How it works</h2>
 <ul>
 <li>When ordering, tick the <b>early bird</b> box in the last step. The discount is deducted automatically at checkout – no code needed.</li>
-<li>Valid for Mordsteam Teams – all packages, any number of teams – and for Mordsteam Friends once it is available. Mordsteam Solo is excluded.</li>
+<li>Valid for Mordsteam Teams – all packages, any number of teams – and for Mordsteam Friends. Mordsteam Solo is excluded.</li>
 </ul>
 <h2>What we ask in return</h2>
 <ul>
-<li>The day after your game we'll send you a short email with a feedback form. You give us honest feedback – it takes about 5 minutes.</li>
+<li>The day after your game we'll send you a short email with a feedback form. You give us honest feedback – it takes about 5 minutes. With Mordsteam Friends the game asks you right after the reveal; there is no email.</li>
 <li>You write a short review. Whether and under which name we show it on mordsteam.com is up to you.</li>
 </ul>
 <h2>The fine print</h2>

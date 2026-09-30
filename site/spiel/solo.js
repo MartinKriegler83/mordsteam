@@ -308,7 +308,7 @@
       ${solved ? `<div class="so-score"><div><small>Endzeit</small><b>${MS.dur(r.score_ms)}</b></div><div><small>Gespielt</small><b>${MS.dur(r.played_ms)}</b></div><div><small>Strafminuten</small><b>${S.penalty_min}</b></div></div>
         <p class="so-pct">${pctLine}</p>` : `<p class="so-pct">${S.first_play ? "Diesmal hat es nicht gereicht – hier ist die Auflösung." : "Hier ist die Auflösung."}</p>`}
       <h3>Die Auflösung</h3>
-      <p><b>Täter/in: ${esc(r.culprit)}</b> · Tatzeit 01:31 · Versteck: ${esc(r.item)}</p>
+      <p><b>Täter/in: ${esc(r.culprit)}</b> · Tatzeit ${esc(r.zeit || "01:31")} · Versteck: ${esc(r.item)}</p>
       <p>${esc(r.text)}</p>
       ${r.voucher ? `<div class="so-voucher"><small>Dein Gutschein für ein Friends- oder Teams-Spiel</small><b class="mono">${esc(r.voucher)}</b><span>5 € Rabatt · einlösbar beim Bestellen von Mordsteam Friends oder Teams (im Bezahlschritt)</span><button type="button" class="btn btn-line" id="copyv">Code kopieren</button></div>` : ""}
       ${solved && S.first_play ? `<div class="actions-row" style="margin-top:22px"><button type="button" class="btn btn-red" id="pdf">Urkunde als PDF speichern</button><button type="button" class="btn btn-line" id="png">Urkunde als Bild</button></div><p class="small" style="margin-top:6px">A4 im Querformat – zum Ausdrucken oder Teilen.</p>` : ""}

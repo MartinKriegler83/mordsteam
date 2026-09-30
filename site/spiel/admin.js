@@ -26,6 +26,7 @@
       const st = await MS.api("GET", "admin/stats" + (statTests ? "?tests=1" : ""), null, H()).catch(() => ({ stats: {} }));
       fb = await MS.api("GET", "admin/feedback", null, H()).catch(() => null);
       soloList = await fetch("/api/solo/admin/list", { headers: H() }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      friendsList = await fetch("/api/friends/admin/list", { headers: H() }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
       ops = await MS.api("GET", "admin/ops", null, H()).catch(() => null);
       render(list.sessions, ord.orders, st.stats);
     } catch (e) {
@@ -79,6 +80,7 @@
 
   let statTests = true;
   let fb = null, fbMsg = "";
+  let friendsMsg = "", friendsList = null;
   let soloMsg = "", soloList = null, ops = null, last = [[], [], {}];
   let tab = "uebersicht";
   try { tab = sessionStorage.getItem("ms_admtab") || "uebersicht"; } catch {}
@@ -116,7 +118,7 @@
         <p class="small">Limits: Mails ${L.mail_day || "∞"}/Tag, ${L.mail_month || "∞"}/Monat · Aufrufe ${L.req_day ? n0(L.req_day) + "/Tag" : "ohne Tageslimit"} · KI-Budget ${L.ai_budget} $/Monat. Warnmail an office@ ab 70 %.</p></div>
       <div class="panel"><div class="eyebrow">Letzte Warnungen</div>${ops.alerts.length ? `<ul class="list small">${ops.alerts.slice(0, 6).map((a) => `<li>${new Date(a.at).toLocaleString("de-AT")} · ${WARNTXT(a.key)}</li>`).join("")}</ul>` : `<p class="muted">Keine Warnungen.</p>`}</div>
       </div>
-      <div class="panel"><div class="eyebrow">Letzte Bestellungen</div>${orders.length ? `<table class="grid small"><tr><th>Zeit</th><th>Kunde</th><th>Produkt</th><th>Betrag</th><th>Status</th></tr>${orders.slice(0, 5).map((o) => `<tr><td>${new Date(o.created_at).toLocaleString("de-AT")}</td><td>${MS.esc((o.contact || {}).name || "")}</td><td>${o.paket === "solo" ? "Solo" : `${({ basis: "Basis", premium: "Premium", plus: "Premium Plus" })[o.paket] || o.paket} · ${o.teams} Teams`}</td><td>${eur(o.amount_cents)}</td><td>${o.status}</td></tr>`).join("")}</table>` : `<p class="muted">Noch keine Bestellungen.</p>`}</div>`;
+      <div class="panel"><div class="eyebrow">Letzte Bestellungen</div>${orders.length ? `<table class="grid small"><tr><th>Zeit</th><th>Kunde</th><th>Produkt</th><th>Betrag</th><th>Status</th></tr>${orders.slice(0, 5).map((o) => `<tr><td>${new Date(o.created_at).toLocaleString("de-AT")}</td><td>${MS.esc((o.contact || {}).name || "")}</td><td>${o.paket === "solo" ? "Solo" : o.paket === "friends" ? `Friends · ${o.teams} Personen` : `${({ basis: "Basis", premium: "Premium", plus: "Premium Plus" })[o.paket] || o.paket} · ${o.teams} Teams`}</td><td>${eur(o.amount_cents)}</td><td>${o.status}</td></tr>`).join("")}</table>` : `<p class="muted">Noch keine Bestellungen.</p>`}</div>`;
   }
   // Balken für die letzten 30 Tage
   function bars(rows, key, fmt = n0) {
@@ -128,8 +130,8 @@
   }
   function systemPanel() {
     if (!ops) return `<div class="panel"><p class="err">Betriebsdaten konnten nicht geladen werden.</p></div>`;
-    const K = { bestellung: "Bestellbestätigung", solo: "Solo-Bestellung", feedback: "Feedback", kontakt: "Kontaktformular", widerruf: "Widerruf (Kunde)", "widerruf-office": "Widerruf (an office)" };
-    const A = { "spiel-abfrage": "Spielgeräte fragen Stand ab (hochgerechnet)", spiel: "Spiel (Aktionen)", aria: "ARIA-Chat", solo: "Solo", shop: "Shop & Formulare", stripe: "Stripe-Webhook", admin: "Admin", sonstiges: "Sonstiges" };
+    const K = { bestellung: "Bestellbestätigung", solo: "Solo-Bestellung", friends: "Friends-Bestellung", feedback: "Feedback", kontakt: "Kontaktformular", widerruf: "Widerruf (Kunde)", "widerruf-office": "Widerruf (an office)" };
+    const A = { "spiel-abfrage": "Spielgeräte fragen Stand ab (hochgerechnet)", spiel: "Spiel (Aktionen)", aria: "ARIA-Chat", solo: "Solo", friends: "Friends", shop: "Shop & Formulare", stripe: "Stripe-Webhook", admin: "Admin", sonstiges: "Sonstiges" };
     return `<div class="panel"><div class="eyebrow">Mails · letzte 30 Tage</div>${bars(ops.mail.days, "n")}
       <table class="grid small" style="margin-top:12px"><tr><th>Art (dieser Monat)</th><th>Versuche</th><th>Zugestellt</th></tr>${ops.mail.kinds.filter((k) => k.kind !== "warnung").map((k) => `<tr><td>${K[k.kind] || k.kind}</td><td>${k.n}</td><td>${k.ok}${k.ok < k.n ? ` <b style="color:var(--red)">(${k.n - k.ok} fehlgeschlagen)</b>` : ""}</td></tr>`).join("") || `<tr><td colspan="3" class="muted">Noch keine Mails.</td></tr>`}</table>
       <p class="small"><a href="https://resend.com/emails" target="_blank" rel="noopener">Resend öffnen</a> · Tarif ändern: Resend → Settings → Billing</p></div>
@@ -157,11 +159,11 @@
       runde: "Runde", team: "Team", geraet: "Gerät", event: "Event bereichert", stimmung: "Stimmung", aufwand: "Aufwand Organisation", best: "Beste Stelle / am meisten Spaß", improve: "Verbessern", difficulty: "Schwierigkeit",
       duration: "Spielzeit", aria: "ARIA", tech: "Technik", players: "Personen", again: "Wieder buchen/spielen", call: "Gespräch" };
     const all = fb.feedback;
-    const kind = (f) => (f.variant === "spieler" ? "spieler" : f.paket === "solo" ? "solo" : "org");
+    const kind = (f) => (f.variant === "spieler" ? "spieler" : f.paket === "solo" ? "solo" : f.paket === "friends" ? "friends" : "org");
     const homeCount = all.filter((f) => f.home).length;
     const list = all.filter((f) => kind(f) === fbFilter);
     const item = (f) => `<div class="sess">
-        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${f.rating ? "★".repeat(f.rating) : "–"}${f.nps != null ? ` · Empfehlung ${f.nps}/10` : ""} · ${f.variant === "spieler" ? MS.esc(f.answers.team || "") + " · " + MS.esc(f.answers.geraet || "") : f.paket === "solo" ? "Mordsteam Solo" + (f.variant === "solo-replay" ? " · Wiederholung" : "") : MS.esc(f.firma || "–")}${f.answers.test === "ja" ? " (Test)" : ""}</b><span class="chip">${f.variant === "eb" ? "Early Bird" : f.variant === "spieler" ? "Spieler" : f.paket === "solo" ? "Solo" : "Organisator"} · ${pub[f.publish] || f.publish}</span></div>
+        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${f.rating ? "★".repeat(f.rating) : "–"}${f.nps != null ? ` · Empfehlung ${f.nps}/10` : ""} · ${f.variant === "spieler" ? MS.esc(f.answers.team || "") + " · " + MS.esc(f.answers.geraet || "") : f.paket === "friends" ? "Mordsteam Friends · " + MS.esc(f.answers.spieler || "") : f.paket === "solo" ? "Mordsteam Solo" + (f.variant === "solo-replay" ? " · Wiederholung" : "") : MS.esc(f.firma || "–")}${f.answers.test === "ja" ? " (Test)" : ""}</b><span class="chip">${f.variant === "eb" ? "Early Bird" : f.variant === "spieler" ? "Spieler" : f.paket === "solo" ? "Solo" : f.paket === "friends" ? "Friends" : "Organisator"} · ${pub[f.publish] || f.publish}</span></div>
         <div class="small">${new Date(f.created_at).toLocaleString("de-AT")}${f.name ? " · " + MS.esc(f.name) : ""}${f.email ? " · " + MS.esc(f.email) : ""}${f.paket && f.paket !== "solo" ? " · " + f.paket : ""}${f.publish === "name" ? ` · Name: <b>${MS.esc(f.publish_name || "")}</b>` : ""}</div>
         ${f.review ? `<p style="margin:8px 0"><i>„${MS.esc(f.review)}“</i></p>` : ""}
         <div class="small">${Object.entries(f.answers).filter(([k, v]) => v && !["runde", "team", "geraet", "test"].includes(k)).map(([k, v]) => `<b>${A[k] || k}:</b> ${MS.esc(v)}`).join("<br>")}</div>
@@ -180,7 +182,7 @@
       ${fbMsg ? `<p class="small" style="margin-top:8px">${fbMsg}</p>` : ""}
       ${fb.links.length ? `<p class="small" style="margin-top:10px"><b>Nicht per Mail zugestellt – Link selbst schicken:</b><br>${fb.links.map((l) => `${MS.esc(l.email || "")}: <a href="${l.link}" target="_blank" rel="noopener">${location.origin}${l.link}</a>`).join("<br>")}</p>` : ""}
       <p class="small" style="margin-top:10px">Startseite: <b>${homeCount}</b> Stimme(n) ausgewählt – ideal sind 2–3 kurze, echte Lobeshymnen. Unterseite: alle freigegebenen des Produkts (Teams bzw. Solo).</p>
-      <div class="chips-row" style="margin:12px 0">${[["org", "Organisatoren"], ["spieler", "Spieler (Teams)"], ["solo", "Solo"]].map(([k, l]) => `<button type="button" class="chipbtn ${fbFilter === k ? "on" : ""}" data-fbf="${k}">${l} (${cnt(k)})</button>`).join("")}</div>
+      <div class="chips-row" style="margin:12px 0">${[["org", "Organisatoren"], ["spieler", "Spieler (Teams)"], ["solo", "Solo"], ["friends", "Friends"]].map(([k, l]) => `<button type="button" class="chipbtn ${fbFilter === k ? "on" : ""}" data-fbf="${k}">${l} (${cnt(k)})</button>`).join("")}</div>
       <div class="list-sessions">${body || `<p class="muted">Noch kein Feedback.</p>`}</div></div>`;
   }
   function statsPanel(stats) {
@@ -209,8 +211,8 @@
       <div class="list-sessions">${orders.length ? orders.map((o) => {
         const c = o.contact || {}, l = c.liefer;
         return `<div class="sess">
-          <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${o.paket === "solo" ? "Mordsteam Solo" : MS.esc(o.firma || "–")}</b><span class="chip ${o.status === "fulfilled" ? "open" : ""}">${o.paket === "solo" && o.status === "fulfilled" ? "bezahlt · Code erstellt" : lbl[o.status] || o.status}</span></div>
-          <div class="mono">${new Date(o.created_at).toLocaleString("de-AT")} · ${o.paket === "solo" ? `SOLO · ${eur(o.amount_cents)}${o.solo_code ? ` · Solo-Code ${o.solo_code}` : ""}` : `${({ basis: "Basis", premium: "PREMIUM", plus: "PREMIUM PLUS" })[o.paket] || o.paket} · ${o.teams} Teams · ${eur(o.amount_cents)} · gekauft ${o.event_date}${o.join_code ? ` · Spielcode ${o.join_code} · Organisator ${o.org_code}` : ""}`}</div>
+          <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${o.paket === "solo" ? "Mordsteam Solo" : o.paket === "friends" ? "Mordsteam Friends" : MS.esc(o.firma || "–")}</b><span class="chip ${o.status === "fulfilled" ? "open" : ""}">${(o.paket === "solo" || o.paket === "friends") && o.status === "fulfilled" ? "bezahlt · Runde angelegt" : lbl[o.status] || o.status}</span></div>
+          <div class="mono">${new Date(o.created_at).toLocaleString("de-AT")} · ${o.paket === "solo" ? `SOLO · ${eur(o.amount_cents)}${o.solo_code ? ` · Solo-Code ${o.solo_code}` : ""}` : o.paket === "friends" ? `FRIENDS · ${o.teams} Personen · ${eur(o.amount_cents)}${o.friends_org ? ` · <a href="/spiel/friends.html?o=${o.friends_org}" target="_blank" rel="noopener">Organisator-Seite</a>` : ""}` : `${({ basis: "Basis", premium: "PREMIUM", plus: "PREMIUM PLUS" })[o.paket] || o.paket} · ${o.teams} Teams · ${eur(o.amount_cents)} · gekauft ${o.event_date}${o.join_code ? ` · Spielcode ${o.join_code} · Organisator ${o.org_code}` : ""}`}</div>
           <div class="small">${MS.esc(c.name || "")} · <a href="mailto:${MS.esc(c.email || "")}">${MS.esc(c.email || "")}</a>${c.telefon ? " · " + MS.esc(c.telefon) : ""}${c.rechnung_firma ? " · Rechnung: " + MS.esc(c.rechnung_firma) : ""}${c.lang ? " · Spielsprache " + c.lang.toUpperCase() : ""}${c.site ? " · Seite " + c.site.toUpperCase() : ""}${c.kunde ? " · " + (c.kunde === "b2c" ? "Privat" : "Firma/Verein") : ""}${c.fiktiv ? " · fiktiv" : ""}${c.earlybird ? ` · <b style="color:var(--red)">EARLY BIRD −${c.earlybird} % (Feedback einholen!)</b>` : ""}</div>
         </div>`;
       }).join("") : `<p class="muted">Noch keine Bestellungen.</p>`}</div></div>`;
@@ -228,6 +230,14 @@
         ${created.quick ? `<p class="small" style="margin-top:8px"><b>${TN[created.quick.tier]}, ${TMIN[created.quick.tier]} Min. · ${created.quick.land} · ${created.quick.lang.toUpperCase()}</b> · ${MS.esc(created.quick.firma)} (${MS.esc(created.quick.stadt)}) · Opfer: ${MS.esc(created.quick.opfer)} · Oberboss: ${MS.esc(created.quick.boss)} · Verdächtige: ${created.quick.people.map(MS.esc).join(", ")} · Täter/in: per Zufall (steht in der Auflösung)</p>
         <div class="actions-row" style="margin-top:10px"><a class="btn btn-ink" href="/spiel/leitung.html" target="_blank" rel="noopener">Organisator-Ansicht öffnen</a><a class="btn btn-line" href="/spiel/?code=${created.join_code}&lang=${created.quick.lang}" target="_blank" rel="noopener">Als Team beitreten</a></div>
         <p class="small" style="margin-top:8px">${created.quick.custom ? "Der Fall ist noch nicht geöffnet. In der Organisator-Ansicht zuerst „Fall öffnen“, dann Teams anmelden lassen und „Fall starten“." : "Der Fall ist geöffnet. Teams anmelden lassen, dann in der Organisator-Ansicht „Fall starten“."}</p>` : ""}</div>` : ""}
+      <div class="panel"><div class="eyebrow">Mordsteam Friends · Testgruppe</div>
+        <p style="margin:8px 0 14px">Legt eine Gruppe „Letzte Runde auf der Hütte“ mit Testnamen (Anna, Bernd, Clara …) an. Du bekommst einen Organisator-Link und einen Einladungslink. Mit mehreren Browserfenstern kannst du mehrere Spieler spielen; in Testgruppen darf der Organisator jederzeit auflösen.</p>
+        <div class="actions-row"><label class="small">Spieler <select id="frn">${[4, 5, 6, 7, 8].map((n) => `<option ${n === 6 ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+          <label class="small">Spielart <select id="frm"><option value="live">gleichzeitig</option><option value="week">über 3 Tage</option></select></label>
+          <button class="btn btn-red" id="frnew">Friends-Testgruppe anlegen</button></div>
+        ${friendsMsg ? `<div style="margin-top:12px">${friendsMsg}</div>` : ""}
+        ${friendsList && friendsList.groups.length ? `<details style="margin-top:12px"><summary>Letzte Friends-Gruppen (${friendsList.groups.length})</summary><table class="grid" style="margin-top:8px"><tr><th>Gruppe</th><th>Spielart</th><th>Status</th><th>Verbunden</th><th>Gelöst</th><th>Ø Endzeit</th><th>Links</th></tr>
+          ${friendsList.groups.map((x) => `<tr><td class="mono">${x.id}${x.test_mode ? " (Test)" : ""}</td><td>${x.mode === "live" ? "gleichzeitig" : "Woche"}</td><td>${({ ready: "wartet auf Start", running: "läuft", revealed: "aufgelöst" })[x.status] || x.status}</td><td>${x.joined} / ${x.n}</td><td>${x.solved}</td><td class="mono">${x.avg ? MS.dur(x.avg) : "–"}</td><td><a href="/spiel/friends.html?o=${x.org_token}" target="_blank" rel="noopener">Organisator</a> · <a href="/spiel/friends.html?e=${x.invite}" target="_blank" rel="noopener">Einladung</a></td></tr>`).join("")}</table></details>` : ""}</div>
       <div class="panel"><div class="eyebrow">Mordsteam Solo · Testcode</div>
         <p style="margin:8px 0 14px">Legt einen Solo-Code „Nachtzug nach Venedig“ im Testmodus an (eigene Wertung, getrennt von echten Spielen; mit „+5 Min.“-Knopf).</p>
         <div class="actions-row"><button class="btn btn-red" id="solonew" data-test="1">Solo-Testcode anlegen</button><button class="btn btn-line" id="solonew2" data-test="0">Solo-Code für Tester (ohne Vorspulen)</button></div>
@@ -311,6 +321,16 @@
       } catch (e2) { soloMsg = `<p class="err">${MS.esc(e2.message)}</p>`; }
       load();
     });
+    const frnew = document.getElementById("frnew");
+    if (frnew) frnew.onclick = async () => {
+      frnew.disabled = true;
+      try {
+        const r = await fetch("/api/friends/admin/group", { method: "POST", headers: { "content-type": "application/json", ...H() }, body: JSON.stringify({ n: Number(document.getElementById("frn").value), mode: document.getElementById("frm").value, days: 3, test: true }) });
+        const d = await r.json(); if (!r.ok) throw new Error(d.error || "Fehler");
+        friendsMsg = `<p style="margin:0">Friends-Testgruppe <b class="mono">${d.id}</b></p><p class="mono small">Organisator: ${location.origin}/spiel/friends.html?o=${d.org}<br>Einladung: ${location.origin}/spiel/friends.html?e=${d.invite}</p><div class="actions-row" style="margin-top:8px"><a class="btn btn-ink" href="/spiel/friends.html?o=${d.org}" target="_blank" rel="noopener">Organisator-Ansicht öffnen</a><a class="btn btn-line" href="/spiel/friends.html?e=${d.invite}" target="_blank" rel="noopener">Als Spieler beitreten</a></div>`;
+      } catch (e2) { friendsMsg = `<p class="err">${MS.esc(e2.message)}</p>`; }
+      load();
+    };
     const ql = document.getElementById("qlang"), qd = document.getElementById("qland");
     if (ql) ql.onchange = () => (qLang = ql.value);
     if (qd) qd.onchange = () => (qLand = qd.value);

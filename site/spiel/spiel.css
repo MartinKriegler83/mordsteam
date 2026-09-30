@@ -488,3 +488,15 @@ button.btn-big{margin-top:14px}
 .tipbtn.on{background:#DDF1E3;border-color:#1F6B3A;color:#1F6B3A}
 .so-time{font-family:var(--mono);font-size:22px;letter-spacing:3px;max-width:150px}
 .so-time + .small{display:block;margin-top:6px}
+/* ---------- Friends ---------- */
+.fr-names{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:18px 0}
+.fr-name{display:flex;flex-direction:column;gap:4px;padding:14px;border:2px solid var(--ink);border-radius:6px;background:#FBF8F0;text-align:left;font:inherit;cursor:pointer}
+.fr-name b{font-size:18px}.fr-name span{font-size:12.5px;color:#5A5D66}
+.fr-name:hover,.fr-name:focus-visible{background:#FFF4CF}
+.fr-roster{list-style:none;padding:0;margin:10px 0 16px;display:grid;gap:6px}
+.fr-roster li{display:flex;justify-content:space-between;gap:10px;padding:9px 12px;background:var(--paper-2);border-radius:4px}
+.fr-roster li.me{outline:2px solid var(--red)}
+.fr-roster span{font-size:13.5px;color:#5A5D66}
+.fr-hush{margin:18px 0;padding:12px 14px;background:#FFE58A;border-radius:4px;transform:rotate(-1deg)}
+.fr-rank tr.me td{background:#FFF4CF}.fr-rank tr.culprit td:nth-child(2) b{color:var(--red)}
+.fr-link{display:flex;gap:8px;margin:6px 0}.fr-link input{flex:1;min-width:0;font-family:var(--mono);font-size:13px;padding:10px;border:1px solid var(--line);border-radius:6px;background:#FBF8F0}

@@ -470,3 +470,11 @@ p.small{font-size:14px;color:#5A5D66}
 .game h3.gname .gp{font-size:1.25em;margin-left:.75em;vertical-align:baseline;color:var(--ink)}
 .summary .sumrow{display:flex;justify-content:space-between;gap:14px;align-items:baseline;font-size:16px;margin-bottom:6px}
 .summary .sumrow b{font-family:var(--mono);font-size:20px;white-space:nowrap}
+/* Friends-Bestellung: Personen */
+.fr-people{display:grid;gap:10px;margin:6px 0 12px}
+.fr-person{display:grid;grid-template-columns:28px 1fr;gap:6px 10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.fr-person .fr-nr{grid-row:span 2;font-family:var(--serif);font-weight:900;font-size:22px;color:var(--red);text-align:center}
+.fr-person input,.fr-person select{width:100%;min-width:0}
+@media (min-width:700px){.fr-person{grid-template-columns:28px 1fr 1.4fr}.fr-person .fr-nr{grid-row:auto}}
+.fr-person input,.fr-person select{font:inherit;padding:11px 12px;border:1.5px solid #B9B09C;border-radius:6px;background:#fff;color:var(--ink);min-height:46px}
+.fr-person input:focus,.fr-person select:focus{outline:3px solid rgba(179,38,30,.35);border-color:var(--red)}

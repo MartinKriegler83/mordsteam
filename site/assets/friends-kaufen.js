@@ -1,0 +1,77 @@
+// Mordsteam Friends bestellen (deutsch unter /friends-kaufen.html, englisch unter /en/friends-buy.html)
+(function () {
+  "use strict";
+  const EN = document.documentElement.lang === "en";
+  const T = (de, en) => (EN ? en : de);
+  const form = document.getElementById("friends"), err = document.getElementById("err"), btn = document.getElementById("submit");
+  const people = document.getElementById("people");
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+  const q = new URLSearchParams(location.search);
+  if (q.get("abgebrochen")) document.getElementById("cancelled").hidden = false;
+  let M = { open: true, earlybird: null, price: { base: 2900, extra: 500, included: 4 }, quirks: [] }, open = true;
+  const eur = (c) => (c / 100).toLocaleString(EN ? "en-IE" : "de-AT", { minimumFractionDigits: 2 }) + (EN ? "" : " €");
+  const money = (c) => (EN ? "€" + eur(c) : eur(c));
+  const priceOf = (n) => M.price.base + Math.max(0, n - M.price.included) * M.price.extra;
+  const draftKey = "ms_friends_draft";
+  function rows() {
+    const n = Number(form.n.value), keep = [...people.querySelectorAll(".fr-person")].map((r) => ({ name: r.querySelector("input").value, quirk: r.querySelector("select").value }));
+    let saved = []; try { saved = JSON.parse(localStorage.getItem(draftKey) || "[]"); } catch {}
+    const src = keep.length ? keep : saved;
+    people.innerHTML = Array.from({ length: n }, (_, i) => {
+      const v = src[i] || {};
+      return `<div class="fr-person"><span class="fr-nr">${i + 1}</span>
+        <input maxlength="30" autocomplete="off" placeholder="${T("Vorname", "First name")}" aria-label="${T("Name Person", "Name person")} ${i + 1}" value="${esc(v.name || "")}">
+        <select aria-label="${T("Eigenheit Person", "Quirk person")} ${i + 1}"><option value="">${T("Eigenheit wählen …", "Choose a quirk …")}</option>${M.quirks.map(([k, l]) => `<option value="${k}" ${v.quirk === k ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></div>`;
+    }).join("");
+    paint();
+  }
+  function save() { try { localStorage.setItem(draftKey, JSON.stringify([...people.querySelectorAll(".fr-person")].map((r) => ({ name: r.querySelector("input").value, quirk: r.querySelector("select").value })))); } catch {} }
+  function paint() {
+    const n = Number(form.n.value), full = priceOf(n);
+    const eb = M.earlybird && form.earlybird.checked, pay = eb ? Math.round(full * (100 - M.earlybird.prozent) / 100) : full;
+    document.getElementById("sofortbox").hidden = form.kunde.value !== "b2c";
+    document.getElementById("daysbox").hidden = form.mode.value !== "week";
+    document.getElementById("sumtxt").textContent = T(`Mordsteam Friends 001 „Letzte Runde auf der Hütte“ · ${n} Personen · 45 Minuten · Spielsprache Deutsch`, `Mordsteam Friends 001 “Last Round at the Hut” · ${n} people · 45 minutes · game language German`);
+    document.getElementById("sumprice").textContent = money(full);
+    document.getElementById("ebrow").hidden = !eb;
+    if (eb) document.getElementById("ebprice").textContent = money(pay - full);
+    document.getElementById("voucherhint").hidden = !!eb;
+    btn.innerHTML = T("Zahlungspflichtig bestellen – ", "Order and pay – ") + money(pay).replace(" ", "&nbsp;");
+  }
+  form.n.addEventListener("change", () => { save(); rows(); });
+  people.addEventListener("input", save); people.addEventListener("change", save);
+  form.addEventListener("change", paint);
+  fetch("/api/shop/friends-meta").then((r) => r.json()).then((m) => {
+    M = m; open = !!m.open;
+    document.getElementById("closed").hidden = open; if (!open) btn.disabled = true;
+    if (m.earlybird) { document.getElementById("ebbox").hidden = false; document.querySelectorAll(".ebp").forEach((x) => (x.textContent = m.earlybird.prozent)); }
+    rows();
+  }).catch(() => rows());
+  function fail(msg, el) { err.textContent = msg; err.hidden = false; if (el && el.focus) el.focus(); }
+  form.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    err.hidden = true;
+    const list = [...people.querySelectorAll(".fr-person")].map((r) => ({ name: r.querySelector("input").value.trim(), quirk: r.querySelector("select").value, el: r }));
+    const emptyName = list.find((p) => !p.name), emptyQ = list.find((p) => !p.quirk);
+    if (emptyName) return fail(T("Bitte für jede Person einen Namen eintragen.", "Please enter a name for every person."), emptyName.el.querySelector("input"));
+    if (emptyQ) return fail(T("Bitte für jede Person eine Eigenheit auswählen.", "Please choose a quirk for every person."), emptyQ.el.querySelector("select"));
+    const low = list.map((p) => p.name.toLowerCase());
+    if (new Set(low).size !== low.length) return fail(T("Zwei Personen haben denselben Namen. Bitte unterscheidbar machen, z. B. mit Initial.", "Two people have the same name. Please make them distinguishable, e.g. with an initial."));
+    if (!form.zustimmung.checked) return fail(T("Bitte bestätigen, dass alle Genannten einverstanden sind.", "Please confirm that everyone named has agreed."), form.zustimmung);
+    const contact = { name: form.c_name.value.trim(), email: form.c_email.value.trim(), kunde: form.kunde.value };
+    const consent = { zustimmung: true, sofort: form.sofort.checked, agb: form.agb.checked };
+    if (contact.name.length < 2) return fail(T("Bitte deinen Namen angeben.", "Please enter your name."), form.c_name);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) return fail(T("Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."), form.c_email);
+    if (!contact.kunde) return fail(T("Bitte angeben, ob du als Privatperson oder für ein Unternehmen bestellst.", "Please tell us whether you are ordering as a private individual or for a company."), form.kunde[0]);
+    if (contact.kunde === "b2c" && !consent.sofort) return fail(T("Bitte bestätigen, dass wir eure Runde gleich nach dem Bezahlen anlegen dürfen.", "Please confirm that we may set up your round right after payment."), form.sofort);
+    if (!consent.agb) return fail(T("Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."), form.agb);
+    btn.disabled = true; const label = btn.innerHTML; btn.textContent = T("Weiter zur Zahlung …", "On to payment …");
+    try {
+      const r = await fetch("/api/shop/friends", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: EN ? "en" : "de", players: list.map((p) => ({ name: p.name, quirk: p.quirk })), mode: form.mode.value, days: Number(form.days.value), earlybird: !!(M.earlybird && form.earlybird.checked), contact, consent }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.redirect) throw new Error(d.error || T("Das hat nicht geklappt.", "That didn't work."));
+      try { localStorage.removeItem(draftKey); } catch {}
+      location.href = d.redirect;
+    } catch (e) { fail(e.message); btn.disabled = !open; btn.innerHTML = label; }
+  });
+})();

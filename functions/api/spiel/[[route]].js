@@ -617,7 +617,10 @@ async function adminCreate(request, env) {
 async function adminOrders(env) {
   const base = "SELECT o.id, o.created_at, o.status, o.paket, o.teams, o.amount_cents, o.event_date, o.contact, o.paid_at, o.shipped_at, json_extract(o.vars,'$.FIRMA') AS firma, s.join_code, s.org_code";
   const tail = " FROM orders o LEFT JOIN sessions s ON s.id=o.session_id ORDER BY o.created_at DESC LIMIT 200";
-  const { results } = await env.DB.prepare(base + ", (SELECT t.code FROM solo_tickets t WHERE t.order_id=o.id) AS solo_code" + tail).all()
+  const solo = ", (SELECT t.code FROM solo_tickets t WHERE t.order_id=o.id) AS solo_code";
+  const friends = ", (SELECT g.org_token FROM friends_groups g WHERE g.order_id=o.id) AS friends_org";
+  const { results } = await env.DB.prepare(base + solo + friends + tail).all()
+    .catch(() => env.DB.prepare(base + solo + tail).all())
     .catch(() => env.DB.prepare(base + tail).all());
   return json({ orders: results.map((o) => ({ ...o, contact: JSON.parse(o.contact || "{}") })) });
 }

@@ -43,12 +43,29 @@
       '<div class="prose"><p>'+T('Die Uhr startet erst, wenn du auf „Ermittlung starten“ tippst – dann hast du 30 Minuten bis Udine. Link zum Spielen: ','The clock only starts when you tap “Start investigation” – then you have 30 minutes to Udine. Link to play: ')+'<a href="'+esc(link)+'">'+esc(link.replace(/^https?:\/\//,""))+'</a></p>'+
       '<p>'+T('Die Rechnung kommt per E-Mail von unserem Zahlungsanbieter Stripe. Fragen? ','The invoice will be emailed by our payment provider Stripe. Questions? ')+MAIL+'</p>'+(d.nr?'<p class="small">'+T('Bestellnummer','Order number')+': <b>'+esc(d.nr)+'</b></p>':'')+'</div>');
   }
+  function friendsDone(d){
+    var inv=location.origin+"/spiel/friends.html?e="+d.invite, org=location.origin+"/spiel/friends.html?o="+d.org_token;
+    var mode=d.mode==="week"?T("über "+d.days+" Tage – jeder spielt, wann er Zeit hat","over "+d.days+" days – everyone plays when they have time"):T("gleichzeitig – du startest den Fall für alle","all at once – you start the case for everyone");
+    show('<div class="eyebrow">'+T("Bezahlt · Mordsteam Friends","Paid · Mordsteam Friends")+'</div>'+
+      '<h1>'+T("Die Hütte wartet.","The hut is waiting.")+'</h1>'+
+      '<p class="lead">'+T('„Letzte Runde auf der Hütte“ für '+d.teams+' Personen, gespielt '+mode+'. 12 Monate spielbar, einmal startbar. Wir haben dir beide Links auch per E-Mail geschickt.','“Last Round at the Chalet” (game language German) for '+d.teams+' people, played '+mode+'. Playable for 12 months, can be started once. We have also emailed you both links.')+'</p>'+
+      '<div class="codes">'+
+      '<div class="codecard"><small>'+T("1 · EINLADUNGSLINK FÜR ALLE","1 · INVITATION LINK FOR EVERYONE")+'</small><p style="word-break:break-all"><a href="'+esc(inv)+'">'+esc(inv.replace(/^https?:\/\//,""))+'</a></p><p>'+T("Schick ihn in eure Gruppe. Jeder tippt auf seinen Namen – auch du, wenn du mitspielst.","Send it to your group. Everyone taps their name – you too, if you're playing.")+'</p><p><button type="button" class="btn btn-ink" id="cpinv">'+T("Link kopieren","Copy link")+'</button></p></div>'+
+      '<div class="codecard dark"><small>'+T("2 · DEINE ORGANISATOR-SEITE · NICHT WEITERGEBEN","2 · YOUR ORGANISER PAGE · DON'T PASS ON")+'</small><p>'+T("Hier siehst du, wer schon da ist, und startest den Fall.","Here you can see who has joined and start the case.")+'</p><p><a class="btn btn-red" href="'+esc(org)+'">'+T("Organisator-Seite öffnen","Open organiser page")+'</a></p></div>'+
+      '</div>'+
+      (d.earlybird?'<p class="note">'+T('Early Bird: Danke, dass ihr uns helft! Nach der Auflösung fragt euch das Spiel direkt nach eurem Feedback.','Early bird: thanks for helping us! After the solution, the game will ask you for your feedback right away.')+'</p>':'')+
+      '<div class="prose"><p>'+T('Die Rechnung kommt per E-Mail von unserem Zahlungsanbieter Stripe. Fragen? ','The invoice will be emailed by our payment provider Stripe. Questions? ')+MAIL+'</p>'+(d.nr?'<p class="small">'+T('Bestellnummer','Order number')+': <b>'+esc(d.nr)+'</b></p>':'')+'</div>');
+    var b=document.getElementById("cpinv");
+    if(b) b.onclick=function(){ if(navigator.share){navigator.share({title:"Mordsteam Friends",text:T("Einer von uns war's. Such dir deinen Namen aus:","One of us did it. Pick your name:"),url:inv}).catch(function(){});} else if(navigator.clipboard){navigator.clipboard.writeText(inv).then(function(){b.textContent=T("Kopiert ✓","Copied ✓");});} };
+    if(b&&navigator.share) b.textContent=T("Link teilen","Share link");
+  }
   function poll(){
     if(!o||!k){show('<h1>'+T("Bestellung nicht gefunden","Order not found")+'</h1><p class="lead">'+T("Der Link ist unvollständig. Schreibt uns an ","The link is incomplete. Write to us at ")+MAIL+'.</p>');return;}
     fetch("/api/shop/status?o="+encodeURIComponent(o)+"&k="+encodeURIComponent(k)).then(function(r){return r.json().then(function(d){return [r,d];});}).then(function(x){
       var r=x[0], d=x[1];
       if(!r.ok){show('<h1>'+T("Bestellung nicht gefunden","Order not found")+'</h1><p class="lead">'+esc(d.error||"")+' '+T("Schreibt uns an ","Write to us at ")+MAIL+'.</p>');return;}
       if(d.produkt==="solo"&&d.status==="fulfilled"&&d.solo_code) return soloDone(d);
+      if(d.produkt==="friends"&&d.status==="fulfilled"&&d.invite) return friendsDone(d);
       if(d.status==="fulfilled"&&d.join_code) return done(d);
       if(++tries>40){show('<div class="eyebrow">'+T("Bestellung","Order")+'</div><h1>'+T("Zahlung wird noch bestätigt","Payment is still being confirmed")+'</h1><p class="lead">'+T("Das dauert ungewöhnlich lange. Ladet die Seite in ein paar Minuten neu – oder schreibt uns an "+MAIL+". Ihr bezahlt sicher nicht doppelt.","This is taking unusually long. Reload the page in a few minutes – or write to us at "+MAIL+". You definitely won't be charged twice.")+'</p>');return;}
       setTimeout(poll,tries<10?1500:4000);
