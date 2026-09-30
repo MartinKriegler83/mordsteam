@@ -17,6 +17,7 @@ import { runFeedbackMails, feedbackInfo, saveFeedback, publicReviews } from "../
 import { handleContact } from "../../../lib/contact.js";
 import { handleWithdraw, orderNo } from "../../../lib/withdraw.js";
 import { sendMail as opsMail } from "../../../lib/ops.js";
+import { enrichPayment } from "../../../lib/accounting.js";
 import { createSoloTicket, migrateSolo } from "../../../lib/solo.js";
 import { createFriendsGroup, friendsGroupOfOrder, friendsPrice, FRIENDS_PRICE, FRIENDS_PRICE_PLUS, FRIENDS_CASES, friendsCron } from "../../../lib/friends.js";
 
@@ -609,6 +610,7 @@ async function recordPayment(env, id, cs) {
       const inv = await stripe(env, "GET", `invoices/${invId}`);
       if (inv && inv.number) await env.DB.prepare("UPDATE orders SET invoice_no=? WHERE id=?").bind(inv.number, id).run();
     }
+    if (cs && cs.id) await enrichPayment(env, id, cs.id);
   } catch { /* Buchhaltungsdaten dürfen die Bestellung nie blockieren */ }
 }
 

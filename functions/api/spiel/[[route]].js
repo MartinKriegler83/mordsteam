@@ -1,5 +1,6 @@
 // Cloudflare Pages Function: /api/spiel/*
 // Benötigt: D1-Binding "DB" und die geheime Umgebungsvariable "ADMIN_KEY".
+import { accountingSummary, migrateAccounting, region, REGION_LABEL } from "../../../lib/accounting.js";
 import {
   CASES, caseOf, langOf, RULES, json, fail, randInt, randomToken, randomCode, esc, viennaDate,
   buildVars, render, checkAnswers, hintTimes, hardEnd, refreshStatus, finishIfAllSolved, recordStats, expired, purgeSession, ranking, teamScore,
@@ -55,6 +56,7 @@ export async function onRequest(ctx) {
       if (route === "admin/order-shipped" && method === "POST") return adminShipped(request, env);
       if (route === "admin/feedback" && method === "GET") return adminFeedback(env);
       if (route === "admin/export" && method === "GET") return adminExport(request, env);
+      if (route === "admin/buchhaltung" && method === "GET") { const u = new URL(request.url); return json(await accountingSummary(env, Date.parse((u.searchParams.get("von") || "2000-01-01") + "T00:00:00+02:00"), Date.parse((u.searchParams.get("bis") || "2999-12-31") + "T23:59:59+02:00"))); }
       if (route === "admin/ops" && method === "GET") return json(await opsSummary(env));
       if (route === "admin/feedback-run" && method === "POST") { const b = await body(request); return json({ sent: await runFeedbackMails(env, new URL(request.url).origin, { force: !!b.force }) }); }
       if (route === "admin/feedback-approve" && method === "POST") {
@@ -655,20 +657,25 @@ async function adminStats(request, env) {
 // Buchhaltung: bezahlte Bestellungen als CSV (Spalten wie im Tabellenblatt „Einnahmen“), Excel-tauglich (; und Komma)
 async function adminExport(request, env) {
   try { await env.DB.prepare("ALTER TABLE orders ADD COLUMN invoice_no TEXT").run(); } catch {}
+  await migrateAccounting(env);
   const u = new URL(request.url);
   const von = u.searchParams.get("von") || "2000-01-01", bis = u.searchParams.get("bis") || "2999-12-31";
   const from = Date.parse(von + "T00:00:00+02:00"), to = Date.parse(bis + "T23:59:59+02:00");
+  await accountingSummary(env, from, to);   // holt fehlende Stripe-Gebühren und Rechnungsländer nach
   const { results } = await env.DB.prepare(
     "SELECT * FROM orders WHERE status IN ('paid','fulfilling','fulfilled') AND paid_at BETWEEN ? AND ? ORDER BY paid_at").bind(from, to).all();
-  const P = { basis: "Basic", premium: "Premium", plus: "Premium Plus", solo: "Mordsteam Solo" };
+  const P = { basis: "Teams Basic", premium: "Teams Premium", plus: "Teams Premium Plus", solo: "Mordsteam Solo", friends: "Friends Krimiabend", "friends-plus": "Friends Plus" };
   const q = (x) => { const t = String(x ?? ""); return /[;"\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
   const d = (ms) => new Intl.DateTimeFormat("de-AT", { timeZone: "Europe/Vienna", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(ms));
-  const lines = [["Datum (bezahlt)", "Rechnungsnr. (Stripe)", "Bestell-ID", "Kunde / Firma", "Paket", "Teams", "Early Bird", "Betrag bezahlt (€)", "davon USt (€)", "Zahlungsweg", "Bemerkung"].join(";")];
+  const e = (c) => (c == null ? "" : (c / 100).toFixed(2).replace(".", ","));
+  const lines = [["Datum (bezahlt)", "Rechnungsnr. (Stripe)", "Bestell-ID", "Kunde / Firma", "Produkt", "Anzahl", "Early Bird", "Kundenart", "Land", "Region", "Einnahme brutto (€)", "Stripe-Gebühr (€)", "Auszahlung netto (€)", "davon USt (€)", "Zahlungsweg"].join(";")];
   for (const o of results) {
     const c = JSON.parse(o.contact || "{}");
     const firma = c.rechnung_firma || (c.fiktiv ? "" : (JSON.parse(o.vars || "{}").FIRMA || ""));
-    lines.push([d(o.paid_at), o.invoice_no || "", o.id.slice(0, 8), [c.name, firma].filter(Boolean).join(" / "), P[o.paket] || o.paket, o.teams,
-      c.earlybird ? "Ja" : "Nein", (o.amount_cents / 100).toFixed(2).replace(".", ","), "0,00", o.stripe_session ? "Stripe" : "Test (ohne Zahlung)", ""].map(q).join(";"));
+    const kind = c.kunde === "b2b" || o.tax_id ? "Unternehmen" : "Privat";
+    const prod = o.paket === "solo" ? `Solo ${String(c.produkt || "solo-001").replace("solo-", "")}` : P[o.paket] || o.paket;
+    lines.push([d(o.paid_at), o.invoice_no || "", o.id.slice(0, 8), [c.name, firma].filter(Boolean).join(" / "), prod, o.teams,
+      c.earlybird ? "Ja" : "Nein", kind, o.bill_country || "", REGION_LABEL[region(o.bill_country)], e(o.amount_cents), e(o.fee_cents), e(o.net_cents), "0,00", o.stripe_session ? "Stripe" : "Test (ohne Zahlung)"].map(q).join(";"));
   }
   return new Response("\ufeff" + lines.join("\r\n"), { headers: { "content-type": "text/csv; charset=utf-8",
     "content-disposition": `attachment; filename="mordsteam-einnahmen-${von}-bis-${bis}.csv"`, "cache-control": "no-store" } });

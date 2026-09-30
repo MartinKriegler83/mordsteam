@@ -207,7 +207,9 @@
       <div class="actions-row" style="margin:8px 0;align-items:end;flex-wrap:wrap;gap:8px">
         <label class="small">von <input type="date" id="exvon" value="${y}-01-01"></label>
         <label class="small">bis <input type="date" id="exbis" value="${y}-12-31"></label>
-        <button class="btn btn-line" id="exbtn" type="button">Einnahmen exportieren (CSV)</button></div>
+        <button class="btn btn-line" id="exbtn" type="button">Einnahmen exportieren (CSV)</button>
+        <button class="btn btn-line" id="bhbtn" type="button">Buchhaltung: Übersicht</button></div>
+      <div id="bhout"></div>
       <p style="margin:8px 0">${paid.length} bezahlt · Umsatz ${eur(paid.reduce((a, o) => a + o.amount_cents, 0))}</p>
       <div class="list-sessions">${orders.length ? orders.map((o) => {
         const c = o.contact || {}, l = c.liefer;
@@ -349,6 +351,26 @@
       if (!r.ok) { alert("Export fehlgeschlagen."); return; }
       const a2 = document.createElement("a"); a2.href = URL.createObjectURL(await r.blob()); a2.download = `mordsteam-einnahmen-${v}-bis-${b2}.csv`;
       document.body.append(a2); a2.click(); a2.remove();
+    };
+    const bhb = document.getElementById("bhbtn");
+    if (bhb) bhb.onclick = async () => {
+      const out = document.getElementById("bhout"); out.innerHTML = `<p class="small">Lade … (holt fehlende Gebühren und Länder bei Stripe)</p>`;
+      try {
+        const v = document.getElementById("exvon").value, b2 = document.getElementById("exbis").value;
+        const d = await MS.api("GET", `admin/buchhaltung?von=${v}&bis=${b2}`, null, H());
+        const eu = (c) => (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 }) + " €";
+        const RL = { inland: "Inland (AT)", eu: "EU-Ausland", drittland: "Nicht-EU-Ausland", unbekannt: "Land unbekannt" };
+        const order = ["unternehmen:inland", "unternehmen:eu", "unternehmen:drittland", "unternehmen:unbekannt", "privat:inland", "privat:eu", "privat:drittland", "privat:unbekannt"];
+        const G = Object.fromEntries(d.groups.map((g) => [g.kunde + ":" + g.region, g]));
+        const rows = order.filter((k) => G[k] || !k.endsWith("unbekannt")).map((k) => { const g = G[k] || { count: 0, gross: 0, fee: 0, net: 0 }; const [kd, rg] = k.split(":");
+          return `<tr><td>${kd === "unternehmen" ? "Unternehmen" : "Privat"}</td><td>${RL[rg]}</td><td>${g.count}</td><td class="mono">${eu(g.gross)}</td><td class="mono">${eu(g.fee)}</td><td class="mono">${eu(g.net)}</td></tr>`; }).join("");
+        const sum = d.groups.reduce((a, g) => ({ c: a.c + g.count, g: a.g + g.gross, f: a.f + g.fee, n: a.n + g.net }), { c: 0, g: 0, f: 0, n: 0 });
+        const pct = Math.round((d.eu_b2c.cents / d.eu_b2c.limit) * 100);
+        out.innerHTML = `<table class="grid small" style="margin-top:10px"><tr><th>Kundenart</th><th>Region</th><th>Anzahl</th><th>Einnahmen brutto</th><th>Stripe-Gebühren</th><th>Auszahlung netto</th></tr>${rows}
+          <tr><th colspan="2">Summe</th><th>${sum.c}</th><th class="mono">${eu(sum.g)}</th><th class="mono">${eu(sum.f)}</th><th class="mono">${eu(sum.n)}</th></tr></table>
+          <p class="small" style="margin-top:8px"><b>EU-Privatkunden ${d.eu_b2c.year}:</b> ${eu(d.eu_b2c.cents)} von 10.000,00 € (${pct} %)${pct >= 80 ? ` <b style="color:var(--red)">– Schwelle fast erreicht: mit Steuerberater klären (OSS)!</b>` : ""}</p>
+          <p class="small">Region nach dem Rechnungsland aus Stripe. Unternehmen = als Unternehmen bestellt oder UID angegeben. Stripe-Gebühren sind eigene Ausgaben (Rechnung bzw. Gebührenaufstellung von Stripe).</p>`;
+      } catch (e2) { out.innerHTML = `<p class="err">${MS.esc(e2.message)}</p>`; }
     };
     const stc = document.getElementById("stattests");
     if (stc) stc.onchange = () => { statTests = stc.checked; load(); };
