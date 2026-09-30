@@ -132,7 +132,7 @@
       <p class="so-pct">Die Auflösung und die Rangliste kommen für alle gleichzeitig, ${when}.</p>
       <div class="fr-hush"><b>Pssst – nichts verraten!</b> Wer anderen hilft, macht sich selbst in der Rangliste schlechter.</div>
       <h3>Wer schon fertig ist</h3>${roster(g)}
-      <p class="small">Diese Seite aktualisiert sich von selbst.</p>
+      <p class="small">${g.mode === "live" ? "Diese Seite aktualisiert sich von selbst." : "Du kannst die Seite ruhig schließen: Sobald die Auflösung da ist, bekommt euer Organisator eine E-Mail und schickt sie euch. Mit deinem Einladungslink siehst du sie dann jederzeit."}</p>
     </section>`;
   }
 
@@ -378,7 +378,7 @@
       <ul class="fr-roster">${g.players.map((p) => `<li><b>${p.name}</b><span>${p.done ? "✓ fertig" : p.playing ? "ermittelt" : p.joined ? "verbunden" : "noch nicht da"}</span></li>`).join("")}</ul>
       ${g.status === "ready" ? `<p class="muted">${g.mode === "live" ? `Wenn alle da sind, startest du den Fall für alle gleichzeitig. Die Uhr läuft dann ${g.limit_min} Minuten.` : `Mit dem Start beginnen die ${g.days} Tage. Jeder spielt, wann er will – die Auflösung kommt für alle gleichzeitig.`}</p>
         <button type="button" class="btn btn-red btn-big" id="start">${g.mode === "live" ? "Fall für alle starten" : `${g.days} Tage starten`}</button>` : ""}
-      ${g.status === "running" ? `<p class="muted">Auflösung ${g.mode === "live" ? "sobald alle fertig sind, spätestens" : "sobald alle fertig sind, spätestens"} ${fmtDate(g.deadline)}.</p>
+      ${g.status === "running" ? `<p class="muted">Auflösung sobald alle fertig sind, spätestens ${fmtDate(g.deadline)}.${g.mode === "live" ? "" : " Du bekommst dann eine E-Mail mit dem Link für eure Gruppe."}</p>
         ${g.can_reveal ? `<button type="button" class="btn btn-red" id="reveal">Auflösung jetzt zeigen${g.test && done < n ? " (Test)" : ""}</button>` : ""}` : ""}
       ${g.reveal ? `<h3 style="margin-top:22px">Es war ${g.reveal.culprit}</h3><p>${g.reveal.text}</p>${rankTable(g.reveal, -1)}` : ""}
       ${msg ? `<p class="err">${esc(msg)}</p>` : ""}

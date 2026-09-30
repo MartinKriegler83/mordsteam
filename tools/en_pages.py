@@ -306,10 +306,10 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <div class="sheet">
 <div class="mast"><span>ZIRBENBLICK CHALET · 1,640 M</span><span>SATURDAY, 7:40 AM</span></div>
 <div class="headline">Landlord found dead in the sauna</div>
-<p>A weekend in the mountains, a rented chalet, a landlord with an embarrassing vlog. In the morning he lies dead in the sauna – the door bolted from outside. Every one of you had a reason.</p>
-<div class="chips"><span>4–8 suspects: you</span><span>13 pieces of evidence</span><span>3 questions</span><span>45 minutes</span></div>
+<p>A weekend in the mountains, a rented chalet, a landlord with an embarrassing vlog and a mania for going digital: sauna, doors, camera – everything in his “smart chalet” is recorded. In the morning he lies dead in the sauna, the door bolted from outside. Every one of you had a reason.</p>
+<div class="chips"><span>4–8 suspects: you</span><span>12+ pieces of evidence</span><span>3 or 4 questions</span><span>45 or 70 minutes</span></div>
 </div>
-<div class="stamp"><div><small>MORDSTEAM · FRIENDS 001</small><strong>UNSOLVED</strong><small>HELICOPTER AT 8:25 AM</small></div></div>
+<div class="stamp"><div><small>MORDSTEAM · FRIENDS 001</small><strong>UNSOLVED</strong><small>THE HELICOPTER IS COMING</small></div></div>
 </div>
 </div></section>
 
@@ -317,7 +317,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <div><b>4–8 investigators</b><span>each on their own phone, tablet or laptop</span></div>
 <div><b>45 or 70 min</b><span>Mystery Night or Mystery Night Plus with AI interrogation room</span></div>
 <div><b>Your names</b><span>with harmless quirks from a list – nobody is embarrassed</span></div>
-<div><b>No game master</b><span>everything runs automatically in the browser, no app, no account</span></div>
+<div><b>Digital game guidance</b><span>everything runs automatically in the browser, no app, no account</span></div>
 </div></section>
 
 <section id="how" class="section"><div class="wrap stack">
@@ -326,7 +326,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <div class="steps">
 <div class="step"><span class="num">1</span><div><h3>Enter your group</h3><p>When ordering, you enter 4 to 8 first names and pick a quirk for each person – “snores like a chainsaw”, “dances while cooking” and so on. The game draws the culprit. Nobody knows in advance, not even the culprit.</p></div></div>
 <div class="step"><span class="num">2</span><div><h3>Share the link</h3><p>You get one invitation link for the group. Everyone opens it on their own device and taps their name. Play at the same time on one evening – together or on a video call – or over 3, 5 or 7 days, whenever each of you has time.</p></div></div>
-<div class="step"><span class="num">3</span><div><h3>Investigate and reveal</h3><p>Everyone investigates on their own: read the evidence, check alibis, solve three questions. Once everyone is done, the reveal comes for all at the same time – with a ranking, the culprit's confession and a fun award for everyone.</p></div></div>
+<div class="step"><span class="num">3</span><div><h3>Investigate and reveal</h3><p>Everyone investigates on their own: read the evidence, check alibis, solve the questions. Once everyone is done, the reveal comes for all at the same time – with a ranking, the culprit's confession and a fun award for everyone.</p></div></div>
 </div>
 </div></section>
 
@@ -343,20 +343,20 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <div class="stack">
 <div class="eyebrow">Friends 001 · Last Round at the Chalet</div>
 <h2 class="h2">“Ferdl! In the sauna! Dead!”</h2>
-<p class="lead">A weekend at the Zirbenblick chalet. In the evening, landlord Ferdl proudly shows you the trailer for his new vlog – with a secretly filmed clip of every one of you. In the morning he lies dead in the sauna. The road is snowed in, the helicopter lands in 45 minutes. By then it must be clear who did it.</p>
+<p class="lead">A weekend at the Zirbenblick chalet. Landlord Ferdl has digitised his chalet right down to the sauna and films a vlog about his guests. In the evening he proudly shows you the trailer for the new episode – with a secretly filmed clip of every one of you. In the morning he lies dead in the sauna. The road is snowed in, the helicopter is on its way. By the time it lands, it must be clear who did it.</p>
 <p><b>The suspects – that's you, for example:</b></p>
 <div class="objects"><span>snores like a chainsaw</span><span>sings in the shower</span><span>secretly eats other people's chocolate</span><span>can't lose at dice</span><span>dances while cooking</span><span>is afraid of cows</span></div>
 </div>
 <div class="clues" aria-label="Examples from the case file">
 <div class="clue"><small>SAUNA CONTROL</small><span>Setpoint 95 → 110 °C<br>??:?? · outside panel</span></div>
 <div class="clue"><small>SCORE PAD, KITCHEN</small><span>“Round 4 – three of us”<br>Who was missing?</span></div>
-<div class="clue dark"><small>YOUR INVESTIGATION</small><div class="codebox" aria-label="Three questions"><i>1</i><i>2</i><i>3</i></div><span class="hint">Time, culprit, hiding place – before the helicopter.</span></div>
-<div class="clue"><small>CHALET APP</small><span>Motion on the stairs · ??:??<br>Who wasn't in bed?</span></div>
+<div class="clue dark"><small>YOUR INVESTIGATION</small><div class="codebox" aria-label="Questions"><i>1</i><i>2</i><i>3</i></div><span class="hint">Time, culprit, hiding place – before the helicopter.</span></div>
+<div class="clue"><small>CHALET APP</small><span>Motion on the stairs · ??:??<br>Who wasn't in their place?</span></div>
 </div>
 <ul class="list case-points">
 <li>You are the suspects – with your names, rooms and quirks</li>
 <li>The culprit is drawn at random; everyone finds out at the reveal</li>
-<li>Three questions that build on each other – new evidence after each correct answer</li>
+<li>Questions that build on each other – new evidence after each correct answer</li>
 <li>Hints at the click of a button, each costs penalty minutes</li>
 <li>Ranking by time plus penalty minutes – and a fun award for everyone</li>
 <li>A stylish mystery with a wink – no gore, no shock effects</li>
@@ -371,15 +371,15 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <div class="pack featured">
 <span class="badge">BASIC</span>
 <h3>Mystery Night</h3><p class="sub">45 minutes · 4–8 people</p>
-<p class="price">from €29</p><p class="per">€29 for up to 4 people, +€5 per extra person (€49 for 8)</p>
+<p class="price">from €29</p><p class="per">€29 for up to 4 people, +€5 per extra person</p>
 <ul class="list"><li>“Last Round at the Chalet” with your names and quirks</li><li>13 pieces of evidence, 3 questions, culprit drawn at random</li><li>At the same time or over 3, 5 or 7 days</li><li>Joint reveal with ranking</li><li>A fun award for everyone</li><li>Playable for 12 months, can be started once</li></ul>
 <a class="btn btn-red" href="friends-buy.html">Order the mystery night</a>
 </div>
 <div class="pack">
 <span class="badge">PREMIUM · WITH AI</span>
-<h3>Mystery Night Plus</h3><p class="sub">70 minutes · with AI interrogation room</p>
+<h3>Mystery Night Plus</h3><p class="sub">70 minutes · 4–8 people</p>
 <p class="price">from €49</p><p class="per">€49 for up to 4 people, +€8 per extra person</p>
-<ul class="list"><li>Everything in the Mystery Night</li><li><b>The interrogation room:</b> question your friends – played by AI, with their names and quirks</li><li>12 questions per person, spread across all doubles as you like</li><li>One of them lies – catch them out in the interrogation and you find the culprit</li><li>Finale: only your doubles know the password to Ferdl's cloud</li><li>For players aged 18 and over</li></ul>
+<ul class="list"><li>Everything in the Mystery Night</li><li><b>The interrogation room:</b> question your friends – played by AI, with their names and quirks</li><li>25 questions per person, spread across all doubles as you like</li><li>One of them lies – catch them out in the interrogation and you find the culprit</li><li>Finale: only your doubles know the password to Ferdl's cloud</li><li>For players aged 18 and over</li></ul>
 <a class="btn btn-red" href="friends-buy.html?v=plus">Order Mystery Night Plus</a>
 </div>
 </div>
@@ -401,20 +401,22 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <details><summary>Who is the culprit?</summary><p>One of you – drawn at random when the round is set up. Nobody knows in advance, not the organiser and not the culprit: they investigate like everyone else and may find out it was them. Everyone learns it together at the reveal.</p></details>
 <details><summary>How long does the case take?</summary><p>45 minutes in the Mystery Night, 70 minutes in Mystery Night Plus with the interrogation room and finale. The clock keeps running if someone takes longer; their final time is just longer. The ranking counts playing time plus penalty minutes.</p></details>
 <details><summary>At the same time or over the week – which is better?</summary><p>At the same time is ideal for an evening together, also on a video call: the organiser starts for everyone, then you reveal together. Over the week suits you if you can't find a date: everyone plays within 3, 5 or 7 days, and the reveal comes for everyone at the same time.</p></details>
+<details><summary>Over the week: how do we know when the reveal is ready?</summary><p>The reveal comes automatically as soon as everyone has played – at the latest at the end of the time window. The organiser then gets an email with the link and shares it in your group chat, for example on WhatsApp. Everyone opens their invitation link again and sees the culprit, the ranking and their award. Nobody has to keep the page open.</p></details>
 <details><summary>What if someone can't play?</summary><p>They remain a suspect in the story – the case stays just as solvable for the others. In the ranking they appear as “didn't play”. In the weekly mode the reveal then comes at the end of the time window.</p></details>
 <details><summary>Which quirks are there?</summary><p>16 affectionately harmless quirks to choose from, from “sings in the shower” to “talks to plants”. There is deliberately no free text – so nobody gets embarrassed. Please only enter people who want to play with their name and quirk.</p></details>
 <details><summary>Does the organiser play too?</summary><p>Of course! Just add yourself to the group. You only need the organiser page to share the link and start – you won't see the culprit there either.</p></details>
 <details><summary>Can people spoil the solution for each other?</summary><p>In theory, yes – but whoever helps others makes their own ranking worse. Anyone who has finished only sees “solved”, not the solution. The culprit, the reveal and the times come for everyone together.</p></details>
-<details><summary>Do we need an app or an account?</summary><p>No. Friends runs right in the browser on phone, tablet or laptop. Everyone only needs the invitation link.</p></details>
+<details><summary>Do we need an app or an account?</summary><p>No. Mordsteam Friends runs right in the browser on phone, tablet or laptop. Everyone only needs the invitation link.</p></details>
 <details><summary>Can I use a voucher?</summary><p>Yes: enter the €5 voucher from Mordsteam Solo in the payment step. One voucher per order, not combinable with the early bird discount.</p></details>
-<details><summary>What is the AI interrogation room in Mystery Night Plus?</summary><p>Once you have solved question 1, the interrogation room opens: each of your friends has an AI double with their name and quirk that you can question via chat – you have 12 questions. One of them lies to you, and for the finale – Ferdl's cloud password – you need what only the doubles know. The AI only knows the invented world of the case; real names never go to the AI provider – we replace them with placeholders first.</p></details>
-<details><summary>Is Friends available in English?</summary><p>Not yet. Friends 001 is currently available in German; the English version will follow.</p></details>
+<details><summary>What is the AI interrogation room in Mystery Night Plus?</summary><p>Once you have solved question 1, the interrogation room opens: each of your friends has an AI double with their name and quirk that you can question via chat – you have 25 questions. One of them lies to you, and for the finale – Ferdl's cloud password – you need what only the doubles know. The AI only knows the invented world of the case; real names never go to the AI provider – we replace them with placeholders first.</p></details>
+<details><summary>From what age?</summary><p>The case is written for adults – a mystery with a wink, no blood and no shock effects. Teenagers can play the Mystery Night well too. Mystery Night Plus with the AI interrogation room is for ages 18 and over; you confirm this when ordering.</p></details>
+<details><summary>Is Mordsteam Friends available in English?</summary><p>Yes. You choose the game language – German or English – when ordering.</p></details>
 </div>
 </div></section>
 
 <section class="cta"><div class="wrap">
-<h2>At 8:25 am the helicopter lands.</h2>
-<p>By then you'll know which of you did it.</p>
+<h2>The helicopter is already on its way.</h2>
+<p>By the time it lands, you'll know which of you did it.</p>
 <a class="btn btn-ink" href="friends-buy.html">Order the mystery night – from €29</a>
 </div></section>
 </main>''')
@@ -474,7 +476,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
  desc="Three cases for one person: night train, theatre and winery – with an AI interrogation room in the Plus case. On phone, tablet or laptop, from €8.90.",
  body='''<nav class="subnav" aria-label="Mordsteam Solo"><div class="wrap">
 <b><span>Mordsteam</span> Solo</b>
-<a href="#how">How it works</a><a href="#case">Solo 001</a><a href="#price">Price</a><a href="#faq">FAQ</a>
+<a href="#how">How it works</a><a href="#case">Solo 001</a><a href="#case2">Solo 002</a><a href="#caseplus">Solo Plus</a><a href="#price">Price</a><a href="#faq">FAQ</a>
 <a class="btn btn-red" href="solo-buy.html">Buy</a>
 </div></nav>
 <main id="top">
@@ -502,7 +504,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 
 <section class="facts" aria-label="Key facts"><div class="wrap">
 <div><b>1 investigator</b><span>just you, on your own device</span></div>
-<div><b>30 min</b><span>the playing time is the train's remaining journey</span></div>
+<div><b>30–45 min</b><span>depending on the case – the clock runs until the police arrive</span></div>
 <div><b>Different every time</b><span>the killer is drawn anew for every playthrough</span></div>
 <div><b>Play right away</b><span>code straight after purchase, valid for 12 months</span></div>
 </div></section>
@@ -511,9 +513,9 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <div class="eyebrow">How it works</div>
 <h2 class="h2">Three steps from purchase to certificate</h2>
 <div class="steps">
-<div class="step"><span class="num">1</span><div><h3>Get your code</h3><p>After paying you get your game code on screen and by email. Start right away or any time within the next 12 months – also as a gift: the name is only entered by whoever plays.</p></div></div>
+<div class="step"><span class="num">1</span><div><h3>Get your code</h3><p>After paying you get your game code on screen and by email. Start right away or any time within the next 12 months – also as a gift: the name is only entered when playing.</p></div></div>
 <div class="step"><span class="num">2</span><div><h3>Investigate</h3><p>The clock runs from the start. You begin at the crime scene, and every correct answer unlocks new evidence. Stuck? Hints are one click away – for penalty minutes.</p></div></div>
-<div class="step"><span class="num">3</span><div><h3>Convict</h3><p>Time of the crime, killer, hiding place of the painting: once you have all three, you see your final time, how much faster you were than the others – and get your certificate with your name.</p></div></div>
+<div class="step"><span class="num">3</span><div><h3>Convict</h3><p>Time of the crime, killer, hiding place: once you have solved all the questions, you see your final time, how much faster you were than the others – and get your certificate with your name.</p></div></div>
 </div>
 </div></section>
 
@@ -541,6 +543,52 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 </ul>
 </div></section>
 
+<section id="case2" class="section case" style="background:var(--paper-2)"><div class="wrap case-grid">
+<div class="stack">
+<div class="eyebrow">Solo 002 · Applause for a Dead Man</div>
+<h2 class="h2">The curtain falls. The star doesn't get up again.</h2>
+<p class="lead">Opening night at a theatre in Vienna. Richard Adler, the celebrated Prospero, takes his bow – and collapses behind the curtain. Poison. The artistic director asks for your help: the police will be here in half an hour.</p>
+<p><b>Five suspects backstage:</b></p>
+<div class="objects"><span>the ex-partner</span><span>the understudy</span><span>the assistant director</span><span>the dresser</span><span>the prop master</span></div>
+</div>
+<div class="clues" aria-label="Examples from the case file">
+<div class="clue"><small>DOCTOR'S FINDINGS</small><span>“swallowed about<br>?? to ?? minutes ago”</span></div>
+<div class="clue"><small>FINGERPRINTS</small><span>Who touched<br>the glass?</span></div>
+<div class="clue dark"><small>YOUR INVESTIGATION</small><div class="codebox" aria-label="Questions"><i>1</i><i>2</i><i>3</i></div><span class="hint">What, who – and the locker code.</span></div>
+<div class="clue"><small>LOCKER BOOK</small><span>Locker 9 · code word ????<br>ABC = 2, DEF = 3 …</span></div>
+</div>
+<ul class="list case-points">
+<li>New puzzles: work out time windows, match fingerprints, crack a locker code</li>
+<li>Evidence in three stages – the next only after the right answer</li>
+<li>Killer and source of the poison drawn anew for every playthrough</li>
+<li>With an investigation sheet to tick off alibis</li>
+<li>A stylish mystery with a wink – no blood, no shock effects</li>
+</ul>
+</div></section>
+
+<section id="caseplus" class="section case"><div class="wrap case-grid">
+<div class="stack">
+<div class="eyebrow">Solo Plus · The Last Vintage · with AI</div>
+<h2 class="h2">“Talk to the people.”</h2>
+<p class="lead">Harvest festival at a winery in the Wachau. Winemaker Ferdinand Aigner lies dead in the fermentation cellar, the door locked from outside, the key gone. The five suspects are waiting in the press house – and this time you interrogate them yourself.</p>
+<p><b>Five suspects who answer you live:</b></p>
+<div class="objects"><span>the son</span><span>the daughter</span><span>the foreman</span><span>the wine merchant</span><span>the neighbouring winemaker</span></div>
+</div>
+<div class="clues" aria-label="Examples from the case file">
+<div class="clue"><small>VENTILATION LOG</small><span>OFF · switch in the hall<br>??:??</span></div>
+<div class="clue"><small>FIREWORKS PHOTOS</small><span>Who can be seen –<br>and who can't?</span></div>
+<div class="clue dark"><small>THE INTERROGATION ROOM</small><div class="codebox" aria-label="Questions"><i>1</i><i>2</i><i>3</i><i>4</i></div><span class="hint">One is lying. Find the contradiction.</span></div>
+<div class="clue"><small>ANNOUNCEMENTS</small><span>“Attention, change …”<br>10:20 pm</span></div>
+</div>
+<ul class="list case-points">
+<li>The interrogation room: you ask in the chat, the suspects answer live – played by an AI</li>
+<li>One of them is lying – only the right questions reveal the contradiction</li>
+<li>Four questions, 45 minutes, killer drawn anew for every playthrough</li>
+<li>The AI only knows the invented world of the case – your name never goes to the AI provider</li>
+<li>Ages 18 and over</li>
+</ul>
+</div></section>
+
 <section id="price" class="section"><div class="wrap stack">
 <div class="eyebrow">Price</div>
 <h2 class="h2">Three cases just for you</h2>
@@ -549,22 +597,22 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <div class="pack featured">
 <span class="badge">BASIC</span>
 <h3>Night Train to Venice</h3><p class="sub">Solo 001 · 30 minutes · 1 person</p>
-<p class="price">€8.90</p><p class="per">buy once, replay up to three times with a different killer</p>
-<ul class="list"><li>16 pieces of evidence, 5 suspects, 3 questions</li><li>Killer drawn anew for every playthrough</li><li>Hints at the click of a button</li><li>Result “faster than X %” on your first playthrough</li><li>Certificate with your name to print or save as PDF</li><li>€5 voucher for a Friends or Teams game</li></ul>
-<a class="btn btn-red" href="solo-buy.html">Buy the case – €8.90</a>
+<p class="price">€8.90</p><p class="per">A body on the night train – and a forgery in the suitcase</p>
+<ul class="list"><li>16 pieces of evidence, 5 suspects, 3 questions</li><li>Killer drawn anew for every playthrough – replay up to three times</li><li>Hints at the click of a button</li><li>Result “faster than X %” on your first playthrough</li><li>Certificate with your name to print or save as PDF</li><li>€5 voucher for a Friends or Teams game</li></ul>
+<a class="btn btn-red" href="solo-buy.html?fall=001">Buy the case – €8.90</a>
 </div>
 <div class="pack">
 <span class="badge">BASIC</span>
 <h3>Applause for a Dead Man</h3><p class="sub">Solo 002 · 30 minutes · 1 person</p>
 <p class="price">€8.90</p><p class="per">Opening night at a Vienna theatre – and the star doesn't get up again</p>
-<ul class="list"><li>New case, new puzzles: poison, fingerprints and a locked locker</li><li>Killer drawn anew for every playthrough</li><li>Hints at the click of a button</li><li>Certificate with your name</li><li>€5 voucher for a Friends or Teams game</li></ul>
+<ul class="list"><li>New case, new puzzles: poison, fingerprints and a locked locker</li><li>Killer drawn anew for every playthrough – replay up to three times</li><li>Hints at the click of a button</li><li>Certificate with your name</li><li>€5 voucher for a Friends or Teams game</li></ul>
 <a class="btn btn-line" href="solo-buy.html?fall=002">Buy the case – €8.90</a>
 </div>
 <div class="pack">
 <span class="badge">PREMIUM · WITH AI</span>
 <h3>The Last Vintage</h3><p class="sub">Solo Plus · 45 minutes · 1 person</p>
 <p class="price">€15.90</p><p class="per">Death at a wine festival in the Wachau</p>
-<ul class="list"><li><b>The interrogation room:</b> question the suspects yourself – they answer live, played by AI</li><li>One of them is lying – find the contradiction</li><li>Killer drawn anew for every playthrough</li><li>Certificate with your name</li><li>€5 voucher for a Friends or Teams game</li><li>Ages 18 and over</li></ul>
+<ul class="list"><li><b>The interrogation room:</b> question the suspects yourself – they answer live, played by AI</li><li>One of them is lying – find the contradiction</li><li>Killer drawn anew for every playthrough – replay up to three times</li><li>Certificate with your name</li><li>€5 voucher for a Friends or Teams game</li><li>Ages 18 and over</li></ul>
 <a class="btn btn-red" href="solo-buy.html?fall=plus">Buy the case – €15.90</a>
 </div>
 </div>
@@ -583,17 +631,17 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <section id="faq" class="section faq"><div class="wrap faq-grid">
 <div class="stack"><div class="eyebrow">FAQ</div><h2 class="h2">Any questions?</h2></div>
 <div>
-<details><summary>How long does the case take?</summary><p>30 minutes – that's how long the train needs to Udine. The clock keeps running if you need longer: you can still solve the case, your final time just gets longer.</p></details>
-<details><summary>Can I pause?</summary><p>No. The clock starts when you click “Start investigation” and keeps running. Until then, take as long as you like: the code is valid for 12 months. If you close the window during the game, your code takes you back – but the clock will have kept running.</p></details>
+<details><summary>How long does the case take?</summary><p>30 minutes for Solo 001 and Solo 002, 45 minutes for Solo Plus – until the police arrive. The clock keeps running if you need longer: you can still solve the case, your final time just gets longer.</p></details>
+<details><summary>Can I pause?</summary><p>No. The clock starts as soon as you open the case file and keeps running. Until then, take as long as you like: the code is valid for 12 months. If you close the window during the game, your code takes you back – but the clock will have kept running.</p></details>
 <details><summary>How do the hints work?</summary><p>Each question has three hints, from a gentle nudge to almost the answer. They cost 1, 2 and 3 penalty minutes. A wrong answer costs 3 minutes, and you can try again straight away.</p></details>
 <details><summary>What does “faster than X %” mean?</summary><p>Your final time (time played plus penalty minutes) is compared with all other investigators who solved the case for the first time. There is no public leaderboard, nobody sees your name.</p></details>
-<details><summary>Can I play the case again?</summary><p>Yes, up to three times within 30 days of your first playthrough. A different killer is drawn for each playthrough, and the matching evidence changes too. Only your first playthrough counts for the comparison.</p></details>
-<details><summary>Can I give Solo as a gift?</summary><p>Yes. Just pass on the code. The name that appears in the story and on the certificate is only entered by the person who plays.</p></details>
+<details><summary>Can I play the case again?</summary><p>Yes, for all three cases: up to three times within 30 days of your first playthrough. A different killer is drawn for each playthrough, and the matching evidence changes too. Only your first playthrough counts for the comparison.</p></details>
+<details><summary>Can I give Mordsteam Solo as a gift?</summary><p>Yes. Just pass on the code. The name that appears in the story and on the certificate is only entered when playing.</p></details>
 <details><summary>What is the €5 voucher?</summary><p>Every Solo case gives you a €5 voucher code after your first playthrough – solved or not. Redeem it in the payment step when ordering Mordsteam Friends or Teams. One voucher per order; it can't be combined with the early bird or other offers and can't be exchanged for cash.</p></details>
-<details><summary>Do I need an app or an account?</summary><p>No. Solo runs right in the browser on phone, tablet or laptop. All you need is your code.</p></details>
-<details><summary>May I use Google or AI?</summary><p>Please don't. The case is built so you solve it with your wits and the evidence – everything you need is in the file. A matter of honour among investigators.</p></details>
-<details><summary>From what age?</summary><p>The case is written for adults – a mystery with a wink, no blood and no shock effects. Teenagers who enjoy crime stories will do fine too.</p></details>
-<details><summary>Is Solo available in English?</summary><p>Not yet. Solo 001 is currently available in German; the English version will follow.</p></details>
+<details><summary>Do I need an app or an account?</summary><p>No. Mordsteam Solo runs right in the browser on phone, tablet or laptop. All you need is your code.</p></details>
+<details><summary>May I use Google or AI?</summary><p>Please don't. The cases are built so you solve them with your wits and the evidence – everything you need is in the file. The only AI allowed to play along are the suspects in the Solo Plus interrogation room. A matter of honour among investigators.</p></details>
+<details><summary>From what age?</summary><p>The cases are written for adults – mysteries with a wink, no blood and no shock effects. Teenagers can play Solo 001 and Solo 002 well too. Solo Plus with the AI interrogation room is for ages 18 and over; you confirm this when buying.</p></details>
+<details><summary>Is Mordsteam Solo available in English?</summary><p>Yes. You choose the game language – German or English – when buying.</p></details>
 </div>
 </div></section>
 

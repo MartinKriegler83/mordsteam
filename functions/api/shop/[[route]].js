@@ -18,7 +18,7 @@ import { handleContact } from "../../../lib/contact.js";
 import { handleWithdraw, orderNo } from "../../../lib/withdraw.js";
 import { sendMail as opsMail } from "../../../lib/ops.js";
 import { createSoloTicket, migrateSolo } from "../../../lib/solo.js";
-import { createFriendsGroup, friendsGroupOfOrder, friendsPrice, FRIENDS_PRICE, FRIENDS_PRICE_PLUS, FRIENDS_CASES } from "../../../lib/friends.js";
+import { createFriendsGroup, friendsGroupOfOrder, friendsPrice, FRIENDS_PRICE, FRIENDS_PRICE_PLUS, FRIENDS_CASES, friendsCron } from "../../../lib/friends.js";
 
 // Sprache der Webseite (Fehlermeldungen, Stripe, Mail) – getrennt von der Spielsprache
 const L = (lang, de, en) => (lang === "en" ? en : de);
@@ -73,8 +73,12 @@ export async function onRequest({ request, env, params }) {
     // Täglicher Lauf (GitHub Action): fällige Feedback-Mails verschicken
     if (route === "cron" && method === "POST") {
       if (!env.CRON_KEY || request.headers.get("x-cron-key") !== env.CRON_KEY) return fail("Nicht berechtigt.", 401);
-      const sent = await runFeedbackMails(env, new URL(request.url).origin);
-      return json({ ok: true, count: sent.length, sent: sent.map((x) => ({ order: x.order, sent: x.sent })) });
+      // Stündlich: Friends-Auflösungen (Wochenmodus). Feedback-Mails nur einmal am Tag (ca. 9 Uhr Wien) oder bei ?alles=1
+      const u = new URL(request.url);
+      const friends = await friendsCron(env, u.origin);
+      const daily = new Date().getUTCHours() === 7 || u.searchParams.get("alles") === "1";
+      const sent = daily ? await runFeedbackMails(env, u.origin) : [];
+      return json({ ok: true, friends, count: sent.length, sent: sent.map((x) => ({ order: x.order, sent: x.sent })) });
     }
     return fail("Nicht gefunden.", 404);
   } catch (e) {
