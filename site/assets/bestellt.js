@@ -36,11 +36,11 @@
   function soloDone(d){
     var link=location.origin+"/spiel/solo.html?c="+d.solo_code;
     show('<div class="eyebrow">'+T("Bezahlt · Mordsteam Solo","Paid · Mordsteam Solo")+'</div>'+
-      '<h1>'+T("Der Nachtzug wartet.","The night train is waiting.")+'</h1>'+
-      '<p class="lead">'+T('Dein Code für „Nachtzug nach Venedig“ ist 12 Monate gültig. Wir haben ihn dir auch per E-Mail geschickt.','Your code for “Night Train to Venice” (game language German) is valid for 12 months. We have also emailed it to you.')+'</p>'+
+      '<h1>'+T((d.solo_head||["Der Nachtzug wartet."])[0],(d.solo_head||["","The night train is waiting."])[1])+'</h1>'+
+      '<p class="lead">'+T('Dein Code für „'+esc(d.solo_title||"Nachtzug nach Venedig")+'“ ist 12 Monate gültig. Wir haben ihn dir auch per E-Mail geschickt.','Your code for “'+esc(d.solo_title_en||"Night Train to Venice")+'” (game language German) is valid for 12 months. We have also emailed it to you.')+'</p>'+
       '<div class="codes"><div class="codecard dark"><small>'+T("DEIN SOLO-CODE","YOUR SOLO CODE")+'</small><div class="code">'+esc(d.solo_code)+'</div><p>'+T("Als Geschenk einfach Code oder Link weitergeben – den Namen gibt ein, wer spielt.","As a gift, just pass on the code or link – the name is entered by whoever plays.")+'</p></div></div>'+
       '<p style="margin:22px 0"><a class="btn btn-red" href="'+esc(link)+'">'+T("Fall öffnen","Open the case")+'</a></p>'+
-      '<div class="prose"><p>'+T('Die Uhr startet erst, wenn du auf „Ermittlung starten“ tippst – dann hast du 30 Minuten bis Udine. Link zum Spielen: ','The clock only starts when you tap “Start investigation” – then you have 30 minutes to Udine. Link to play: ')+'<a href="'+esc(link)+'">'+esc(link.replace(/^https?:\/\//,""))+'</a></p>'+
+      '<div class="prose"><p>'+T('Die Uhr startet erst, wenn du die Akte öffnest – dann hast du '+(d.solo_min||30)+' Minuten, '+((d.solo_goal||["bis Udine"])[0])+'. Link zum Spielen: ','The clock only starts when you open the case file – then you have '+(d.solo_min||30)+' minutes '+((d.solo_goal||["","until Udine"])[1])+'. Link to play: ')+'<a href="'+esc(link)+'">'+esc(link.replace(/^https?:\/\//,""))+'</a></p>'+
       '<p>'+T('Die Rechnung kommt per E-Mail von unserem Zahlungsanbieter Stripe. Fragen? ','The invoice will be emailed by our payment provider Stripe. Questions? ')+MAIL+'</p>'+(d.nr?'<p class="small">'+T('Bestellnummer','Order number')+': <b>'+esc(d.nr)+'</b></p>':'')+'</div>');
   }
   function friendsDone(d){

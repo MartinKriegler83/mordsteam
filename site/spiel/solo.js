@@ -226,8 +226,10 @@
       <div class="ctip"><div><b>Hinweis nehmen</b><p>${cost ? `Hinweis ${q.hints.length + 1} von 3 für diese Frage. Kostet ${cost} Strafminuten.` : "Für diese Frage hast du alle Hinweise."}</p></div>
         ${cost ? `<button type="button" class="btn ${armed ? "btn-ink" : "btn-line"}" id="hint">${armed ? `Ja, Hinweis nehmen (+${cost} Min.)` : "Hinweis anzeigen"}</button>${armed ? `<button type="button" class="linkbtn" id="hintno">Abbrechen</button>` : ""}` : ""}</div>` : ""}
       ${locked.map((x) => `<div class="qrow so-locked"><span class="qn">${x.nr}</span><div class="qf"><label>${esc(x.label)}</label><span class="hint">Wird frei, sobald du Frage ${x.nr - 1} gelöst hast.</span></div></div>`).join("")}
+      ${blattHtml()}
       <p style="margin-top:26px;text-align:right">${giveArmed ? `<span class="small">Wirklich aufgeben? Du siehst dann die Auflösung${S.first_play ? " und kommst nicht in die Wertung" : ""}.</span> <button type="button" class="btn btn-ink" id="give">Ja, Auflösung zeigen</button> <button type="button" class="linkbtn" id="giveno">Weiter ermitteln</button>` : `<button type="button" class="linkbtn" id="give">Aufgeben und Auflösung ansehen</button>`}</p>
     </section>`;
+    bindBlatt();
     const inp = $("ans");
     if (inp && q.type === "code") {
       inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("check").click(); } });
@@ -255,6 +257,31 @@
       try { await refresh(await api("POST", "aufgeben")); scrollTo(0, 0); } catch (e) { verdict = { cls: "warn", html: esc(e.message) }; fragenView(); }
     };
     if ($("giveno")) $("giveno").onclick = () => { giveArmed = false; fragenView(); };
+  }
+
+  // ---------- Ermittlungsblatt: Denkhilfe, bleibt nur auf diesem Gerät ----------
+  const blattKey = () => "ms_solo_blatt_" + S.code + "_" + S.started_at;
+  const blattGet = () => { try { return JSON.parse(MS.get(blattKey()) || "{}"); } catch { return {}; } };
+  const MARK = [["?", "offen"], ["✓", "hat Alibi"], ["!", "verdächtig"]];
+  function blattHtml() {
+    const tq = S.questions.find((x) => x.key === "taeter");
+    if (!tq || !tq.options) return "";
+    const B = blattGet();
+    return `<details class="so-blatt" ${B._open ? "open" : ""}><summary>Dein Ermittlungsblatt</summary>
+      <p class="small muted">Hak ab, wer ein Alibi hat – nur für dich, auf diesem Gerät.</p>
+      ${tq.options.map((o) => { const x = B[o[0]] || {}; const m = MARK[x.m || 0]; return `<div class="so-brow"><button type="button" class="chipbtn so-mark m${x.m || 0}" data-bl="${esc(o[0])}" title="${m[1]}">${m[0]} ${m[1]}</button><b>${esc(o[1])}</b><input data-bn="${esc(o[0])}" maxlength="80" placeholder="Notiz …" value="${esc(x.n || "")}"></div>`; }).join("")}
+    </details>`;
+  }
+  function bindBlatt() {
+    const save = (B) => MS.set(blattKey(), JSON.stringify(B));
+    const det = root.querySelector(".so-blatt");
+    if (!det) return;
+    det.addEventListener("toggle", () => { const B = blattGet(); B._open = det.open; save(B); });
+    root.querySelectorAll("[data-bl]").forEach((b) => (b.onclick = () => {
+      const B = blattGet(), k = b.dataset.bl; B[k] = B[k] || {}; B[k].m = ((B[k].m || 0) + 1) % 3; save(B);
+      const m = MARK[B[k].m]; b.textContent = m[0] + " " + m[1]; b.className = "chipbtn so-mark m" + B[k].m;
+    }));
+    root.querySelectorAll("[data-bn]").forEach((i) => (i.oninput = () => { const B = blattGet(), k = i.dataset.bn; B[k] = B[k] || {}; B[k].n = i.value; save(B); }));
   }
 
   async function answer(q, value) {

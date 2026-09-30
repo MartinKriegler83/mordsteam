@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Buy Solo – Mordsteam</title>
-<meta name="description" content="Buy Mordsteam Solo 001 “Night Train to Venice”: €8.90, code right away on screen and by email.">
+<meta name="description" content="Buy Mordsteam Solo: murder mysteries for one person from €8.90, code right away on screen and by email.">
 <meta name="robots" content="noindex">
 <link rel="alternate" hreflang="de" href="https://mordsteam.com/solo-kaufen.html">
 <link rel="alternate" hreflang="en" href="https://mordsteam.com/en/solo-buy.html">
@@ -44,13 +44,18 @@
 </details>
 </div></header>
 <main class="page shop"><div class="wrap">
-<div class="eyebrow">Order · Mordsteam Solo 001</div>
-<h1>Night Train to Venice</h1>
-<p class="lead">A murder mystery for one person, 30 minutes. You pay €8.90 and get your code right away on screen and by email. The case itself is currently available in German.</p>
+<div class="eyebrow">Order · Mordsteam Solo</div>
+<h1>A case just for you</h1>
+<p class="lead">Murder mysteries for one person. You pay once and get your code right away on screen and by email. The cases themselves are currently available in German.</p>
 <div class="note" id="closed" hidden>Orders are not open yet. You can look at the form, but not submit it yet.</div>
 <div class="note" id="cancelled" hidden>The payment was cancelled. You can simply try again.</div>
 <form class="form" id="solo" novalidate>
-<fieldset class="step"><legend><span>1</span> Your details</legend>
+<fieldset class="step"><legend><span>1</span> Which case?</legend>
+<label class="check"><input type="radio" name="fall" value="solo-001" checked><span><b>Night Train to Venice</b> · Solo 001 · 30 minutes · €8.90</span></label>
+<label class="check"><input type="radio" name="fall" value="solo-002"><span><b>Applause for a Dead Man</b> · Solo 002 · 30 minutes · €8.90</span></label>
+<label class="check"><input type="radio" name="fall" value="solo-plus-001"><span><b>The Last Vintage</b> · Solo Plus · 45 minutes · €15.90 – with AI interrogation room, ages 18+</span></label>
+</fieldset>
+<fieldset class="step"><legend><span>2</span> Your details</legend>
 <div class="two">
 <div class="field"><label for="c_name">Your name *</label><input id="c_name" name="c_name" maxlength="120" autocomplete="name"></div>
 <div class="field"><label for="c_email">Email *</label><input id="c_email" name="c_email" type="email" maxlength="160" autocomplete="email"><span class="hint">We'll send your code and invoice here.</span></div>
@@ -61,9 +66,10 @@
 <label class="check"><input type="radio" name="kunde" value="b2b"><span>Company, club or organisation</span></label>
 <span class="hint">Private individuals have the statutory right of withdrawal (see <a href="terms.html#ruecktritt" target="_blank" rel="noopener">terms section 8</a>).</span></div>
 </fieldset>
-<fieldset class="step"><legend><span>2</span> Review and pay</legend>
-<div class="summary"><div class="sumrow"><span>Mordsteam Solo 001 “Night Train to Venice” · 30 minutes · game language German</span><b>€8.90</b></div><p class="small">Final price. Code valid for 12 months, then replayable up to three times with a different killer. VAT exempt (small business scheme).</p></div>
+<fieldset class="step"><legend><span>3</span> Review and pay</legend>
+<div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Solo 001 “Night Train to Venice” · 30 minutes · game language German</span><b id="sumprice">€8.90</b></div><p class="small">Final price. Code valid for 12 months, then replayable up to three times with a different killer. VAT exempt (small business scheme).</p></div>
 <label class="check" id="sofortbox" hidden><input type="checkbox" name="sofort"><span>I expressly request that you provide my code right after payment – I can still play whenever I like. I am aware that as a private individual I thereby lose my right of withdrawal (at the latest once the case has been played). *</span></label>
+<label class="check" id="ab18box" hidden><input type="checkbox" name="ab18"><span>I am at least 18 years old and agree that an AI plays the suspects in the interrogation room. My name is not sent to the AI provider. *</span></label>
 <label class="check"><input type="checkbox" name="agb"><span>I accept the <a href="terms.html" target="_blank">terms</a> and have read the <a href="privacy.html" target="_blank">privacy policy</a>. *</span></label>
 <p class="formerr" id="err" role="alert" hidden></p>
 <div><button class="btn btn-red" type="submit" id="submit">Order with obligation to pay – €8.90</button></div>

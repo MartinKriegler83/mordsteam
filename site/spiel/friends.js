@@ -167,7 +167,7 @@
       <h2>Wen willst du verhören?</h2>
       <p class="muted">Die Doppelgänger werden von einer KI gespielt und kennen nur die erfundene Welt des Falls. Einer von ihnen lügt. Du hast noch <b>${left} von ${V.max}</b> Fragen.</p>
       <div class="fr-suspects">${V.suspects.map((x) => `<button type="button" class="chipbtn ${x.idx === vSel ? "on" : ""}" data-sus="${x.idx}">${x.name}${x.me ? " (du)" : ""}${(V.threads[x.idx] || []).length ? " ·" + (V.threads[x.idx].filter((m) => m.role === "user").length) : ""}</button>`).join("")}</div>
-      <div class="fr-thread" id="thread">${th.length ? th.map((m) => `<div class="fr-msg ${m.role === "user" ? "q" : "a"}"><small>${m.role === "user" ? "Du" : who.name + " · KI-Doppelgänger"}</small>${m.text}</div>`).join("") : `<p class="small muted">Noch keine Fragen an ${who.name}. Tipp: Frag nach der Nacht, nach Ferdl oder nach dem Clip.</p>`}${vBusy ? `<div class="fr-msg a typing"><small>${who.name} · KI-Doppelgänger</small>…</div>` : ""}</div>
+      <div class="fr-thread" id="thread">${th.length ? th.map((m) => `<div class="fr-msg ${m.role === "user" ? "q" : "a"}"><small>${m.role === "user" ? "Du" : who.name + " · KI-Doppelgänger"}</small>${m.text}</div>`).join("") : `<p class="small muted">Noch keine Fragen an ${who.name}. Tipp: Frag, wo die Person in der Nacht war – oder was sie über Ferdl und sein Passwort weiß.</p>`}${vBusy ? `<div class="fr-msg a typing"><small>${who.name} · KI-Doppelgänger</small>…</div>` : ""}</div>
       ${left > 0 ? `<form id="vf" class="fr-ask"><input id="vq" maxlength="${V.max_chars}" autocomplete="off" placeholder="Deine Frage an ${who.name} …" ${vBusy ? "disabled" : ""}><button class="btn btn-red" type="submit" ${vBusy ? "disabled" : ""}>Fragen</button></form>` : `<p class="note">Du hast alle Fragen gestellt. Die Hinweise zur letzten Frage helfen dir weiter.</p>`}
       ${vErr ? `<p class="err">${esc(vErr)}</p>` : ""}
       <p class="small" style="margin-top:14px"><button type="button" class="linkbtn" id="toQv">Zu den Fragen →</button></p>
@@ -196,7 +196,7 @@
   // ---------- Akte ----------
   const kindClass = (d) => ({ Notiz: "k-note", Beleg: "k-receipt", Systemauszug: "k-sys", Liste: "k-mail", Befund: "k-mail", Protokoll: "k-note", Fundstück: "k-press" })[d.kk || d.kind] || "";
   const ROT = [-1.4, 0.9, -0.5, 1.2, -1, 0.6, -0.2, 1.4];
-  const STAGE_TITLE = { 2: "Neue Beweisstücke: Alibis und Protokolle", 3: "Neue Beweisstücke: die Speicherkarte" };
+  const STAGE_TITLE = { 2: "Neue Beweisstücke: Alibis und Protokolle", 3: "Neue Beweisstücke: die Speicherkarte", 4: "Finale: das Cloud-Backup" };
   function akteView() {
     const read = S.docs.filter((d) => seen.has(d.id)).length;
     root.innerHTML = `<div class="deskhead"><h2>Fallakte</h2><span>${read} / ${S.docs.length} gelesen</span></div>

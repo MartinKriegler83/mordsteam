@@ -26,7 +26,14 @@ const L = (lang, de, en) => (lang === "en" ? en : de);
 // Firmenbuchnummer nach der Eintragung hier eintragen (erscheint in der Vertragsbestätigung, § 14 UGB)
 const COMPANY_FN = "";
 export const PRICES = { basis: 8900, premium: 11900, plus: 14900 };   // Cent pro Team, Endpreise
-export const SOLO_PRICE = 890;                                        // Mordsteam Solo 001, Endpreis
+export const SOLO_PRICE = 890;                                        // Mordsteam Solo Basic, Endpreis
+// Solo-Fälle im Shop (Endpreise in Cent). plus = mit KI-Verhörraum (ab 18)
+export const SOLO_OFFERS = {
+  "solo-001": { price: 890, no: "Solo 001", de: "Nachtzug nach Venedig", en: "Night Train to Venice", min: 30, head: ["Der Nachtzug wartet.", "The night train is waiting."], goal: ["bis Udine", "until Udine"] },
+  "solo-002": { price: 890, no: "Solo 002", de: "Applaus für einen Toten", en: "Applause for a Dead Man", min: 30, head: ["Der Vorhang ist gefallen.", "The curtain has fallen."], goal: ["bis die Polizei im Theater ist", "until the police reach the theatre"] },
+  "solo-plus-001": { price: 1590, no: "Solo Plus", de: "Der letzte Jahrgang", en: "The Last Vintage", min: 45, plus: true, head: ["Das Weinfest wartet.", "The wine festival is waiting."], goal: ["bis die Polizei aus Krems kommt", "until the police arrive from Krems"] },
+};
+const soloOffer = (id) => SOLO_OFFERS[id] || SOLO_OFFERS["solo-001"];
 const TIER = { basis: 0, premium: 1, plus: 2 };
 const NAMES = { basis: "Basic (50 Min.)", premium: "Premium (70 Min.)", plus: "Premium Plus (90 Min.)" };
 const NAMES_EN = { basis: "Basic (50 min)", premium: "Premium (70 min)", plus: "Premium Plus (90 min)" };
@@ -227,7 +234,8 @@ async function soloBestellung(request, env) {
   if (!shopOpen(env)) return fail(L(site, "Bestellungen sind derzeit noch nicht möglich.", "Orders are not possible yet."), 403);
   const k = b.contact || {};
   const s = (x, max = 120) => String(x ?? "").trim().slice(0, max);
-  const contact = { name: s(k.name), email: s(k.email, 160).toLowerCase(), lang: "de", site, produkt: "solo-001" };
+  const fall = SOLO_OFFERS[b.fall] ? b.fall : "solo-001", F = SOLO_OFFERS[fall];
+  const contact = { name: s(k.name), email: s(k.email, 160).toLowerCase(), lang: "de", site, produkt: fall };
   if (!["b2b", "b2c"].includes(k.kunde)) throw new InputError(L(site, "Bitte angeben, ob du als Privatperson oder für ein Unternehmen bestellst.", "Please tell us whether you are ordering as a private individual or for a company."));
   contact.kunde = k.kunde;
   if (contact.name.length < 2) throw new InputError(L(site, "Bitte deinen Namen angeben.", "Please enter your name."));
@@ -237,12 +245,16 @@ async function soloBestellung(request, env) {
     if (!c.sofort) throw new InputError(L(site, "Bitte bestätigen, dass wir deinen Code gleich nach dem Bezahlen bereitstellen dürfen.", "Please confirm that we may provide your code right after payment."));
     contact.sofort_zustimmung = new Date().toISOString();
   }
+  if (F.plus) {
+    if (!c.ab18) throw new InputError(L(site, "Solo Plus mit KI-Verhörraum ist ab 18 Jahren. Bitte bestätigen.", "Solo Plus with the AI interrogation room is for ages 18 and over. Please confirm."));
+    contact.ab18 = new Date().toISOString();
+  }
   if (!c.agb) throw new InputError(L(site, "Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."));
   contact.no_feedback = true;
   const id = crypto.randomUUID(), token = randomToken(16), today = viennaDate(), validUntil = addDays(today, 365);
   await env.DB.prepare(
     "INSERT INTO orders (id, token, created_at, status, paket, teams, amount_cents, event_date, vars, contact, logo) VALUES (?,?,?,'pending','solo',1,?,?,?,?,NULL)"
-  ).bind(id, token, Date.now(), SOLO_PRICE, today, JSON.stringify({ FIRMA: "Mordsteam Solo" }), JSON.stringify(contact)).run();
+  ).bind(id, token, Date.now(), F.price, today, JSON.stringify({ FIRMA: "Mordsteam Solo" }), JSON.stringify(contact)).run();
   const origin = new URL(request.url).origin;
   const pre = site === "en" ? "/en" : "";
   const done = `${origin}${pre}/${site === "en" ? "ordered" : "bestellt"}.html?o=${id}&k=${token}`;
@@ -252,12 +264,12 @@ async function soloBestellung(request, env) {
       success_url: done, cancel_url: `${origin}${pre}/${site === "en" ? "solo-buy" : "solo-kaufen"}.html?abgebrochen=1`,
       billing_address_collection: "auto",
       ...(contact.kunde === "b2b" ? { tax_id_collection: { enabled: true } } : {}),
-      line_items: [{ quantity: 1, price_data: { currency: "eur", unit_amount: SOLO_PRICE,
-        product_data: { name: L(site, "Mordsteam Solo 001 „Nachtzug nach Venedig“", "Mordsteam Solo 001 “Night Train to Venice”"),
-          description: L(site, `Krimi für eine Person, 30 Minuten · Code gültig bis ${validUntil} · Spielsprache Deutsch`, `Murder mystery for one person, 30 minutes · code valid until ${validUntil} · game language German`) } } }],
+      line_items: [{ quantity: 1, price_data: { currency: "eur", unit_amount: F.price,
+        product_data: { name: L(site, `Mordsteam ${F.no} „${F.de}“`, `Mordsteam ${F.no} “${F.en}”`),
+          description: L(site, `Krimi für eine Person, ${F.min} Minuten${F.plus ? " mit KI-Verhörraum" : ""} · Code gültig bis ${validUntil} · Spielsprache Deutsch`, `Murder mystery for one person, ${F.min} minutes${F.plus ? " with AI interrogation room" : ""} · code valid until ${validUntil} · game language German`) } } }],
       metadata: { order_id: id }, payment_intent_data: { metadata: { order_id: id } },
       invoice_creation: { enabled: true, invoice_data: {
-        description: L(site, `Mordsteam Solo 001, digitaler Krimi für eine Person, spielbar bis ${validUntil}.`, `Mordsteam Solo 001, digital murder mystery for one person, playable until ${validUntil}.`),
+        description: L(site, `Mordsteam ${F.no} „${F.de}“, digitaler Krimi für eine Person, spielbar bis ${validUntil}.`, `Mordsteam ${F.no} “${F.en}”, digital murder mystery for one person, playable until ${validUntil}.`),
         footer: L(site, "Umsatzsteuerfrei aufgrund der Kleinunternehmerregelung gemäß § 6 Abs. 1 Z 27 UStG.", "VAT exempt under the Austrian small business scheme (§ 6 (1) no. 27 UStG)."),
         metadata: { order_id: id } } },
     });
@@ -370,6 +382,8 @@ async function status(request, env) {
     firma: JSON.parse(order.vars).FIRMA, lang: ct.lang || "de", land: JSON.parse(order.vars).LAND || "AT", earlybird: ct.earlybird || 0, nr: orderNo(order.id), kunde: ct.kunde || "" };
   if (order.paket === "solo") {
     out.produkt = "solo";
+    const SF = soloOffer(ct.produkt);
+    Object.assign(out, { solo_case: ct.produkt || "solo-001", solo_title: SF.de, solo_title_en: SF.en, solo_head: SF.head, solo_min: SF.min, solo_goal: SF.goal });
     if (order.status === "fulfilled") {
       await migrateSolo(env);
       const t = await env.DB.prepare("SELECT code FROM solo_tickets WHERE order_id=?").bind(order.id).first();
@@ -433,7 +447,7 @@ async function fulfill(env, id, origin) {
     try {
       await migrateSolo(env);
       const have = await env.DB.prepare("SELECT code FROM solo_tickets WHERE order_id=?").bind(id).first();
-      const code = have ? have.code : await createSoloTicket(env, { orderId: id, lang: "de" });
+      const code = have ? have.code : await createSoloTicket(env, { caseId: SOLO_OFFERS[ct.produkt] ? ct.produkt : "solo-001", orderId: id, lang: "de" });
       await env.DB.prepare("UPDATE orders SET status='fulfilled' WHERE id=?").bind(id).run();
       await soloMail(env, o, code, origin).catch(() => {});
     } catch (e) {
@@ -519,7 +533,7 @@ ${c.kunde === "b2b" ? T("Für Bestellungen als Unternehmen, Verein oder Organisa
 
 // ---------- Solo: Mail mit Code ----------
 async function soloMail(env, o, code, origin) {
-  const c = JSON.parse(o.contact);
+  const c = JSON.parse(o.contact), F = soloOffer(c.produkt);
   const site = c.site === "en" ? "en" : "de";
   const T = (de, en) => (site === "en" ? en : de);
   const e = (x) => String(x).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
@@ -527,23 +541,23 @@ async function soloMail(env, o, code, origin) {
   const validUntil = addDays(viennaDate(o.created_at), 365);
   const html = `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.55;color:#15171C;max-width:560px">
 <div style="font-family:Georgia,serif;font-weight:900;font-size:22px;letter-spacing:.5px;margin-bottom:6px"><span style="color:#B3261E">MORDS</span>TEAM <span style="font-size:14px;letter-spacing:3px">SOLO</span></div>
-<h2 style="font-family:Georgia,serif">${T("Der Nachtzug wartet.", "The night train is waiting.")}</h2>
+<h2 style="font-family:Georgia,serif">${T(F.head[0], F.head[1])}</h2>
 <p>${T("Hallo", "Hi")} ${e(c.name)},</p>
-<p>${T("danke für deine Bestellung von <b>Mordsteam Solo 001 „Nachtzug nach Venedig“</b>. Dein Code ist 12 Monate gültig, bis", "thank you for ordering <b>Mordsteam Solo 001 “Night Train to Venice”</b> (game language German). Your code is valid for 12 months, until")} ${validUntil}.</p>
+<p>${T(`danke für deine Bestellung von <b>Mordsteam ${F.no} „${F.de}“</b>. Dein Code ist 12 Monate gültig, bis`, `thank you for ordering <b>Mordsteam ${F.no} “${F.en}”</b> (game language German). Your code is valid for 12 months, until`)} ${validUntil}.</p>
 <p style="margin:18px 0"><span style="font-size:13px;color:#5A5D66">${T("Dein Solo-Code", "Your Solo code")}</span><br><b style="font-family:monospace;font-size:28px;letter-spacing:4px">${code}</b></p>
 <p style="margin:22px 0"><a href="${link}" style="background:#B3261E;color:#fff;text-decoration:none;padding:13px 22px;border-radius:6px;font-weight:bold;display:inline-block">${T("Fall öffnen", "Open the case")}</a></p>
-<p>${T("Die Uhr startet erst, wenn du auf „Ermittlung starten“ tippst – dann hast du 30 Minuten bis Udine. Als Geschenk? Einfach Code oder Link weitergeben, den Namen gibt ein, wer spielt.", "The clock only starts when you tap “Start investigation” – then you have 30 minutes to Udine. A gift? Just pass on the code or link; the name is entered by whoever plays.")}</p>
+<p>${T(`Die Uhr startet erst, wenn du die Akte öffnest – dann hast du ${F.min} Minuten, ${F.goal[0]}.${F.plus ? " Im Verhörraum befragst du die Verdächtigen selbst – sie werden von einer KI gespielt." : ""} Als Geschenk? Einfach Code oder Link weitergeben, den Namen gibt ein, wer spielt.`, `The clock only starts when you open the case file – then you have ${F.min} minutes ${F.goal[1]}.${F.plus ? " In the interrogation room you question the suspects yourself – they are played by an AI." : ""} A gift? Just pass on the code or link; the name is entered by whoever plays.`)}</p>
 <p>${T("Die Rechnung kommt separat per Mail von unserem Zahlungsanbieter.", "The invoice will be sent separately by our payment provider.")}<br>${T("Viel Spaß beim Ermitteln!", "Happy investigating!")}<br>Mordsteam</p>
 <hr style="border:0;border-top:1px solid #DDD5C4;margin:24px 0 14px">
 <div style="font-size:12.5px;color:#5A5D66;line-height:1.5"><b>${T("Vertragsbestätigung", "Contract confirmation")}</b><br>
 ${T("Bestellnummer", "Order number")}: ${orderNo(o.id)}<br>
 ${T("Anbieter", "Provider")}: Mordsteam e.U., ${T("Inhaber", "owner")} Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, ${T("Österreich", "Austria")}, office@mordsteam.com${COMPANY_FN ? `, FN ${COMPANY_FN}` : ""}, ${T("Firmenbuchgericht", "register court")} Landesgericht Eisenstadt<br>
-${T("Leistung", "Service")}: ${T("Digitaler Krimi für eine Person „Nachtzug nach Venedig“ (Mordsteam Solo 001), Spielsprache Deutsch; spielbar 12 Monate ab Kauf; innerhalb von 30 Tagen nach dem ersten Durchgang bis zu dreimal wiederholbar.", "Digital murder mystery for one person “Night Train to Venice” (Mordsteam Solo 001), game language German; playable for 12 months from purchase; can be replayed up to three times within 30 days of the first playthrough.")}<br>
+${T("Leistung", "Service")}: ${T(`Digitaler Krimi für eine Person „${F.de}“ (Mordsteam ${F.no})${F.plus ? " mit KI-Verhörraum, ab 18 Jahren" : ""}, Spielsprache Deutsch; spielbar 12 Monate ab Kauf; innerhalb von 30 Tagen nach dem ersten Durchgang bis zu dreimal wiederholbar.`, `Digital murder mystery for one person “${F.en}” (Mordsteam ${F.no})${F.plus ? " with AI interrogation room, ages 18 and over" : ""}, game language German; playable for 12 months from purchase; can be replayed up to three times within 30 days of the first playthrough.`)}<br>
 ${T("Preis", "Price")}: ${(o.amount_cents / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 })} € ${T("(Endpreis; Kleinunternehmer, keine USt gemäß § 6 Abs. 1 Z 27 UStG). Bezahlt über Stripe.", "(final price; small business, no VAT under § 6 (1) no. 27 UStG). Paid via Stripe.")}<br>
 ${T("Es gelten unsere AGB", "Our terms apply")}: <a href="${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}">${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}</a><br>
 ${c.kunde === "b2b" ? T("Für Bestellungen als Unternehmen besteht kein gesetzliches Rücktrittsrecht.", "Orders placed as a company have no statutory right of withdrawal.") : T("Du hast ausdrücklich verlangt, dass wir deinen Code gleich nach dem Bezahlen bereitstellen, und bestätigt, dass du als Privatperson dadurch dein Rücktrittsrecht verlierst. Es erlischt mit dieser Bestätigung und der Bereitstellung des Codes (§ 18 Abs. 1 Z 11 FAGG), spätestens aber, sobald der Fall gespielt und beendet ist (§ 18 Abs. 1 Z 1 FAGG).", "You expressly requested that we provide your code right after payment and confirmed that as a private individual you thereby lose your right of withdrawal. It expires with this confirmation and the provision of the code (§ 18 (1) no. 11 FAGG), but at the latest once the case has been played and ended (§ 18 (1) no. 1 FAGG).")}${c.kunde !== "b2b" ? `<br>${T("Widerruf (nur Privatpersonen, solange das Rücktrittsrecht besteht)", "Withdrawal (private individuals only, while the right of withdrawal exists)")}: <a href="${origin}${site === "en" ? "/en/withdraw.html" : "/widerruf.html"}?nr=${orderNo(o.id)}">${T("Vertrag widerrufen", "Withdraw from contract")}</a>` : ""}
 </div></div>`;
-  await opsMail(env, "solo", { to: [c.email], reply_to: "office@mordsteam.com", subject: T("Dein Mordsteam-Solo-Fall: Nachtzug nach Venedig", "Your Mordsteam Solo case: Night Train to Venice"), html });
+  await opsMail(env, "solo", { to: [c.email], reply_to: "office@mordsteam.com", subject: T(`Dein Mordsteam-Solo-Fall: ${F.de}`, `Your Mordsteam Solo case: ${F.en}`), html });
 }
 
 // ---------- Friends: Mail mit Organisator- und Einladungslink ----------

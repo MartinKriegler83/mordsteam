@@ -510,3 +510,12 @@ button.btn-big{margin-top:14px}
 .fr-msg.typing{opacity:.6}
 .fr-ask{display:flex;gap:8px}.fr-ask input{flex:1;min-width:0;font:inherit;font-size:16px;padding:12px;border:1.5px solid #B9B09C;border-radius:6px;background:#fff}
 @media (max-width:480px){body.friends .tabs button{padding-left:10px;padding-right:10px;font-size:14px}body.friends .desk .tabs .wrap,body.friends.desk .tabs .wrap{gap:2px}}
+
+/* Solo: Ermittlungsblatt */
+.so-blatt{margin-top:22px;border:1px dashed var(--line,#cfc6b3);border-radius:10px;padding:10px 14px}
+.so-blatt summary{cursor:pointer;font-weight:700}
+.so-brow{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:center;padding:8px 0;border-top:1px solid rgba(0,0,0,.06)}
+.so-brow input{grid-column:1/-1;font:inherit;font-size:14px;padding:6px 8px;border:1px solid #d8d0bf;border-radius:6px;background:#fff}
+.so-mark{min-width:118px;font-size:13px}
+.so-mark.m1{background:#2E6B3A;color:#fff;border-color:#2E6B3A}
+.so-mark.m2{background:#B3261E;color:#fff;border-color:#B3261E}

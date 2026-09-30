@@ -46,13 +46,18 @@
 </div></header>
 
 <main class="page shop"><div class="wrap">
-<div class="eyebrow">Bestellung · Mordsteam Solo 001</div>
-<h1>Nachtzug nach Venedig</h1>
-<p class="lead">Ein Krimi für eine Person, 30 Minuten. Du bezahlst 8,90 € und bekommst deinen Code sofort am Bildschirm und per E-Mail.</p>
+<div class="eyebrow">Bestellung · Mordsteam Solo</div>
+<h1>Dein Fall für dich allein</h1>
+<p class="lead">Krimis für eine Person. Du bezahlst einmal und bekommst deinen Code sofort am Bildschirm und per E-Mail.</p>
 <div class="note" id="closed" hidden>Bestellungen sind noch nicht geöffnet. Du kannst das Formular ansehen, aber noch nicht absenden.</div>
 <div class="note" id="cancelled" hidden>Die Zahlung wurde abgebrochen. Du kannst es einfach nochmals versuchen.</div>
 <form class="form" id="solo" novalidate>
-<fieldset class="step"><legend><span>1</span> Deine Angaben</legend>
+<fieldset class="step"><legend><span>1</span> Welcher Fall?</legend>
+<label class="check"><input type="radio" name="fall" value="solo-001" checked><span><b>Nachtzug nach Venedig</b> · Solo 001 · 30 Minuten · 8,90 €</span></label>
+<label class="check"><input type="radio" name="fall" value="solo-002"><span><b>Applaus für einen Toten</b> · Solo 002 · 30 Minuten · 8,90 €</span></label>
+<label class="check"><input type="radio" name="fall" value="solo-plus-001"><span><b>Der letzte Jahrgang</b> · Solo Plus · 45 Minuten · 15,90 € – mit KI-Verhörraum, ab 18 Jahren</span></label>
+</fieldset>
+<fieldset class="step"><legend><span>2</span> Deine Angaben</legend>
 <div class="two">
 <div class="field"><label for="c_name">Dein Name *</label><input id="c_name" name="c_name" maxlength="120" autocomplete="name"></div>
 <div class="field"><label for="c_email">E-Mail *</label><input id="c_email" name="c_email" type="email" maxlength="160" autocomplete="email"><span class="hint">Hierher schicken wir Code und Rechnung.</span></div>
@@ -63,9 +68,10 @@
 <label class="check"><input type="radio" name="kunde" value="b2b"><span>Unternehmen, Verein oder Organisation</span></label>
 <span class="hint">Für Privatpersonen gilt das gesetzliche Rücktrittsrecht (siehe <a href="agb.html#ruecktritt" target="_blank" rel="noopener">AGB Punkt 8</a>).</span></div>
 </fieldset>
-<fieldset class="step"><legend><span>2</span> Prüfen und bezahlen</legend>
-<div class="summary"><div class="sumrow"><span>Mordsteam Solo 001 „Nachtzug nach Venedig“ · 30 Minuten · Spielsprache Deutsch</span><b>8,90 €</b></div><p class="small">Endpreis. Code 12 Monate gültig, danach bis zu dreimal mit anderem Täter wiederholbar. Umsatzsteuerfrei (Kleinunternehmerregelung).</p></div>
+<fieldset class="step"><legend><span>3</span> Prüfen und bezahlen</legend>
+<div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Solo 001 „Nachtzug nach Venedig“ · 30 Minuten · Spielsprache Deutsch</span><b id="sumprice">8,90 €</b></div><p class="small">Endpreis. Code 12 Monate gültig, danach bis zu dreimal mit anderem Täter wiederholbar. Umsatzsteuerfrei (Kleinunternehmerregelung).</p></div>
 <label class="check" id="sofortbox" hidden><input type="checkbox" name="sofort"><span>Ich möchte ausdrücklich, dass ihr meinen Code gleich nach dem Bezahlen bereitstellt – spielen kann ich trotzdem, wann ich will. Mir ist bekannt, dass ich dadurch als Privatperson mein Rücktrittsrecht verliere (spätestens, sobald der Fall gespielt ist). *</span></label>
+<label class="check" id="ab18box" hidden><input type="checkbox" name="ab18"><span>Ich bin mindestens 18 Jahre alt und einverstanden, dass im Verhörraum eine KI die Verdächtigen spielt. Mein Name geht dabei nicht an den KI-Anbieter. *</span></label>
 <label class="check"><input type="checkbox" name="agb"><span>Ich akzeptiere die <a href="agb.html" target="_blank">AGB</a> und habe die <a href="datenschutz.html" target="_blank">Datenschutzerklärung</a> gelesen. *</span></label>
 <p class="formerr" id="err" role="alert" hidden></p>
 <div><button class="btn btn-red" type="submit" id="submit">Zahlungspflichtig bestellen – 8,90&nbsp;€</button></div>
