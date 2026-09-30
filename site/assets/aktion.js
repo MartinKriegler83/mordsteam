@@ -20,13 +20,13 @@
   // Bewertungen (nur freigegebene, mit Zustimmung der Kunden): bis zu 3 auf der Startseite, sonst bleibt der Block unsichtbar
   var sec = document.getElementById("bewertungen");
   if (!sec) return;
-  fetch("/api/shop/bewertungen?lang=" + (EN ? "en" : "de") + (sec.dataset.produkt ? "&produkt=" + sec.dataset.produkt : "")).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+  fetch("/api/shop/bewertungen?lang=" + (EN ? "en" : "de") + (sec.dataset.produkt ? "&produkt=" + sec.dataset.produkt : "") + (sec.dataset.ort ? "&ort=" + sec.dataset.ort : "")).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
     var list = (d && d.reviews || []).slice(0, 3);
     if (!list.length) return;
     var esc = function (s) { return String(s || "").replace(/[&<>"]/g, function (m) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]; }); };
     document.getElementById("reviews").innerHTML = list.map(function (r) {
       return '<figure class="review"><span class="rs" aria-label="' + r.rating + '/5">' + "★★★★★".slice(0, r.rating) + '</span><p>' + (EN ? "“" : "„") + esc(r.text) + (EN ? "”" : "“") + '</p><small>' +
-        esc(r.name || (sec.dataset.produkt === "solo" ? (EN ? "Investigator" : "Ermittler/in") : (EN ? "Investigator team" : "Ermittlerteam"))) + "</small></figure>";
+        esc((r.name || (r.produkt === "solo" ? (EN ? "Investigator" : "Ermittler/in") : r.von === "spieler" ? (EN ? "Player" : "Mitspieler/in") : (EN ? "Investigator team" : "Ermittlerteam"))) + (sec.dataset.ort === "home" ? (r.produkt === "solo" ? " · Mordsteam Solo" : " · Mordsteam Teams") : "")) + "</small></figure>";
     }).join("");
     sec.hidden = false;
   }).catch(function () {});

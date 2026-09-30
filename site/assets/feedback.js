@@ -13,23 +13,23 @@
   const q = (label, inner, hint) => `<div class="field fb-q"><span class="label">${label}</span>${hint ? `<span class="hint">${hint}</span>` : ""}${inner}</div>`;
   const text = (name, rows = 3) => `<textarea name="${name}" rows="${rows}" maxlength="1500"></textarea>`;
 
+  // Organisator-Bogen: Wie hat Mordsteam in euer Teamevent gepasst? (Das Spiel selbst bewerten die Spieler direkt nach der Runde.)
   function form(d) {
     const eb = d.variant === "eb";
     const stars = `<div class="fb-stars" role="radiogroup" aria-label="${T("Sterne", "Stars")}">${[1, 2, 3, 4, 5].map((n) => `<label><input type="radio" name="rating" value="${n}"><span aria-hidden="true">★</span><b class="sr">${n}</b></label>`).join("")}</div>`;
     const nps = `<div class="fb-nps">${[...Array(11)].map((_, n) => `<label><input type="radio" name="nps" value="${n}"><span>${n}</span></label>`).join("")}</div><div class="fb-npsl"><span>${T("unwahrscheinlich", "not likely")}</span><span>${T("sehr wahrscheinlich", "very likely")}</span></div>`;
     return `<form id="fbform" class="form">
-      ${q(T("Wie hat euch der Fall insgesamt gefallen? *", "How did you like the case overall? *"), stars)}
-      ${eb ? q(T("Wie wahrscheinlich empfehlt ihr Mordsteam weiter?", "How likely are you to recommend Mordsteam?"), nps) : ""}
-      ${eb ? q(T("Wie schwer war der Fall?", "How hard was the case?"), radios("difficulty", [["leicht", T("zu leicht", "too easy")], ["passend", T("genau richtig", "just right")], ["schwer", T("zu schwer", "too hard")]])) : ""}
-      ${eb ? q(T("Und die Spielzeit?", "And the playing time?"), radios("duration", [["kurz", T("zu kurz", "too short")], ["passend", T("passend", "about right")], ["lang", T("zu lang", "too long")]])) : ""}
-      ${q(T("Was hat am meisten Spaß gemacht?", "What was the most fun?"), text("best"))}
+      ${q(T("Wie zufrieden wart ihr mit Mordsteam insgesamt? *", "How satisfied were you with Mordsteam overall? *"), stars)}
+      ${q(T("Hat Mordsteam euer Teamevent bereichert?", "Did Mordsteam enrich your team event?"), radios("event", [["sehr", T("ja, sehr", "yes, a lot")], ["etwas", T("etwas", "somewhat")], ["kaum", T("kaum", "hardly")]]))}
+      ${q(T("Wie war die Stimmung im Team?", "What was the mood in the team like?"), radios("stimmung", [["super", T("super", "great")], ["gut", T("gut", "good")], ["gemischt", T("gemischt", "mixed")], ["schlecht", T("eher schlecht", "rather poor")]]))}
+      ${q(T("Wie aufwendig war die Organisation für dich?", "How much effort was organising it for you?"), radios("aufwand", [["einfach", T("sehr einfach", "very easy")], ["okay", T("okay", "okay")], ["aufwendig", T("zu aufwendig", "too much")]]))}
+      ${q(T("Würdet ihr wieder einen Mordsteam-Fall buchen?", "Would you book another Mordsteam case?"), radios("again", [["ja", T("ja", "yes")], ["vielleicht", T("vielleicht", "maybe")], ["nein", T("nein", "no")]]))}
+      ${q(T("Wie wahrscheinlich empfehlt ihr Mordsteam weiter?", "How likely are you to recommend Mordsteam?"), nps)}
       ${q(T("Was sollen wir besser machen?", "What should we improve?"), text("improve"))}
-      ${eb && d.paket === "plus" ? q(T("Wie hat euch das Finale mit ARIA gefallen?", "How did you like the finale with ARIA?"), text("aria", 2)) : ""}
       ${eb ? q(T("Gab es technische Probleme?", "Were there any technical problems?"), text("tech", 2), T("Gerät, Browser, Firmen-Laptop …", "Device, browser, company laptop …")) : ""}
       ${eb ? q(T("Wie viele Personen haben mitgespielt?", "How many people played?"), `<input name="players" type="number" min="1" max="500" inputmode="numeric" style="max-width:140px">`) : ""}
-      ${eb ? q(T("Würdet ihr wieder einen Mordsteam-Fall spielen?", "Would you play another Mordsteam case?"), radios("again", [["ja", T("ja", "yes")], ["vielleicht", T("vielleicht", "maybe")], ["nein", T("nein", "no")]])) : ""}
       <hr class="fb-hr">
-      ${q(T("Eure Bewertung in 1–3 Sätzen", "Your review in 1–3 sentences"), text("review", 3), T("So, wie ihr es anderen erzählen würdet, die überlegen, Mordsteam zu buchen.", "The way you'd tell others who are thinking about booking Mordsteam."))}
+      ${q(T("Eure Bewertung in 1–3 Sätzen", "Your review in 1–3 sentences"), text("review", 3), T("So, wie ihr es anderen erzählen würdet, die überlegen, Mordsteam zu buchen. Über ein nettes Feedback freuen wir uns besonders.", "The way you'd tell others who are thinking about booking Mordsteam. We especially love a kind word."))}
       ${q(T("Dürfen wir eure Bewertung auf mordsteam.com zeigen?", "May we show your review on mordsteam.com?"),
         radios("publish", [["no", T("Nein, nur für euch", "No, just for you")], ["anon", T("Ja, anonym", "Yes, anonymously")], ["name", T("Ja, mit Namen", "Yes, with a name")]]) +
         `<input name="publish_name" id="pubname" maxlength="80" placeholder="${T("z. B. Julia B., Muster GmbH", "e.g. Julia B., Example Ltd")}" hidden style="margin-top:10px">`)}
@@ -47,7 +47,7 @@
     if (d.done) return msg(`<h2>${T("Schon erledigt – danke!", "Already done – thank you!")}</h2><p class="lead">${T("Euer Feedback ist bei uns angekommen.", "Your feedback has reached us.")}</p>`);
     document.getElementById("fbintro").textContent = d.variant === "eb"
       ? T(`Danke, dass ihr als Early Bird dabei wart${d.firma ? " – " + d.firma : ""}! Das dauert rund 5 Minuten.`, `Thanks for joining as an early bird${d.firma ? " – " + d.firma : ""}! This takes about 5 minutes.`)
-      : T("Das dauert rund 2 Minuten. Nur die Sterne sind Pflicht.", "This takes about 2 minutes. Only the stars are required.");
+      : T("Das dauert rund 2 Minuten. Nur die Sterne sind Pflicht. Wie euren Spielern der Fall selbst gefallen hat, fragen wir sie direkt nach der Runde.", "This takes about 2 minutes. Only the stars are required. We ask your players directly after the round how they liked the case itself.");
     msg(form(d));
     const fm = document.getElementById("fbform");
     fm.addEventListener("change", () => { document.getElementById("pubname").hidden = (fm.publish.value !== "name"); });

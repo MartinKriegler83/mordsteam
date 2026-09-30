@@ -59,7 +59,7 @@ export async function onRequest({ request, env, params }) {
       if (r.error === "rating") return fail(b.lang === "en" ? "Please choose a star rating." : "Bitte eine Sternebewertung wählen.");
       return json({ ok: true });
     }
-    if (route === "bewertungen" && method === "GET") { const q = new URL(request.url).searchParams; return json({ reviews: await publicReviews(env, q.get("lang") === "en" ? "en" : "de", q.get("produkt") || "") }); }
+    if (route === "bewertungen" && method === "GET") { const q = new URL(request.url).searchParams; return json({ reviews: await publicReviews(env, q.get("lang") === "en" ? "en" : "de", q.get("produkt") || "", q.get("ort") || "") }); }
     // Täglicher Lauf (GitHub Action): fällige Feedback-Mails verschicken
     if (route === "cron" && method === "POST") {
       if (!env.CRON_KEY || request.headers.get("x-cron-key") !== env.CRON_KEY) return fail("Nicht berechtigt.", 401);

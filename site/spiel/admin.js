@@ -149,23 +149,39 @@
       <p class="small">Endzeit = Spielzeit + Strafminuten. Richtwert: 30 Minuten.</p></div>`;
   }
   // ---------- Feedback ----------
+  let fbFilter = "org";
   function feedbackPanel() {
     if (!fb) return "";
     const pub = { no: "nicht veröffentlichen", anon: "anonym erlaubt", name: "mit Namen erlaubt" };
-    const A = { spieler: "Spieler/in", geloest: "Gelöst", test: "Test", wiederholung_leicht: "Wiederholung war", wiederholung_lohnt: "Hat sich gelohnt", wiederholung_notiz: "Anmerkung Wiederholung", best: "Am meisten Spaß", improve: "Verbessern", difficulty: "Schwierigkeit", duration: "Spielzeit", aria: "ARIA", tech: "Technik", players: "Personen", again: "Wieder spielen", call: "Gespräch" };
-    return `<div class="panel"><div class="eyebrow">Feedback nach dem Spiel</div>
-      <p class="small" style="margin:6px 0">Mailversand: <b>${fb.mail ? "eingerichtet" : "NICHT eingerichtet (RESEND_API_KEY / MAIL_FROM fehlen) – Links unten selbst verschicken"}</b> · Täglicher Lauf: <b>${fb.cron ? "CRON_KEY gesetzt" : "CRON_KEY fehlt"}</b></p>
-      <p style="margin:8px 0">${fb.due.length} Runde(n) beendet und noch ohne Feedback-Mail.</p>
+    const A = { spieler: "Spieler/in", geloest: "Gelöst", test: "Test", wiederholung_leicht: "Wiederholung war", wiederholung_lohnt: "Hat sich gelohnt", wiederholung_notiz: "Anmerkung Wiederholung",
+      runde: "Runde", team: "Team", geraet: "Gerät", event: "Event bereichert", stimmung: "Stimmung", aufwand: "Aufwand Organisation", best: "Beste Stelle / am meisten Spaß", improve: "Verbessern", difficulty: "Schwierigkeit",
+      duration: "Spielzeit", aria: "ARIA", tech: "Technik", players: "Personen", again: "Wieder buchen/spielen", call: "Gespräch" };
+    const all = fb.feedback;
+    const kind = (f) => (f.variant === "spieler" ? "spieler" : f.paket === "solo" ? "solo" : "org");
+    const homeCount = all.filter((f) => f.home).length;
+    const list = all.filter((f) => kind(f) === fbFilter);
+    const item = (f) => `<div class="sess">
+        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${f.rating ? "★".repeat(f.rating) : "–"}${f.nps != null ? ` · Empfehlung ${f.nps}/10` : ""} · ${f.variant === "spieler" ? MS.esc(f.answers.team || "") + " · " + MS.esc(f.answers.geraet || "") : f.paket === "solo" ? "Mordsteam Solo" + (f.variant === "solo-replay" ? " · Wiederholung" : "") : MS.esc(f.firma || "–")}${f.answers.test === "ja" ? " (Test)" : ""}</b><span class="chip">${f.variant === "eb" ? "Early Bird" : f.variant === "spieler" ? "Spieler" : f.paket === "solo" ? "Solo" : "Organisator"} · ${pub[f.publish] || f.publish}</span></div>
+        <div class="small">${new Date(f.created_at).toLocaleString("de-AT")}${f.name ? " · " + MS.esc(f.name) : ""}${f.email ? " · " + MS.esc(f.email) : ""}${f.paket && f.paket !== "solo" ? " · " + f.paket : ""}${f.publish === "name" ? ` · Name: <b>${MS.esc(f.publish_name || "")}</b>` : ""}</div>
+        ${f.review ? `<p style="margin:8px 0"><i>„${MS.esc(f.review)}“</i></p>` : ""}
+        <div class="small">${Object.entries(f.answers).filter(([k, v]) => v && !["runde", "team", "geraet", "test"].includes(k)).map(([k, v]) => `<b>${A[k] || k}:</b> ${MS.esc(v)}`).join("<br>")}</div>
+        ${f.publish !== "no" && f.review ? `<div class="actions-row" style="margin-top:8px"><button class="tipbtn ${f.approved ? "on" : ""}" data-fbok="${f.id}" data-place="page" data-v="${f.approved ? 0 : 1}">${f.approved ? "✓ auf Unterseite" : "Auf Unterseite zeigen"}</button><button class="tipbtn ${f.home ? "on" : ""}" data-fbok="${f.id}" data-place="home" data-v="${f.home ? 0 : 1}">${f.home ? "✓ auf Startseite" : "Auf Startseite zeigen"}</button></div>` : ""}
+      </div>`;
+    let body;
+    if (fbFilter === "spieler") {
+      const groups = {};
+      for (const f of list) { const sid = f.order_id.split(":")[1]; (groups[sid] = groups[sid] || []).push(f); }
+      body = Object.values(groups).map((g) => `<details class="sess" style="padding:0"><summary style="padding:12px 14px;cursor:pointer"><b>${MS.esc(g[0].answers.runde || "Runde")}</b>${g[0].answers.test === "ja" ? " (Test)" : ""} · ${g.length} Antwort${g.length === 1 ? "" : "en"} · Ø ${(g.reduce((a, f) => a + (f.rating || 0), 0) / g.length).toFixed(1)} ★ · ${new Date(g[0].created_at).toLocaleDateString("de-AT")}</summary><div class="list-sessions" style="padding:0 10px 10px">${g.map(item).join("")}</div></details>`).join("");
+    } else body = list.map(item).join("");
+    const cnt = (k) => all.filter((f) => kind(f) === k).length;
+    return `<div class="panel"><div class="eyebrow">Feedback</div>
+      <p class="small" style="margin:6px 0">Organisator-Mail am Tag nach dem Spiel: <b>${fb.mail ? "Mailversand eingerichtet" : "Mailversand NICHT eingerichtet – Links unten selbst verschicken"}</b> · Täglicher Lauf: <b>${fb.cron ? "CRON_KEY gesetzt" : "CRON_KEY fehlt"}</b> · ${fb.due.length} Runde(n) fällig</p>
       <div class="actions-row"><button class="btn btn-line" id="fbrun">Fällige jetzt senden</button><button class="btn btn-line" id="fbforce">Test: auch heute beendete sofort</button></div>
       ${fbMsg ? `<p class="small" style="margin-top:8px">${fbMsg}</p>` : ""}
       ${fb.links.length ? `<p class="small" style="margin-top:10px"><b>Nicht per Mail zugestellt – Link selbst schicken:</b><br>${fb.links.map((l) => `${MS.esc(l.email || "")}: <a href="${l.link}" target="_blank" rel="noopener">${location.origin}${l.link}</a>`).join("<br>")}</p>` : ""}
-      <div class="list-sessions" style="margin-top:12px">${fb.feedback.length ? fb.feedback.map((f) => `<div class="sess">
-        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${"★".repeat(f.rating || 0)}${f.nps != null ? ` · Empfehlung ${f.nps}/10` : ""} · ${f.paket === "solo" ? "Mordsteam Solo" + (f.answers.test === "ja" ? " (Test)" : "") : MS.esc(f.firma || "–")}</b><span class="chip ${f.approved ? "open" : ""}">${f.variant === "eb" ? "Early Bird" : f.variant === "solo" ? "Solo" : f.variant === "solo-replay" ? "Solo · Wiederholung" : "Standard"} · ${pub[f.publish]}</span></div>
-        <div class="small">${new Date(f.created_at).toLocaleString("de-AT")} · ${MS.esc(f.name || "")} · ${MS.esc(f.email || "")} · ${f.paket}${f.publish === "name" ? ` · Name: <b>${MS.esc(f.publish_name || "")}</b>` : ""}</div>
-        ${f.review ? `<p style="margin:8px 0"><i>„${MS.esc(f.review)}“</i></p>` : ""}
-        <div class="small">${Object.entries(f.answers).map(([k, v]) => `<b>${A[k] || k}:</b> ${MS.esc(v)}`).join("<br>")}</div>
-        ${f.publish !== "no" && f.review ? `<div style="margin-top:8px"><button class="tipbtn" data-fbok="${f.id}" data-v="${f.approved ? 0 : 1}">${f.approved ? "Von Startseite nehmen" : "Auf Startseite zeigen"}</button></div>` : ""}
-      </div>`).join("") : `<p class="muted">Noch kein Feedback.</p>`}</div></div>`;
+      <p class="small" style="margin-top:10px">Startseite: <b>${homeCount}</b> Stimme(n) ausgewählt – ideal sind 2–3 kurze, echte Lobeshymnen. Unterseite: alle freigegebenen des Produkts (Teams bzw. Solo).</p>
+      <div class="chips-row" style="margin:12px 0">${[["org", "Organisatoren"], ["spieler", "Spieler (Teams)"], ["solo", "Solo"]].map(([k, l]) => `<button type="button" class="chipbtn ${fbFilter === k ? "on" : ""}" data-fbf="${k}">${l} (${cnt(k)})</button>`).join("")}</div>
+      <div class="list-sessions">${body || `<p class="muted">Noch kein Feedback.</p>`}</div></div>`;
   }
   function statsPanel(stats) {
     const lab = { wer: "1 Wer", wann: "2 Wann", warum: "3 Konto", wo: "4 Mappe", helfer: "5 Helfer", fach: "6 Fach", pin: "7 PIN" };
@@ -214,7 +230,8 @@
         <p class="small" style="margin-top:8px">${created.quick.custom ? "Der Fall ist noch nicht geöffnet. In der Organisator-Ansicht zuerst „Fall öffnen“, dann Teams anmelden lassen und „Fall starten“." : "Der Fall ist geöffnet. Teams anmelden lassen, dann in der Organisator-Ansicht „Fall starten“."}</p>` : ""}</div>` : ""}
       <div class="panel"><div class="eyebrow">Mordsteam Solo · Testcode</div>
         <p style="margin:8px 0 14px">Legt einen Solo-Code „Nachtzug nach Venedig“ im Testmodus an (eigene Wertung, getrennt von echten Spielen; mit „+5 Min.“-Knopf).</p>
-        <div class="actions-row"><button class="btn btn-red" id="solonew">Solo-Testcode anlegen</button></div>
+        <div class="actions-row"><button class="btn btn-red" id="solonew" data-test="1">Solo-Testcode anlegen</button><button class="btn btn-line" id="solonew2" data-test="0">Solo-Code für Tester (ohne Vorspulen)</button></div>
+        <p class="small" style="margin-top:6px">Tester-Codes verhalten sich wie gekaufte Codes: kein „+5 Min.“, sie zählen in der echten Wertung und ihr Gutschein ist ein echter Stripe-Code.</p>
         ${soloMsg ? `<div style="margin-top:12px">${soloMsg}</div>` : ""}
         ${soloList && soloList.tickets.length ? `<details style="margin-top:12px"><summary>Letzte Solo-Codes (${soloList.tickets.length})</summary><table class="grid" style="margin-top:8px"><tr><th>Code</th><th>Name</th><th>Test</th><th>Durchgänge</th><th>Erste Zeit</th><th>Gutschein</th></tr>
           ${soloList.tickets.map((x) => `<tr><td class="mono"><a href="/spiel/solo.html?c=${x.code}" target="_blank" rel="noopener">${x.code}</a></td><td>${MS.esc(x.name || "–")}</td><td>${x.test_mode ? "ja" : "nein"}</td><td>${x.runs}</td><td class="mono">${x.score ? MS.dur(x.score) : "–"}</td><td class="mono">${MS.esc(x.voucher || "–")}${x.voucher ? (x.voucher_synced ? " ✓ Stripe" : " (nicht in Stripe)") : ""}</td></tr>`).join("")}</table>
@@ -285,16 +302,15 @@
       try { await quickTest(Number(b.dataset.quick)); err = ""; scrollTo(0, 0); } catch (e2) { err = e2.message; }
       load();
     }));
-    const sn = document.getElementById("solonew");
-    if (sn) sn.onclick = async () => {
+    ["solonew", "solonew2"].map((id) => document.getElementById(id)).filter(Boolean).forEach((sn) => sn.onclick = async () => {
       sn.disabled = true;
       try {
-        const r = await fetch("/api/solo/admin/ticket", { method: "POST", headers: { "content-type": "application/json", ...H() }, body: "{}" });
+        const r = await fetch("/api/solo/admin/ticket", { method: "POST", headers: { "content-type": "application/json", ...H() }, body: JSON.stringify({ test: sn.dataset.test === "1" }) });
         const d = await r.json(); if (!r.ok) throw new Error(d.error || "Fehler");
-        soloMsg = `<p style="margin:0">Solo-Code: <span class="bigcode" style="font-size:26px">${d.code}</span></p><p class="mono small">${location.origin}/spiel/solo.html?c=${d.code}</p><div class="actions-row" style="margin-top:8px"><a class="btn btn-ink" href="/spiel/solo.html?c=${d.code}" target="_blank" rel="noopener">Solo-Fall öffnen</a></div>`;
+        soloMsg = `<p style="margin:0">${sn.dataset.test === "1" ? "Solo-Testcode" : "Solo-Code für Tester"}: <span class="bigcode" style="font-size:26px">${d.code}</span></p><p class="mono small">${location.origin}/spiel/solo.html?c=${d.code}</p><div class="actions-row" style="margin-top:8px"><a class="btn btn-ink" href="/spiel/solo.html?c=${d.code}" target="_blank" rel="noopener">Solo-Fall öffnen</a></div>`;
       } catch (e2) { soloMsg = `<p class="err">${MS.esc(e2.message)}</p>`; }
       load();
-    };
+    });
     const ql = document.getElementById("qlang"), qd = document.getElementById("qland");
     if (ql) ql.onchange = () => (qLang = ql.value);
     if (qd) qd.onchange = () => (qLand = qd.value);
@@ -302,7 +318,8 @@
     const b1 = document.getElementById("fbrun"), b2 = document.getElementById("fbforce");
     if (b1) b1.onclick = fr(false);
     if (b2) b2.onclick = fr(true);
-    root.querySelectorAll("[data-fbok]").forEach((b) => (b.onclick = async () => { await MS.api("POST", "admin/feedback-approve", { id: b.dataset.fbok, approved: b.dataset.v === "1" }, H()); load(); }));
+    root.querySelectorAll("[data-fbok]").forEach((b) => (b.onclick = async () => { await MS.api("POST", "admin/feedback-approve", { id: b.dataset.fbok, place: b.dataset.place, approved: b.dataset.v === "1" }, H()); load(); }));
+    root.querySelectorAll("[data-fbf]").forEach((b) => (b.onclick = () => { fbFilter = b.dataset.fbf; render(...last); }));
     const exb = document.getElementById("exbtn");
     if (exb) exb.onclick = async () => {
       const v = document.getElementById("exvon").value, b2 = document.getElementById("exbis").value;

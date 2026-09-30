@@ -36,6 +36,7 @@ export async function onRequest(ctx) {
     if (route === "aria/chat" && method === "POST") return withTeam(request, env, ariaChat, true);
     if (route === "aria/kennwort" && method === "POST") return withTeam(request, env, ariaKennwort, true);
     if (route === "test/vorspulen" && method === "POST") return withTeam(request, env, vorspulen, true, false);
+    if (route === "feedback" && method === "POST") return withTeam(request, env, playerFeedback);
     // --- Organisator ---
     if (route === "leitung/login" && method === "POST") return leitungLogin(request, env);
     if (route === "leitung/state" && method === "GET") return withOrg(request, env, leitungState);
@@ -56,7 +57,12 @@ export async function onRequest(ctx) {
       if (route === "admin/export" && method === "GET") return adminExport(request, env);
       if (route === "admin/ops" && method === "GET") return json(await opsSummary(env));
       if (route === "admin/feedback-run" && method === "POST") { const b = await body(request); return json({ sent: await runFeedbackMails(env, new URL(request.url).origin, { force: !!b.force }) }); }
-      if (route === "admin/feedback-approve" && method === "POST") { const b = await body(request); await migrateFeedback(env); await env.DB.prepare("UPDATE feedback SET approved=? WHERE id=?").bind(b.approved ? 1 : 0, String(b.id || "")).run(); return json({ ok: true }); }
+      if (route === "admin/feedback-approve" && method === "POST") {
+        // Auswahl für die Website: „page“ = Unterseite des Produkts (Teams/Solo), „home“ = Startseite (2–3 Stimmen)
+        const b = await body(request); await migrateFeedback(env);
+        const col = b.place === "home" ? "home" : "approved";
+        await env.DB.prepare(`UPDATE feedback SET ${col}=? WHERE id=?`).bind(b.approved ? 1 : 0, String(b.id || "")).run(); return json({ ok: true });
+      }
     }
     return fail(L(hLang(request), "Nicht gefunden.", "Not found."), 404);
   } catch (e) {
@@ -147,7 +153,31 @@ async function mitlesen(request, env) {
   return json({ token, team: team.name, lang: lg });
 }
 
-async function teamState({ env, team, session, viewer }) {
+// Spieler-Feedback: jedes Gerät (Team-Hauptgerät und Mitlesegerät) einmal, direkt nach Rundenende, ohne Namen
+function playerKey(request, session, team, viewer) {
+  return `spiel:${session.id}:${viewer ? "v:" + (request.headers.get("x-view") || "") : "t:" + team.id}`;
+}
+async function playerFeedback({ request, env, team, session, viewer }) {
+  const lg = langOf(session);
+  if (session.status !== "finished") return fail(L(lg, "Feedback gibt es nach dem Spiel.", "Feedback is available after the game."), 409);
+  await migrateFeedback(env);
+  const b = await body(request);
+  const rating = Math.round(Number(b.rating));
+  if (!(rating >= 1 && rating <= 5)) return fail(L(lg, "Bitte eine Sternebewertung wählen.", "Please choose a star rating."));
+  const clip = (x, n) => String(x ?? "").trim().slice(0, n);
+  const publish = ["no", "anon", "name"].includes(b.publish) ? b.publish : "no";
+  const pubName = publish === "name" ? clip(b.publish_name, 30).replace(/[^\p{L} .'-]/gu, "") : null;
+  if (publish === "name" && (!pubName || pubName.length < 2)) return fail(L(lg, "Bitte deinen Vornamen angeben (z. B. „Julia“ oder „Julia B.“).", "Please enter your first name (e.g. “Julia” or “Julia B.”)."));
+  const v = buildVars(session);
+  const answers = { runde: String(v.FIRMA || "").replace(/&amp;/g, "&"), team: team.name, geraet: viewer ? "Mitlesegerät" : "Team-Hauptgerät",
+    difficulty: clip(b.difficulty, 40), best: clip(b.best, 800), improve: clip(b.improve, 1500), test: session.test_mode ? "ja" : "nein" };
+  await env.DB.prepare("INSERT OR IGNORE INTO feedback (id, order_id, created_at, variant, lang, paket, rating, nps, answers, review, publish, publish_name, approved) VALUES (?,?,?,?,?,?,?,NULL,?,?,?,?,0)")
+    .bind(crypto.randomUUID(), playerKey(request, session, team, viewer), Date.now(), "spieler", lg, ["basis", "premium", "plus"][tierOf(session)], rating,
+      JSON.stringify(answers), clip(b.review, 600), publish, pubName).run();
+  return json({ ok: true });
+}
+
+async function teamState({ env, team, session, viewer, request }) {
   // Link für Mitlesegeräte: wird beim ersten Abruf des Teamgeräts erzeugt
   if (!viewer && !team.view_token) {
     team.view_token = randomToken(16);
@@ -216,6 +246,7 @@ async function teamState({ env, team, session, viewer }) {
     ranking: session.status === "finished" ? rank : session.status === "running" ? [] : rank.map((r) => ({ name: r.name })),
     // Nach Spielende bekommen alle Teams die Auflösung (erst dann, damit niemand vorher spickt)
     aufloesung: session.status === "finished" ? solutionInfo(session) : null,
+    feedback_done: session.status === "finished" ? await migrateFeedback(env).then(() => env.DB.prepare("SELECT 1 AS x FROM feedback WHERE order_id=?").bind(playerKey(request, session, team, viewer)).first()).then((r) => !!r) : false,
   });
 }
 
@@ -644,7 +675,7 @@ async function adminExport(request, env) {
 async function adminFeedback(env) {
   await migrateFeedback(env);
   const { results } = await env.DB.prepare(
-    "SELECT f.*, json_extract(o.vars,'$.FIRMA') AS firma, json_extract(o.contact,'$.name') AS name, json_extract(o.contact,'$.email') AS email FROM feedback f LEFT JOIN orders o ON o.id=f.order_id ORDER BY f.created_at DESC LIMIT 200").all();
+    "SELECT f.*, json_extract(o.vars,'$.FIRMA') AS firma, json_extract(o.contact,'$.name') AS name, json_extract(o.contact,'$.email') AS email FROM feedback f LEFT JOIN orders o ON o.id=f.order_id ORDER BY f.created_at DESC LIMIT 500").all();
   const due = await dueFeedback(env, { force: true });
   const { results: open } = await env.DB.prepare(
     "SELECT id, feedback_token, json_extract(contact,'$.email') AS email, json_extract(contact,'$.site') AS site FROM orders WHERE feedback_token IS NOT NULL AND feedback_sent_at IS NULL AND id NOT IN (SELECT order_id FROM feedback)").all();

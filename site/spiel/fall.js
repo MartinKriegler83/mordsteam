@@ -205,6 +205,50 @@
     </section>`;
   }
 
+  // ---------- Spieler-Feedback (jedes Gerät einmal, ohne Namen) ----------
+  function playerFb() {
+    if (S.feedback_done) return "";
+    const ch = (key, list) => `<div class="chips-row">${list.map(([v, l]) => `<button type="button" class="chipbtn" data-${key}="${v}">${l}</button>`).join("")}</div>`;
+    return `<section class="paper so-fb" id="pfb">
+      <div class="eyebrow">${t("Euer Feedback", "Your feedback")}</div><h2 class="h2p">${t("Wie war der Fall?", "How was the case?")}</h2>
+      <p class="muted">${t("30 Sekunden, anonym – und ihr helft uns, noch bessere Fälle zu bauen.", "30 seconds, anonymous – and you help us build even better cases.")}</p>
+      <div class="stars" role="radiogroup" aria-label="${t("Sterne", "Stars")}">${[1, 2, 3, 4, 5].map((n) => `<button type="button" data-star="${n}" aria-label="${n}/5">★</button>`).join("")}</div>
+      <div class="field"><span class="label">${t("Wie schwer war der Fall?", "How hard was the case?")}</span>${ch("diff", [["zu leicht", t("zu leicht", "too easy")], ["genau richtig", t("genau richtig", "just right")], ["zu schwer", t("zu schwer", "too hard")]])}</div>
+      <div class="field"><label for="pfbest">${t("Die beste Stelle?", "The best moment?")} <span class="opt">${t("optional", "optional")}</span></label><textarea id="pfbest" maxlength="800" rows="2"></textarea></div>
+      <div class="field"><label for="pfimp">${t("Was hat genervt oder sollen wir besser machen?", "What annoyed you or what should we improve?")} <span class="opt">${t("optional, nur für uns", "optional, just for us")}</span></label><textarea id="pfimp" maxlength="1500" rows="2"></textarea></div>
+      <div class="fbpub"><div class="field"><label for="pfrev">${t("Ein paar Worte für andere Teams?", "A few words for other teams?")}</label><span class="hint">${t("Über ein nettes Feedback freuen wir uns besonders. Optional.", "We especially love a kind word. Optional.")}</span><textarea id="pfrev" maxlength="600" rows="3"></textarea></div>
+      <div class="field"><span class="label">${t("Dürfen wir deine Worte auf mordsteam.com zeigen?", "May we show your words on mordsteam.com?")}</span>
+        <label class="check"><input type="radio" name="ppub" value="name"><span>${t("Ja, mit Vornamen", "Yes, with my first name")}</span></label>
+        <input id="pfname" maxlength="30" placeholder="${t("z. B. Julia oder Julia B.", "e.g. Julia or Julia B.")}" hidden style="margin:4px 0 8px">
+        <label class="check"><input type="radio" name="ppub" value="anon"><span>${t("Ja, aber anonym", "Yes, but anonymously")}</span></label>
+        <label class="check"><input type="radio" name="ppub" value="no" checked><span>${t("Nein, nur für euch", "No, just for you")}</span></label></div></div>
+      <p class="err" id="pferr" hidden></p><button type="button" class="btn btn-red" id="pfsend">${t("Feedback senden", "Send feedback")}</button>
+    </section>`;
+  }
+  function bindPlayerFb() {
+    const box = $("pfb");
+    if (!box) return;
+    const pick = {};
+    box.querySelectorAll("[data-star],[data-diff]").forEach((b) => (b.onclick = () => {
+      const key = b.dataset.star !== undefined ? "star" : "diff";
+      pick[key] = b.dataset[key];
+      if (key === "star") box.querySelectorAll("[data-star]").forEach((x) => x.classList.toggle("on", Number(x.dataset.star) <= Number(pick.star)));
+      else box.querySelectorAll("[data-diff]").forEach((x) => x.classList.toggle("on", x === b));
+    }));
+    box.querySelectorAll("input[name=ppub]").forEach((r) => (r.onchange = () => { $("pfname").hidden = r.value !== "name" || !r.checked; }));
+    $("pfsend").onclick = async () => {
+      const err = $("pferr");
+      if (!pick.star) { err.textContent = t("Bitte wähle 1 bis 5 Sterne.", "Please choose 1 to 5 stars."); err.hidden = false; return; }
+      const pub = (box.querySelector("input[name=ppub]:checked") || {}).value || "no";
+      $("pfsend").disabled = true;
+      try {
+        await MS.api("POST", "feedback", { rating: Number(pick.star), difficulty: pick.diff || "", best: $("pfbest").value, improve: $("pfimp").value, review: $("pfrev").value, publish: pub, publish_name: $("pfname").value }, H);
+        S.feedback_done = true;
+        box.innerHTML = `<div class="eyebrow">${t("Euer Feedback", "Your feedback")}</div><h2 class="h2p">${t("Danke!", "Thank you!")}</h2><p class="muted">${t("Euer Feedback ist angekommen.", "Your feedback has arrived.")}</p>`;
+      } catch (e) { err.textContent = e.message; err.hidden = false; $("pfsend").disabled = false; }
+    };
+  }
+
   function viewFinal() {
     const A = S.aufloesung;
     root.innerHTML = `<div class="final">
@@ -225,8 +269,10 @@
         <div id="revealbox"><p class="muted">${t("Wartet mit dem Aufdecken, bis euer Organisator so weit ist.", "Wait with the reveal until your organiser is ready.")}</p>
         <button type="button" class="btn btn-ink btn-big" id="reveal">${t("Umschlag öffnen", "Open the envelope")}</button></div>
       </section>` : ""}
+      ${playerFb()}
       ${thanks()}
     </div>`;
+    bindPlayerFb();
     const r = $("reveal");
     if (r) r.onclick = () => {
       $("revealbox").innerHTML = `<div class="answers">${A.answers.map((a, i) => `<div><i>${pad(i + 1)}</i><span>${a.label}</span><b>${MS.esc(a.answer)}${a.detail ? ` · ${MS.esc(a.detail)}` : ""}</b></div>`).join("")}
