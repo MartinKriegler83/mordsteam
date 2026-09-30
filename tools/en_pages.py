@@ -249,7 +249,7 @@ P["index"] = dict(title="Mordsteam – Murder mysteries you solve yourselves", h
 <h3 class="gname"><span class="wm-r">MORDS</span>TEAM<span class="gp">FRIENDS</span></h3>
 <p class="for">The murder-mystery night for your friends.</p>
 <p>You are the suspects – with your real names and your little quirks. Everyone plays at the same time, or whenever they have time this week.</p>
-<p class="meta">4–8 INVESTIGATORS · EVERYONE ON THEIR OWN DEVICE · 45 MIN · FROM €29 PER GROUP</p>
+<p class="meta">4–8 INVESTIGATORS · EVERYONE ON THEIR OWN DEVICE · 45–70 MIN · FROM €29 PER GROUP</p>
 <a class="btn btn-red" href="friends.html">Go to Mordsteam Friends</a>
 </article>
 <article class="game live"><span class="tab">SOLO</span><span class="smark ok">PLAY<br>NOW</span>
@@ -316,7 +316,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 
 <section class="facts" aria-label="Key facts"><div class="wrap">
 <div><b>4–8 investigators</b><span>each on their own phone, tablet or laptop</span></div>
-<div><b>45 min</b><span>until the mountain rescue helicopter lands</span></div>
+<div><b>45 or 70 min</b><span>Mystery Night or Mystery Night Plus with AI interrogation room</span></div>
 <div><b>Your names</b><span>with harmless quirks from a list – nobody is embarrassed</span></div>
 <div><b>No game master</b><span>everything runs automatically in the browser, no app, no account</span></div>
 </div></section>
@@ -377,11 +377,11 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <a class="btn btn-red" href="friends-buy.html">Order the mystery night</a>
 </div>
 <div class="pack">
-<span class="badge" style="background:var(--ink)">COMING SOON</span>
+<span class="badge">NEW · WITH AI</span>
 <h3>Mystery Night Plus</h3><p class="sub">70 minutes · with AI interrogation room</p>
 <p class="price">from €49</p><p class="per">€49 for up to 4 people, +€8 per extra person</p>
-<ul class="list"><li>Everything in the Mystery Night</li><li><b>The interrogation room:</b> question your friends – played by AI, with their names and quirks</li><li>The culprit's double lies – but will they slip up?</li><li>Finale with a fourth question</li></ul>
-<a class="btn btn-line" href="contact.html">Let me know</a>
+<ul class="list"><li>Everything in the Mystery Night</li><li><b>The interrogation room:</b> question your friends – played by AI, with their names and quirks</li><li>12 questions per person, spread across all doubles as you like</li><li>The culprit's double lies – only those who interrogate them solve the finale</li><li>For players aged 18 and over</li></ul>
+<a class="btn btn-red" href="friends-buy.html?v=plus">Order Mystery Night Plus</a>
 </div>
 </div>
 <div class="devicebox">
@@ -400,7 +400,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <div class="stack"><div class="eyebrow">FAQ</div><h2 class="h2">Questions?</h2></div>
 <div>
 <details><summary>Who is the culprit?</summary><p>One of you – drawn at random when the round is set up. Nobody knows in advance, not the organiser and not the culprit: they investigate like everyone else and may find out it was them. Everyone learns it together at the reveal.</p></details>
-<details><summary>How long does the case take?</summary><p>45 minutes – that's how long the mountain rescue helicopter needs. The clock keeps running if someone takes longer; their final time is just longer. The ranking counts playing time plus penalty minutes.</p></details>
+<details><summary>How long does the case take?</summary><p>45 minutes in the Mystery Night, 70 minutes in Mystery Night Plus with the interrogation room and finale. The clock keeps running if someone takes longer; their final time is just longer. The ranking counts playing time plus penalty minutes.</p></details>
 <details><summary>At the same time or over the week – which is better?</summary><p>At the same time is ideal for an evening together, also on a video call: the organiser starts for everyone, then you reveal together. Over the week suits you if you can't find a date: everyone plays within 3, 5 or 7 days, and the reveal comes for everyone at the same time.</p></details>
 <details><summary>What if someone can't play?</summary><p>They remain a suspect in the story – the case stays just as solvable for the others. In the ranking they appear as “didn't play”. In the weekly mode the reveal then comes at the end of the time window.</p></details>
 <details><summary>Which quirks are there?</summary><p>16 affectionately harmless quirks to choose from, from “sings in the shower” to “talks to plants”. There is deliberately no free text – so nobody gets embarrassed. Please only enter people who want to play with their name and quirk.</p></details>
@@ -408,6 +408,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <details><summary>Can people spoil the solution for each other?</summary><p>In theory, yes – but whoever helps others makes their own ranking worse. Anyone who has finished only sees “solved”, not the solution. The culprit, the reveal and the times come for everyone together.</p></details>
 <details><summary>Do we need an app or an account?</summary><p>No. Friends runs right in the browser on phone, tablet or laptop. Everyone only needs the invitation link.</p></details>
 <details><summary>Can I use a voucher?</summary><p>Yes: enter the €5 voucher from Mordsteam Solo in the payment step. It can't be combined with the early bird discount.</p></details>
+<details><summary>What is the AI interrogation room in Mystery Night Plus?</summary><p>Once you have solved question 2, the interrogation room opens: each of your friends has an AI double with their name and quirk that you can question via chat – you have 12 questions. The culprit's double lies and has an excuse ready that you need for the finale. The AI only knows the invented world of the case; real names never go to the AI provider – we replace them with placeholders first.</p></details>
 <details><summary>Is Friends available in English?</summary><p>Not yet. Friends 001 is currently available in German; the English version will follow.</p></details>
 </div>
 </div></section>
@@ -428,19 +429,23 @@ P["friends-buy"] = dict(title="Order Friends – Mordsteam", robots="noindex", d
 <div class="note" id="closed" hidden>Orders are not open yet. You can look at the form, but not submit it yet.</div>
 <div class="note" id="cancelled" hidden>The payment was cancelled. You can simply try again.</div>
 <form class="form" id="friends" novalidate>
-<fieldset class="step"><legend><span>1</span> Your group</legend>
+<fieldset class="step"><legend><span>1</span> Which version?</legend>
+<label class="check"><input type="radio" name="variant" value="basis" checked><span><b>Mystery Night</b> · 45 minutes · from €29 (up to 4 people, +€5 per extra person)</span></label>
+<label class="check"><input type="radio" name="variant" value="plus"><span><b>Mystery Night Plus</b> · 70 minutes · from €49 (up to 4 people, +€8 per extra person) – with AI interrogation room: you question the AI doubles of your friends. 18+.</span></label>
+</fieldset>
+<fieldset class="step"><legend><span>2</span> Your group</legend>
 <div class="field"><label for="n">How many are playing? *</label><select id="n" name="n"><option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option></select>
 <span class="hint">Add yourself if you're playing. The game draws the culprit – you'll only find out at the reveal too.</span></div>
 <div id="people" class="fr-people"></div>
 <p class="hint">First names are enough; if two share a first name, add an initial (e.g. “Anna B.”). The quirk is a harmless running gag in the case – there is deliberately no free text.</p>
 <label class="check"><input type="checkbox" name="zustimmung"><span>Everyone named knows about it and agrees to play in the fictional case with their name and the chosen quirk – including as a suspect or culprit. *</span></label>
 </fieldset>
-<fieldset class="step"><legend><span>2</span> How do you want to play?</legend>
+<fieldset class="step"><legend><span>3</span> How do you want to play?</legend>
 <label class="check"><input type="radio" name="mode" value="live" checked><span><b>At the same time</b> – you play on the same evening, together or on a video call. You start the case for everyone.</span></label>
 <label class="check"><input type="radio" name="mode" value="week"><span><b>Over the week</b> – everyone plays when they have time. The reveal comes for everyone together.</span></label>
 <div class="field" id="daysbox" hidden><label for="days">Time window</label><select id="days" name="days"><option value="3">3 days</option><option value="5">5 days</option><option value="7" selected>7 days</option></select><span class="hint">The days start when you tap start on your organiser page – not with the purchase.</span></div>
 </fieldset>
-<fieldset class="step"><legend><span>3</span> Your details</legend>
+<fieldset class="step"><legend><span>4</span> Your details</legend>
 <div class="two">
 <div class="field"><label for="c_name">Your name *</label><input id="c_name" name="c_name" maxlength="120" autocomplete="name"></div>
 <div class="field"><label for="c_email">Email *</label><input id="c_email" name="c_email" type="email" maxlength="160" autocomplete="email"><span class="hint">We'll send the links and the invoice here.</span></div>
@@ -450,10 +455,11 @@ P["friends-buy"] = dict(title="Order Friends – Mordsteam", robots="noindex", d
 <label class="check"><input type="radio" name="kunde" value="b2b"><span>Company, club or organisation</span></label>
 <span class="hint">Private individuals have the statutory right of withdrawal (see <a href="terms.html#ruecktritt" target="_blank" rel="noopener">terms section 8</a>).</span></div>
 </fieldset>
-<fieldset class="step"><legend><span>4</span> Review and pay</legend>
+<fieldset class="step"><legend><span>5</span> Review and pay</legend>
 <div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Friends 001 “Last Round at the Chalet” · 6 people · 45 minutes · game language German</span><b id="sumprice">€39.00</b></div>
 <div class="sumrow" id="ebrow" hidden><span>Early bird −<span class="ebp">40</span>%</span><b id="ebprice"></b></div>
-<p class="small">Final price for the whole group: €29 for up to 4 people, +€5 per extra person. Playable for 12 months, can be started once. VAT exempt (small business scheme).</p></div>
+<p class="small">Final price for the whole group. Playable for 12 months, can be started once. VAT exempt (small business scheme).</p></div>
+<label class="check" id="ab18box" hidden><input type="checkbox" name="ab18"><span>All players are at least 18 years old (required for the AI interrogation room) and agree that an AI plays their doubles in the game – only with placeholders instead of real names and the chosen quirk. *</span></label>
 <label class="check" id="ebbox" hidden><input type="checkbox" name="earlybird"><span><b>Early bird: <span class="ebp">40</span>% off</b> your first game. In return: after the reveal you give us short feedback in the game (<a href="early-bird.html" target="_blank" rel="noopener">conditions</a>).</span></label>
 <p class="hint" id="voucherhint">Voucher code, e.g. from Mordsteam Solo? Enter it in the next step when paying.</p>
 <label class="check" id="sofortbox" hidden><input type="checkbox" name="sofort"><span>I expressly request that you set up our round and provide the links right after payment – we can still play whenever we like. I am aware that as a private individual I thereby lose my right of withdrawal (at the latest with the joint reveal). *</span></label>
@@ -746,6 +752,7 @@ P["privacy"] = dict(title="Privacy policy – Mordsteam", desc="How Mordsteam ha
 <p><b>Mordsteam Friends:</b> The person ordering enters the first names of the players and one quirk each from a fixed list, and confirms that everyone agrees. We only use this information to set up the fictional case for the group (Art. 6(1)(b) GDPR). Whoever picks their name via the invitation link gets their own game progress; the others in the group only see who has joined or finished, and only see the ranking and times at the joint reveal. The names are stored only in the game round, not in the order. 30 days after the reveal we delete the round including names and game progress, a round that is never revealed 13 months after the order at the latest.</p>
 <h2>6. AI characters in the game</h2>
 <p>In some games or variants you can chat with an AI-controlled character (stated in the game description). What you write in the chat is sent together with the invented case data to our AI provider Anthropic so that the character can reply (Art. 6(1)(b) GDPR). We replace the real names from the personalisation (e.g. company, people, rooms) with placeholders before sending and only reinsert them in the reply – even if they are typed into the chat. The players' devices only connect to mordsteam.com, not directly to the AI provider. Anthropic processes the data as a processor, does not use it to train its models and deletes inputs and outputs after 30 days by default. The transfer to the USA is based on certification under the EU-US Data Privacy Framework or on EU standard contractual clauses.</p>
+<p>In Mordsteam Friends Mystery Night Plus, the AI plays the players' doubles. For this we transmit no names, only placeholders, the chosen quirk from the list, the invented case data and the questions asked in the interrogation room; names someone types into a question are also replaced with placeholders first. Interrogation histories are stored with the game round and deleted with it.</p>
 <p>Please don't enter real personal data in the chat – the AI character doesn't need it and only knows the world of the game. The number of messages per game round is limited. We store the chat history with the game round and delete it 30 days after the game ends. AI characters are labelled as AI; their answers may contain errors.</p>
 <h2>7. Contact form and email</h2>
 <p>If you write to us using the contact form or by email, we process your name, email address and message to answer your enquiry (Art. 6(1)(b) or (f) GDPR). Messages from the form are delivered to our mailbox via our email service Resend (Resend, Inc., USA; sent via servers in the EU) and stored there. To prevent abuse, we also store a hashed short value of your IP address with the time and delete it after 24 hours. Our emails are processed via Apple iCloud.</p>
@@ -817,6 +824,7 @@ P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mor
 <h2>6. AI characters in the game</h2>
 <ul>
 <li>Some games or variants include a character you talk to by chat and which is controlled by artificial intelligence (“AI character”). Which ones is stated in the game description. Variants with an AI character are intended only for participants aged 18 and over; you confirm this when ordering.</li>
+<li>In Mordsteam Friends Mystery Night Plus, an AI plays the players' doubles (“AI doubles”) – with placeholders instead of real names and only with the chosen quirk from the list. By ordering you confirm that all players agree to this.</li>
 <li>AI characters are labelled as AI, only know the invented world of the case and can make mistakes. Their answers are part of the game and not information or advice. Please don't enter real personal data in the chat.</li>
 <li>The number of messages per game round is limited; the limit is shown in the game. If the AI is temporarily unavailable, you automatically receive all information needed to solve the case – the case remains solvable.</li>
 </ul>

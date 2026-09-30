@@ -18,7 +18,7 @@ import { handleContact } from "../../../lib/contact.js";
 import { handleWithdraw, orderNo } from "../../../lib/withdraw.js";
 import { sendMail as opsMail } from "../../../lib/ops.js";
 import { createSoloTicket, migrateSolo } from "../../../lib/solo.js";
-import { createFriendsGroup, friendsGroupOfOrder, friendsPrice, FRIENDS_PRICE, FRIENDS_CASES } from "../../../lib/friends.js";
+import { createFriendsGroup, friendsGroupOfOrder, friendsPrice, FRIENDS_PRICE, FRIENDS_PRICE_PLUS, FRIENDS_CASES } from "../../../lib/friends.js";
 
 // Sprache der Webseite (Fehlermeldungen, Stripe, Mail) – getrennt von der Spielsprache
 const L = (lang, de, en) => (lang === "en" ? en : de);
@@ -275,7 +275,7 @@ async function soloBestellung(request, env) {
 // ---------- Friends-Bestellung (Krimiabend für 4–8 Freunde) ----------
 function friendsMeta(env) {
   const C = FRIENDS_CASES["friends-001"];
-  return json({ open: shopOpen(env), earlybird: earlybird(env), price: FRIENDS_PRICE, quirks: C.QUIRK_KEYS.map((k) => [k, C.QUIRKS[k].label]), limit_min: C.LIMIT_MIN, title: C.TITLE });
+  return json({ open: shopOpen(env), earlybird: earlybird(env), price: FRIENDS_PRICE, price_plus: FRIENDS_PRICE_PLUS, limit_plus: C.LIMIT_MIN_PLUS, quirks: C.QUIRK_KEYS.map((k) => [k, C.QUIRKS[k].label]), limit_min: C.LIMIT_MIN, title: C.TITLE });
 }
 async function friendsBestellung(request, env) {
   let b = {};
@@ -293,6 +293,7 @@ async function friendsBestellung(request, env) {
   if (new Set(low).size !== n) throw new InputError(L(site, "Zwei Personen haben denselben Namen. Bitte unterscheidbar machen, z. B. mit Initial.", "Two people have the same name. Please make them distinguishable, e.g. with an initial."));
   const mode = b.mode === "week" ? "week" : "live";
   const days = [3, 5, 7].includes(Number(b.days)) ? Number(b.days) : 7;
+  const plus = b.variant === "plus";
   const k = b.contact || {};
   const contact = { name: s(k.name), email: s(k.email, 160).toLowerCase(), lang: "de", site, produkt: "friends-001", no_feedback: true };
   if (!["b2b", "b2c"].includes(k.kunde)) throw new InputError(L(site, "Bitte angeben, ob du als Privatperson oder für ein Unternehmen bestellst.", "Please tell us whether you are ordering as a private individual or for a company."));
@@ -301,6 +302,7 @@ async function friendsBestellung(request, env) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError(L(site, "Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."));
   const c = b.consent || {};
   if (!c.zustimmung) throw new InputError(L(site, "Bitte bestätigen, dass alle Genannten einverstanden sind.", "Please confirm that everyone named has agreed."));
+  if (plus && !c.ab18) throw new InputError(L(site, "Der Krimiabend Plus mit KI-Verhörraum ist für Mitspielende ab 18 Jahren. Bitte bestätigen oder den Krimiabend wählen.", "Mystery Night Plus with the AI interrogation room is for players aged 18 and over. Please confirm or choose the Mystery Night."));
   if (contact.kunde === "b2c") {
     if (!c.sofort) throw new InputError(L(site, "Bitte bestätigen, dass wir eure Runde gleich nach dem Bezahlen anlegen dürfen.", "Please confirm that we may set up your round right after payment."));
     contact.sofort_zustimmung = new Date().toISOString();
@@ -309,14 +311,15 @@ async function friendsBestellung(request, env) {
   const eb = b.earlybird === true ? earlybird(env) : null;
   if (b.earlybird === true && !eb) throw new InputError(L(site, "Die Early-Bird-Aktion ist leider schon vorbei. Bitte das Häkchen entfernen.", "Sorry, the early bird offer has ended. Please untick the box."));
   if (eb) contact.earlybird = eb.prozent;
-  const full = friendsPrice(n), amount = eb ? Math.round(full * (100 - eb.prozent) / 100) : full;
+  const full = friendsPrice(n, plus), amount = eb ? Math.round(full * (100 - eb.prozent) / 100) : full;
   const id = crypto.randomUUID(), token = randomToken(16), today = viennaDate(), validUntil = addDays(today, 365);
   // Die Namen stehen nur bis zum Anlegen der Runde in der Bestellung, danach nur noch in der Runde (die gelöscht wird)
-  const vars = { FIRMA: "Mordsteam Friends", friends: { players, mode, days } };
+  const vars = { FIRMA: "Mordsteam Friends", friends: { players, mode, days, plus } };
   await env.DB.prepare(
-    "INSERT INTO orders (id, token, created_at, status, paket, teams, amount_cents, event_date, vars, contact, logo) VALUES (?,?,?,'pending','friends',?,?,?,?,?,NULL)"
-  ).bind(id, token, Date.now(), n, amount, today, JSON.stringify(vars), JSON.stringify(contact)).run();
+    "INSERT INTO orders (id, token, created_at, status, paket, teams, amount_cents, event_date, vars, contact, logo) VALUES (?,?,?,'pending',?,?,?,?,?,?,NULL)"
+  ).bind(id, token, Date.now(), plus ? "friends-plus" : "friends", n, amount, today, JSON.stringify(vars), JSON.stringify(contact)).run();
   const origin = new URL(request.url).origin, pre = site === "en" ? "/en" : "";
+  const lim = plus ? C.LIMIT_MIN_PLUS : C.LIMIT_MIN, vName = plus ? L(site, "Krimiabend Plus", "Mystery Night Plus") : L(site, "Krimiabend", "mystery night");
   const done = `${origin}${pre}/${site === "en" ? "ordered" : "bestellt"}.html?o=${id}&k=${token}`;
   const modeTxt = mode === "live" ? L(site, "gleichzeitig", "all at once") : L(site, `über ${days} Tage`, `over ${days} days`);
   if (env.STRIPE_SECRET_KEY) {
@@ -327,11 +330,11 @@ async function friendsBestellung(request, env) {
       billing_address_collection: "auto",
       ...(contact.kunde === "b2b" ? { tax_id_collection: { enabled: true } } : {}),
       line_items: [{ quantity: 1, price_data: { currency: "eur", unit_amount: full,
-        product_data: { name: L(site, `Mordsteam Friends 001 „${C.TITLE}“ – Krimiabend für ${n} Personen`, `Mordsteam Friends 001 “Last Round at the Chalet” – mystery night for ${n} people`),
-          description: L(site, `${C.LIMIT_MIN} Minuten, gespielt ${modeTxt} · spielbar bis ${validUntil} · Spielsprache Deutsch`, `${C.LIMIT_MIN} minutes, played ${modeTxt} · playable until ${validUntil} · game language German`) } } }],
+        product_data: { name: L(site, `Mordsteam Friends 001 „${C.TITLE}“ – ${vName} für ${n} Personen`, `Mordsteam Friends 001 “Last Round at the Chalet” – ${vName} for ${n} people`),
+          description: L(site, `${lim} Minuten${plus ? " mit KI-Verhörraum" : ""}, gespielt ${modeTxt} · spielbar bis ${validUntil} · Spielsprache Deutsch`, `${lim} minutes${plus ? " with AI interrogation room" : ""}, played ${modeTxt} · playable until ${validUntil} · game language German`) } } }],
       metadata: { order_id: id }, payment_intent_data: { metadata: { order_id: id } },
       invoice_creation: { enabled: true, invoice_data: {
-        description: L(site, `Mordsteam Friends 001, digitaler Krimiabend für ${n} Personen, einmal spielbar bis ${validUntil}.`, `Mordsteam Friends 001, digital mystery night for ${n} people, playable once until ${validUntil}.`),
+        description: L(site, `Mordsteam Friends 001, digitaler ${plus ? "Krimiabend Plus mit KI-Verhörraum" : "Krimiabend"} für ${n} Personen, einmal spielbar bis ${validUntil}.`, `Mordsteam Friends 001, digital ${plus ? "Mystery Night Plus with AI interrogation room" : "mystery night"} for ${n} people, playable once until ${validUntil}.`),
         footer: L(site, "Umsatzsteuerfrei aufgrund der Kleinunternehmerregelung gemäß § 6 Abs. 1 Z 27 UStG.", "VAT exempt under the Austrian small business scheme (§ 6 (1) no. 27 UStG)."),
         metadata: { order_id: id } } },
     });
@@ -374,8 +377,8 @@ async function status(request, env) {
     }
     return json(out);
   }
-  if (order.paket === "friends") {
-    out.produkt = "friends";
+  if (order.paket === "friends" || order.paket === "friends-plus") {
+    out.produkt = "friends"; out.plus = order.paket === "friends-plus";
     out.teams = order.teams;
     if (order.status === "fulfilled") {
       const g = await friendsGroupOfOrder(env, order.id);
@@ -439,13 +442,13 @@ async function fulfill(env, id, origin) {
     }
     return;
   }
-  if (o.paket === "friends") {
+  if (o.paket === "friends" || o.paket === "friends-plus") {
     try {
       const f = vars.friends || {};
       let g = await friendsGroupOfOrder(env, id);
-      if (!g) g = await createFriendsGroup(env, { players: f.players || [], mode: f.mode, days: f.days, orderId: id, lang: "de" });
+      if (!g) g = await createFriendsGroup(env, { players: f.players || [], mode: f.mode, days: f.days, orderId: id, lang: "de", plus: !!f.plus });
       // Namen aus der Bestellung entfernen – sie stehen nur noch in der Runde
-      await env.DB.prepare("UPDATE orders SET status='fulfilled', vars=? WHERE id=?").bind(JSON.stringify({ FIRMA: "Mordsteam Friends", friends: { n: (f.players || []).length, mode: f.mode, days: f.days } }), id).run();
+      await env.DB.prepare("UPDATE orders SET status='fulfilled', vars=? WHERE id=?").bind(JSON.stringify({ FIRMA: "Mordsteam Friends", friends: { n: (f.players || []).length, mode: f.mode, days: f.days, plus: !!f.plus } }), id).run();
       await friendsMail(env, o, g, origin).catch(() => {});
     } catch (e) {
       await env.DB.prepare("UPDATE orders SET status='paid' WHERE id=?").bind(id).run();
@@ -551,25 +554,26 @@ async function friendsMail(env, o, g, origin) {
   const e = (x) => String(x).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
   const orgLink = `${origin}/spiel/friends.html?o=${g.org_token}`, invLink = `${origin}/spiel/friends.html?e=${g.invite}`;
   const validUntil = addDays(viennaDate(o.created_at), 365);
-  const n = JSON.parse(g.data).players.length;
+  const gd = JSON.parse(g.data), n = gd.players.length, plus = !!gd.plus, lim = plus ? 70 : 45;
+  const vName = plus ? T("Krimiabend Plus mit KI-Verhörraum", "Mystery Night Plus with AI interrogation room") : T("Krimiabend", "Mystery Night");
   const modeTxt = g.mode === "live" ? T("gleichzeitig – du startest den Fall für alle", "all at once – you start the case for everyone") : T(`über ${g.window_days} Tage – jeder spielt, wann er Zeit hat`, `over ${g.window_days} days – everyone plays when they have time`);
   const btn = (href, label, dark) => `<a href="${href}" style="background:${dark ? "#15171C" : "#B3261E"};color:#fff;text-decoration:none;padding:13px 22px;border-radius:6px;font-weight:bold;display:inline-block;margin:4px 0">${label}</a>`;
   const html = `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.55;color:#15171C;max-width:560px">
 <div style="font-family:Georgia,serif;font-weight:900;font-size:22px;letter-spacing:.5px;margin-bottom:6px"><span style="color:#B3261E">MORDS</span>TEAM <span style="font-size:14px;letter-spacing:3px">FRIENDS</span></div>
 <h2 style="font-family:Georgia,serif">${T("Die Hütte wartet.", "The hut is waiting.")}</h2>
 <p>${T("Hallo", "Hi")} ${e(c.name)},</p>
-<p>${T(`danke für deine Bestellung von <b>Mordsteam Friends 001 „Letzte Runde auf der Hütte“</b> für ${n} Personen. Gespielt wird ${modeTxt}. Eure Runde ist 12 Monate spielbar, bis ${validUntil}, und lässt sich einmal starten.`, `thank you for ordering <b>Mordsteam Friends 001 “Last Round at the Chalet”</b> (game language German) for ${n} people. You play ${modeTxt}. Your round is playable for 12 months, until ${validUntil}, and can be started once.`)}</p>
+<p>${T(`danke für deine Bestellung von <b>Mordsteam Friends 001 „Letzte Runde auf der Hütte“ – ${vName}</b> für ${n} Personen. Gespielt wird ${modeTxt}. Eure Runde ist 12 Monate spielbar, bis ${validUntil}, und lässt sich einmal starten.`, `thank you for ordering <b>Mordsteam Friends 001 “Last Round at the Chalet” – ${vName}</b> (game language German) for ${n} people. You play ${modeTxt}. Your round is playable for 12 months, until ${validUntil}, and can be started once.`)}</p>
 <p><b>1. ${T("Einladungslink an alle schicken", "Send the invitation link to everyone")}</b><br>${T("Jeder öffnet ihn und tippt auf seinen Namen – auch du, wenn du mitspielst.", "Everyone opens it and taps their name – you too, if you're playing.")}<br><a href="${invLink}">${e(invLink)}</a></p>
 <p><b>2. ${T("Deine Organisator-Seite (nicht weitergeben)", "Your organiser page (don't pass on)")}</b><br>${T("Dort siehst du, wer schon da ist, und startest den Fall.", "There you can see who has joined and start the case.")}</p>
 <p>${btn(orgLink, T("Organisator-Seite öffnen", "Open organiser page"), true)}</p>
-<p>${T(`Die Uhr läuft 45 Minuten ab dem Start. Die Auflösung mit Rangliste kommt für alle gleichzeitig – sobald alle fertig sind.`, `The clock runs for 45 minutes from the start. The solution and ranking come for everyone at the same time – once everyone has finished.`)}</p>
+<p>${T(`Die Uhr läuft ${lim} Minuten ab dem Start. Die Auflösung mit Rangliste kommt für alle gleichzeitig – sobald alle fertig sind.`, `The clock runs for ${lim} minutes from the start. The solution and ranking come for everyone at the same time – once everyone has finished.`)}${plus ? " " + T("Der KI-Verhörraum ist für Mitspielende ab 18 Jahren.", "The AI interrogation room is for players aged 18 and over.") : ""}</p>
 ${c.earlybird ? `<p><b>Early Bird:</b> ${T("Danke, dass ihr uns helft! Nach der Auflösung fragt euch das Spiel direkt nach eurem Feedback.", "Thanks for helping us! After the solution, the game will ask you for your feedback right away.")}</p>` : ""}
 <p>${T("Die Rechnung kommt separat per Mail von unserem Zahlungsanbieter.", "The invoice will be sent separately by our payment provider.")}<br>${T("Viel Spaß beim Ermitteln!", "Happy investigating!")}<br>Mordsteam</p>
 <hr style="border:0;border-top:1px solid #DDD5C4;margin:24px 0 14px">
 <div style="font-size:12.5px;color:#5A5D66;line-height:1.5"><b>${T("Vertragsbestätigung", "Contract confirmation")}</b><br>
 ${T("Bestellnummer", "Order number")}: ${orderNo(o.id)}<br>
 ${T("Anbieter", "Provider")}: Mordsteam e.U., ${T("Inhaber", "owner")} Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, ${T("Österreich", "Austria")}, office@mordsteam.com${COMPANY_FN ? `, FN ${COMPANY_FN}` : ""}, ${T("Firmenbuchgericht", "register court")} Landesgericht Eisenstadt<br>
-${T("Leistung", "Service")}: ${T(`Digitaler Krimiabend „Letzte Runde auf der Hütte“ (Mordsteam Friends 001) für ${n} Personen, 45 Minuten, Spielsprache Deutsch; spielbar 12 Monate ab Kauf, einmal startbar.`, `Digital mystery night “Last Round at the Chalet” (Mordsteam Friends 001) for ${n} people, 45 minutes, game language German; playable for 12 months from purchase, can be started once.`)}<br>
+${T("Leistung", "Service")}: ${T(`Digitaler ${vName} „Letzte Runde auf der Hütte“ (Mordsteam Friends 001) für ${n} Personen, ${lim} Minuten, Spielsprache Deutsch; spielbar 12 Monate ab Kauf, einmal startbar.`, `Digital ${vName} “Last Round at the Chalet” (Mordsteam Friends 001) for ${n} people, ${lim} minutes, game language German; playable for 12 months from purchase, can be started once.`)}<br>
 ${T("Preis", "Price")}: ${(o.amount_cents / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 })} € ${T("(Endpreis; Kleinunternehmer, keine USt gemäß § 6 Abs. 1 Z 27 UStG). Bezahlt über Stripe.", "(final price; small business, no VAT under § 6 (1) no. 27 UStG). Paid via Stripe.")}<br>
 ${T("Es gelten unsere AGB", "Our terms apply")}: <a href="${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}">${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}</a><br>
 ${c.kunde === "b2b" ? T("Für Bestellungen als Unternehmen besteht kein gesetzliches Rücktrittsrecht.", "Orders placed as a company have no statutory right of withdrawal.") : T("Du hast ausdrücklich verlangt, dass wir eure Runde gleich nach dem Bezahlen anlegen und die Links bereitstellen, und bestätigt, dass du als Privatperson dadurch dein Rücktrittsrecht verlierst. Es erlischt mit dieser Bestätigung und der Bereitstellung der Links (§ 18 Abs. 1 Z 11 FAGG), spätestens aber mit der gemeinsamen Auflösung (§ 18 Abs. 1 Z 1 FAGG).", "You expressly requested that we set up your round and provide the links right after payment and confirmed that as a private individual you thereby lose your right of withdrawal. It expires with this confirmation and the provision of the links (§ 18 (1) no. 11 FAGG), but at the latest with the joint solution (§ 18 (1) no. 1 FAGG).")}${c.kunde !== "b2b" ? `<br>${T("Widerruf (nur Privatpersonen, solange das Rücktrittsrecht besteht)", "Withdrawal (private individuals only, while the right of withdrawal exists)")}: <a href="${origin}${site === "en" ? "/en/withdraw.html" : "/widerruf.html"}?nr=${orderNo(o.id)}">${T("Vertrag widerrufen", "Withdraw from contract")}</a>` : ""}

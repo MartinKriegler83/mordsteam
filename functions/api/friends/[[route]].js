@@ -1,6 +1,6 @@
 // Cloudflare Pages Function: /api/friends/* – Mordsteam Friends (Krimiabend für 4–8 Freunde)
 import { json, fail } from "../../../lib/game.js";
-import { friendsInvite, friendsClaim, friendsState, friendsBegin, friendsHint, friendsAnswer, friendsGiveUp, friendsOrg, friendsOrgStart, friendsOrgReveal, friendsAdmin, friendsFeedback } from "../../../lib/friends.js";
+import { friendsInvite, friendsClaim, friendsState, friendsBegin, friendsHint, friendsAnswer, friendsGiveUp, friendsOrg, friendsOrgStart, friendsOrgReveal, friendsAdmin, friendsFeedback, friendsVerhoerGet, friendsVerhoerAsk } from "../../../lib/friends.js";
 
 export async function onRequest({ request, env, params }) {
   if (!env.DB) return fail("Datenbank nicht eingerichtet.", 500);
@@ -14,6 +14,8 @@ export async function onRequest({ request, env, params }) {
     if (route === "hint" && m === "POST") return await friendsHint(request, env);
     if (route === "answer" && m === "POST") return await friendsAnswer(request, env);
     if (route === "aufgeben" && m === "POST") return await friendsGiveUp(request, env);
+    if (route === "verhoer" && m === "GET") return await friendsVerhoerGet(request, env);
+    if (route === "verhoer" && m === "POST") return await friendsVerhoerAsk(request, env);
     if (route === "feedback" && m === "POST") return await friendsFeedback(request, env);
     if (route === "org" && m === "GET") return await friendsOrg(env, url);
     if (route === "org/start" && m === "POST") return await friendsOrgStart(request, env);

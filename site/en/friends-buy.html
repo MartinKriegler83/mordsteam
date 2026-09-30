@@ -50,19 +50,23 @@
 <div class="note" id="closed" hidden>Orders are not open yet. You can look at the form, but not submit it yet.</div>
 <div class="note" id="cancelled" hidden>The payment was cancelled. You can simply try again.</div>
 <form class="form" id="friends" novalidate>
-<fieldset class="step"><legend><span>1</span> Your group</legend>
+<fieldset class="step"><legend><span>1</span> Which version?</legend>
+<label class="check"><input type="radio" name="variant" value="basis" checked><span><b>Mystery Night</b> · 45 minutes · from €29 (up to 4 people, +€5 per extra person)</span></label>
+<label class="check"><input type="radio" name="variant" value="plus"><span><b>Mystery Night Plus</b> · 70 minutes · from €49 (up to 4 people, +€8 per extra person) – with AI interrogation room: you question the AI doubles of your friends. 18+.</span></label>
+</fieldset>
+<fieldset class="step"><legend><span>2</span> Your group</legend>
 <div class="field"><label for="n">How many are playing? *</label><select id="n" name="n"><option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option></select>
 <span class="hint">Add yourself if you're playing. The game draws the culprit – you'll only find out at the reveal too.</span></div>
 <div id="people" class="fr-people"></div>
 <p class="hint">First names are enough; if two share a first name, add an initial (e.g. “Anna B.”). The quirk is a harmless running gag in the case – there is deliberately no free text.</p>
 <label class="check"><input type="checkbox" name="zustimmung"><span>Everyone named knows about it and agrees to play in the fictional case with their name and the chosen quirk – including as a suspect or culprit. *</span></label>
 </fieldset>
-<fieldset class="step"><legend><span>2</span> How do you want to play?</legend>
+<fieldset class="step"><legend><span>3</span> How do you want to play?</legend>
 <label class="check"><input type="radio" name="mode" value="live" checked><span><b>At the same time</b> – you play on the same evening, together or on a video call. You start the case for everyone.</span></label>
 <label class="check"><input type="radio" name="mode" value="week"><span><b>Over the week</b> – everyone plays when they have time. The reveal comes for everyone together.</span></label>
 <div class="field" id="daysbox" hidden><label for="days">Time window</label><select id="days" name="days"><option value="3">3 days</option><option value="5">5 days</option><option value="7" selected>7 days</option></select><span class="hint">The days start when you tap start on your organiser page – not with the purchase.</span></div>
 </fieldset>
-<fieldset class="step"><legend><span>3</span> Your details</legend>
+<fieldset class="step"><legend><span>4</span> Your details</legend>
 <div class="two">
 <div class="field"><label for="c_name">Your name *</label><input id="c_name" name="c_name" maxlength="120" autocomplete="name"></div>
 <div class="field"><label for="c_email">Email *</label><input id="c_email" name="c_email" type="email" maxlength="160" autocomplete="email"><span class="hint">We'll send the links and the invoice here.</span></div>
@@ -72,10 +76,11 @@
 <label class="check"><input type="radio" name="kunde" value="b2b"><span>Company, club or organisation</span></label>
 <span class="hint">Private individuals have the statutory right of withdrawal (see <a href="terms.html#ruecktritt" target="_blank" rel="noopener">terms section 8</a>).</span></div>
 </fieldset>
-<fieldset class="step"><legend><span>4</span> Review and pay</legend>
+<fieldset class="step"><legend><span>5</span> Review and pay</legend>
 <div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Friends 001 “Last Round at the Chalet” · 6 people · 45 minutes · game language German</span><b id="sumprice">€39.00</b></div>
 <div class="sumrow" id="ebrow" hidden><span>Early bird −<span class="ebp">40</span>%</span><b id="ebprice"></b></div>
-<p class="small">Final price for the whole group: €29 for up to 4 people, +€5 per extra person. Playable for 12 months, can be started once. VAT exempt (small business scheme).</p></div>
+<p class="small">Final price for the whole group. Playable for 12 months, can be started once. VAT exempt (small business scheme).</p></div>
+<label class="check" id="ab18box" hidden><input type="checkbox" name="ab18"><span>All players are at least 18 years old (required for the AI interrogation room) and agree that an AI plays their doubles in the game – only with placeholders instead of real names and the chosen quirk. *</span></label>
 <label class="check" id="ebbox" hidden><input type="checkbox" name="earlybird"><span><b>Early bird: <span class="ebp">40</span>% off</b> your first game. In return: after the reveal you give us short feedback in the game (<a href="early-bird.html" target="_blank" rel="noopener">conditions</a>).</span></label>
 <p class="hint" id="voucherhint">Voucher code, e.g. from Mordsteam Solo? Enter it in the next step when paying.</p>
 <label class="check" id="sofortbox" hidden><input type="checkbox" name="sofort"><span>I expressly request that you set up our round and provide the links right after payment – we can still play whenever we like. I am aware that as a private individual I thereby lose my right of withdrawal (at the latest with the joint reveal). *</span></label>

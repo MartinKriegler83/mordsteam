@@ -67,12 +67,15 @@
     if (!S.begun && !S.can_begin) { plain(); every(15000, () => refresh()); return waitStartView(); }
     every(0);
     tabs.hidden = false;
+    $("vtab").hidden = !S.plus;
+    $("vbadge").hidden = !(S.verhoer && S.verhoer.open && !MS.get(seenKey() + "_v"));
     tabs.querySelectorAll("[data-tab]").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === tab));
     const unseen = S.docs.filter((d) => !seen.has(d.id)).length;
     $("newbadge").hidden = !unseen; $("newbadge").textContent = unseen;
     if (!S.begun) tab = tab === "gruppe" ? "gruppe" : "einsatz";
     if (tab === "einsatz") return einsatzView();
     if (tab === "gruppe") return gruppeView();
+    if (tab === "verhoer") return verhoerView();
     if (tab === "fragen") return fragenView();
     return openDoc !== null ? docView() : akteView();
   }
@@ -85,6 +88,7 @@
       busy = false; scrollTo(0, 0); return;
     }
     if (t === "gruppe") { tab = t; await refresh(); scrollTo(0, 0); return; }
+    if (t === "verhoer") { tab = t; render(); scrollTo(0, 0); return; }
     tab = t; render(); scrollTo(0, 0);
   }
   tabs.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => go(b.dataset.tab)));
@@ -146,6 +150,40 @@
     </div></section>`;
     $("toAkte").onclick = () => go("akte");
   }
+  // ---------- Plus: Verhörraum ----------
+  let V = null, vSel = null, vBusy = false, vErr = "";
+  async function verhoerView() {
+    MS.set(seenKey() + "_v", "1"); $("vbadge").hidden = true;
+    if (!S.verhoer || !S.verhoer.open) {
+      root.innerHTML = `<section class="report paper"><div class="eyebrow">Plus · Verhörraum</div><h2>Noch verschlossen</h2>
+        <p class="muted">Der Verhörraum öffnet, sobald du Frage ${S.verhoer ? S.verhoer.from_question : 2} gelöst hast. Dann kannst du die KI-Doppelgänger deiner Freunde verhören – ${S.verhoer ? S.verhoer.max : 12} Fragen hast du.</p></section>`;
+      return;
+    }
+    if (!V) { try { V = await api("GET", "verhoer"); } catch (e) { root.innerHTML = `<p class="err">${esc(e.message)}</p>`; return; } }
+    if (vSel === null) vSel = V.suspects.find((x) => !x.me) ? V.suspects.find((x) => !x.me).idx : 0;
+    const left = V.max - V.used, th = V.threads[vSel] || [], who = V.suspects[vSel];
+    root.innerHTML = `<section class="report paper fr-verhoer">
+      <div class="eyebrow">Plus · Verhörraum · KI</div>
+      <h2>Wen willst du verhören?</h2>
+      <p class="muted">Die Doppelgänger werden von einer KI gespielt und kennen nur die erfundene Welt des Falls. Einer von ihnen lügt. Du hast noch <b>${left} von ${V.max}</b> Fragen.</p>
+      <div class="fr-suspects">${V.suspects.map((x) => `<button type="button" class="chipbtn ${x.idx === vSel ? "on" : ""}" data-sus="${x.idx}">${x.name}${x.me ? " (du)" : ""}${(V.threads[x.idx] || []).length ? " ·" + (V.threads[x.idx].filter((m) => m.role === "user").length) : ""}</button>`).join("")}</div>
+      <div class="fr-thread" id="thread">${th.length ? th.map((m) => `<div class="fr-msg ${m.role === "user" ? "q" : "a"}"><small>${m.role === "user" ? "Du" : who.name + " · KI-Doppelgänger"}</small>${m.text}</div>`).join("") : `<p class="small muted">Noch keine Fragen an ${who.name}. Tipp: Frag nach der Nacht, nach Ferdl oder nach dem Clip.</p>`}${vBusy ? `<div class="fr-msg a typing"><small>${who.name} · KI-Doppelgänger</small>…</div>` : ""}</div>
+      ${left > 0 ? `<form id="vf" class="fr-ask"><input id="vq" maxlength="${V.max_chars}" autocomplete="off" placeholder="Deine Frage an ${who.name} …" ${vBusy ? "disabled" : ""}><button class="btn btn-red" type="submit" ${vBusy ? "disabled" : ""}>Fragen</button></form>` : `<p class="note">Du hast alle Fragen gestellt. Die Hinweise zur letzten Frage helfen dir weiter.</p>`}
+      ${vErr ? `<p class="err">${esc(vErr)}</p>` : ""}
+      <p class="small" style="margin-top:14px"><button type="button" class="linkbtn" id="toQv">Zu den Fragen →</button></p>
+    </section>`;
+    const t = $("thread"); if (t) t.scrollTop = t.scrollHeight;
+    root.querySelectorAll("[data-sus]").forEach((b) => (b.onclick = () => { vSel = Number(b.dataset.sus); vErr = ""; verhoerView(); }));
+    $("toQv").onclick = () => go("fragen");
+    if ($("vf")) $("vf").onsubmit = async (e) => {
+      e.preventDefault();
+      const text = $("vq").value.trim(); if (!text || vBusy) return;
+      vBusy = true; vErr = ""; V.threads[vSel] = [...(V.threads[vSel] || []), { role: "user", text: esc(text) }]; verhoerView();
+      try { V = await api("POST", "verhoer", { suspect: vSel, text }); } catch (e2) { vErr = e2.message; V.threads[vSel].pop(); }
+      vBusy = false; if (tab === "verhoer") verhoerView();
+    };
+  }
+
   function gruppeView() {
     const g = S.group;
     root.innerHTML = `<section class="report paper">
@@ -251,7 +289,8 @@
       if (d.correct) {
         verdict = null; openDoc = null;
         await refresh(d);
-        if (!d.ended) { verdict = { cls: "good", html: `<strong>Richtig!</strong>Frage ${q.nr} ist gelöst. Neue Beweisstücke liegen in deiner Akte.` }; fragenView(); toast(`📁 Neue Beweisstücke in deiner Akte <b>Ansehen</b>`); }
+        const vNow = S.plus && S.verhoer && S.verhoer.open && q.nr === S.verhoer.from_question;
+        if (!d.ended) { verdict = { cls: "good", html: vNow ? `<strong>Richtig!</strong>Frage ${q.nr} ist gelöst. Der Verhörraum ist offen – verhöre die Doppelgänger deiner Freunde.` : q.nr >= 3 ? `<strong>Richtig!</strong>Frage ${q.nr} ist gelöst. Jetzt das Finale.` : `<strong>Richtig!</strong>Frage ${q.nr} ist gelöst. Neue Beweisstücke liegen in deiner Akte.` }; fragenView(); if (vNow) { V = null; const tt = $("toast"); tt.innerHTML = `<button type="button">🗣️ Der Verhörraum ist offen <b>Verhören</b></button>`; tt.hidden = false; tt.querySelector("button").onclick = () => { tt.hidden = true; go("verhoer"); }; setTimeout(() => (tt.hidden = true), 5000); } else if (q.nr < 3) toast(`📁 Neue Beweisstücke in deiner Akte <b>Ansehen</b>`); }
         scrollTo(0, 0);
       } else {
         verdict = { cls: "bad", html: `<strong>Leider falsch.</strong>+${d.penalty} Minuten Strafzeit. Schau dir die Beweisstücke noch einmal an.` };

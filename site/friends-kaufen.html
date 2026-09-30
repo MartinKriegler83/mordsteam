@@ -52,19 +52,23 @@
 <div class="note" id="closed" hidden>Bestellungen sind noch nicht geöffnet. Du kannst das Formular ansehen, aber noch nicht absenden.</div>
 <div class="note" id="cancelled" hidden>Die Zahlung wurde abgebrochen. Du kannst es einfach nochmals versuchen.</div>
 <form class="form" id="friends" novalidate>
-<fieldset class="step"><legend><span>1</span> Eure Gruppe</legend>
+<fieldset class="step"><legend><span>1</span> Welche Variante?</legend>
+<label class="check"><input type="radio" name="variant" value="basis" checked><span><b>Krimiabend</b> · 45 Minuten · ab 29 € (bis 4 Personen, jede weitere +5 €)</span></label>
+<label class="check"><input type="radio" name="variant" value="plus"><span><b>Krimiabend Plus</b> · 70 Minuten · ab 49 € (bis 4 Personen, jede weitere +8 €) – mit KI-Verhörraum: Ihr verhört die KI-Doppelgänger eurer Freunde. Ab 18 Jahren.</span></label>
+</fieldset>
+<fieldset class="step"><legend><span>2</span> Eure Gruppe</legend>
 <div class="field"><label for="n">Wie viele spielen mit? *</label><select id="n" name="n"><option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option></select>
 <span class="hint">Trag dich selbst mit ein, wenn du mitspielst. Wer der Täter ist, lost das Spiel aus – auch du erfährst es erst bei der Auflösung.</span></div>
 <div id="people" class="fr-people"></div>
 <p class="hint">Vornamen reichen, bei gleichen Vornamen mit Initial (z. B. „Anna B.“). Die Eigenheit ist ein harmloser Running Gag im Fall – Freitexte gibt es bewusst nicht.</p>
 <label class="check"><input type="checkbox" name="zustimmung"><span>Alle Genannten wissen Bescheid und sind einverstanden, mit ihrem Namen und der gewählten Eigenheit im fiktiven Fall mitzuspielen – auch als Verdächtige oder Täter. *</span></label>
 </fieldset>
-<fieldset class="step"><legend><span>2</span> Wie wollt ihr spielen?</legend>
+<fieldset class="step"><legend><span>3</span> Wie wollt ihr spielen?</legend>
 <label class="check"><input type="radio" name="mode" value="live" checked><span><b>Gleichzeitig</b> – ihr spielt am selben Abend, zusammen oder im Videocall. Du startest den Fall für alle.</span></label>
 <label class="check"><input type="radio" name="mode" value="week"><span><b>Über die Woche</b> – jeder spielt, wann er Zeit hat. Die Auflösung kommt für alle gemeinsam.</span></label>
 <div class="field" id="daysbox" hidden><label for="days">Zeitfenster</label><select id="days" name="days"><option value="3">3 Tage</option><option value="5">5 Tage</option><option value="7" selected>7 Tage</option></select><span class="hint">Die Tage beginnen, wenn du auf deiner Organisator-Seite auf Start tippst – nicht mit dem Kauf.</span></div>
 </fieldset>
-<fieldset class="step"><legend><span>3</span> Deine Angaben</legend>
+<fieldset class="step"><legend><span>4</span> Deine Angaben</legend>
 <div class="two">
 <div class="field"><label for="c_name">Dein Name *</label><input id="c_name" name="c_name" maxlength="120" autocomplete="name"></div>
 <div class="field"><label for="c_email">E-Mail *</label><input id="c_email" name="c_email" type="email" maxlength="160" autocomplete="email"><span class="hint">Hierher schicken wir die Links und die Rechnung.</span></div>
@@ -74,10 +78,11 @@
 <label class="check"><input type="radio" name="kunde" value="b2b"><span>Unternehmen, Verein oder Organisation</span></label>
 <span class="hint">Für Privatpersonen gilt das gesetzliche Rücktrittsrecht (siehe <a href="agb.html#ruecktritt" target="_blank" rel="noopener">AGB Punkt 8</a>).</span></div>
 </fieldset>
-<fieldset class="step"><legend><span>4</span> Prüfen und bezahlen</legend>
+<fieldset class="step"><legend><span>5</span> Prüfen und bezahlen</legend>
 <div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Friends 001 „Letzte Runde auf der Hütte“ · 6 Personen · 45 Minuten · Spielsprache Deutsch</span><b id="sumprice">39,00 €</b></div>
 <div class="sumrow" id="ebrow" hidden><span>Early Bird −<span class="ebp">40</span> %</span><b id="ebprice"></b></div>
-<p class="small">Endpreis für die ganze Gruppe: 29 € bis 4 Personen, jede weitere +5 €. 12 Monate spielbar, einmal startbar. Umsatzsteuerfrei (Kleinunternehmerregelung).</p></div>
+<p class="small" id="sumnote">Endpreis für die ganze Gruppe. 12 Monate spielbar, einmal startbar. Umsatzsteuerfrei (Kleinunternehmerregelung).</p></div>
+<label class="check" id="ab18box" hidden><input type="checkbox" name="ab18"><span>Alle Mitspielenden sind mindestens 18 Jahre alt (Voraussetzung für den KI-Verhörraum) und damit einverstanden, dass eine KI im Spiel ihre Doppelgänger spielt – nur mit Platzhaltern statt echter Namen und der gewählten Eigenheit. *</span></label>
 <label class="check" id="ebbox" hidden><input type="checkbox" name="earlybird"><span><b>Early Bird: <span class="ebp">40</span> % Rabatt</b> auf euer erstes Spiel. Gegenleistung: Nach der Auflösung gebt ihr uns im Spiel kurz Feedback (<a href="earlybird.html" target="_blank" rel="noopener">Bedingungen</a>).</span></label>
 <p class="hint" id="voucherhint">Gutscheincode, z. B. aus Mordsteam Solo? Den gibst du im nächsten Schritt beim Bezahlen ein.</p>
 <label class="check" id="sofortbox" hidden><input type="checkbox" name="sofort"><span>Ich möchte ausdrücklich, dass ihr unsere Runde gleich nach dem Bezahlen anlegt und die Links bereitstellt – spielen können wir trotzdem, wann wir wollen. Mir ist bekannt, dass ich dadurch als Privatperson mein Rücktrittsrecht verliere (spätestens mit der gemeinsamen Auflösung). *</span></label>
