@@ -66,6 +66,7 @@
     $("#fiktivnote").hidden = !fk;
     // Early Bird: Feedback ist Teil der Bedingungen – Abwahl der Feedback-Mail ausblenden
     $("#nofbbox").hidden = !!(META.earlybird && form.earlybird.checked);
+    if ($("#voucherhint")) $("#voucherhint").hidden = !!(META.earlybird && form.earlybird.checked);
     $("#zustimmungbox").hidden = fk;
     // Schritte fortlaufend nummerieren (fiktiv: Firma, Opfer, Verdächtige entfallen)
     [...form.querySelectorAll("fieldset.step")].filter((f) => !f.hidden).forEach((f, i) => (f.querySelector("legend span").textContent = i + 1));
