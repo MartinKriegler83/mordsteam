@@ -49,6 +49,7 @@
       <h1>${b.title}</h1>
       <form id="sf" class="form" style="margin-top:22px">
       ${needName ? `<div class="field"><label for="nm">Dein Ermittlername</label><input id="nm" required maxlength="40" autocomplete="nickname" placeholder="z. B. Martina Huber"><span class="small">Steht in der Geschichte und auf deiner Urkunde.</span></div>` : ""}
+      <p class="small">Du kannst auf jedem Gerät ermitteln – Handy, Tablet oder Laptop. Mit deinem Code kannst du auch mitten im Fall auf ein anderes Gerät wechseln und dort weitermachen.</p>
       <p class="small">Als Nächstes liest du deinen Einsatz und die Spielregeln. Die Uhr startet erst, wenn du die Akte oder die Fragen öffnest.</p>
       <button class="btn btn-red btn-big" type="submit">Weiter zum Einsatz</button><p class="err" role="alert">${err ? esc(err) : ""}</p></form>
     </div></section>`;
