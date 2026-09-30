@@ -475,3 +475,12 @@ button.btn-big{margin-top:14px}
 .bars div:hover i{background:var(--ink)}
 .bars-axis{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:#5A5D66;margin-top:4px}
 .so-voucher .btn{justify-self:center;margin-top:8px}
+.so-fb{margin-top:22px}
+.so-fb .field{margin-top:14px}
+.so-fb textarea{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:#FBF8F0}
+.stars{display:flex;gap:6px;margin:12px 0 4px}
+.stars button{font-size:34px;line-height:1;background:none;border:0;color:#CFC7B6;cursor:pointer;padding:2px}
+.stars button.on{color:var(--red)}
+.chips-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.chipbtn{font:inherit;font-size:14px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--paper);cursor:pointer;min-height:40px}
+.chipbtn.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}

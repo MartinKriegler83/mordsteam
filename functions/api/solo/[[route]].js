@@ -1,6 +1,6 @@
 // Cloudflare Pages Function: /api/solo/* – Mordsteam Solo (Einzelfälle)
 import { json, fail } from "../../../lib/game.js";
-import { soloTicketInfo, soloStart, soloState, soloHint, soloAnswer, soloGiveUp, soloForward, soloAdmin } from "../../../lib/solo.js";
+import { soloTicketInfo, soloStart, soloState, soloHint, soloAnswer, soloGiveUp, soloForward, soloAdmin, soloFeedback } from "../../../lib/solo.js";
 
 export async function onRequest({ request, env, params }) {
   if (!env.DB) return fail("Datenbank nicht eingerichtet.", 500);
@@ -13,6 +13,7 @@ export async function onRequest({ request, env, params }) {
     if (route === "hint" && m === "POST") return await soloHint(request, env);
     if (route === "answer" && m === "POST") return await soloAnswer(request, env);
     if (route === "aufgeben" && m === "POST") return await soloGiveUp(request, env);
+    if (route === "feedback" && m === "POST") return await soloFeedback(request, env);
     if (route === "test/vorspulen" && m === "POST") return await soloForward(request, env);
     if (route.startsWith("admin/")) {
       if (!env.ADMIN_KEY) return fail("ADMIN_KEY ist nicht gesetzt.", 503);

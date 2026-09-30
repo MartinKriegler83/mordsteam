@@ -152,7 +152,7 @@
   function feedbackPanel() {
     if (!fb) return "";
     const pub = { no: "nicht veröffentlichen", anon: "anonym erlaubt", name: "mit Namen erlaubt" };
-    const A = { best: "Am meisten Spaß", improve: "Verbessern", difficulty: "Schwierigkeit", duration: "Spielzeit", aria: "ARIA", tech: "Technik", players: "Personen", again: "Wieder spielen", call: "Gespräch" };
+    const A = { spieler: "Spieler/in", geloest: "Gelöst", test: "Test", best: "Am meisten Spaß", improve: "Verbessern", difficulty: "Schwierigkeit", duration: "Spielzeit", aria: "ARIA", tech: "Technik", players: "Personen", again: "Wieder spielen", call: "Gespräch" };
     return `<div class="panel"><div class="eyebrow">Feedback nach dem Spiel</div>
       <p class="small" style="margin:6px 0">Mailversand: <b>${fb.mail ? "eingerichtet" : "NICHT eingerichtet (RESEND_API_KEY / MAIL_FROM fehlen) – Links unten selbst verschicken"}</b> · Täglicher Lauf: <b>${fb.cron ? "CRON_KEY gesetzt" : "CRON_KEY fehlt"}</b></p>
       <p style="margin:8px 0">${fb.due.length} Runde(n) beendet und noch ohne Feedback-Mail.</p>
@@ -160,7 +160,7 @@
       ${fbMsg ? `<p class="small" style="margin-top:8px">${fbMsg}</p>` : ""}
       ${fb.links.length ? `<p class="small" style="margin-top:10px"><b>Nicht per Mail zugestellt – Link selbst schicken:</b><br>${fb.links.map((l) => `${MS.esc(l.email || "")}: <a href="${l.link}" target="_blank" rel="noopener">${location.origin}${l.link}</a>`).join("<br>")}</p>` : ""}
       <div class="list-sessions" style="margin-top:12px">${fb.feedback.length ? fb.feedback.map((f) => `<div class="sess">
-        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${"★".repeat(f.rating || 0)}${f.nps != null ? ` · Empfehlung ${f.nps}/10` : ""} · ${MS.esc(f.firma || "–")}</b><span class="chip ${f.approved ? "open" : ""}">${f.variant === "eb" ? "Early Bird" : "Standard"} · ${pub[f.publish]}</span></div>
+        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${"★".repeat(f.rating || 0)}${f.nps != null ? ` · Empfehlung ${f.nps}/10` : ""} · ${f.paket === "solo" ? "Mordsteam Solo" + (f.answers.test === "ja" ? " (Test)" : "") : MS.esc(f.firma || "–")}</b><span class="chip ${f.approved ? "open" : ""}">${f.variant === "eb" ? "Early Bird" : f.variant === "solo" ? "Solo" : "Standard"} · ${pub[f.publish]}</span></div>
         <div class="small">${new Date(f.created_at).toLocaleString("de-AT")} · ${MS.esc(f.name || "")} · ${MS.esc(f.email || "")} · ${f.paket}${f.publish === "name" ? ` · Name: <b>${MS.esc(f.publish_name || "")}</b>` : ""}</div>
         ${f.review ? `<p style="margin:8px 0"><i>„${MS.esc(f.review)}“</i></p>` : ""}
         <div class="small">${Object.entries(f.answers).map(([k, v]) => `<b>${A[k] || k}:</b> ${MS.esc(v)}`).join("<br>")}</div>

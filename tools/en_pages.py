@@ -312,7 +312,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night for yo
 </div></section>
 </main>''')
 
-P["solo"] = dict(title="Mordsteam Solo – Night Train to Venice: a murder mystery just for you",
+P["solo"] = dict(title="Mordsteam Solo – Night Train to Venice: a murder mystery just for you", scripts='<script src="/assets/aktion.js"></script>',
  desc="A body in the sleeping car, four suspects and 30 minutes to Udine: Mordsteam Solo is the murder mystery for one person – on phone, tablet or laptop, for €8.90.",
  body='''<nav class="subnav" aria-label="Mordsteam Solo"><div class="wrap">
 <b><span>Mordsteam</span> Solo</b>
@@ -408,6 +408,12 @@ P["solo"] = dict(title="Mordsteam Solo – Night Train to Venice: a murder myste
 <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="14" height="10" rx="1.5"/><path d="M1 17h16"/><rect x="17" y="8" width="6" height="12" rx="1.2"/><path d="M19.5 17.5h1"/></svg>
 <p><b>Playable on phone, tablet or laptop.</b> Right in the browser, no app and no account. A stable internet connection is all you need – ideal for the train, the lunch break or an evening on the sofa.</p>
 </div>
+</div></section>
+
+<section id="bewertungen" class="section" data-produkt="solo" hidden><div class="wrap stack">
+<div class="eyebrow">Voices</div>
+<h2 class="h2">What investigators say</h2>
+<div class="reviews" id="reviews"></div>
 </div></section>
 
 <section id="faq" class="section faq"><div class="wrap faq-grid">
@@ -573,9 +579,10 @@ P["privacy"] = dict(title="Privacy policy – Mordsteam", desc="How Mordsteam ha
 <h2>2. Visiting the website</h2>
 <p>The website is delivered via Cloudflare (Cloudflare, Inc., USA, and affiliated companies). Technically necessary connection data such as IP address, time, page requested and browser identifier are processed to deliver the site securely and quickly (Art. 6(1)(f) GDPR). Cloudflare is certified under the EU-US Data Privacy Framework.</p>
 <p>To see how often which pages are visited, we use Cloudflare Web Analytics. It works without cookies and without storing anything in your browser and does not build profiles of individual visitors; we only see aggregated figures (e.g. page views, country, device type). The legal basis is our legitimate interest in improving the website (Art. 6(1)(f) GDPR). For operations, we also count server requests and emails sent only as numbers per day – without IP addresses, recipients or content.</p>
-<p>We use no cookies, no tracking and no analytics tools. Fonts are hosted locally; no data is sent to Google.</p>
+<p>We use no cookies and do not track individual visitors. Fonts are hosted locally; no data is sent to Google.</p>
 <h2>3. Feedback after the game</h2>
 <p>The day after the game ends, we send the person who ordered a single email with a link to a feedback form (Art. 6(1)(f) GDPR – we want to improve our cases; for early bird orders part of the discount conditions, Art. 6(1)(b) GDPR). You can opt out of this email when ordering. We store your answers without reference to the people in the case. We only publish a review if you expressly agree in the form – anonymously or under the name you provide for it. You can withdraw your consent at any time by email; we will then remove the review from the website.</p>
+<p>For Mordsteam Solo, we ask for your feedback right in the browser at the end of the game (stars, difficulty, optionally a sentence and suggestions for improvement). This is voluntary. It is stored with your player name; your sentence is only published if you expressly agree – anonymously or with your first name – and only after we approve it.</p>
 <h2>4. Order and payment</h2>
 <p>For an order we process the chosen game with package or variant, the number of teams or players, the game language, your name, your email address, whether you order as a company or private individual, optionally phone and invoice company, and the details for personalising the case where the game provides for it (e.g. company or group name, place, rooms, names, title, role or quirks of the people who appear in the case, optionally your logo). The purpose is performance of the contract (Art. 6(1)(b) GDPR). If you choose a fictional cast, you don't provide any personal data for the personalisation.</p>
 <p>Payment and invoicing are handled by Stripe (Stripe Payments Europe, Ltd., Dublin, Ireland). Stripe receives your payment and billing data for this and processes it under its own responsibility; we never see card details. If you withdraw from a contract, we process the order number, name, email address, time and any note to handle and document the withdrawal (Art. 6(1)(b) and (c) GDPR). We send the order confirmation and the feedback email via the email service Resend (Resend, Inc., USA; sent via servers in the EU, safeguarded by EU standard contractual clauses). We keep invoice and payment data for as long as tax retention obligations require (in Austria usually seven years).</p>
