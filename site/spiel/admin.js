@@ -238,13 +238,14 @@
         <div class="actions-row"><label class="small">Spieler <select id="frn">${[4, 5, 6, 7, 8].map((n) => `<option ${n === 6 ? "selected" : ""}>${n}</option>`).join("")}</select></label>
           <label class="small">Spielart <select id="frm"><option value="live">gleichzeitig</option><option value="week">über 3 Tage</option></select></label>
           <label class="small">Variante <select id="frv"><option value="">Krimiabend</option><option value="plus">Plus (KI-Verhörraum)</option></select></label>
+          <label class="small">Sprache <select id="frl"><option value="de">Deutsch</option><option value="en">Englisch</option></select></label>
           <button class="btn btn-red" id="frnew">Friends-Testgruppe anlegen</button></div>
         ${friendsMsg ? `<div style="margin-top:12px">${friendsMsg}</div>` : ""}
         ${friendsList && friendsList.groups.length ? `<details style="margin-top:12px"><summary>Letzte Friends-Gruppen (${friendsList.groups.length})</summary><table class="grid" style="margin-top:8px"><tr><th>Gruppe</th><th>Spielart</th><th>Status</th><th>Verbunden</th><th>Gelöst</th><th>Ø Endzeit</th><th>Links</th></tr>
           ${friendsList.groups.map((x) => `<tr><td class="mono">${x.id}${x.test_mode ? " (Test)" : ""}</td><td>${x.mode === "live" ? "gleichzeitig" : "Woche"}${x.plus ? " · Plus" : ""}</td><td>${({ ready: "wartet auf Start", running: "läuft", revealed: "aufgelöst" })[x.status] || x.status}</td><td>${x.joined} / ${x.n}</td><td>${x.solved}</td><td class="mono">${x.avg ? MS.dur(x.avg) : "–"}</td><td><a href="/spiel/friends.html?o=${x.org_token}" target="_blank" rel="noopener">Organisator</a> · <a href="/spiel/friends.html?e=${x.invite}" target="_blank" rel="noopener">Einladung</a></td></tr>`).join("")}</table></details>` : ""}</div>
       <div class="panel"><div class="eyebrow">Mordsteam Solo · Testcode</div>
         <p style="margin:8px 0 14px">Legt einen Solo-Code im Testmodus an (eigene Wertung, getrennt von echten Spielen; mit „+5 Min.“-Knopf).</p>
-        <div class="actions-row"><label class="small">Fall <select id="solocase"><option value="solo-001">001 · Nachtzug nach Venedig</option><option value="solo-002">002 · Applaus für einen Toten</option><option value="solo-plus-001">Plus · Der letzte Jahrgang (KI)</option></select></label><button class="btn btn-red" id="solonew" data-test="1">Solo-Testcode anlegen</button><button class="btn btn-line" id="solonew2" data-test="0">Solo-Code für Tester (ohne Vorspulen)</button></div>
+        <div class="actions-row"><label class="small">Fall <select id="solocase"><option value="solo-001">001 · Nachtzug nach Venedig</option><option value="solo-002">002 · Applaus für einen Toten</option><option value="solo-plus-001">Plus · Der letzte Jahrgang (KI)</option></select></label><label class="small">Sprache <select id="solol"><option value="de">Deutsch</option><option value="en">Englisch</option></select></label><button class="btn btn-red" id="solonew" data-test="1">Solo-Testcode anlegen</button><button class="btn btn-line" id="solonew2" data-test="0">Solo-Code für Tester (ohne Vorspulen)</button></div>
         <p class="small" style="margin-top:6px">Tester-Codes verhalten sich wie gekaufte Codes: kein „+5 Min.“, sie zählen in der echten Wertung und ihr Gutschein ist ein echter Stripe-Code.</p>
         ${soloMsg ? `<div style="margin-top:12px">${soloMsg}</div>` : ""}
         ${soloList && soloList.tickets.length ? `<details style="margin-top:12px"><summary>Letzte Solo-Codes (${soloList.tickets.length})</summary><table class="grid" style="margin-top:8px"><tr><th>Code</th><th>Fall</th><th>Name</th><th>Test</th><th>Durchgänge</th><th>Erste Zeit</th><th>Gutschein</th></tr>
@@ -319,7 +320,7 @@
     ["solonew", "solonew2"].map((id) => document.getElementById(id)).filter(Boolean).forEach((sn) => sn.onclick = async () => {
       sn.disabled = true;
       try {
-        const r = await fetch("/api/solo/admin/ticket", { method: "POST", headers: { "content-type": "application/json", ...H() }, body: JSON.stringify({ test: sn.dataset.test === "1", case: (document.getElementById("solocase") || {}).value || "solo-001" }) });
+        const r = await fetch("/api/solo/admin/ticket", { method: "POST", headers: { "content-type": "application/json", ...H() }, body: JSON.stringify({ test: sn.dataset.test === "1", case: (document.getElementById("solocase") || {}).value || "solo-001", lang: (document.getElementById("solol") || {}).value || "de" }) });
         const d = await r.json(); if (!r.ok) throw new Error(d.error || "Fehler");
         soloMsg = `<p style="margin:0">${sn.dataset.test === "1" ? "Solo-Testcode" : "Solo-Code für Tester"}: <span class="bigcode" style="font-size:26px">${d.code}</span></p><p class="mono small">${location.origin}/spiel/solo.html?c=${d.code}</p><div class="actions-row" style="margin-top:8px"><a class="btn btn-ink" href="/spiel/solo.html?c=${d.code}" target="_blank" rel="noopener">Solo-Fall öffnen</a></div>`;
       } catch (e2) { soloMsg = `<p class="err">${MS.esc(e2.message)}</p>`; }
@@ -329,7 +330,7 @@
     if (frnew) frnew.onclick = async () => {
       frnew.disabled = true;
       try {
-        const r = await fetch("/api/friends/admin/group", { method: "POST", headers: { "content-type": "application/json", ...H() }, body: JSON.stringify({ n: Number(document.getElementById("frn").value), mode: document.getElementById("frm").value, days: 3, test: true, plus: document.getElementById("frv").value === "plus" }) });
+        const r = await fetch("/api/friends/admin/group", { method: "POST", headers: { "content-type": "application/json", ...H() }, body: JSON.stringify({ n: Number(document.getElementById("frn").value), mode: document.getElementById("frm").value, days: 3, test: true, plus: document.getElementById("frv").value === "plus", lang: (document.getElementById("frl") || {}).value || "de" }) });
         const d = await r.json(); if (!r.ok) throw new Error(d.error || "Fehler");
         friendsMsg = `<p style="margin:0">Friends-Testgruppe <b class="mono">${d.id}</b></p><p class="mono small">Organisator: ${location.origin}/spiel/friends.html?o=${d.org}<br>Einladung: ${location.origin}/spiel/friends.html?e=${d.invite}</p><div class="actions-row" style="margin-top:8px"><a class="btn btn-ink" href="/spiel/friends.html?o=${d.org}" target="_blank" rel="noopener">Organisator-Ansicht öffnen</a><a class="btn btn-line" href="/spiel/friends.html?e=${d.invite}" target="_blank" rel="noopener">Als Spieler beitreten</a></div>`;
       } catch (e2) { friendsMsg = `<p class="err">${MS.esc(e2.message)}</p>`; }

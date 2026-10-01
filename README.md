@@ -35,7 +35,8 @@ lib/                     Spiellogik – wird nie ausgeliefert, nur von functions
   countries.js             Länderprofile (37 Länder): Behörden, Währung, IBAN, Kennzeichen, Telefon, Städte, Namen
   cases/                   Die Fälle (Texte, Beweisstücke, Lösungen, Hinweise, KI-Prompts)
     fall-001.js / fall-001-en.js   Teams-Fall, deutsch und englische Textschicht
-    friends-001.js, solo-001.js, solo-002.js, solo-plus-001.js
+    friends-001.js, solo-001.js, solo-002.js, solo-plus-001.js   Friends- und Solo-Fälle (deutsch, mit der Logik)
+    *-en.js                  englische Textschicht je Fall: exportiert nur die Exporte mit sichtbarem Text, gleiche Namen und Struktur
   stripe.js                Stripe-Hilfe für lib/ (der Shop hat eine eigene Kopie)
   accounting.js            Buchhaltung: Einnahmen nach Kundenart und Region, EU-Privatkunden-Schwelle
   feedback.js              Feedback-Mails und -Bögen, Bewertungen
@@ -49,7 +50,7 @@ site/                    Öffentliche Website (deutsch) + site/en/ (englisch, ge
 teaser/                  Platzhalter-Startseite und Impressum für den Teaser-Modus
 tools/                   Prüf- und Hilfsskripte (siehe „Lokal testen“)
   en_pages.py              erzeugt site/en/*.html (englische Seiten nie direkt bearbeiten)
-  check_*.mjs              Prüfskripte je Fall (Eindeutigkeit der Lösung über alle Varianten)
+  check_*.mjs              Prüfskripte je Fall (Eindeutigkeit der Lösung über alle Varianten); check_*_en.mjs prüft die englische Fassung gegen die deutsche
   github-workflow-feedback-mails.yml   Vorlage der GitHub-Action (Kopie von .github/workflows/feedback-mails.yml)
 .github/workflows/feedback-mails.yml   stündlicher Aufruf von /api/shop/cron
 faelle/                  alte Arbeitsdokumente (nicht ausgeliefert)
@@ -72,12 +73,15 @@ design/                  Designentwürfe (nicht ausgeliefert)
 ### Solo (`/spiel/solo.html`)
 - Ein Kauf erzeugt ein **Ticket** (`solo_tickets`, Code). Jeder Durchgang ist ein **Run** (`solo_runs`) mit eigenem Täter; der erste zählt für den Vergleich („schneller als X %“, `solo_scores`). Verhöre in `solo_chat`.
 - Zum Ticket gehört ein 5-€-Gutscheincode für Friends/Teams (Stripe-Promotion-Code).
+- Spielsprache: `solo_tickets.lang`. `soloCase(id, lang)` in `lib/solo.js` legt bei `en` die Textschicht `<id>-en.js` über das deutsche Modul (`{ ...DE, ...EN }`). Der Spielstand liefert `lang`, die Oberfläche übernimmt sie.
 
 ### Friends (`/spiel/friends.html`)
 - Eine **Gruppe** (`friends_groups`) hat einen Fall für alle (Besetzung, Täter, Zeitvariante), jede Person einen eigenen Durchgang (`friends_players`). Modus `live` (gemeinsame Uhr, Organisator startet) oder `week` (3/5/7 Tage, jeder startet selbst). Lösung und Rangliste erst bei der gemeinsamen Auflösung (`org/reveal` oder automatisch per Cron). Verhöre in `friends_chat`.
+- Spielsprache: `friends_groups.lang`, gilt für die ganze Gruppe; `friendsCase(id, lang)` in `lib/friends.js` wie bei Solo. Einladung, Spielstand und Organisator-Seite liefern `lang`.
 
 ### Shop (`/api/shop/`)
 - Bestellseiten: `bestellen.html` (Teams), `friends-kaufen.html`, `solo-kaufen.html` (+ englische Gegenstücke).
+- Alle drei Bestellformulare haben das Feld Spielsprache (`lang`, unabhängig von der Website-Sprache `site`); es landet in `orders.contact.lang` und von dort in Spielrunde, Gruppe bzw. Ticket.
 - Ablauf: Formular → `bestellung` / `friends` / `solo` legt `orders` (Status `pending`) an → Stripe Checkout → Webhook `stripe-webhook` (`checkout.session.completed`) → `fulfill()` legt Spielrunde/Gruppe/Ticket an und schickt die Bestellmail → `bestellt.html` fragt `status` ab.
 - Preise stehen im Code, in Cent, als Endpreise: Teams `PRICES` in `functions/api/shop/[[route]].js`, Friends `FRIENDS_PRICE`/`FRIENDS_PRICE_PLUS` in `lib/friends.js`, Solo je Fall (`price` in der Produktliste direkt unter `PRICES`).
 - Early Bird: Rabatt als Stripe-Coupon, gesteuert über `EARLYBIRD_*`.
@@ -89,7 +93,7 @@ Zugriff mit dem Admin-Schlüssel (Header `x-admin`). Funktionen: Spielrunden anl
 
 ## API-Routen
 
-Alle Routen liefern JSON. Authentifizierung über Header:
+Alle Routen liefern JSON. Fehlermeldungen kommen in der Spielsprache bzw., wenn noch keine Runde bekannt ist, in der Sprache aus dem Header `x-lang`. Authentifizierung über Header:
 
 | Header | Wer |
 |---|---|
@@ -106,9 +110,9 @@ Alle Routen liefern JSON. Authentifizierung über Header:
 - Admin: `POST admin/session`, `GET admin/sessions`, `POST admin/delete`, `GET admin/orders`, `POST admin/order-shipped`, `GET admin/stats`, `GET admin/export`, `GET admin/meta`, `GET admin/ops`, `GET admin/buchhaltung`, `GET admin/feedback`, `POST admin/feedback-approve`, `POST admin/feedback-run`
 - Nur Testrunden: `POST test/vorspulen` (Spielzeit vorspulen)
 
-**`/api/solo/…`**: `start`, `begin`, `state`, `answer`, `hint`, `verhoer`, `aufgeben`, `ticket`, `feedback`, `test/vorspulen`, `admin/list`, `admin/ticket`
+**`/api/solo/…`** (Admin-Testticket: `admin/ticket` mit `case`, `lang`, `name`): `start`, `begin`, `state`, `answer`, `hint`, `verhoer`, `aufgeben`, `ticket`, `feedback`, `test/vorspulen`, `admin/list`, `admin/ticket`
 
-**`/api/friends/…`**: `claim`, `begin`, `state`, `answer`, `hint`, `verhoer`, `aufgeben`, `invite`, `org`, `org/start`, `org/reveal`, `feedback`, `admin/list`, `admin/group`
+**`/api/friends/…`** (Admin-Testgruppe: `admin/group` mit `n`, `lang`, `plus`, `mode`): `claim`, `begin`, `state`, `answer`, `hint`, `verhoer`, `aufgeben`, `invite`, `org`, `org/start`, `org/reveal`, `feedback`, `admin/list`, `admin/group`
 
 **`/api/shop/…`**: siehe Abschnitt Shop.
 
@@ -191,6 +195,7 @@ Voraussetzung: Node.js. Wrangler wird per `npx` geladen.
    node tools/check_solo002.mjs
    node tools/check_soloplus.mjs
    node tools/check_friends.mjs
+   for f in tools/check_*_en.mjs; do node $f; done
    ```
    Alle müssen ohne „FEHLER“ enden.
 2. **Englische Seiten neu erzeugen** nach Änderungen an deutschen Seiten mit englischem Gegenstück: `python3 tools/en_pages.py`

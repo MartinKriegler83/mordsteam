@@ -20,19 +20,20 @@
 <span class="brand"><svg width="26" height="26" viewBox="0 0 34 34" fill="none" stroke="#F3EFE6" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg>
 <span class="brandbox"><small id="fallname">Mordsteam Solo</small><strong id="pname">Mordsteam Solo</strong></span></span>
 <span class="clock" id="clock" aria-live="off"></span>
+<button type="button" class="langsw" id="langsw" hidden>EN</button>
 </div>
-<nav class="tabs" id="tabs" role="tablist" hidden>
+<nav class="tabs" id="tabs" role="tablist" hidden data-en-aria="Case sections" aria-label="Fallbereiche">
 <div class="wrap">
-<button type="button" role="tab" data-tab="einsatz">Einsatz</button>
-<button type="button" role="tab" data-tab="akte">Akte <span class="fbadge" id="newbadge" hidden></span></button>
-<button type="button" role="tab" data-tab="fragen">Fragen</button>
-<button type="button" role="tab" data-tab="verhoer" id="vtab" hidden>Verhör <span class="fbadge" id="vbadge" hidden>!</span></button>
+<button type="button" role="tab" data-tab="einsatz"><span data-en="Briefing">Einsatz</span></button>
+<button type="button" role="tab" data-tab="akte"><span data-en="File">Akte</span> <span class="fbadge" id="newbadge" hidden></span></button>
+<button type="button" role="tab" data-tab="fragen"><span data-en="Questions">Fragen</span></button>
+<button type="button" role="tab" data-tab="verhoer" id="vtab" hidden><span data-en="Interrogation">Verhör</span> <span class="fbadge" id="vbadge" hidden>!</span></button>
 </div>
 </nav>
 </header>
-<main class="view"><div class="wrap" id="root"><p class="ondesk">Lade…</p></div></main>
+<main class="view"><div class="wrap" id="root"><p class="ondesk" data-en="Loading…">Lade…</p></div></main>
 <div class="toast" id="toast" role="status" hidden></div>
-<div class="testbar noprint" id="testbar" hidden><span>TEST</span><button type="button" id="ff5">+5 Min.</button></div>
+<div class="testbar noprint" id="testbar" hidden><span>TEST</span><button type="button" id="ff5" data-en="+5 min">+5 Min.</button></div>
 <script src="/spiel/common.js"></script>
 <script src="/spiel/solo.js"></script>
 </body>

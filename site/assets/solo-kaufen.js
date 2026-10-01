@@ -18,11 +18,12 @@
     document.getElementById("sofortbox").hidden = form.kunde.value !== "b2c";
     const C = CASES[form.fall.value] || CASES["solo-001"];
     document.getElementById("ab18box").hidden = !C.plus;
-    document.getElementById("sumtxt").textContent = (EN ? C.en : C.de) + T(" · Spielsprache Deutsch", " · game language German");
+    const en = form.lang.value === "en";
+    document.getElementById("sumtxt").textContent = (EN ? C.en : C.de) + T(` · Spielsprache ${en ? "Englisch" : "Deutsch"}`, ` · game language ${en ? "English" : "German"}`);
     document.getElementById("sumprice").textContent = eur(C.p);
     btn.textContent = T("Zahlungspflichtig bestellen – ", "Order with obligation to pay – ") + eur(C.p);
   };
-  form.querySelectorAll("input[name=kunde],input[name=fall]").forEach((r) => r.addEventListener("change", paint));
+  form.querySelectorAll("input[name=kunde],input[name=fall],select[name=lang]").forEach((r) => r.addEventListener("change", paint));
   paint();
   let open = true;
   fetch("/api/shop/meta" + (EN ? "?lang=en" : "")).then((r) => r.json()).then((m) => { open = !!m.open; document.getElementById("closed").hidden = open; if (!open) btn.disabled = true; }).catch(() => {});
@@ -41,7 +42,7 @@
     if (!consent.agb) return fail(T("Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."), form.agb);
     btn.disabled = true; const label = btn.textContent; btn.textContent = T("Weiter zur Zahlung …", "On to payment …");
     try {
-      const r = await fetch("/api/shop/solo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: EN ? "en" : "de", fall, contact, consent }) });
+      const r = await fetch("/api/shop/solo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: EN ? "en" : "de", lang: form.lang.value === "en" ? "en" : "de", fall, contact, consent }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.redirect) throw new Error(d.error || T("Das hat nicht geklappt.", "That didn't work."));
       location.href = d.redirect;

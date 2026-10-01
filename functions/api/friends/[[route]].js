@@ -7,7 +7,7 @@ export async function onRequest({ request, env, params }) {
   const route = (params.route || []).join("/");
   const m = request.method, url = new URL(request.url);
   try {
-    if (route === "invite" && m === "GET") return await friendsInvite(env, url);
+    if (route === "invite" && m === "GET") return await friendsInvite(env, url, request);
     if (route === "claim" && m === "POST") return await friendsClaim(request, env);
     if (route === "state" && m === "GET") return await friendsState(request, env);
     if (route === "begin" && m === "POST") return await friendsBegin(request, env);
@@ -17,7 +17,7 @@ export async function onRequest({ request, env, params }) {
     if (route === "verhoer" && m === "GET") return await friendsVerhoerGet(request, env);
     if (route === "verhoer" && m === "POST") return await friendsVerhoerAsk(request, env);
     if (route === "feedback" && m === "POST") return await friendsFeedback(request, env);
-    if (route === "org" && m === "GET") return await friendsOrg(env, url);
+    if (route === "org" && m === "GET") return await friendsOrg(env, url, request);
     if (route === "org/start" && m === "POST") return await friendsOrgStart(request, env);
     if (route === "org/reveal" && m === "POST") return await friendsOrgReveal(request, env);
     if (route.startsWith("admin/")) {

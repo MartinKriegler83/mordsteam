@@ -7,7 +7,7 @@ export async function onRequest({ request, env, params }) {
   const route = (params.route || []).join("/");
   const m = request.method;
   try {
-    if (route === "ticket" && m === "GET") return await soloTicketInfo(env, new URL(request.url));
+    if (route === "ticket" && m === "GET") return await soloTicketInfo(env, new URL(request.url), request);
     if (route === "start" && m === "POST") return await soloStart(request, env);
     if (route === "state" && m === "GET") return await soloState(request, env);
     if (route === "begin" && m === "POST") return await soloBegin(request, env);

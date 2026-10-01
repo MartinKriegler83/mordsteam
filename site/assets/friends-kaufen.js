@@ -34,9 +34,10 @@
     document.getElementById("sofortbox").hidden = form.kunde.value !== "b2c";
     document.getElementById("daysbox").hidden = form.mode.value !== "week";
     document.getElementById("ab18box").hidden = !isPlus();
+    const gl = form.lang.value === "en", sl = T(`Spielsprache ${gl ? "Englisch" : "Deutsch"}`, `game language ${gl ? "English" : "German"}`);
     document.getElementById("sumtxt").textContent = isPlus()
-      ? T(`Mordsteam Friends 001 „Letzte Runde auf der Hütte“ · Krimiabend Plus mit KI-Verhörraum · ${n} Personen · 70 Minuten · Spielsprache Deutsch`, `Mordsteam Friends 001 “Last Round at the Chalet” · Mystery Night Plus with AI interrogation room · ${n} people · 70 minutes · game language German`)
-      : T(`Mordsteam Friends 001 „Letzte Runde auf der Hütte“ · Krimiabend · ${n} Personen · 45 Minuten · Spielsprache Deutsch`, `Mordsteam Friends 001 “Last Round at the Chalet” · Mystery Night · ${n} people · 45 minutes · game language German`);
+      ? T(`Mordsteam Friends 001 „Letzte Runde auf der Hütte“ · Krimiabend Plus mit KI-Verhörraum · ${n} Personen · 70 Minuten · ${sl}`, `Mordsteam Friends 001 “Last Round at the Chalet” · Mystery Night Plus with AI interrogation room · ${n} people · 70 minutes · ${sl}`)
+      : T(`Mordsteam Friends 001 „Letzte Runde auf der Hütte“ · Krimiabend · ${n} Personen · 45 Minuten · ${sl}`, `Mordsteam Friends 001 “Last Round at the Chalet” · Mystery Night · ${n} people · 45 minutes · ${sl}`);
     document.getElementById("sumprice").textContent = money(full);
     document.getElementById("ebrow").hidden = !eb;
     if (eb) document.getElementById("ebprice").textContent = money(pay - full);
@@ -46,7 +47,7 @@
   form.n.addEventListener("change", () => { save(); rows(); });
   people.addEventListener("input", save); people.addEventListener("change", save);
   form.addEventListener("change", paint);
-  fetch("/api/shop/friends-meta").then((r) => r.json()).then((m) => {
+  fetch("/api/shop/friends-meta" + (EN ? "?lang=en" : "")).then((r) => r.json()).then((m) => {
     M = m; open = !!m.open;
     document.getElementById("closed").hidden = open; if (!open) btn.disabled = true;
     if (m.earlybird) { document.getElementById("ebbox").hidden = false; document.querySelectorAll(".ebp").forEach((x) => (x.textContent = m.earlybird.prozent)); }
@@ -73,7 +74,7 @@
     if (!consent.agb) return fail(T("Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."), form.agb);
     btn.disabled = true; const label = btn.innerHTML; btn.textContent = T("Weiter zur Zahlung …", "On to payment …");
     try {
-      const r = await fetch("/api/shop/friends", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: EN ? "en" : "de", variant: isPlus() ? "plus" : "basis", players: list.map((p) => ({ name: p.name, quirk: p.quirk })), mode: form.mode.value, days: Number(form.days.value), earlybird: !!(M.earlybird && form.earlybird.checked), contact, consent }) });
+      const r = await fetch("/api/shop/friends", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: EN ? "en" : "de", lang: form.lang.value === "en" ? "en" : "de", variant: isPlus() ? "plus" : "basis", players: list.map((p) => ({ name: p.name, quirk: p.quirk })), mode: form.mode.value, days: Number(form.days.value), earlybird: !!(M.earlybird && form.earlybird.checked), contact, consent }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.redirect) throw new Error(d.error || T("Das hat nicht geklappt.", "That didn't work."));
       try { localStorage.removeItem(draftKey); } catch {}

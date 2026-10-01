@@ -12,26 +12,26 @@
 <link rel="icon" href="/assets/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<title>Mordsteam Friends – Letzte Runde auf der Hütte</title>
+<title>Mordsteam Friends</title>
 </head>
 <body class="app desk solo friends">
 <header class="bar noprint">
 <div class="wrap">
 <span class="brand"><svg width="26" height="26" viewBox="0 0 34 34" fill="none" stroke="#F3EFE6" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg>
-<span class="brandbox"><small id="fallname">Mordsteam Friends</small><strong id="pname">Letzte Runde auf der Hütte</strong></span></span>
+<span class="brandbox"><small id="fallname">Mordsteam Friends</small><strong id="pname">&nbsp;</strong></span></span>
 <span class="clock" id="clock" aria-live="off"></span>
 </div>
 <nav class="tabs" id="tabs" role="tablist" hidden>
 <div class="wrap">
-<button type="button" role="tab" data-tab="einsatz">Einsatz</button>
-<button type="button" role="tab" data-tab="akte">Akte <span class="fbadge" id="newbadge" hidden></span></button>
-<button type="button" role="tab" data-tab="fragen">Fragen</button>
-<button type="button" role="tab" data-tab="verhoer" id="vtab" hidden>Verhör <span class="fbadge" id="vbadge" hidden>!</span></button>
-<button type="button" role="tab" data-tab="gruppe">Gruppe</button>
+<button type="button" role="tab" data-tab="einsatz"><span data-en="Briefing">Einsatz</span></button>
+<button type="button" role="tab" data-tab="akte"><span data-en="File">Akte</span> <span class="fbadge" id="newbadge" hidden></span></button>
+<button type="button" role="tab" data-tab="fragen"><span data-en="Questions">Fragen</span></button>
+<button type="button" role="tab" data-tab="verhoer" id="vtab" hidden><span data-en="Interrogation">Verhör</span> <span class="fbadge" id="vbadge" hidden>!</span></button>
+<button type="button" role="tab" data-tab="gruppe"><span data-en="Group">Gruppe</span></button>
 </div>
 </nav>
 </header>
-<main class="view"><div class="wrap" id="root"><p class="ondesk">Lade…</p></div></main>
+<main class="view"><div class="wrap" id="root"><p class="ondesk" data-en="Loading…">Lade…</p></div></main>
 <div class="toast" id="toast" role="status" hidden></div>
 <script src="/spiel/common.js"></script>
 <script src="/spiel/friends.js"></script>

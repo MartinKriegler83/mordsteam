@@ -299,7 +299,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <a class="btn btn-red" href="friends-buy.html">Order the mystery night – from €29</a>
 <a class="btn-text" href="#how">How it works</a>
 </div>
-<p class="small">The case itself is currently available in German.</p>
+<p class="small">Play in English or German.</p>
 </div>
 <div class="file" aria-hidden="true">
 <div class="folder"></div>
@@ -426,13 +426,16 @@ P["friends-buy"] = dict(title="Order Friends – Mordsteam", robots="noindex", d
  body='''<main class="page shop"><div class="wrap">
 <div class="eyebrow">Order · Mordsteam Friends 001</div>
 <h1>Last Round at the Chalet</h1>
-<p class="lead">The mystery night for 4–8 friends, 45 minutes, everyone on their own device. After payment you get the invitation link for the group and your organiser page right away – on screen and by email. The case itself is currently available in German.</p>
+<p class="lead">The mystery night for 4–8 friends, 45 minutes, everyone on their own device. After payment you get the invitation link for the group and your organiser page right away – on screen and by email.</p>
 <div class="note" id="closed" hidden>Orders are not open yet. You can look at the form, but not submit it yet.</div>
 <div class="note" id="cancelled" hidden>The payment was cancelled. You can simply try again.</div>
 <form class="form" id="friends" novalidate>
 <fieldset class="step"><legend><span>1</span> Which version?</legend>
 <label class="check"><input type="radio" name="variant" value="basis" checked><span><b>Mystery Night</b> · 45 minutes · from €29 (up to 4 people, +€5 per extra person)</span></label>
 <label class="check"><input type="radio" name="variant" value="plus"><span><b>Mystery Night Plus</b> · 70 minutes · from €49 (up to 4 people, +€8 per extra person) – with AI interrogation room: you question the AI doubles of your friends. 18+.</span></label>
+<div class="field"><label for="lang">Game language *</label>
+<select id="lang" name="lang"><option value="en">English</option><option value="de">German</option></select>
+<span class="hint">Applies to the whole group: case file, questions, interrogation room and solution – independent of this website.</span></div>
 </fieldset>
 <fieldset class="step"><legend><span>2</span> Your group</legend>
 <div class="field"><label for="n">How many are playing? *</label><select id="n" name="n"><option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option></select>
@@ -657,7 +660,7 @@ P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy
  body='''<main class="page shop"><div class="wrap">
 <div class="eyebrow">Order · Mordsteam Solo</div>
 <h1>A case just for you</h1>
-<p class="lead">Murder mysteries for one person. You pay once and get your code right away on screen and by email. The cases themselves are currently available in German.</p>
+<p class="lead">Murder mysteries for one person. You pay once and get your code right away on screen and by email.</p>
 <div class="note" id="closed" hidden>Orders are not open yet. You can look at the form, but not submit it yet.</div>
 <div class="note" id="cancelled" hidden>The payment was cancelled. You can simply try again.</div>
 <form class="form" id="solo" novalidate>
@@ -665,6 +668,9 @@ P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy
 <label class="check"><input type="radio" name="fall" value="solo-001" checked><span><b>Night Train to Venice</b> · Solo 001 · 40 minutes · €8.90</span></label>
 <label class="check"><input type="radio" name="fall" value="solo-002"><span><b>Applause for a Dead Man</b> · Solo 002 · 30 minutes · €8.90</span></label>
 <label class="check"><input type="radio" name="fall" value="solo-plus-001"><span><b>The Last Vintage</b> · Solo Plus · 45 minutes · €15.90 – with AI interrogation room, ages 18+</span></label>
+<div class="field"><label for="lang">Game language *</label>
+<select id="lang" name="lang"><option value="en">English</option><option value="de">German</option></select>
+<span class="hint">The language of the case, the questions and the certificate – independent of this website.</span></div>
 </fieldset>
 <fieldset class="step"><legend><span>2</span> Your details</legend>
 <div class="two">
