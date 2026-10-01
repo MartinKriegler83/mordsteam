@@ -504,7 +504,7 @@ async function sendMail(env, o, s, origin) {
   const host = origin.replace(/^https?:\/\//, "");
   const MIN = { basis: 50, premium: 70, plus: 90 };
   const html = `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#15171C">
-<div style="font-family:Georgia,serif;font-weight:900;font-size:22px;letter-spacing:.5px;margin-bottom:6px"><span style="color:#B3261E">MORDS</span><span style="color:#15171C">TEAM</span></div>
+<div style="font-family:Georgia,serif;font-weight:900;font-size:28px;letter-spacing:.5px;margin-bottom:6px"><span style="color:#B3261E">MORDS</span><span style="color:#15171C">TEAM</span></div>
 <h2 style="font-family:Georgia,serif">${T("Euer Fall ist bereit.", "Your case is ready.")}</h2>
 <p>${T("Hallo", "Hi")} ${e(c.name)},</p>
 <p>${T(`danke für eure Bestellung von <b>Fall 001 „${e(title)}“ – ${NAMES[o.paket] || o.paket}</b> für ${o.teams} Team${o.teams === 1 ? "" : "s"} bei ${e(vars.FIRMA)}. Spielbar ab sofort, 12 Monate lang – einmal startbar. Spielsprache: <b>${lang === "en" ? "Englisch" : "Deutsch"}</b>.`,
@@ -548,7 +548,7 @@ async function soloMail(env, o, code, origin) {
   const link = `${origin}/spiel/solo.html?c=${code}`;
   const validUntil = addDays(viennaDate(o.created_at), 365);
   const html = `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.55;color:#15171C;max-width:560px">
-<div style="font-family:Georgia,serif;font-weight:900;font-size:22px;letter-spacing:.5px;margin-bottom:6px"><span style="color:#B3261E">MORDS</span>TEAM <span style="font-size:14px;letter-spacing:3px">SOLO</span></div>
+<div style="font-family:Georgia,serif;font-weight:900;font-size:28px;letter-spacing:.5px;margin-bottom:6px"><span style="color:#B3261E">MORDS</span><span style="color:#15171C">TEAM</span></div>
 <h2 style="font-family:Georgia,serif">${T(F.head[0], F.head[1])}</h2>
 <p>${T("Hallo", "Hi")} ${e(c.name)},</p>
 <p>${T(`danke für deine Bestellung von <b>Mordsteam ${F.no} „${F.de}“</b> (Spielsprache ${GL}). Dein Code ist 12 Monate gültig, bis`, `thank you for ordering <b>Mordsteam ${F.no} “${F.en}”</b> (game language ${GL}). Your code is valid for 12 months, until`)} ${validUntil}.</p>
@@ -582,7 +582,7 @@ async function friendsMail(env, o, g, origin) {
   const modeTxt = g.mode === "live" ? T("gleichzeitig – du startest den Fall für alle", "all at once – you start the case for everyone") : T(`über ${g.window_days} Tage – jeder spielt, wann er Zeit hat`, `over ${g.window_days} days – everyone plays when they have time`);
   const btn = (href, label, dark) => `<a href="${href}" style="background:${dark ? "#15171C" : "#B3261E"};color:#fff;text-decoration:none;padding:13px 22px;border-radius:6px;font-weight:bold;display:inline-block;margin:4px 0">${label}</a>`;
   const html = `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.55;color:#15171C;max-width:560px">
-<div style="font-family:Georgia,serif;font-weight:900;font-size:22px;letter-spacing:.5px;margin-bottom:6px"><span style="color:#B3261E">MORDS</span>TEAM <span style="font-size:14px;letter-spacing:3px">FRIENDS</span></div>
+<div style="font-family:Georgia,serif;font-weight:900;font-size:28px;letter-spacing:.5px;margin-bottom:6px"><span style="color:#B3261E">MORDS</span><span style="color:#15171C">TEAM</span></div>
 <h2 style="font-family:Georgia,serif">${T("Die Hütte wartet.", "The hut is waiting.")}</h2>
 <p>${T("Hallo", "Hi")} ${e(c.name)},</p>
 <p>${T(`danke für deine Bestellung von <b>Mordsteam Friends 001 „Letzte Runde auf der Hütte“ – ${vName}</b> für ${n} Personen (Spielsprache ${GL}). Gespielt wird ${modeTxt}. Eure Runde ist 12 Monate spielbar, bis ${validUntil}, und lässt sich einmal starten.`, `thank you for ordering <b>Mordsteam Friends 001 “Last Round at the Chalet” – ${vName}</b> (game language ${GL}) for ${n} people. You play ${modeTxt}. Your round is playable for 12 months, until ${validUntil}, and can be started once.`)}</p>
