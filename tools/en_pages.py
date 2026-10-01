@@ -122,6 +122,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <div class="step"><span class="num">2</span><div><h3>Get your file</h3><p>Your personal case file arrives digitally on laptop, phone or tablet. Plus your own case intranet – with your logo – and the case desk for every team.</p></div></div>
 <div class="step"><span class="num">3</span><div><h3>Investigate and solve the case</h3><p>Will you find all the crucial clues? Enter everything correctly at the case desk and you've solved the case. At the end: an award ceremony, the big reveal and certificates to download.</p></div></div>
 </div>
+<p class="rolebox"><b>How it works:</b> Everyone is a detective. The culprit is a role in the case that randomly carries the name of one of you – not even they know it. Nobody has to act or lie.</p>
 </div></section>
 
 <section id="case" class="section case"><div class="wrap case-grid">
@@ -196,11 +197,12 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <section id="faq" class="section faq"><div class="wrap faq-grid">
 <div class="stack"><div class="eyebrow">FAQ</div><h2 class="h2">Questions?</h2></div>
 <div>
+<details><summary>Who is the culprit?</summary><p>Always someone from your group – drawn at random, new every round. Not even the organiser knows in advance, and neither does the culprit. Everyone who appears in the case should have agreed beforehand.</p></details>
 <details><summary>Can we play with just one team?</summary><p>Yes. Then you play against the clock: the ranking and certificate show your time including penalty minutes. With several teams it becomes a contest – whoever solves the case first wins.</p></details>
 <details><summary>How many people fit in a team?</summary><p>3 to 6 is ideal. Each team enters its answers on one main device and can connect up to 5 more phones or laptops via QR code to follow along – so you can split up the evidence. More people? Just book one more team – that makes the competition more exciting, too.</p></details>
 <details><summary>Do we need a game master?</summary><p>No person needed. Instructions and the digital case desk guide you through the case: start, automatic hints, answer entry and award ceremony. One person from your group just starts the clock – and can still play along.</p></details>
+<details><summary>Can we pause?</summary><p>No. From the start the clock runs for all teams at the same time and without a pause – that keeps the contest fair. So plan the playing time in one go.</p></details>
 <details><summary>How long does a case take?</summary><p>Basic: 50 minutes, one act with four questions. Premium: 70 minutes – after act 1, the case desk unlocks a second act. Premium Plus: 90 minutes – in the finale you question ARIA, the AI assistant on your intranet. If a team gets stuck, HQ sends hints automatically.</p></details>
-<details><summary>Who is the culprit?</summary><p>Always someone from your group – drawn at random, new every round. Not even the organiser knows in advance, and neither does the culprit. Everyone who appears in the case should have agreed beforehand.</p></details>
 <details><summary>Can we play in English?</summary><p>Yes. You choose the game language (German or English) when you order – independently of the language of this website. The whole case, the intranet, the case desk and ARIA then speak that language.</p></details>
 <details><summary>Which countries does the case work in?</summary><p>The case is localised for your country: police, currency, number plates, bank details, phone numbers and cities fit – for the countries of Europe as well as the USA, Canada, Australia and New Zealand. For all other countries we set it in a fictional place.</p></details>
 <details><summary>What do we need to play?</summary><p>One laptop, tablet or smartphone with internet per team – for the case file, intranet, answer entry and ranking. Up to 5 more devices per team can follow along via QR code. That's all you need.</p></details>
@@ -228,7 +230,7 @@ P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=Tru
 <section class="bh" aria-labelledby="bh-t"><div class="wrap">
 <svg class="bh-lupe" viewBox="0 0 34 34" aria-hidden="true"><g fill="none" stroke="#F3EFE6" stroke-width="3"><circle cx="14" cy="14" r="9"/><line x1="20.5" y1="20.5" x2="29" y2="29" stroke-linecap="round"/></g><circle class="dot" cx="14" cy="14" r="3.5" fill="#E0463C"/></svg>
 <h1 id="bh-t"><span class="r">MORDS</span>TEAM</h1>
-<p class="kicker">The online murder-mystery game starring you</p>
+<p class="kicker">The online murder-mystery game<br class="mbr"> starring you</p>
 <p class="claim">Today, you’re the detectives.</p>
 <p class="sub">Mordsteam is a murder-mystery game in your browser: you get a case file with your own names in it, hunt for clues, question suspects and unmask the culprit. As a team event at work, as a mystery night with friends or on your own – on phone or laptop, nothing to download.</p>
 <div class="actions"><a class="btn btn-red" href="#games">Choose a case</a><a class="btn btn-ghost" href="teams.html">For companies &amp; clubs</a></div>
@@ -262,6 +264,7 @@ P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=Tru
 <a class="btn btn-red" href="solo.html">Go to Mordsteam Solo</a>
 </article>
 </div>
+<p class="rolebox"><b>How it works:</b> Everyone is a detective. The culprit is a role in the case that randomly carries the name of one of you – not even they know it. Nobody has to act or lie.</p>
 </div></section>
 
 
@@ -330,6 +333,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <div class="step"><span class="num">2</span><div><h3>Share the link</h3><p>You get one invitation link for the group. Everyone opens it on their own device and taps their name. Play at the same time on one evening – together or on a video call – or over 3, 5 or 7 days, whenever each of you has time.</p></div></div>
 <div class="step"><span class="num">3</span><div><h3>Investigate and reveal</h3><p>Puzzle it out together, everyone answers on their own device: read the evidence, check alibis, solve the questions. Once everyone is done, the reveal comes for all at the same time – with a ranking, the culprit's confession and a fun award for everyone.</p></div></div>
 </div>
+<p class="rolebox"><b>How it works:</b> Everyone is a detective. The culprit is a role in the case that randomly carries the name of one of you – not even they know it. They investigate like everyone else and may find out it was them. Nobody has to act or lie.</p>
 </div></section>
 
 <section class="section" style="background:var(--paper-2)"><div class="wrap stack">
@@ -402,6 +406,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <div>
 <details><summary>Who is the culprit?</summary><p>One of you – drawn at random when the round is set up. Nobody knows in advance, not the organiser and not the culprit: they investigate like everyone else and may find out it was them. Everyone learns it together at the reveal.</p></details>
 <details><summary>How long does the case take?</summary><p>45 minutes in the Mystery Night, 70 minutes in Mystery Night Plus with the interrogation room and finale. The clock keeps running if someone takes longer; their final time is just longer. The ranking counts playing time plus penalty minutes.</p></details>
+<details><summary>Can we pause?</summary><p>No, the clock runs without a pause – that is part of the game. When playing together it starts for everyone when the organiser starts; over the week, everyone starts their own clock by opening the case file. So best to start when you have the time in one go.</p></details>
 <details><summary>At the same time or over the week – which is better?</summary><p>At the same time is ideal for an evening together, also on a video call: the organiser starts for everyone, then you reveal together. Over the week suits you if you can't find a date: everyone plays within 3, 5 or 7 days, and the reveal comes for everyone at the same time.</p></details>
 <details><summary>Over the week: how do we know when the reveal is ready?</summary><p>The reveal comes automatically as soon as everyone has played – at the latest at the end of the time window. The organiser then gets an email with the link and shares it in your group chat, for example on WhatsApp. Everyone opens their invitation link again and sees the culprit, the ranking and their award. Nobody has to keep the page open.</p></details>
 <details><summary>What if someone can't play?</summary><p>They remain a suspect in the story – the case stays just as solvable for the others. In the ranking they appear as “didn't play”. In the weekly mode the reveal then comes at the end of the time window.</p></details>
