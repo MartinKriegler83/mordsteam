@@ -38,7 +38,7 @@ lib/                     Spiellogik – wird nie ausgeliefert, nur von functions
     friends-001.js, solo-001.js, solo-002.js, solo-plus-001.js   Friends- und Solo-Fälle (deutsch, mit der Logik)
     *-en.js                  englische Textschicht je Fall: exportiert nur die Exporte mit sichtbarem Text, gleiche Namen und Struktur
   stripe.js                Stripe-Hilfe für lib/ (der Shop hat eine eigene Kopie)
-  accounting.js            Buchhaltung: Einnahmen nach Kundenart und Region, EU-Privatkunden-Schwelle
+  accounting.js            Buchhaltung: Einnahmen nach Kundenart und Region, EU-Privatkunden-Schwelle, Ausgaben-Checkliste
   feedback.js              Feedback-Mails und -Bögen, Bewertungen
   withdraw.js              Widerrufsfunktion für Verbraucher
   contact.js               Kontaktformular (Spam-Schutz, Limit)
@@ -89,7 +89,7 @@ design/                  Designentwürfe (nicht ausgeliefert)
 - Weitere Routen: `meta`, `friends-meta` (Preise, Shop offen?), `feedback` (GET/POST Bogen), `bewertungen` (freigegebene Bewertungen), `kontakt`, `widerruf`, `status`.
 
 ### Admin (`/spiel/admin.html`)
-Zugriff mit dem Admin-Schlüssel (Header `x-admin`). Funktionen: Spielrunden anlegen/löschen, Bestellungen, Solo-Tickets und Friends-Gruppen anlegen und auflisten, Statistik, Feedback freigeben, Betrieb (Mails, KI-Verbrauch, Aufrufe, Fehler), Buchhaltung, Export.
+Zugriff mit dem Admin-Schlüssel (Header `x-admin`). Funktionen: Spielrunden anlegen/löschen, Bestellungen, Solo-Tickets und Friends-Gruppen anlegen und auflisten, Statistik, Feedback freigeben, Betrieb (Mails, KI-Verbrauch, Aufrufe, Fehler), Buchhaltung (Einnahmen-Übersicht und Ausgaben-Checkliste im Tab „Bestellungen & Finanzen“), Export.
 
 ## API-Routen
 
@@ -107,7 +107,7 @@ Alle Routen liefern JSON. Fehlermeldungen kommen in der Spielsprache bzw., wenn 
 **`/api/spiel/…`** (Teams und Admin)
 - Spiel: `GET state`, `GET akte`, `GET code`, `POST join`, `POST mitlesen`, `POST loesung`, `POST kontrolle`, `GET firma`, `POST firma/login`, `GET aria`, `POST aria/chat`, `POST aria/kennwort`, `POST bonus`, `POST bonus/fertig`, `GET sonder`, `POST sonder/chat`, `POST feedback`
 - Leitung: `POST leitung/login`, `GET leitung/state`, `POST leitung/aktion`, `GET leitung/aufloesung`
-- Admin: `POST admin/session`, `GET admin/sessions`, `POST admin/delete`, `GET admin/orders`, `POST admin/order-shipped`, `GET admin/stats`, `GET admin/export`, `GET admin/meta`, `GET admin/ops`, `GET admin/buchhaltung`, `GET admin/feedback`, `POST admin/feedback-approve`, `POST admin/feedback-run`
+- Admin: `POST admin/session`, `GET admin/sessions`, `POST admin/delete`, `GET admin/orders`, `POST admin/order-shipped`, `GET admin/stats`, `GET admin/export`, `GET admin/meta`, `GET admin/ops`, `GET admin/buchhaltung`, `GET/POST admin/kosten`, `POST admin/kosten/loeschen`, `GET admin/feedback`, `POST admin/feedback-approve`, `POST admin/feedback-run`
 - Nur Testrunden: `POST test/vorspulen` (Spielzeit vorspulen)
 
 **`/api/solo/…`** (Admin-Testticket: `admin/ticket` mit `case`, `lang`, `name`): `start`, `begin`, `state`, `answer`, `hint`, `verhoer`, `aufgeben`, `ticket`, `feedback`, `test/vorspulen`, `admin/list`, `admin/ticket`
@@ -133,6 +133,7 @@ Grundschema in `db/schema.sql`. Neue Spalten und Tabellen werden zusätzlich bei
 | `solo_tickets`, `solo_runs`, `solo_chat`, `solo_scores` | Solo |
 | `friends_groups`, `friends_players`, `friends_chat` | Friends |
 | `ops_mail`, `ops_ai`, `ops_hits`, `ops_err`, `ops_alerts` | Betriebszähler (keine Inhalte, keine Empfänger) |
+| `cost_items` | Ausgaben-Checkliste im Admin (Posten, Rhythmus, Betrag, betrieblicher Anteil, Beleg); Startliste wird einmal angelegt, Löschen setzt `deleted=1` |
 | `contact_log` | Hash der IP für das Kontaktformular-Limit, nach 24 h gelöscht |
 
 ## Umgebungsvariablen (Cloudflare Pages → Settings → Variables and Secrets)

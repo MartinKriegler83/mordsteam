@@ -28,6 +28,7 @@
       soloList = await fetch("/api/solo/admin/list", { headers: H() }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
       friendsList = await fetch("/api/friends/admin/list", { headers: H() }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
       ops = await MS.api("GET", "admin/ops", null, H()).catch(() => null);
+      kosten = await MS.api("GET", "admin/kosten", null, H()).catch(() => null);
       render(list.sessions, ord.orders, st.stats);
     } catch (e) {
       if (e.status === 401 || e.status === 503) { try { sessionStorage.removeItem("ms_admin"); } catch {} key = null; return keyView(e.status === 401 ? "Schlüssel falsch." : e.message); }
@@ -82,6 +83,7 @@
   let fb = null, fbMsg = "";
   let friendsMsg = "", friendsList = null;
   let soloMsg = "", soloList = null, ops = null, last = [[], [], {}];
+  let kosten = null, kostenEdit = null, kostenMsg = "";
   let tab = "uebersicht";
   try { tab = sessionStorage.getItem("ms_admtab") || "uebersicht"; } catch {}
   const TABS = [["uebersicht", "Übersicht"], ["finanzen", "Bestellungen & Finanzen"], ["runden", "Spielrunden & Tests"], ["statistik", "Spielstatistik"], ["system", "Kapazität & System"], ["feedback", "Feedback"]];
@@ -197,6 +199,42 @@
       <tr><th>Basic</th>${col("basis", stats.basis)}</tr><tr><th>Premium</th>${col("premium", stats.premium)}</tr><tr><th>Premium Plus</th>${col("plus", stats.plus)}</tr></table></div></div>`;
   }
 
+  // ---------- Ausgaben: Kostenliste (Checkliste für die E/A-Rechnung) ----------
+  function costsPanel() {
+    if (!kosten) return `<div class="panel"><div class="eyebrow">Ausgaben</div><p class="small">Kostenliste konnte nicht geladen werden.</p></div>`;
+    const money = (c, w) => c == null ? "<i>offen</i>" : (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 }) + (w === "USD" ? " $" : " €");
+    const A = kosten.arten, e = MS.esc;
+    const rows = kosten.items.map((x) => `<tr>
+      <td><b>${e(x.name)}</b>${x.anbieter ? `<br><span class="small">${e(x.anbieter)}</span>` : ""}</td>
+      <td>${e(A[x.art] || x.art)}${x.seit ? `<br><span class="small">seit ${e(x.seit)}</span>` : ""}</td>
+      <td class="mono">${x.art === "nutzung" && x.betrag_cents == null ? "<span class=\"small\">laut Rechnung</span>" : money(x.betrag_cents, x.waehrung)}</td>
+      <td style="white-space:nowrap">${x.anteil == null ? "<i>offen</i>" : x.anteil + "&nbsp;%"}</td>
+      <td class="small">${e(x.beleg || "")}${x.hinweis ? `<br><i>${e(x.hinweis)}</i>` : ""}</td>
+      <td><button class="btn btn-line" type="button" data-kedit="${e(x.id)}">Ändern</button></td></tr>`).join("");
+    const sums = Object.entries(kosten.sums).map(([w, s]) => `${money(Math.round(s.year_full / 12), w)} pro Monat · ${money(s.year_full, w)} pro Jahr (betrieblich: ${money(s.year_business, w)} pro Jahr)`).join("<br>");
+    const k = kostenEdit || {};
+    const opt = (v, cur) => Object.entries(A).map(([key, l]) => `<option value="${key}" ${key === cur ? "selected" : ""}>${l}</option>`).join("");
+    const val = (v) => (v == null ? "" : e(String(v)));
+    return `<div class="panel"><div class="eyebrow">Ausgaben · was wir absetzen können</div>
+      <p class="small" style="margin:6px 0 10px">Checkliste aller Kosten, damit nichts vergessen wird. Die einzelnen Zahlungen mit Datum kommen später in die E/A-Rechnung. „Anteil“ = betrieblich genutzter Teil; bei gemischter Nutzung (privat und Mordsteam) nur dieser Teil absetzbar.${kosten.open ? ` <b>${kosten.open} Posten mit offenem Betrag oder Anteil.</b>` : ""}</p>
+      <div style="overflow-x:auto"><table class="grid small"><tr><th>Posten</th><th>Rhythmus</th><th>Betrag</th><th>Anteil</th><th>Beleg · Hinweis</th><th></th></tr>${rows}</table></div>
+      <p class="small" style="margin-top:8px"><b>Fixkosten mit bekanntem Betrag:</b><br>${sums || "–"}</p>
+      <form id="kform" class="form" style="margin-top:14px;border-top:1px solid var(--line, #ddd);padding-top:12px">
+        <div class="eyebrow">${k.id ? "Posten ändern" : "Neuer Posten"}</div>
+        <input type="hidden" name="id" value="${val(k.id)}">
+        <div class="two"><div class="field"><label>Name *</label><input name="name" maxlength="120" value="${val(k.name)}"></div>
+        <div class="field"><label>Anbieter</label><input name="anbieter" maxlength="80" value="${val(k.anbieter)}"></div></div>
+        <div class="two"><div class="field"><label>Rhythmus</label><select name="art">${opt(0, k.art || "monatlich")}</select></div>
+        <div class="field"><label>Betrag (leer = offen)</label><div style="display:flex;gap:6px"><input name="betrag" inputmode="decimal" placeholder="z. B. 149,99" value="${k.betrag_cents == null ? "" : (k.betrag_cents / 100).toFixed(2).replace(".", ",")}"><select name="waehrung"><option ${k.waehrung !== "USD" ? "selected" : ""}>EUR</option><option ${k.waehrung === "USD" ? "selected" : ""}>USD</option></select></div></div></div>
+        <div class="two"><div class="field"><label>Betrieblicher Anteil in % (leer = offen)</label><input name="anteil" inputmode="numeric" value="${val(k.anteil)}"></div>
+        <div class="field"><label>Seit (JJJJ-MM oder JJJJ-MM-TT)</label><input name="seit" placeholder="2026-09" value="${val(k.seit)}"></div></div>
+        <div class="field"><label>Wo liegt der Beleg?</label><input name="beleg" maxlength="300" value="${val(k.beleg)}"></div>
+        <div class="field"><label>Hinweis</label><input name="hinweis" maxlength="500" value="${val(k.hinweis)}"></div>
+        <div class="actions-row"><button class="btn btn-red" type="submit">Speichern</button>${k.id ? `<button class="btn btn-line" type="button" id="kcancel">Abbrechen</button><button class="btn btn-ghost" type="button" id="kdel">Posten löschen</button>` : ""}</div>
+        <p class="err">${e(kostenMsg)}</p>
+      </form></div>`;
+  }
+
   function ordersPanel(orders) {
     const eur = (c) => (c / 100).toLocaleString("de-AT", { maximumFractionDigits: 2 }) + " €";
     const lbl = { pending: "offen", paid: "bezahlt", fulfilling: "in Arbeit", fulfilled: "bezahlt · Runde angelegt", withdrawn: "WIDERRUFEN – erstatten!" };
@@ -281,7 +319,7 @@
         <p class="err">${MS.esc(err)}</p>
       </form></div>` : ""}
       ${tab === "uebersicht" ? overviewPanel(orders) : ""}
-      ${tab === "finanzen" ? ordersPanel(orders) : ""}
+      ${tab === "finanzen" ? ordersPanel(orders) + costsPanel() : ""}
       ${tab === "statistik" ? statsPanel(stats) + soloStatsPanel() : ""}
       ${tab === "system" ? systemPanel() : ""}
       ${tab === "feedback" ? feedbackPanel() : ""}
@@ -353,6 +391,21 @@
       const a2 = document.createElement("a"); a2.href = URL.createObjectURL(await r.blob()); a2.download = `mordsteam-einnahmen-${v}-bis-${b2}.csv`;
       document.body.append(a2); a2.click(); a2.remove();
     };
+    root.querySelectorAll("[data-kedit]").forEach((b) => (b.onclick = () => { kostenEdit = kosten.items.find((x) => x.id === b.dataset.kedit) || null; kostenMsg = ""; render(...last); const f = document.getElementById("kform"); if (f) f.scrollIntoView({ behavior: "smooth" }); }));
+    const kf = document.getElementById("kform");
+    if (kf) {
+      kf.onsubmit = async (ev) => {
+        ev.preventDefault();
+        const d = Object.fromEntries(new FormData(kf).entries());
+        try { kosten = await MS.api("POST", "admin/kosten", d, H()); kostenEdit = null; kostenMsg = ""; } catch (e2) { kostenMsg = e2.message; }
+        render(...last);
+      };
+      const kc = document.getElementById("kcancel"); if (kc) kc.onclick = () => { kostenEdit = null; kostenMsg = ""; render(...last); };
+      const kd = document.getElementById("kdel"); if (kd) kd.onclick = async () => {
+        if (!confirm("Diesen Posten aus der Liste löschen?")) return;
+        kosten = await MS.api("POST", "admin/kosten/loeschen", { id: kostenEdit.id }, H()); kostenEdit = null; render(...last);
+      };
+    }
     const bhb = document.getElementById("bhbtn");
     if (bhb) bhb.onclick = async () => {
       const out = document.getElementById("bhout"); out.innerHTML = `<p class="small">Lade … (holt fehlende Gebühren und Länder bei Stripe)</p>`;

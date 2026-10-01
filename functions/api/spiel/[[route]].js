@@ -1,6 +1,6 @@
 // Cloudflare Pages Function: /api/spiel/*
 // Benötigt: D1-Binding "DB" und die geheime Umgebungsvariable "ADMIN_KEY".
-import { accountingSummary, migrateAccounting, region, REGION_LABEL } from "../../../lib/accounting.js";
+import { accountingSummary, migrateAccounting, region, REGION_LABEL, costList, costSave, costDelete } from "../../../lib/accounting.js";
 import {
   CASES, caseOf, langOf, RULES, json, fail, randInt, randomToken, randomCode, esc, viennaDate,
   buildVars, render, checkAnswers, hintTimes, hardEnd, refreshStatus, finishIfAllSolved, recordStats, expired, purgeSession, ranking, teamScore,
@@ -60,6 +60,9 @@ export async function onRequest(ctx) {
       if (route === "admin/order-shipped" && method === "POST") return adminShipped(request, env);
       if (route === "admin/feedback" && method === "GET") return adminFeedback(env);
       if (route === "admin/export" && method === "GET") return adminExport(request, env);
+      if (route === "admin/kosten" && method === "GET") return json(await costList(env));
+      if (route === "admin/kosten" && method === "POST") { try { return json(await costSave(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
+      if (route === "admin/kosten/loeschen" && method === "POST") { const b = await request.json().catch(() => ({})); return json(await costDelete(env, b.id)); }
       if (route === "admin/buchhaltung" && method === "GET") { const u = new URL(request.url); return json(await accountingSummary(env, Date.parse((u.searchParams.get("von") || "2000-01-01") + "T00:00:00+02:00"), Date.parse((u.searchParams.get("bis") || "2999-12-31") + "T23:59:59+02:00"))); }
       if (route === "admin/ops" && method === "GET") return json(await opsSummary(env));
       if (route === "admin/feedback-run" && method === "POST") { const b = await body(request); return json({ sent: await runFeedbackMails(env, new URL(request.url).origin, { force: !!b.force }) }); }
