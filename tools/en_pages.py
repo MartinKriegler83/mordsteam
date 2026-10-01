@@ -109,7 +109,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <section id="whoisitfor" class="section"><div class="wrap">
 <div class="stack" style="margin-bottom:28px"><div class="eyebrow">Who it's for</div><h2 class="h2">Made for every team with secrets</h2></div>
 <div class="audience two">
-<div class="aud"><span class="status live">CASE 001 · BOOK NOW</span><h3>Companies</h3><ul class="list"><li>Team building and offsites</li><li>Onboarding new teams</li><li>Department and holiday parties</li><li>Ideal for virtual teams</li></ul></div>
+<div class="aud"><span class="status live">CASE 001 · BOOK NOW</span><h3>Companies</h3><ul class="list"><li>Team building and offsites</li><li>Onboarding new teams</li><li>Ideal for virtual teams</li></ul></div>
 <div class="aud"><span class="status plan">CASE 002 · COMING SOON</span><h3>Clubs</h3><ul class="list"><li>Club nights and anniversaries</li><li>Holiday parties and outings</li><li>Sports, music and cultural clubs</li></ul></div>
 </div>
 </div></section>
