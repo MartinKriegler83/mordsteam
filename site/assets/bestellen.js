@@ -55,6 +55,32 @@
     sel.value = "3";
   }
 
+  // Teamrechner: möglichst viele Teams, aber mindestens 4 pro Team (höchstens 6), maximal 15 Teams.
+  // 12 Personen → 3 Teams à 4; bis 6 Personen → 1 Team.
+  function teamPlan(n) {
+    if (n <= 6) return 1;
+    let t = Math.floor(n / 4);
+    if (Math.ceil(n / t) > 6) t = Math.ceil(n / 6);
+    return Math.min(t, 15);
+  }
+  function teamTip() {
+    const n = Math.floor(Number($("#personen").value));
+    const tip = $("#teamtip");
+    if (!n || n < 1) return;
+    if (n < 3) { tip.textContent = T("Teams ist ab 3 Personen gedacht – allein oder zu zweit passt Mordsteam Solo.", "Teams is meant for 3 or more – on your own or as a pair, Mordsteam Solo fits."); return; }
+    const t = teamPlan(n);
+    $("#teams").value = String(t);
+    const base = Math.floor(n / t), extra = n % t;
+    const sizes = [...Array(t)].map((_, i) => base + (i < extra ? 1 : 0));
+    const and = T(" und ", " and ");
+    const list = sizes.length > 1 ? sizes.slice(0, -1).join(", ") + and + sizes[sizes.length - 1] : String(sizes[0]);
+    let txt = t === 1 ? T(`Unser Vorschlag: 1 Team mit ${n} Personen – ihr spielt gegen die Uhr.`, `Our suggestion: 1 team of ${n} – you play against the clock.`)
+      : extra === 0 ? T(`Unser Vorschlag: ${t} Teams à ${base} Personen – ihr tretet gegeneinander an.`, `Our suggestion: ${t} teams of ${base} – you compete against each other.`)
+      : T(`Unser Vorschlag: ${t} Teams mit ${list} Personen – ihr tretet gegeneinander an.`, `Our suggestion: ${t} teams of ${list} people – you compete against each other.`);
+    if (n > 90) txt += T(" Für so große Gruppen meldet euch gerne bei uns.", " For groups this large, feel free to get in touch.");
+    tip.textContent = txt;
+  }
+
   function update() {
     const p = premium();
     $(".susrow[data-i='6']").hidden = !p;
@@ -245,6 +271,7 @@
     else form.earlybird.checked = false;
     $("#cancelled").hidden = !new URLSearchParams(location.search).has("abgebrochen");
     update();
+    $("#personen").addEventListener("input", teamTip);
     form.addEventListener("input", () => { update(); save(); });
     form.addEventListener("change", () => { update(); save(); });
     form.addEventListener("submit", submit);

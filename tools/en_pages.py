@@ -199,7 +199,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <div>
 <details><summary>Who is the culprit?</summary><p>Always someone from your group – drawn at random, new every round. Not even the organiser knows in advance, and neither does the culprit. Everyone who appears in the case should have agreed beforehand.</p></details>
 <details><summary>Can we play with just one team?</summary><p>Yes. Then you play against the clock: the ranking and certificate show your time including penalty minutes. With several teams it becomes a contest – whoever solves the case first wins.</p></details>
-<details><summary>How many people fit in a team?</summary><p>3 to 6 is ideal. Each team enters its answers on one main device and can connect up to 5 more phones or laptops via QR code to follow along – so you can split up the evidence. More people? Just book one more team – that makes the competition more exciting, too.</p></details>
+<details><summary>How many people fit in a team?</summary><p>3 to 6 is ideal. Each team enters its answers on one main device and can connect up to 5 more phones or laptops via QR code to follow along – so you can split up the evidence. More of you? Then split up: 12 people play best as 3 teams of 4 – with at least 4 per team everyone stays involved, and several teams make the contest more exciting. The order form works out the right number of teams for you.</p></details>
 <details><summary>Do we need a game master?</summary><p>No person needed. Instructions and the digital case desk guide you through the case: start, automatic hints, answer entry and award ceremony. One person from your group just starts the clock – and can still play along.</p></details>
 <details><summary>Can we pause?</summary><p>No. From the start the clock runs for all teams at the same time and without a pause – that keeps the contest fair. So plan the playing time in one go.</p></details>
 <details><summary>How long does a case take?</summary><p>Basic: 50 minutes, one act with four questions. Premium: 70 minutes – after act 1, the case desk unlocks a second act. Premium Plus: 90 minutes – in the finale you question ARIA, the AI assistant on your intranet. If a team gets stuck, HQ sends hints automatically.</p></details>
@@ -244,20 +244,23 @@ P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=Tru
 <div class="games">
 <article class="game live"><span class="tab">TEAMS</span><span class="smark ok">PLAY<br>NOW</span>
 <h3 class="gname"><span class="wm-r">MORDS</span>TEAM<span class="gp">TEAMS</span></h3>
-<p class="for">The murder-mystery team event for companies and clubs.</p>
-<p>Your boss has been poisoned, the evidence is gone – and one of you did it. One team against the clock or several teams against each other – with your names and your rooms.</p>
+<p class="purpose">Solve it together</p>
+<p class="for">The murder-mystery team event: you investigate as a team, together. Several teams can also compete against each other.</p>
+<p>Your boss has been poisoned, the evidence is gone – and one of you did it. With your names and your rooms, for companies, departments and clubs.</p>
 <p class="meta">3–6 PLAYERS PER TEAM · ANY NUMBER OF TEAMS · 50–90 MIN · FROM €89 PER TEAM</p>
 <a class="btn btn-red" href="teams.html">Go to Mordsteam Teams</a>
 </article>
 <article class="game live"><span class="tab">FRIENDS</span><span class="smark ok">PLAY<br>NOW</span>
 <h3 class="gname"><span class="wm-r">MORDS</span>TEAM<span class="gp">FRIENDS</span></h3>
-<p class="for">The murder-mystery night for your friends.</p>
+<p class="purpose">Everyone for themselves</p>
+<p class="for">The mystery night for friends: everyone investigates on their own phone – who unmasks the culprit first?</p>
 <p>You are the suspects – with your real names and your little quirks. Everyone plays at the same time, or whenever they have time this week.</p>
 <p class="meta">4–8 INVESTIGATORS · EVERYONE ON THEIR OWN DEVICE · 45–70 MIN · FROM €29 PER GROUP</p>
 <a class="btn btn-red" href="friends.html">Go to Mordsteam Friends</a>
 </article>
 <article class="game live"><span class="tab">SOLO</span><span class="smark ok">PLAY<br>NOW</span>
 <h3 class="gname"><span class="wm-r">MORDS</span>TEAM<span class="gp">SOLO</span></h3>
+<p class="purpose">On your own</p>
 <p class="for">A case just for you.</p>
 <p>Thirty minutes, five suspects, one truth. The quick mystery in between – and the perfect taste of a team game.</p>
 <p class="meta">1 INVESTIGATOR · 30–45 MIN · ANY TIME · FROM €8.90</p>
@@ -265,6 +268,18 @@ P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=Tru
 </article>
 </div>
 <p class="rolebox"><b>How it works:</b> Everyone is a detective. The culprit is a role in the case that randomly carries the name of one of you – not even they know it. Nobody has to act or lie.</p>
+<!-- DECISION HELP Teams/Friends – to remove, delete this block up to "END DECISION HELP" -->
+<div class="compare" aria-label="Teams or Friends?">
+<h3>Teams or Friends?</h3>
+<div class="compare-scroll"><table>
+<tr><th></th><th>Teams</th><th>Friends</th></tr>
+<tr><th>What it's about</th><td>solve it together, grow as a team</td><td>everyone against everyone – who is fastest?</td></tr>
+<tr><th>How many</th><td>from 3 people; larger groups split into teams (12 people = 3 teams of 4)</td><td>4–8 people, everyone plays themselves</td></tr>
+<tr><th>Devices</th><td>one per team, plus up to 5 to read along</td><td>everyone their own</td></tr>
+<tr><th>When</th><td>a shared date, on site or on a video call</td><td>together in the evening or everyone during the week</td></tr>
+<tr><th>Ideal for</th><td>departments, company parties, clubs, remote teams</td><td>friends, family, colleagues in private</td></tr>
+</table></div></div>
+<!-- END DECISION HELP -->
 </div></section>
 
 
@@ -299,7 +314,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <div class="stack">
 <div class="eyebrow">Mordsteam Friends · for 4–8 friends</div>
 <h1>One of you did it.</h1>
-<p class="lead">The murder-mystery night for your friends: you are the suspects – with your real names and your little quirks. Everyone investigates on their own phone, on the same evening or spread over the week. And in the end it's clear who did it.</p>
+<p class="lead">The murder-mystery night for your friends: you are the suspects – with your real names and your little quirks. Everyone investigates for themselves on their own phone, on the same evening or spread over the week – who unmasks the culprit first?</p>
 <div class="actions">
 <a class="btn btn-red" href="friends-buy.html">Order the mystery night – from €29</a>
 <a class="btn-text" href="#how">How it works</a>
@@ -331,7 +346,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <div class="steps">
 <div class="step"><span class="num">1</span><div><h3>Enter your group</h3><p>When ordering, you enter 4 to 8 first names and pick a quirk for each person – “snores like a chainsaw”, “dances while cooking” and so on. The game draws the culprit. Nobody knows in advance, not even the culprit.</p></div></div>
 <div class="step"><span class="num">2</span><div><h3>Share the link</h3><p>You get one invitation link for the group. Everyone opens it on their own device and taps their name. Play at the same time on one evening – together or on a video call – or over 3, 5 or 7 days, whenever each of you has time.</p></div></div>
-<div class="step"><span class="num">3</span><div><h3>Investigate and reveal</h3><p>Puzzle it out together, everyone answers on their own device: read the evidence, check alibis, solve the questions. Once everyone is done, the reveal comes for all at the same time – with a ranking, the culprit's confession and a fun award for everyone.</p></div></div>
+<div class="step"><span class="num">3</span><div><h3>Investigate and reveal</h3><p>Everyone for themselves – talking is allowed, but every tip helps the competition: read the evidence, check alibis, solve the questions. Once everyone is done, the reveal comes for all at the same time – with a ranking, the culprit's confession and a fun award for everyone.</p></div></div>
 </div>
 <p class="rolebox"><b>How it works:</b> Everyone is a detective. The culprit is a role in the case that randomly carries the name of one of you – not even they know it. They investigate like everyone else and may find out it was them. Nobody has to act or lie.</p>
 </div></section>
@@ -417,6 +432,8 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <details><summary>Can I use a voucher?</summary><p>Yes: enter the €5 voucher from Mordsteam Solo in the payment step. One voucher per order, not combinable with the early bird discount.</p></details>
 <details><summary>What is the AI interrogation room in Mystery Night Plus?</summary><p>Once you have solved question 1, the interrogation room opens: each of your friends has an AI double with their name and quirk that you can question via chat – you have 25 questions. One of them lies to you, and for the finale – Ferdl's cloud password – you need what only the doubles know. The AI only knows the invented world of the case; real names never go to the AI provider – we replace them with placeholders first.</p></details>
 <details><summary>From what age?</summary><p>The case is written for adults – a mystery with a wink, no blood and no shock effects. Teenagers can play the Mystery Night well too. Mystery Night Plus with the AI interrogation room is for ages 18 and over; you confirm this when ordering.</p></details>
+<details><summary>Is it good for colleagues, too?</summary><p>Yes, as a relaxed round after work or spread over the week: everyone plays for themselves, and at the end there is a ranking and the reveal for all. If you'd rather investigate together as a team – say as a team event for your department – <a href="teams.html">Mordsteam Teams</a> is the right choice.</p></details>
+<details><summary>Do we get an invoice?</summary><p>Yes, automatically by email. If you order as a company, club or organisation, enter the company address and VAT number when paying – they will then appear on the invoice.</p></details>
 <details><summary>Is Mordsteam Friends available in English?</summary><p>Yes. You choose the game language – German or English – when ordering.</p></details>
 </div>
 </div></section>
@@ -651,6 +668,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <details><summary>Do I need an app or an account?</summary><p>No. Mordsteam Solo runs right in the browser on phone, tablet or laptop. All you need is your code.</p></details>
 <details><summary>May I use Google or AI?</summary><p>Please don't. The cases are built so you solve them with your wits and the evidence – everything you need is in the file. The only AI allowed to play along are the suspects in the Solo Plus interrogation room. A matter of honour among investigators.</p></details>
 <details><summary>From what age?</summary><p>The cases are written for adults – mysteries with a wink, no blood and no shock effects. Teenagers can play Solo 001 and Solo 002 well too. Solo Plus with the AI interrogation room is for ages 18 and over; you confirm this when buying.</p></details>
+<details><summary>Do I get an invoice?</summary><p>Yes, automatically by email. If you buy for a company, club or organisation, enter the company address and VAT number when paying.</p></details>
 <details><summary>Is Mordsteam Solo available in English?</summary><p>Yes. You choose the game language – German or English – when buying.</p></details>
 </div>
 </div></section>
@@ -721,7 +739,9 @@ P["order"] = dict(title="Order – Mordsteam", robots="noindex", desc="Order cas
 <p class="note" id="plusnote" hidden>ARIA is intended for participants aged 18 and over. If younger people play along, for example apprentices, please choose Basic or Premium – no AI runs there.</p>
 <div class="two">
 <div class="field"><label for="teams">Number of teams *</label>
-<select id="teams" name="teams"></select><span class="hint">3 to 6 people per team is ideal. Each team needs one device.</span></div>
+<select id="teams" name="teams"></select>
+<div class="teamcalc"><label for="personen">How many of you are there in total?</label><input id="personen" type="number" min="1" max="200" inputmode="numeric" placeholder="e.g. 12"></div>
+<span class="hint" id="teamtip">4 to 6 people per team is ideal, each team needs one device. Enter your head count – we'll suggest the right number of teams.</span></div>
 <div class="field"><span class="label">When do you play?</span><p class="whenbox">Whenever you like: right after paying or any time in the next 12 months. Each case can be started once.</p></div>
 </div>
 </fieldset>
