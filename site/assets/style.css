@@ -127,6 +127,9 @@ p{margin:0}
 .cta{background:var(--red);color:#fff;text-align:center}
 .cta .wrap{display:flex;flex-direction:column;align-items:center;gap:18px;padding-top:56px;padding-bottom:56px}
 .cta h2{font-family:var(--serif);font-weight:900;font-size:36px;line-height:1.05;max-width:900px}
+.cta .cta-nl{margin-top:16px;font-size:19px;line-height:1.4}
+.cta .cta-nl a{color:#fff;text-decoration:underline;text-underline-offset:3px}
+.cta .cta-nl b{font-weight:800}
 .footer{background:var(--ink);color:var(--muted);font-size:14px}
 .footer .wrap{display:flex;flex-direction:column;gap:16px;padding-top:32px;padding-bottom:32px}
 .footer a{color:var(--muted)}

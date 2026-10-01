@@ -299,7 +299,7 @@ P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=Tru
 <h2>One of you has something to hide.</h2>
 <p>Find out who.</p>
 <a class="btn btn-ink" href="#games">Choose a case</a>
-<p class="small" style="margin-top:16px"><a href="newsletter.html" style="color:inherit">Be the first to hear about new cases – sign up for the newsletter</a></p>
+<p class="cta-nl"><a href="newsletter.html">Be the first to hear about new cases – sign up for the <b>newsletter</b></a></p>
 </div></section>
 </main>''')
 

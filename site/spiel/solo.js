@@ -434,29 +434,40 @@
     const INK = "#15171C", RED = "#B3261E", MUT = "#5A5D66";
     g.fillStyle = "#F3EFE6"; g.fillRect(0, 0, W, H);
     g.strokeStyle = INK; g.lineWidth = 10; g.strokeRect(70, 70, W - 140, H - 140); g.lineWidth = 3; g.strokeRect(96, 96, W - 192, H - 192);
-    g.textAlign = "center"; g.textBaseline = "alphabetic";
-    const spaced = (t) => t.split("").join(String.fromCharCode(8202, 8202));
+    g.textBaseline = "alphabetic";
+    // leichte Sperrung (ein Haarspatium) – nur für kleine Großbuchstaben-Zeilen
+    const spaced = (t) => t.split("").join(String.fromCharCode(8202));
     const fit = (t, font, size, max) => { let s = size; do { g.font = font.replace("SIZE", s + "px"); s -= 4; } while (g.measureText(t).width > max && s > 20); };
-    // Marke
-    g.font = `900 72px ${serif}`; const wM = g.measureText("MORDS").width, wT = g.measureText("TEAM").width;
-    g.font = `700 34px ${mono}`; const sub = spaced("  SOLO"), wS = g.measureText(sub).width;
-    let x = W / 2 - (wM + wT + wS) / 2; g.textAlign = "left";
-    g.font = `900 72px ${serif}`; g.fillStyle = RED; g.fillText("MORDS", x, 300); g.fillStyle = INK; g.fillText("TEAM", x + wM, 300);
-    g.font = `700 34px ${mono}`; g.fillText(sub, x + wM + wT, 300);
-    g.textAlign = "center";
-    g.fillStyle = RED; g.font = `600 36px ${mono}`; g.fillText(spaced(L("URKUNDE", "CERTIFICATE")), W / 2, 420);
-    g.fillStyle = INK; fit(S.name, `900 SIZE ${serif}`, 170, W - 500); g.fillText(S.name, W / 2, 620);
-    g.font = `400 50px ${sans}`; g.fillText(L(`hat den Fall „${S.title}“ gelöst`, `has solved the case “${S.title}”`), W / 2, 760);
-    g.fillText(U().cert, W / 2, 830);
+    // Marke oben: MORDS (rot) TEAM (schwarz) – darunter das Produkt (SOLO), beides mittig
+    g.textAlign = "left"; g.font = `900 84px ${serif}`;
+    const wM = g.measureText("MORDS").width, wT = g.measureText("TEAM").width, x = W / 2 - (wM + wT) / 2;
+    g.fillStyle = RED; g.fillText("MORDS", x, 250); g.fillStyle = INK; g.fillText("TEAM", x + wM, 250);
+    g.textAlign = "center"; g.font = `900 104px ${serif}`; g.fillText(U().caseNo.split(" ")[0].toUpperCase(), W / 2, 370);
+    g.fillStyle = RED; g.font = `600 52px ${mono}`; g.fillText(spaced(L("URKUNDE", "CERTIFICATE")), W / 2, 500);
+    g.fillStyle = INK; fit(S.name, `900 SIZE ${serif}`, 170, W - 500); g.fillText(S.name, W / 2, 690);
+    fit(L(`hat den Fall „${S.title}“ gelöst`, `has solved the case “${S.title}”`), `400 SIZE ${sans}`, 52, W - 420);
+    g.fillText(L(`hat den Fall „${S.title}“ gelöst`, `has solved the case “${S.title}”`), W / 2, 810);
+    fit(U().cert, `400 SIZE ${sans}`, 52, W - 420); g.fillText(U().cert, W / 2, 875);
+    // Ergebnis: Spalten nach ihrer echten Breite, damit sich nichts überlappt
     const date = new Intl.DateTimeFormat(loc(), { dateStyle: "long" }).format(new Date(S.started_at + (r.played_ms || 0)));
     const cols = [[L("ENDZEIT", "FINAL TIME"), MS.dur(r.score_ms)], ...(r.pct !== null && r.pct !== undefined ? [[L("SCHNELLER ALS", "FASTER THAN"), r.pct + L(" %", "%")]] : []), [L("DATUM", "DATE"), date]];
-    const cw = 560, x0 = W / 2 - (cols.length * cw) / 2 + cw / 2;
-    cols.forEach(([l, v], k) => { g.fillStyle = MUT; g.font = `600 28px ${mono}`; g.fillText(spaced(l), x0 + k * cw, 1010); g.fillStyle = INK; g.font = `700 60px ${mono}`; g.fillText(v, x0 + k * cw, 1090); });
-    // Stempel
-    g.save(); g.translate(W - 470, H - 360); g.rotate(-0.12); g.strokeStyle = RED; g.fillStyle = RED;
-    g.lineWidth = 9; g.strokeRect(-250, -95, 500, 190); g.lineWidth = 3; g.strokeRect(-232, -77, 464, 154);
-    g.font = `700 24px ${mono}`; g.fillText(spaced("MORDSTEAM · " + U().caseNo), 0, -32); g.font = `900 70px ${serif}`; g.fillText(L("GELÖST", "SOLVED"), 0, 40); g.restore();
+    const fL = `600 30px ${mono}`, fV = `700 56px ${mono}`;
+    const ws = cols.map(([l, v]) => { g.font = fL; const a = g.measureText(spaced(l)).width; g.font = fV; return Math.max(a, g.measureText(v).width) + 140; });
+    let cx = W / 2 - ws.reduce((a, b) => a + b, 0) / 2;
+    cols.forEach(([l, v], k) => { const mid = cx + ws[k] / 2; g.fillStyle = MUT; g.font = fL; g.fillText(spaced(l), mid, 1025); g.fillStyle = INK; g.font = fV; g.fillText(v, mid, 1100); cx += ws[k]; });
+    // Stempel im Stil der Website: doppelter Rahmen, oben und unten klein, in der Mitte groß
+    const top = spaced("MORDSTEAM · " + U().caseNo), mid = L("GELÖST", "SOLVED"), bot = spaced(date.toUpperCase());
+    g.font = `500 26px ${mono}`; const wt = Math.max(g.measureText(top).width, g.measureText(bot).width);
+    g.font = `900 104px ${serif}`; const wm = g.measureText(mid).width;
+    const iw = Math.max(wt, wm) + 90, ih = 230, pad = 16;
+    g.save(); g.translate(W - 520, H - 360); g.rotate(-9 * Math.PI / 180);
+    g.fillStyle = "rgba(255,253,248,0.92)"; g.fillRect(-iw / 2 - pad, -ih / 2 - pad, iw + 2 * pad, ih + 2 * pad);
+    g.strokeStyle = RED; g.lineWidth = 10; g.strokeRect(-iw / 2 - pad, -ih / 2 - pad, iw + 2 * pad, ih + 2 * pad);
+    g.lineWidth = 4; g.strokeRect(-iw / 2, -ih / 2, iw, ih);
+    g.fillStyle = RED; g.font = `500 26px ${mono}`; g.fillText(top, 0, -62); g.fillText(bot, 0, 92);
+    g.font = `900 104px ${serif}`; g.fillText(mid, 0, 46); g.restore();
     g.fillStyle = MUT; g.font = `400 30px ${mono}`; g.fillText(spaced("mordsteam.com"), W / 2, H - 170);
+    if (kind === "canvas") return c;
     const base = L("Mordsteam-Urkunde-", "Mordsteam-Certificate-") + (S.name.replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "") || "Solo");
     const blob = kind === "pdf" ? await pdfFromCanvas(c) : await new Promise((ok) => c.toBlob(ok, "image/png"));
     const file = new File([blob], base + (kind === "pdf" ? ".pdf" : ".png"), { type: blob.type });

@@ -157,6 +157,7 @@ Nur Namen, keine Werte. Production und Preview haben je eigene Werte.
 | `STRIPE_SECRET_KEY` | Secret | Stripe API |
 | `STRIPE_WEBHOOK_SECRET` | Secret | Signaturprüfung des Stripe-Webhooks |
 | `RESEND_API_KEY` | Secret | Mailversand; für den Newsletter (Kontakte, Segmente, Broadcasts) mit **Full access** |
+| `ECG_API_KEY` | Secret | optional: API-Key der RTR (Entwickler-Schnittstelle der ECG-Liste). Gesetzt → jede Kundenadresse wird vor der Newsletter-Übertragung automatisch geprüft (SHA-512 von Adresse und Domain); sonst Abgleich gegen die im Admin hochgeladene Hash-Datei |
 | `MAIL_FROM` | Text | Absender der automatischen Mails; ohne ihn werden keine Mails verschickt |
 | `ARIA_MODEL` | Text | Claude-Modell (Standard: `claude-haiku-4-5-20251001`) |
 | `SHOP_OPEN` | Text | `true` = Bestellungen möglich |

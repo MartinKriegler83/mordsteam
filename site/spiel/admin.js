@@ -248,7 +248,8 @@
       <p class="small">Neue Kunden und bestätigte Anmeldungen werden automatisch übertragen. Der Knopf trägt ältere Bestellungen nach und wiederholt Fehlgeschlagenes. Wer sich bei Resend abgemeldet hat, wird nie wieder aufgenommen.</p>
 
       <div class="eyebrow" style="margin-top:18px">ECG-Liste der RTR</div>
-      <p class="small">${n.ecg.at ? `Stand: ${new Date(n.ecg.at).toLocaleDateString("de-AT")} · ${n0(n.ecg.count)} Einträge${ecgAge > 30 ? ` · <b style="color:var(--red)">älter als 30 Tage – vor dem nächsten Newsletter neu hochladen</b>` : ""}` : `<b style="color:var(--red)">Noch keine Liste hochgeladen.</b> Ohne Liste werden Kunden ungeprüft übertragen.`}</p>
+      ${n.ecg.api ? `<p class="small"><b style="color:#2E6B3A">Automatisch:</b> Jede Kundenadresse wird vor der Übertragung über die Schnittstelle der RTR geprüft (Secret ECG_API_KEY). Ein Datei-Upload ist nicht nötig.</p>` : ""}
+      <p class="small">${n.ecg.at ? `Stand: ${new Date(n.ecg.at).toLocaleDateString("de-AT")} · ${n0(n.ecg.count)} Einträge${ecgAge > 30 ? ` · <b style="color:var(--red)">älter als 30 Tage – vor dem nächsten Newsletter neu hochladen</b>` : ""}` : (n.ecg.api ? "Datei-Upload nur als Ersatz, falls die Schnittstelle ausfällt." : `<b style="color:var(--red)">Weder Schnittstelle (ECG_API_KEY) noch Liste vorhanden.</b> Ohne Prüfung werden Kunden ungeprüft übertragen.`)}</p>
       <p class="small">Die Datei <span class="mono">ecg-liste.hash</span> bekommst du bei der RTR. Hochladen ersetzt die alte Liste; Kunden, die jetzt auf der Liste stehen, werden automatisch aus Resend entfernt.</p>
       <div class="actions-row"><input type="file" id="ecgfile" accept=".hash,application/octet-stream"><button class="btn btn-line" type="button" id="ecgup">Liste hochladen</button></div>
       <p class="small" id="ecgout"></p>
