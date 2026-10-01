@@ -311,6 +311,8 @@
         if (vNow) V = null;
         if (!d.ended) { verdict = { cls: "good", html: `<strong>Richtig!</strong>Frage ${q.nr} ist gelöst. Neue Beweisstücke liegen in deiner Akte.${vNow ? " Und der Verhörraum ist offen." : ""}` }; fragenView(); toast(vNow ? `🗣️ Der Verhörraum ist offen <b>Ansehen</b>` : `📁 Neue Beweisstücke in deiner Akte <b>Ansehen</b>`); }
         scrollTo(0, 0);
+      } else if (d.stale) {
+        verdict = null; await refresh(d);   // schon in einem anderen Tab gelöst
       } else {
         verdict = { cls: "bad", html: `<strong>Leider falsch.</strong>+${d.penalty} Minuten Strafzeit. Schau dir die Beweisstücke noch einmal an.` };
         await refresh(d);

@@ -54,7 +54,7 @@ const MS = {
   },
   // Stand eines Teams in der Rangliste
   stage(r, tier) {
-    if (r.solved) return MS.t("gelöst", "solved");
+    if (r.solved) return r.bonus_done === false ? MS.t("gelöst · Zusatzermittlung", "solved · bonus round") : MS.t("gelöst", "solved");
     if (!tier) return MS.t("ermittelt", "investigating");
     return ["", MS.t("Akt 1", "Act 1"), MS.t("Akt 2", "Act 2"), "Finale"][r.stage] || MS.t("ermittelt", "investigating");
   },

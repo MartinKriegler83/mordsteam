@@ -156,7 +156,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <span class="badge">GETTING STARTED</span>
 <h3>Basic</h3><p class="sub">50 minutes · one act</p>
 <p class="price">€89 per team</p><p class="per">around €18 per person in teams of 5</p>
-<ul class="list"><li>Your personal case – with your names, your rooms and your logo</li><li>Digital case file for every team</li><li>Your own case intranet with hidden clues</li><li>One act with four questions</li><li>Digital case desk: automatic hints, award ceremony and solution</li><li>Winners' certificates to download</li></ul>
+<ul class="list"><li>Your personal case – with your names, your rooms and your logo</li><li>Digital case file for every team</li><li>Your own case intranet with hidden clues</li><li>One act with four questions</li><li>Digital case desk: automatic hints, award ceremony and solution</li><li>Bonus investigation for fast teams: bonus minutes for the ranking</li><li>Winners' certificates to download</li></ul>
 <a class="btn btn-line" href="order.html?paket=basis">Order Basic</a>
 </div>
 <div class="pack featured">
@@ -170,7 +170,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <span class="badge">THE FULL EXPERIENCE</span>
 <h3>Premium Plus</h3><p class="sub">90 minutes · two acts and an AI finale</p>
 <p class="price">€149 per team</p><p class="per">around €30 per person in teams of 5</p>
-<ul class="list"><li>Everything in Premium</li><li>Finale with ARIA, the AI assistant on your intranet: she helps you solve the last puzzle</li><li>For participants aged 18 and over</li></ul>
+<ul class="list"><li>Everything in Premium</li><li>Finale with ARIA, the AI assistant on your intranet: she helps you solve the last puzzle</li><li>A surprise for teams that finish before minute 70 – with an AI interrogation as a special assignment</li><li>For participants aged 18 and over</li></ul>
 <a class="btn btn-line" href="order.html?paket=plus">Order Premium Plus</a>
 </div>
 </div>
@@ -326,7 +326,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <div class="steps">
 <div class="step"><span class="num">1</span><div><h3>Enter your group</h3><p>When ordering, you enter 4 to 8 first names and pick a quirk for each person – “snores like a chainsaw”, “dances while cooking” and so on. The game draws the culprit. Nobody knows in advance, not even the culprit.</p></div></div>
 <div class="step"><span class="num">2</span><div><h3>Share the link</h3><p>You get one invitation link for the group. Everyone opens it on their own device and taps their name. Play at the same time on one evening – together or on a video call – or over 3, 5 or 7 days, whenever each of you has time.</p></div></div>
-<div class="step"><span class="num">3</span><div><h3>Investigate and reveal</h3><p>Everyone investigates on their own: read the evidence, check alibis, solve the questions. Once everyone is done, the reveal comes for all at the same time – with a ranking, the culprit's confession and a fun award for everyone.</p></div></div>
+<div class="step"><span class="num">3</span><div><h3>Investigate and reveal</h3><p>Puzzle it out together, everyone answers on their own device: read the evidence, check alibis, solve the questions. Once everyone is done, the reveal comes for all at the same time – with a ranking, the culprit's confession and a fun award for everyone.</p></div></div>
 </div>
 </div></section>
 
@@ -484,7 +484,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <div class="stack">
 <div class="eyebrow">Mordsteam Solo · just for you</div>
 <h1>Who did it on the night train?</h1>
-<p class="lead">A body in the sleeping car, five suspects, 30 minutes to Udine. The murder mystery for one person: read the evidence, check the alibis, convict the killer – on your phone, tablet or laptop, whenever and wherever you like.</p>
+<p class="lead">A body in the sleeping car, five suspects, 40 minutes to Udine. The murder mystery for one person: read the evidence, check the alibis, convict the killer – on your phone, tablet or laptop, whenever and wherever you like.</p>
 <div class="actions">
 <a class="btn btn-red" href="#price">Choose a case – from €8.90</a>
 <a class="btn-text" href="#how">How it works</a>
@@ -498,7 +498,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <p>Sleeping car 327, just past Villach. A sleeping pill in the cognac, a forgery in the suitcase. Five people on the train had a motive – and only one had the opportunity.</p>
 <div class="chips"><span>5 suspects</span><span>16 pieces of evidence</span><span>3 questions</span><span>1 investigator: you</span></div>
 </div>
-<div class="stamp"><div><small>MORDSTEAM · SOLO 001</small><strong>UNSOLVED</strong><small>UDINE ARR. 2:45 AM</small></div></div>
+<div class="stamp"><div><small>MORDSTEAM · SOLO 001</small><strong>UNSOLVED</strong><small>UDINE ARR. 2:55 AM</small></div></div>
 </div>
 </div></section>
 
@@ -523,7 +523,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <div class="stack">
 <div class="eyebrow">Solo 001 · Night Train to Venice</div>
 <h2 class="h2">The conductor knocks. “You read crime novels, don't you?”</h2>
-<p class="lead">Night train from Vienna to Venice, 2:15 am. The art dealer Viktor Hallwachs lies dead in his compartment, and the painting in his suitcase is a copy. At 2:45 am the police board in Udine – by then you want to be able to tell them who did it.</p>
+<p class="lead">Night train from Vienna to Venice, 2:15 am. The art dealer Viktor Hallwachs lies dead in his compartment, and the painting in his suitcase is a copy. At 2:55 am the police board in Udine – by then you want to be able to tell them who did it.</p>
 <p><b>Five suspects, five motives:</b></p>
 <div class="objects"><span>the business partner</span><span>the nephew</span><span>the journalist</span><span>the conductor</span><span>the art appraiser</span></div>
 </div>
@@ -596,7 +596,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <div class="pack-grid three">
 <div class="pack featured">
 <span class="badge">BASIC</span>
-<h3>Night Train to Venice</h3><p class="sub">Solo 001 · 30 minutes · 1 person</p>
+<h3>Night Train to Venice</h3><p class="sub">Solo 001 · 40 minutes · 1 person</p>
 <p class="price">€8.90</p><p class="per">A body on the night train – and a forgery in the suitcase</p>
 <ul class="list"><li>16 pieces of evidence, 5 suspects, 3 questions</li><li>Killer drawn anew for every playthrough – replay up to three times</li><li>Hints at the click of a button</li><li>Result “faster than X %” on your first playthrough</li><li>Certificate with your name to print or save as PDF</li><li>€5 voucher for a Friends or Teams game</li></ul>
 <a class="btn btn-red" href="solo-buy.html?fall=001">Buy the case – €8.90</a>
@@ -631,7 +631,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <section id="faq" class="section faq"><div class="wrap faq-grid">
 <div class="stack"><div class="eyebrow">FAQ</div><h2 class="h2">Any questions?</h2></div>
 <div>
-<details><summary>How long does the case take?</summary><p>30 minutes for Solo 001 and Solo 002, 45 minutes for Solo Plus – until the police arrive. The clock keeps running if you need longer: you can still solve the case, your final time just gets longer.</p></details>
+<details><summary>How long does the case take?</summary><p>40 minutes for Solo 001, 30 minutes for Solo 002 and 45 minutes for Solo Plus – until the police arrive. The clock keeps running if you need longer: you can still solve the case, your final time just gets longer.</p></details>
 <details><summary>Can I pause?</summary><p>No. The clock starts as soon as you open the case file and keeps running. Until then, take as long as you like: the code is valid for 12 months. If you close the window during the game, your code takes you back – but the clock will have kept running.</p></details>
 <details><summary>How do the hints work?</summary><p>Each question has three hints, from a gentle nudge to almost the answer. They cost 1, 2 and 3 penalty minutes. A wrong answer costs 3 minutes, and you can try again straight away.</p></details>
 <details><summary>What does “faster than X %” mean?</summary><p>Your final time (time played plus penalty minutes) is compared with all other investigators who solved the case for the first time. There is no public leaderboard, nobody sees your name.</p></details>
@@ -646,7 +646,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 </div></section>
 
 <section class="cta"><div class="wrap">
-<h2>At 2:45 am the train stops in Udine.</h2>
+<h2>At 2:55 am the train stops in Udine.</h2>
 <p>By then you'll know who did it.</p>
 <a class="btn btn-ink" href="#price">Choose a case – from €8.90</a>
 </div></section>
@@ -662,7 +662,7 @@ P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy
 <div class="note" id="cancelled" hidden>The payment was cancelled. You can simply try again.</div>
 <form class="form" id="solo" novalidate>
 <fieldset class="step"><legend><span>1</span> Which case?</legend>
-<label class="check"><input type="radio" name="fall" value="solo-001" checked><span><b>Night Train to Venice</b> · Solo 001 · 30 minutes · €8.90</span></label>
+<label class="check"><input type="radio" name="fall" value="solo-001" checked><span><b>Night Train to Venice</b> · Solo 001 · 40 minutes · €8.90</span></label>
 <label class="check"><input type="radio" name="fall" value="solo-002"><span><b>Applause for a Dead Man</b> · Solo 002 · 30 minutes · €8.90</span></label>
 <label class="check"><input type="radio" name="fall" value="solo-plus-001"><span><b>The Last Vintage</b> · Solo Plus · 45 minutes · €15.90 – with AI interrogation room, ages 18+</span></label>
 </fieldset>
@@ -678,7 +678,7 @@ P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy
 <span class="hint">Private individuals have the statutory right of withdrawal (see <a href="terms.html#ruecktritt" target="_blank" rel="noopener">terms section 8</a>).</span></div>
 </fieldset>
 <fieldset class="step"><legend><span>3</span> Review and pay</legend>
-<div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Solo 001 “Night Train to Venice” · 30 minutes · game language German</span><b id="sumprice">€8.90</b></div><p class="small">Final price. Code valid for 12 months, then replayable up to three times with a different killer. VAT exempt (small business scheme).</p></div>
+<div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Solo 001 “Night Train to Venice” · 40 minutes · game language German</span><b id="sumprice">€8.90</b></div><p class="small">Final price. Code valid for 12 months, then replayable up to three times with a different killer. VAT exempt (small business scheme).</p></div>
 <label class="check" id="sofortbox" hidden><input type="checkbox" name="sofort"><span>I expressly request that you provide my code right after payment – I can still play whenever I like. I am aware that as a private individual I thereby lose my right of withdrawal (at the latest once the case has been played). *</span></label>
 <label class="check" id="ab18box" hidden><input type="checkbox" name="ab18"><span>I am at least 18 years old and agree that an AI plays the suspects in the interrogation room. My name is not sent to the AI provider. *</span></label>
 <label class="check"><input type="checkbox" name="agb"><span>I accept the <a href="terms.html" target="_blank">terms</a> and have read the <a href="privacy.html" target="_blank">privacy policy</a>. *</span></label>
@@ -814,12 +814,13 @@ P["privacy"] = dict(title="Privacy policy – Mordsteam", desc="How Mordsteam ha
 <p>In some games or variants you can chat with an AI-controlled character (stated in the game description). What you write in the chat is sent together with the invented case data to our AI provider Anthropic so that the character can reply (Art. 6(1)(b) GDPR). We replace the real names from the personalisation (e.g. company, people, rooms) with placeholders before sending and only reinsert them in the reply – even if they are typed into the chat. The players' devices only connect to mordsteam.com, not directly to the AI provider. Anthropic processes the data as a processor, does not use it to train its models and deletes inputs and outputs after 30 days by default. The transfer to the USA is based on certification under the EU-US Data Privacy Framework or on EU standard contractual clauses.</p>
 <p>In Mordsteam Friends Mystery Night Plus, the AI plays the players' doubles. For this we transmit no names, only placeholders, the chosen quirk from the list, the invented case data and the questions asked in the interrogation room; names someone types into a question are also replaced with placeholders first. Interrogation histories are stored with the game round and deleted with it.</p>
 <p>In Mordsteam Solo Plus, the AI plays invented suspects. For this we only transmit the invented case data and your questions in the interrogation room – not your name. Please do not type personal data into your questions. We delete the conversations together with your playthroughs, 30 days after your last game ended.</p>
+<p>In Mordsteam Teams Premium Plus, the AI plays ARIA, the assistant on the case intranet, and – in the special assignment for fast teams – a character being interrogated. We replace real names (company, boss, suspects, rooms) with placeholders before transmission; only these placeholders, the invented case data and the chat messages are transmitted. We delete the conversations with the game round, 30 days after the game ended.</p>
 <p>Please don't enter real personal data in the chat – the AI character doesn't need it and only knows the world of the game. The number of messages per game round is limited. We store the chat history with the game round and delete it 30 days after the game ends. AI characters are labelled as AI; their answers may contain errors.</p>
 <h2>7. Contact form and email</h2>
 <p>If you write to us using the contact form or by email, we process your name, email address and message to answer your enquiry (Art. 6(1)(b) or (f) GDPR). Messages from the form are delivered to our mailbox via our email service Resend (Resend, Inc., USA; sent via servers in the EU) and stored there. To prevent abuse, we also store a hashed short value of your IP address with the time and delete it after 24 hours. Our emails are processed via Apple iCloud.</p>
 <h2>8. Your rights</h2>
 <p>You have the right to access, rectification, erasure, restriction of processing, data portability and objection. Write to <a href="mailto:office@mordsteam.com">office@mordsteam.com</a>. You can also lodge a complaint with the Austrian Data Protection Authority: <a href="https://www.dsb.gv.at">www.dsb.gv.at</a>.</p>
-<p>Last updated: September 2026</p>
+<p>Last updated: October 2026</p>
 </div></main>''')
 
 P["imprint"] = dict(title="Imprint – Mordsteam", desc="Legal information about Mordsteam.",

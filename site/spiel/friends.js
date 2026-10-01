@@ -292,6 +292,9 @@
         const vNow = S.plus && S.verhoer && S.verhoer.open && q.nr === S.verhoer.from_question;
         if (!d.ended) { verdict = { cls: "good", html: vNow ? `<strong>Richtig!</strong>Frage ${q.nr} ist gelöst. Der Verhörraum ist offen – verhöre die Doppelgänger deiner Freunde.` : q.nr >= 3 ? `<strong>Richtig!</strong>Frage ${q.nr} ist gelöst. Jetzt das Finale.` : `<strong>Richtig!</strong>Frage ${q.nr} ist gelöst. Neue Beweisstücke liegen in deiner Akte.` }; fragenView(); if (vNow) { V = null; const tt = $("toast"); tt.innerHTML = `<button type="button">🗣️ Der Verhörraum ist offen <b>Verhören</b></button>`; tt.hidden = false; tt.querySelector("button").onclick = () => { tt.hidden = true; go("verhoer"); }; setTimeout(() => (tt.hidden = true), 5000); } else if (q.nr < 3) toast(`📁 Neue Beweisstücke in deiner Akte <b>Ansehen</b>`); }
         scrollTo(0, 0);
+      } else if (d.stale) {
+        // Die Frage wurde schon (z. B. in einem anderen Tab) gelöst – nur neu laden, keine Strafmeldung
+        verdict = null; await refresh(d);
       } else {
         verdict = { cls: "bad", html: `<strong>Leider falsch.</strong>+${d.penalty} Minuten Strafzeit. Schau dir die Beweisstücke noch einmal an.` };
         await refresh(d);

@@ -24,7 +24,7 @@ for (let v = 0; v < C.TIME_SHIFTS.length; v++) for (const c of C.CULPRITS) {
   // Frage 4: am Ort des Täters genau ein nicht durchsuchter Platz
   const free = [...doc("verstecke").matchAll(/<tr><td>([^<]+)<\/td><td>([^<]+)<\/td><td>(–|ja, nichts)<\/td>/g)].filter((r) => r[3] === "–").map((r) => r[1]);
   if (!free.includes(C.SPOTS[sol.schluessel].name)) fail(`${tag} Versteck durchsucht`);
-  const after = doc("fotos2"); if (!after.includes(C.SUSPECTS[c].name + " (etwas außer Atem)")) fail(`${tag} Nachher-Foto`);
+  const after = doc("fotos2"); if (!after.includes(C.SUSPECTS[c].name) || after.includes("außer Atem")) fail(`${tag} Nachher-Foto`);
   for (const d of D) (lens[d.id] ||= new Set()).add((d.html.match(/<tr>/g) || []).length + "/" + (d.html.match(/<p/g) || []).length);
   if (!C.verhoerSystem(c, v, c).includes(C.LIES[c].say)) fail(`${tag} Prompt`);
 }

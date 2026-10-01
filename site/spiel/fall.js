@@ -32,6 +32,8 @@
   let vLogin = { u: "", p: "" };      // Eingaben im Partner-Login bleiben stehen
   let aria = null, ariaDraft = "", ariaPw = "", ariaBusy = false, ariaMsg = "";  // ARIA-Chat (Premium Plus)
   let draft = {};
+  let bDraft = {}, bBusy = false, bMsg = "", doneArmed = false;   // Zusatzermittlung
+  let sonder = null, sDraft = "", sBusy = false;                    // Sonderauftrag (Premium Plus)
   let lastKey = "", lastStage = null;
   let verdict = null;        // { cls: 'bad'|'warn'|'good', html }
   let checkArmed = false, checkRes = "";
@@ -57,7 +59,8 @@
     if (S.lang && S.lang !== MS.lang) { MS.setLang(S.lang); lastKey = ""; docs = null; firma = null; }
     $("fallname").textContent = S.fall;
     $("teamname").textContent = VIEWER ? `${S.team} · ${t("Mitlesegerät", "follow-along device")}` : S.team;
-    const key = [S.status, S.solved, S.stage, S.check_available].join("|");
+    const bk = S.bonus ? [S.bonus.done, ...S.bonus.questions.map((q) => q.status), S.bonus.sonder ? S.bonus.sonder.status : ""].join(",") : "";
+    const key = [S.status, S.solved, S.stage, S.check_available, bk].join("|");
     if (S.stage !== lastStage) { if (lastStage !== null) docs = null; lastStage = S.stage; }
     if (key !== lastKey) { lastKey = key; await render(); }
     else if (tab === "funk") renderView();
@@ -191,6 +194,7 @@
       <div><b>${S.solved ? MS.dur(S.score_ms) : "–"}</b><span>${t("Wertungszeit", "Score time")}</span></div>
       <div><b>${S.wrong}</b><span>${t("Fehlversuche", "Wrong attempts")}</span></div>
       <div><b>${S.penalty_min}</b><span>${t("Min. Strafzeit", "min penalty")}</span></div>
+      ${S.bonus && S.bonus.min ? `<div><b>−${S.bonus.min}</b><span>${t("Min. Bonus", "min bonus")}</span></div>` : ""}
       <div><b>${seen.size}</b><span>${t("Beweisstücke gelesen", "Evidence read")}</span></div>
     </div>`;
   }
@@ -262,7 +266,7 @@
         <div class="eyebrow">${t("Siegerehrung", "Award ceremony")}</div><h2 class="h2p">${t("Das Podest", "The podium")}</h2>
         ${podium()}
         ${rankTable()}
-        <p class="small" style="margin-top:10px">${t("Wertung = Spielzeit bis zur Lösung plus Strafzeit.", "Score = playing time until solved plus penalty time.")}</p>
+        <p class="small" style="margin-top:10px">${t("Wertung = Spielzeit bis zur Lösung plus Strafzeit, minus Bonusminuten aus der Zusatzermittlung.", "Score = playing time until solved plus penalty time, minus bonus minutes from the bonus investigation.")}</p>
       </section>
       ${A ? `<section class="paper reveal">
         <div class="eyebrow">${t("Die Auflösung", "The solution")}</div><h2 class="h2p">${t("Was wirklich geschah", "What really happened")}</h2>
@@ -291,7 +295,91 @@
         ${bilanz()}
         ${VIEWER ? "" : `<a class="btn btn-red" href="/spiel/urkunde.html">${t("Urkunde herunterladen", "Download certificate")}</a>`}
       </section>
+      ${bonusHtml()}
     </div>`;
+    bindBonus();
+  }
+
+  // ---------- Zusatzermittlung (alle Pakete) und Sonderauftrag (Premium Plus) ----------
+  function bonusHtml() {
+    const B = S.bonus;
+    if (!B) return "";
+    const res = (q) => q.status === "ok" ? `<p class="bres y">✓ ${t("Richtig", "Correct")} – −${B.per} ${t("Min.", "min")}</p>`
+      : `<p class="bres n">✗ ${t("Leider falsch", "Sorry, wrong")} (${t("richtig", "correct")}: ${MS.esc(q.solution || "")})</p>`;
+    const qs = B.questions.map((q, i) => `<div class="qrow"><span class="qn">${i + 1}</span><div class="qf">
+        <label for="b_${q.key}">${q.label}</label><span class="hint">${MS.esc(q.hint)}</span>
+        ${q.status === "open" && !B.done && !VIEWER ? `<div class="brow"><input id="b_${q.key}" data-b="${q.key}" autocomplete="off" spellcheck="false" value="${MS.esc(bDraft[q.key] || "")}"><button type="button" class="btn btn-line" data-bsend="${q.key}">${t("Antworten", "Answer")}</button></div>`
+          : q.status === "open" ? `<p class="bres">${t("nicht beantwortet", "not answered")}</p>` : `<p class="bans">${MS.esc(q.answer || "")}</p>${res(q)}`}
+      </div></div>`).join("");
+    const sd = B.sonder;
+    const sonderPart = sd ? `<section class="report paper sonder">
+        <div class="eyebrow">${t("Überraschung · nur für schnelle Teams", "Surprise · fast teams only")}</div>
+        <div class="verdict good">${sd.surprise}</div>
+        <h2>${t("Sonderauftrag", "Special assignment")}</h2>
+        <p class="muted">${MS.esc(sd.task)} ${t(`Ihr habt ${sd.max} Fragen. Richtig gelöst: −${sd.bonus} Min. auf eure Wertung. Nur ein Versuch.`, `You have ${sd.max} questions. Solved correctly: −${sd.bonus} min off your score. One attempt only.`)}</p>
+        <div class="aria-log" id="slog">${sonderLog()}</div>
+        ${sd.status === "open" && !B.done && !VIEWER ? `<form class="aria-form" id="sform"><textarea id="sin" rows="2" maxlength="300" placeholder="${t("Frage an die verhörte Person …", "Question for the person being interrogated …")}">${MS.esc(sDraft)}</textarea><button type="submit" class="v-btn" ${sBusy ? "disabled" : ""}>${t("Fragen", "Ask")}</button></form>
+          <p class="aria-meta" id="smeta">${sonder ? `${sonder.used} / ${sonder.max} ${t("Fragen", "questions")} · ` : ""}${t("Die verhörte Person wird von einer KI gespielt.", "The person is played by an AI.")}</p>
+          <div class="qrow"><span class="qn">★</span><div class="qf"><label for="s_ziel">${MS.esc(sd.label)}</label>
+          <div class="brow"><select id="s_ziel"><option value="">${t("Ziel wählen …", "Choose a destination …")}</option>${sd.options.map((o) => `<option value="${o[0]}">${MS.esc(o[1])}</option>`).join("")}</select><button type="button" class="btn btn-line" id="ssend">${t("Antworten", "Answer")}</button></div></div></div>`
+          : sd.status === "open" ? "" : `<p class="bans">${MS.esc(sd.answer || "")}</p>${sd.status === "ok" ? `<p class="bres y">✓ ${t("Richtig", "Correct")} – −${sd.bonus} ${t("Min.", "min")}</p>` : `<p class="bres n">✗ ${t("Leider falsch", "Sorry, wrong")} (${t("richtig", "correct")}: ${MS.esc(sd.solution || "")})</p>`}`}
+      </section>` : "";
+    return `<section class="report paper bonus">
+        <div class="eyebrow">${t("Zusatzermittlung", "Bonus investigation")}</div>
+        <h2>${t("Noch Zeit? Holt euch Bonusminuten!", "Time left? Earn bonus minutes!")}</h2>
+        <p class="muted">${t(`Drei Fragen aus eurer Akte – jede hat genau einen Versuch. Jede richtige Antwort zieht ${B.per} Minuten von eurer Wertung ab. Am Lösen ändert das nichts, nur an der Rangliste.`, `Three questions from your file – each has exactly one attempt. Every correct answer takes ${B.per} minutes off your score. It doesn't affect solving, only the ranking.`)}${B.min ? ` <b>${t(`Bisher: −${B.min} Min.`, `So far: −${B.min} min.`)}</b>` : ""}</p>
+        ${B.sonder_missed ? `<p class="small">${t("Teams, die Premium Plus vor Minute 70 komplett lösen, bekommen hier eine Überraschung.", "Teams who solve Premium Plus completely before minute 70 get a surprise here.")}</p>` : ""}
+        ${qs}
+        <p class="err" id="bmsg" role="alert">${MS.esc(bMsg)}</p>
+        ${B.done ? `<p class="bres y">${t("Ermittlung abgeschlossen. Die Auflösung kommt, sobald alle Teams fertig sind oder euer Organisator die Runde beendet.", "Investigation closed. The solution appears once all teams are done or your organiser ends the round.")}</p>`
+          : VIEWER ? "" : `<button type="button" class="btn ${doneArmed ? "btn-ink" : "btn-line"}" id="bdone">${doneArmed ? t("Ja, Ermittlung abschließen", "Yes, close the investigation") : t("Ermittlung abschließen", "Close the investigation")}</button>`}
+      </section>${sonderPart}`;
+  }
+  function sonderLog() {
+    const m = (sonder ? sonder.msgs : []).map((x) => `<div class="aria-b ${x.role === "user" ? "me" : "bot"}">${nl2br(x.text)}</div>`).join("");
+    return (m || `<p class="aria-empty">${t("Noch keine Fragen gestellt.", "No questions asked yet.")}</p>`) + (sBusy ? `<div class="aria-b bot typing"><span></span><span></span><span></span></div>` : "");
+  }
+  async function loadSonder() {
+    if (!S || !S.bonus || !S.bonus.sonder) return;
+    try { sonder = await MS.api("GET", "sonder", null, H); } catch { return; }
+    const l = $("slog"); if (l) { l.innerHTML = sonderLog(); l.scrollTop = l.scrollHeight; }
+    const m = $("smeta"); if (m && sonder) m.firstChild && (m.innerHTML = `${sonder.used} / ${sonder.max} ${t("Fragen", "questions")} · ${t("Die verhörte Person wird von einer KI gespielt.", "The person is played by an AI.")}`);
+  }
+  function bindBonus() {
+    if (!S.bonus) return;
+    root.querySelectorAll("[data-b]").forEach((inp) => { inp.oninput = () => (bDraft[inp.dataset.b] = inp.value); });
+    root.querySelectorAll("[data-bsend]").forEach((b) => (b.onclick = () => bonusSend(b.dataset.bsend, (root.querySelector(`[data-b="${b.dataset.bsend}"]`) || {}).value || "")));
+    const ss = $("ssend"); if (ss) ss.onclick = () => bonusSend("s_ziel", $("s_ziel").value);
+    const bd = $("bdone");
+    if (bd) bd.onclick = async () => {
+      if (!doneArmed) { doneArmed = true; return viewSolved(); }
+      doneArmed = false;
+      try { await MS.api("POST", "bonus/fertig", {}, H); } catch (e) { bMsg = e.message; }
+      lastKey = ""; await poll();
+    };
+    const f = $("sform"), ta = $("sin");
+    if (f) {
+      ta.oninput = () => (sDraft = ta.value);
+      ta.onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); f.requestSubmit(); } };
+      f.onsubmit = async (e) => {
+        e.preventDefault();
+        const text = ta.value.trim();
+        if (!text || sBusy) return;
+        sBusy = true; sDraft = ""; ta.value = "";
+        sonder = sonder || { msgs: [], used: 0, max: S.bonus.sonder.max };
+        sonder.msgs.push({ role: "user", text }); $("slog").innerHTML = sonderLog();
+        try { await MS.api("POST", "sonder/chat", { text }, H); } catch (err) { sonder.msgs.push({ role: "assistant", text: err.message }); }
+        sBusy = false; await loadSonder();
+      };
+    }
+    if (S.bonus.sonder && !sonder) loadSonder(); else { const l = $("slog"); if (l) l.scrollTop = l.scrollHeight; }
+  }
+  async function bonusSend(key, value) {
+    if (bBusy) return;
+    if (!String(value).trim()) { bMsg = t("Bitte zuerst eine Antwort eingeben.", "Please enter an answer first."); return viewSolved(); }
+    bBusy = true; bMsg = "";
+    try { await MS.api("POST", "bonus", { key, value }, H); delete bDraft[key]; } catch (e) { bMsg = e.message; }
+    bBusy = false; lastKey = ""; await poll();
   }
 
   // ---------- Einsatz: Regeln in einer Minute ----------
@@ -503,7 +591,7 @@
           <label for="q_${q.key}">${q.label}</label><span class="hint">${MS.esc(q.hint)}</span>
           <input id="q_${q.key}" data-q="${q.key}" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="${i < S.questions.length - 1 ? "next" : "done"}" value="${MS.esc(draft[q.key] || "")}">
           ${hintsFor(q.key)}</div></div>`).join("");
-    const ctip = S.check_available ? `<div class="ctip"><div><b>${t("Kontrolltipp", "Check")}</b><p>${t(`Zeigt, welche Antworten eures letzten Versuchs schon stimmen. Kostet ${S.rules.check} Minuten Strafzeit.`, `Shows which answers of your last attempt are already correct. Costs ${S.rules.check} minutes of penalty time.`)}</p></div>
+    const ctip = S.check_available ? `<div class="ctip"><div><b>${t("Kontrolltipp", "Check")}</b><p>${t(`Zeigt, welche der Antworten, die gerade im Formular stehen, schon stimmen. Kostet ${S.rules.check} Minuten Strafzeit.`, `Shows which of the answers currently in the form are already correct. Costs ${S.rules.check} minutes of penalty time.`)}</p></div>
           <button type="button" class="btn ${checkArmed ? "btn-ink" : "btn-line"}" id="check">${checkArmed ? t(`Ja, Kontrolltipp nutzen (+${S.rules.check} Min.)`, `Yes, use the check (+${S.rules.check} min)`) : t("Kontrolltipp nutzen", "Use the check")}</button>
           ${checkArmed ? `<button type="button" class="linkbtn" id="checkno">${t("Abbrechen", "Cancel")}</button>` : ""}${checkRes}</div>` : "";
     if (S.stage === 3) {
@@ -550,7 +638,9 @@
       if (!checkArmed) { checkArmed = true; return viewLoesung(); }
       checkArmed = false;
       try {
-        const d = await MS.api("POST", "kontrolle", null, H);
+        const cur = {};
+        for (const inp of root.querySelectorAll("[data-q]")) cur[inp.dataset.q] = inp.value;
+        const d = await MS.api("POST", "kontrolle", cur, H);
         checkRes = `<div class="checkrow">${S.questions.map((q, i) => `<span class="${d.result[q.key] ? "y" : "n"}">${t("Frage", "Question")} ${q.nr}: ${d.result[q.key] ? t("richtig", "correct") : t("falsch", "wrong")}</span>`).join("")}</div>`;
         S.penalty_min += d.penalty_min; tick();
       } catch (err) { checkRes = `<p class="err">${MS.esc(err.message)}</p>`; }

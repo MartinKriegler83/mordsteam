@@ -30,7 +30,7 @@ export const PRICES = { basis: 8900, premium: 11900, plus: 14900 };   // Cent pr
 export const SOLO_PRICE = 890;                                        // Mordsteam Solo Basic, Endpreis
 // Solo-Fälle im Shop (Endpreise in Cent). plus = mit KI-Verhörraum (ab 18)
 export const SOLO_OFFERS = {
-  "solo-001": { price: 890, no: "Solo 001", de: "Nachtzug nach Venedig", en: "Night Train to Venice", min: 30, head: ["Der Nachtzug wartet.", "The night train is waiting."], goal: ["bis Udine", "until Udine"] },
+  "solo-001": { price: 890, no: "Solo 001", de: "Nachtzug nach Venedig", en: "Night Train to Venice", min: 40, head: ["Der Nachtzug wartet.", "The night train is waiting."], goal: ["bis Udine", "until Udine"] },
   "solo-002": { price: 890, no: "Solo 002", de: "Applaus für einen Toten", en: "Applause for a Dead Man", min: 30, head: ["Der Vorhang ist gefallen.", "The curtain has fallen."], goal: ["bis die Polizei im Theater ist", "until the police reach the theatre"] },
   "solo-plus-001": { price: 1590, no: "Solo Plus", de: "Der letzte Jahrgang", en: "The Last Vintage", min: 45, plus: true, head: ["Das Weinfest wartet.", "The wine festival is waiting."], goal: ["bis die Polizei aus Krems kommt", "until the police arrive from Krems"] },
 };

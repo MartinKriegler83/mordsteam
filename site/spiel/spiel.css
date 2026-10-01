@@ -519,3 +519,15 @@ button.btn-big{margin-top:14px}
 .so-mark{min-width:118px;font-size:13px}
 .so-mark.m1{background:#2E6B3A;color:#fff;border-color:#2E6B3A}
 .so-mark.m2{background:#B3261E;color:#fff;border-color:#B3261E}
+
+/* Zusatzermittlung und Sonderauftrag */
+.final .bonus,.final .sonder{margin-top:22px}
+.brow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.brow input,.brow select{flex:1 1 180px;min-height:44px;font:inherit;padding:10px 12px;border:1.5px solid #B9B09C;border-radius:6px;background:#fff}
+.brow .btn{margin:0}
+.bans{font-family:var(--mono);font-size:15px;margin-top:6px}
+.bres{font-size:14px;margin-top:4px;color:var(--ink-2)}
+.bres.y{color:#1F6B3A}.bres.n{color:var(--red-dark)}
+.sonder .aria-log{margin-top:12px;min-height:140px}
+.sonder .aria-form{margin-top:10px}
+.sonder .v-btn{background:#6B3FD1;color:#fff;flex:none}.sonder .v-btn[disabled]{opacity:.5}

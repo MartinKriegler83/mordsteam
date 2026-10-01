@@ -7,7 +7,7 @@
   const q = new URLSearchParams(location.search);
   if (q.get("abgebrochen")) document.getElementById("cancelled").hidden = false;
   const CASES = {
-    "solo-001": { p: 890, de: "Mordsteam Solo 001 „Nachtzug nach Venedig“ · 30 Minuten", en: "Mordsteam Solo 001 “Night Train to Venice” · 30 minutes" },
+    "solo-001": { p: 890, de: "Mordsteam Solo 001 „Nachtzug nach Venedig“ · 40 Minuten", en: "Mordsteam Solo 001 “Night Train to Venice” · 40 minutes" },
     "solo-002": { p: 890, de: "Mordsteam Solo 002 „Applaus für einen Toten“ · 30 Minuten", en: "Mordsteam Solo 002 “Applause for a Dead Man” · 30 minutes" },
     "solo-plus-001": { p: 1590, plus: true, de: "Mordsteam Solo Plus „Der letzte Jahrgang“ · 45 Minuten · mit KI-Verhörraum", en: "Mordsteam Solo Plus “The Last Vintage” · 45 minutes · with AI interrogation room" },
   };

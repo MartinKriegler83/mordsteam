@@ -1,0 +1,25 @@
+// Prüft Teams-Fall 001: IBAN-Darstellung in allen Ländern (die gesuchten letzten 4 Ziffern stehen nie geteilt),
+// Zusatzermittlung (Lösungen eindeutig) und Sonderauftrag (Ziel gültig) für viele zufällige Runden.
+// Aufruf: node tools/check_teams.mjs
+import { account, COUNTRY_ORDER } from "../lib/countries.js";
+import * as F from "../lib/cases/fall-001.js";
+let err = 0;
+const fail = (m) => { err++; console.log("FEHLER", m); };
+for (const c of COUNTRY_ORDER) for (const k of ["9697", "0102", "4521"]) for (const bank of [false, true]) {
+  const a = account(c, k, bank);
+  if (!a.endsWith(k)) fail(`${c} endet nicht auf ${k}: ${a}`);
+  const before = a.slice(0, -4);
+  if (/\d$/.test(before) && /[A-Z]{2}\d{2} /.test(a)) fail(`${c} letzte 4 Ziffern nicht als eigener Block: ${a}`);
+}
+
+const rand = (n) => Math.floor(Math.random() * n);
+for (let i = 0; i < 500; i++) for (const premium of [false, true]) {
+  const sec = F.makeSecrets(rand, { premium, lang: i % 2 ? "en" : "de", feier: "Panorama-Lounge" });
+  const b = F.bonusSolution(sec);
+  if (!/^\d\d:\d\d$/.test(b.b_zeit) || b.b_taxi.length !== 2 || b.b_video.length !== 1) fail(`Bonus unvollständig ${JSON.stringify(b)}`);
+  if (b.b_taxi.includes(b.b_video)) fail("Bonus: Video-Person sitzt auch im Taxi");
+  if (b.b_taxi.includes(sec.L_T) || b.b_video === sec.L_T) fail("Bonus: Täter als Alibi-Person");
+  if (premium && !F.ZIELE[F.zielOf(sec)]) fail("Sonderauftrag: Ziel ungültig");
+  if (sec.ROOM_NEU && /panorama/i.test(sec.ROOM_NEU)) fail("Kennwort-Raum steckt im Feierraum-Namen");
+}
+console.log(err ? `${err} Fehler` : `IBAN in ${COUNTRY_ORDER.length} Ländern, 1000 Runden Zusatzermittlung/Sonderauftrag: alles ok`);

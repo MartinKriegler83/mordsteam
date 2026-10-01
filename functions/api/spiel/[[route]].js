@@ -36,6 +36,10 @@ export async function onRequest(ctx) {
     if (route === "aria" && method === "GET") return withTeam(request, env, ariaGet);
     if (route === "aria/chat" && method === "POST") return withTeam(request, env, ariaChat, true);
     if (route === "aria/kennwort" && method === "POST") return withTeam(request, env, ariaKennwort, true);
+    if (route === "bonus" && method === "POST") return withTeam(request, env, bonusAnswer, false, false);
+    if (route === "bonus/fertig" && method === "POST") return withTeam(request, env, bonusDone, false, false);
+    if (route === "sonder" && method === "GET") return withTeam(request, env, sonderGet);
+    if (route === "sonder/chat" && method === "POST") return withTeam(request, env, sonderChat, true, false);
     if (route === "test/vorspulen" && method === "POST") return withTeam(request, env, vorspulen, true, false);
     if (route === "feedback" && method === "POST") return withTeam(request, env, playerFeedback);
     // --- Organisator ---
@@ -196,7 +200,7 @@ async function teamState({ env, team, session, viewer, request }) {
   const now = Date.now();
   let hints = [], nextHint = null;
   if (session.started_at && session.status === "running" && stage < 4) {
-    for (const h of hintTimes(session)) {
+    for (const h of hintTimes(session, team)) {
       if (h.stage !== stage) continue;
       if (h.time <= now) hints.push({ q: h.q, label: label(h.q), level: h.level, time: h.time, text: render(c.TIPS[h.q][h.level - 1], v) });
       else if (!nextHint || h.time < nextHint.time) nextHint = { time: h.time, label: label(h.q) };
@@ -248,6 +252,7 @@ async function teamState({ env, team, session, viewer, request }) {
     ranking: session.status === "finished" ? rank : session.status === "running" ? [] : rank.map((r) => ({ name: r.name })),
     // Nach Spielende bekommen alle Teams die Auflösung (erst dann, damit niemand vorher spickt)
     aufloesung: session.status === "finished" ? solutionInfo(session) : null,
+    bonus: bonusView(session, team),
     feedback_done: session.status === "finished" ? await migrateFeedback(env).then(() => env.DB.prepare("SELECT 1 AS x FROM feedback WHERE order_id=?").bind(playerKey(request, session, team, viewer)).first()).then((r) => !!r) : false,
   });
 }
@@ -282,12 +287,22 @@ function partnerPassword(session) {
   const x = JSON.parse(session.secrets);
   return `${x.HUND || "Bruno"}${x.JAHR || x.GRUENDUNG || "2011"}`.toLowerCase();
 }
-async function firmaLogin({ request, session }) {
-  const c = caseOf(session);
+async function firmaLogin({ request, env, team, session }) {
+  const c = caseOf(session), lg = langOf(session);
   const b = await body(request);
   const ok = String(b.user || "").trim().toLowerCase() === c.FIRMA_WEB.login.user &&
     String(b.password || "").trim().toLowerCase().replace(/\s+/g, "") === partnerPassword(session);
-  if (!ok) return fail(L(langOf(session), "Benutzername oder Passwort falsch.", "Wrong user name or password."), 403);
+  if (!ok) {
+    // Wer oft scheitert, bekommt vom „Helpdesk“ schrittweise mehr Hilfe – starke Teams merken davon nichts.
+    const n = (team.login_fails || 0) + 1;
+    await env.DB.prepare("UPDATE teams SET login_fails=? WHERE id=?").bind(n, team.id).run();
+    let m = L(lg, "Benutzername oder Passwort falsch.", "Wrong user name or password.");
+    if (n >= 6) m += " " + L(lg, "Helpdesk: Den treuesten Begleiter kennt sogar die Lokalzeitung – und das Jahr steht im Mitarbeiterporträt im Intranet.",
+      "Helpdesk: Even the local paper knows the most loyal companion – and the year is in the staff portrait on the intranet.");
+    else if (n >= 3) m += " " + L(lg, "Passwort-Hinweis des Kontos: „Name meines treuesten Begleiters + das Jahr, in dem ich hier angefangen habe“ – alles klein, ohne Leerzeichen.",
+      "Account password hint: “Name of my most loyal companion + the year I started here” – all lower case, no spaces.");
+    return fail(m, 403);
+  }
   return json({ html: render(c.FIRMA_WEB.partner, buildVars(session)) });
 }
 
@@ -361,7 +376,7 @@ function ariaPseudo(x) {
 }
 
 async function ariaMsgs(env, team) {
-  const { results } = await env.DB.prepare("SELECT role, text, at FROM aria_msgs WHERE team_id=? ORDER BY id LIMIT 300").bind(team.id).all();
+  const { results } = await env.DB.prepare("SELECT role, text, at FROM aria_msgs WHERE team_id=? AND role NOT LIKE 'v-%' ORDER BY id LIMIT 300").bind(team.id).all();
   return results;
 }
 async function ariaGet({ env, team, session }) {
@@ -456,7 +471,7 @@ async function vorspulen({ request, env, team, session }) {
   const stage = stageOf(session, team);
   let shift = Math.min(60, Math.max(1, Number(b.minuten) || 5)) * 60000;
   if (b.bis === "hinweis") {
-    const next = hintTimes(session).filter((h) => h.stage === stage && h.time > now).sort((a, c) => a.time - c.time)[0];
+    const next = hintTimes(session, team).filter((h) => h.stage === stage && h.time > now).sort((a, c) => a.time - c.time)[0];
     if (!next) return fail(L(lg, "In dieser Stufe kommt kein weiterer Hinweis mehr.", "No more hints in this stage."));
     shift = next.time - now + 1000;
   }
@@ -464,16 +479,24 @@ async function vorspulen({ request, env, team, session }) {
   return json({ ok: true, minuten: Math.round(shift / 60000) });
 }
 
-async function kontrolle({ env, team, session }) {
+async function kontrolle({ request, env, team, session }) {
   const stage = stageOf(session, team);
   const lg = langOf(session);
   if (stage >= 3) return fail(L(lg, "Für diese Stufe gibt es keinen Kontrolltipp.", "There is no check for this stage."));
   if (team.wrong < RULES.checkAfterWrong) return fail(L(lg, `Den Kontrolltipp gibt es erst nach ${RULES.checkAfterWrong} Fehlversuchen.`, `The check is only available after ${RULES.checkAfterWrong} wrong attempts.`));
-  let last = null;
-  try { last = JSON.parse(team.last_result || "null"); } catch {}
-  if (!last || last.stage !== stage) return fail(L(lg, "Gebt zuerst einen Lösungsversuch für diese Stufe ab.", "Submit an answer for this stage first."));
+  // Geprüft wird, was gerade im Formular steht – fehlt das, der letzte Versuch dieser Stufe
+  const b = await body(request);
+  const qs = stageQuestions(session, stage);
+  let result = null;
+  if (b && qs.some((q) => String(b[q.key] ?? "").trim())) result = checkAnswers(session, b, qs);
+  else {
+    let last = null;
+    try { last = JSON.parse(team.last_result || "null"); } catch {}
+    if (!last || last.stage !== stage) return fail(L(lg, "Tragt zuerst eure Antworten ins Formular ein.", "Enter your answers in the form first."));
+    result = last.result;
+  }
   await env.DB.prepare("UPDATE teams SET penalty_min=penalty_min+? WHERE id=?").bind(RULES.checkPenaltyMin, team.id).run();
-  return json({ result: last.result, penalty_min: RULES.checkPenaltyMin });
+  return json({ result, penalty_min: RULES.checkPenaltyMin });
 }
 
 // ---------- Organisator ----------
@@ -704,5 +727,141 @@ async function adminDelete(request, env) {
   const b = await body(request);
   if (!b.id) return fail("id fehlt.");
   await purgeSession(env, b.id);
+  return json({ ok: true });
+}
+
+// ---------- Zusatzermittlung und Sonderauftrag (nach dem Lösen) ----------
+const bonusOf = (team) => { try { return JSON.parse(team.bonus || "{}") || {}; } catch { return {}; } };
+function sonderEligible(session, team) {
+  const c = caseOf(session);
+  return isPlus(session) && !!c.SONDER && !!team.solved_at && !!session.started_at && team.solved_at - session.started_at <= c.SONDER_MIN * 60000;
+}
+function bonusView(session, team) {
+  const c = caseOf(session);
+  if (!team.solved_at || !c.BONUS) return null;
+  const v = buildVars(session), B = bonusOf(team), lg = langOf(session);
+  const sol = c.bonusSolution(JSON.parse(session.secrets));
+  const st = (k) => (B[k] ? (B[k].ok ? "ok" : "wrong") : "open");
+  const out = {
+    per: c.BONUS_MIN, min: team.bonus_min || 0, done: !!team.bonus_done_at,
+    questions: c.BONUS.map((q) => ({ key: q.key, label: render(q.label, v), hint: q.hint, status: st(q.key),
+      answer: B[q.key] ? String(B[q.key].v) : null, solution: B[q.key] ? sol[q.key] : null })),
+    sonder: null, sonder_missed: isPlus(session) && !!c.SONDER && !sonderEligible(session, team),
+  };
+  if (sonderEligible(session, team)) {
+    const opts = c.SONDER.options();
+    const right = opts[c.zielOf(JSON.parse(session.secrets))];
+    out.sonder = { surprise: render(c.SONDER.surprise, v), task: render(c.SONDER.task, v), label: render(c.SONDER.label, v), options: opts,
+      status: st("s_ziel"), answer: B.s_ziel ? (opts.find((o) => o[0] === B.s_ziel.v) || [, ""])[1] : null,
+      solution: B.s_ziel ? right[1] : null, bonus: c.SONDER_BONUS, max: c.SONDER_MAX, min_limit: c.SONDER_MIN };
+  }
+  return out;
+}
+async function bonusMaybeDone(env, session, team, B) {
+  const c = caseOf(session);
+  const all = c.BONUS.every((q) => B[q.key]) && (!sonderEligible(session, team) || B.s_ziel);
+  if (!all || team.bonus_done_at) return;
+  const now = Date.now();
+  await env.DB.prepare("UPDATE teams SET bonus_done_at=? WHERE id=? AND bonus_done_at IS NULL").bind(now, team.id).run();
+  await finishIfAllSolved(env, session, now);
+}
+async function bonusAnswer({ request, env, team, session }) {
+  const c = caseOf(session), lg = langOf(session);
+  if (!team.solved_at) return fail(L(lg, "Die Zusatzermittlung gibt es nach dem Lösen.", "The bonus investigation comes after solving."), 409);
+  if (session.status !== "running") return fail(L(lg, "Die Runde ist beendet.", "The round has ended."), 409);
+  if (team.bonus_done_at) return fail(L(lg, "Eure Ermittlung ist abgeschlossen.", "Your investigation is closed."), 409);
+  const b = await body(request);
+  const key = String(b.key || ""), val = String(b.value ?? "").slice(0, 60);
+  const B = bonusOf(team);
+  if (B[key]) return fail(L(lg, "Diese Frage habt ihr schon beantwortet – es gibt nur einen Versuch.", "You've already answered this question – there's only one attempt."), 409);
+  let ok, add;
+  if (key === "s_ziel") {
+    if (!sonderEligible(session, team)) return fail(L(lg, "Den Sonderauftrag gibt es nur für Premium Plus und nur, wenn der Fall vor Minute 70 gelöst wurde.", "The special assignment is only for Premium Plus and only if the case was solved before minute 70."), 403);
+    if (!val) return fail(L(lg, "Bitte ein Ziel wählen.", "Please choose a destination."));
+    ok = val === "z" + c.zielOf(JSON.parse(session.secrets)); add = c.SONDER_BONUS;
+  } else {
+    const q = c.BONUS.find((x) => x.key === key);
+    if (!q) return fail("Unbekannte Frage.");
+    if (!val.trim()) return fail(L(lg, "Bitte eine Antwort eingeben.", "Please enter an answer."));
+    const sol = c.bonusSolution(JSON.parse(session.secrets));
+    const n = { time: (x) => { const d = String(x || "").replace(/[^0-9]/g, ""); return d.length === 3 ? `0${d[0]}:${d.slice(1)}` : d.length === 4 ? `${d.slice(0, 2)}:${d.slice(2)}` : d; },
+      letter: (x) => String(x || "").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 1),
+      letters: (x) => [...new Set(String(x || "").toUpperCase().replace(/[^A-Z]/g, ""))].sort().join("") }[q.pattern];
+    ok = n(val) !== "" && n(val) === n(sol[key]);
+    add = c.BONUS_MIN;
+  }
+  B[key] = { v: val, ok, at: Date.now() };
+  team.bonus = JSON.stringify(B);
+  await env.DB.prepare("UPDATE teams SET bonus=?, bonus_min=bonus_min+? WHERE id=?").bind(team.bonus, ok ? add : 0, team.id).run();
+  team.bonus_min = (team.bonus_min || 0) + (ok ? add : 0);
+  await bonusMaybeDone(env, session, team, B);
+  return json({ ok, bonus_min: team.bonus_min });
+}
+async function bonusDone({ env, team, session }) {
+  const lg = langOf(session);
+  if (!team.solved_at) return fail(L(lg, "Erst den Fall lösen.", "Solve the case first."), 409);
+  if (!team.bonus_done_at) {
+    const now = Date.now();
+    await env.DB.prepare("UPDATE teams SET bonus_done_at=? WHERE id=?").bind(now, team.id).run();
+    await finishIfAllSolved(env, session, now);
+  }
+  return json({ ok: true });
+}
+// Verhör des Mitwissers (KI). Echte Namen verlassen den Server nie – wie bei ARIA.
+const sonderX = (session) => {
+  const x = ariaX(session);
+  const v = buildVars(session);
+  const sec = JSON.parse(session.secrets), inp = JSON.parse(session.vars);
+  return { ...x, M_IDX: sec.M_IDX, T_IDX: sec.T_IDX, SCHEINFIRMA_TXT: String(v.SCHEINFIRMA || "").replace(/&amp;/g, "&"), T_NAME: String(inp[`S${sec.T_IDX + 1}`] || "") };
+};
+async function sonderMsgs(env, team) {
+  return (await env.DB.prepare("SELECT role, text FROM aria_msgs WHERE team_id=? AND role IN ('v-user','v-ai') ORDER BY id LIMIT 100").bind(team.id).all()).results
+    .map((m) => ({ role: m.role === "v-user" ? "user" : "assistant", text: m.text }));
+}
+async function sonderGet({ env, team, session }) {
+  const c = caseOf(session);
+  if (!sonderEligible(session, team)) return json({ open: false });
+  const msgs = await sonderMsgs(env, team);
+  return json({ open: true, msgs, used: msgs.filter((m) => m.role === "user").length, max: c.SONDER_MAX, max_chars: ARIA_LIMITS.maxChars });
+}
+async function sonderChat({ request, env, team, session }) {
+  const c = caseOf(session), lg = langOf(session);
+  if (!sonderEligible(session, team)) return fail(L(lg, "Den Sonderauftrag gibt es hier nicht.", "There is no special assignment here."), 403);
+  if (bonusOf(team).s_ziel) return fail(L(lg, "Der Sonderauftrag ist schon beantwortet.", "The special assignment has already been answered."), 409);
+  const b = await body(request);
+  const text = String(b.text || "").replace(/\s+/g, " ").trim().slice(0, ARIA_LIMITS.maxChars);
+  if (!text) return fail(L(lg, "Bitte eine Frage eingeben.", "Please enter a question."));
+  const prev = await sonderMsgs(env, team);
+  if (prev.filter((m) => m.role === "user").length >= c.SONDER_MAX) return fail(L(lg, "Alle Fragen sind verbraucht. Entscheidet euch jetzt.", "All questions are used up. Make your decision now."), 429);
+  if (!(await ariaGate(env, team))) return fail(L(lg, "Einen Moment …", "One moment …"), 429);
+  await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, Date.now(), "v-user", text).run();
+  const x = sonderX(session), ps = ariaPseudo(x);
+  let reply, logged = false;
+  try {
+    if (!env.ANTHROPIC_API_KEY) throw new Error("kein Schlüssel");
+    const messages = [];
+    for (const m of [...prev, { role: "user", text }].slice(-12)) {
+      const t = ps.hide(m.text), last = messages[messages.length - 1];
+      if (last && last.role === m.role) last.content += "\n" + t; else messages.push({ role: m.role, content: t });
+    }
+    while (messages.length && messages[0].role !== "user") messages.shift();
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      body: JSON.stringify({ model: env.ARIA_MODEL || "claude-haiku-4-5-20251001", max_tokens: 250, temperature: 0.6,
+        system: [{ type: "text", text: c.SONDER.system({ ...ps.xp, M_IDX: x.M_IDX, T_IDX: x.T_IDX, SCHEINFIRMA_TXT: x.SCHEINFIRMA_TXT, PIN: x.PIN, FACH: x.FACH }), cache_control: { type: "ephemeral" } }], messages }),
+      signal: AbortSignal.timeout(20000),
+    });
+    const d = await r.json();
+    logged = true;
+    await logAI(env, d.usage, r.ok);
+    if (!r.ok) throw new Error(d.error?.message || String(r.status));
+    reply = ps.show((d.content || []).filter((p) => p.type === "text").map((p) => p.text).join("").trim()).slice(0, 800);
+    if (!reply) throw new Error("leer");
+  } catch (e) {
+    if (!logged && env.ANTHROPIC_API_KEY) await logAI(env, null, false);
+    reply = c.SONDER.fallback(x, text);
+  }
+  await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, Date.now(), "v-ai", reply).run();
   return json({ ok: true });
 }
