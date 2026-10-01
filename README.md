@@ -1,26 +1,220 @@
 # Mordsteam
 
-Website, Spielplattform und Fall-Dokumente für mordsteam.com. **Repository privat halten** – hier liegen die Falllösungen.
+Website, Shop und Spielplattform von **mordsteam.com**. Mordsteam verkauft digitale Krimispiele, die im Browser gespielt werden:
+
+| Produkt | Spielart | Fälle im Code |
+|---|---|---|
+| **Teams** | Firmen-Teamevent, mehrere Teams treten gegeneinander an, Spielleitung über eigenes Dashboard | `fall-001` „Die rote Mappe“ in drei Paketen: Basic, Premium (2. Akt), Premium Plus (Finale mit KI-Assistenz ARIA) |
+| **Friends** | Krimiabend für 4–8 Personen, jede Person am eigenen Handy, gleichzeitig oder zeitversetzt über mehrere Tage | `friends-001` „Letzte Runde auf der Hütte“, Basic und Plus (mit KI-Verhörraum) |
+| **Solo** | Einzelspiel am Handy oder Laptop | `solo-001` „Nachtzug nach Venedig“, `solo-002` „Applaus für einen Toten“, `solo-plus-001` „Der letzte Jahrgang“ (mit KI-Verhörraum) |
+
+> **Repository privat halten.** In `lib/` stehen alle Falllösungen. Ausgeliefert wird nur, was `build.sh` nach `dist/` kopiert.
+
+---
+
+## Technik in einem Satz
+
+Statische Seiten (HTML, CSS, Vanilla-JS ohne Build-Tool und ohne Frameworks) auf **Cloudflare Pages**, Server-Logik als **Cloudflare Pages Functions** (`functions/`), Datenbank **Cloudflare D1** (SQLite), Zahlung über **Stripe Checkout**, Mails über **Resend**, KI-Figuren über die **Anthropic Claude API**. Keine npm-Abhängigkeiten im Projekt.
+
+## Ordnerstruktur
 
 ```
-site/          Website (Startseite, Pilot-Formular, Rechtstexte)
-site/spiel/    Spielplattform „Fallzentrale“ (nur Oberflächen, keine Fallinhalte)
-teaser/        Platzhalter-Startseite bis zum Launch
-functions/     Server-Funktionen (Pilot-Formular, Spiel-API)
-lib/           Spiellogik und Fälle – wird nie öffentlich ausgeliefert
-db/schema.sql  Datenbank der Spielplattform (Cloudflare D1)
-build.sh       Baut dist/: Teaser oder volle Seite (Schalter LAUNCH)
-faelle/        Arbeitsdokumente zu den Fällen
+build.sh                 Build für Cloudflare Pages: erzeugt dist/ (Teaser oder volle Seite, siehe „Build“)
+db/schema.sql            Grundschema der D1-Datenbank (Teams-Plattform und Shop)
+functions/               Cloudflare Pages Functions (Server)
+  _middleware.js           Sprachweiche für "/" (Besucher außerhalb DACH → /en/)
+  api/_middleware.js       zählt API-Aufrufe je Bereich, protokolliert Serverfehler (ops_hits, ops_err)
+  api/spiel/[[route]].js   Teams: Spiel, Spielleitung, Admin-Bereich (alle Produkte)
+  api/solo/[[route]].js    Solo (dünne Hülle um lib/solo.js)
+  api/friends/[[route]].js Friends (dünne Hülle um lib/friends.js)
+  api/shop/[[route]].js    Shop: Bestellung, Stripe-Webhook, Mails, Feedback, Kontakt, Widerruf, Cron
+lib/                     Spiellogik – wird nie ausgeliefert, nur von functions/ importiert
+  game.js                  Teams-Logik: Fälle, Stufen, Funksprüche (hintTimes), Wertung, Statistik
+  create.js                Spielrunde anlegen (Admin und Bestellung), Datenbank-Migrationen (migrate)
+  solo.js / friends.js     Logik für Solo und Friends inkl. eigener Tabellen und Migrationen
+  countries.js             Länderprofile (37 Länder): Behörden, Währung, IBAN, Kennzeichen, Telefon, Städte, Namen
+  cases/                   Die Fälle (Texte, Beweisstücke, Lösungen, Hinweise, KI-Prompts)
+    fall-001.js / fall-001-en.js   Teams-Fall, deutsch und englische Textschicht
+    friends-001.js, solo-001.js, solo-002.js, solo-plus-001.js
+  stripe.js                Stripe-Hilfe für lib/ (der Shop hat eine eigene Kopie)
+  accounting.js            Buchhaltung: Einnahmen nach Kundenart und Region, EU-Privatkunden-Schwelle
+  feedback.js              Feedback-Mails und -Bögen, Bewertungen
+  withdraw.js              Widerrufsfunktion für Verbraucher
+  contact.js               Kontaktformular (Spam-Schutz, Limit)
+  ops.js                   Betrieb: Mail-Versand, KI-Verbrauch, Zähler, Warnmails
+site/                    Öffentliche Website (deutsch) + site/en/ (englisch, generiert)
+  spiel/                   Spielplattform „Fallzentrale“: Oberflächen für Teams, Leitung, Solo, Friends, Admin, Urkunde
+  assets/                  CSS, Seiten-Skripte, Schriften
+  _headers                 Sicherheits-Header, noindex für /spiel/ und Bestellseiten
+teaser/                  Platzhalter-Startseite und Impressum für den Teaser-Modus
+tools/                   Prüf- und Hilfsskripte (siehe „Lokal testen“)
+  en_pages.py              erzeugt site/en/*.html (englische Seiten nie direkt bearbeiten)
+  check_*.mjs              Prüfskripte je Fall (Eindeutigkeit der Lösung über alle Varianten)
+  github-workflow-feedback-mails.yml   Vorlage der GitHub-Action (Kopie von .github/workflows/feedback-mails.yml)
+.github/workflows/feedback-mails.yml   stündlicher Aufruf von /api/shop/cron
+faelle/                  alte Arbeitsdokumente (nicht ausgeliefert)
+design/                  Designentwürfe (nicht ausgeliefert)
 ```
 
-## Veröffentlichen
+## Wie die Produkte technisch funktionieren
+
+### Teams (`/spiel/`)
+- Eine **Spielrunde** (`sessions`) gehört zu einer Bestellung oder wird im Admin angelegt. Sie enthält die Eingaben des Bestellers (`vars`: Firma, Namen, Räume, Land, Sprache, Logo …) und die gewürfelten Falldaten (`secrets`: Täter, Uhrzeiten, Kontonummern, Passwörter …). Alle Texte entstehen zur Laufzeit aus Vorlage + `vars` + `secrets`.
+- Teams treten mit dem **Beitrittscode** bei (`join`), Zuschauergeräte über `mitlesen` (`viewers`). Die Spielleitung meldet sich mit dem **Leitungscode** an (`leitung/login`) und startet, pausiert, beendet.
+- Stufen: Akt 1 (`wer`, `wann`, `warum`, `wo`), Premium zusätzlich Akt 2 (`helfer`, `fach`), Premium Plus zusätzlich Finale (`pin`, mit ARIA). Antworten gehen als ganze Stufe an `loesung`; Fehlversuche kosten Strafminuten, nach zwei Fehlversuchen gibt es `kontrolle`.
+- **Funksprüche** (automatische Hinweise) kommen nach Zeitplan je Paket (`HINTS` im Fall); für Akt 2 und Finale je Team relativ zum Akt-Start (`HINTS_REL`, `hintTimes()` in `lib/game.js`).
+- **Firmen-Intranet** (`firma`, `firma/login`): fiktive Intranetseiten der Kundenfirma; der Login-Bereich verlangt ein Passwort aus Hund + Jahr. Fehlversuche je Team werden gezählt (`teams.login_fails`), ab dem 3. und 6. zeigt die Fehlermeldung zusätzliche Hilfe.
+- **ARIA** (Premium Plus, `aria`, `aria/chat`, `aria/kennwort`): KI-Assistenz im Intranet; Verlauf in `aria_msgs`.
+- **Zusatzermittlung** (`bonus`, `bonus/fertig`): nach dem Lösen 3 Bonusfragen, je richtig −2 Min. Wertung. **Sonderauftrag** (`sonder`, `sonder/chat`): nur Premium Plus und nur wenn das Team vor Minute 70 fertig ist; KI-Verhör, richtiges Ziel −5 Min. Verlauf in `aria_msgs` mit Rollen `v-user`/`v-ai`.
+- Die Runde endet automatisch, wenn alle Teams gelöst **und** die Zusatzermittlung abgeschlossen haben (`finishIfAllSolved`). Danach Auflösung, Rangliste, Urkunde (`/spiel/urkunde.html`), Statistik in `stats_teams`.
+- Sprache der Runde (`sessions.lang`): Deutsch oder Englisch; `caseOf()` legt `fall-001-en.js` über die deutsche Fassung.
+
+### Solo (`/spiel/solo.html`)
+- Ein Kauf erzeugt ein **Ticket** (`solo_tickets`, Code). Jeder Durchgang ist ein **Run** (`solo_runs`) mit eigenem Täter; der erste zählt für den Vergleich („schneller als X %“, `solo_scores`). Verhöre in `solo_chat`.
+- Zum Ticket gehört ein 5-€-Gutscheincode für Friends/Teams (Stripe-Promotion-Code).
+
+### Friends (`/spiel/friends.html`)
+- Eine **Gruppe** (`friends_groups`) hat einen Fall für alle (Besetzung, Täter, Zeitvariante), jede Person einen eigenen Durchgang (`friends_players`). Modus `live` (gemeinsame Uhr, Organisator startet) oder `week` (3/5/7 Tage, jeder startet selbst). Lösung und Rangliste erst bei der gemeinsamen Auflösung (`org/reveal` oder automatisch per Cron). Verhöre in `friends_chat`.
+
+### Shop (`/api/shop/`)
+- Bestellseiten: `bestellen.html` (Teams), `friends-kaufen.html`, `solo-kaufen.html` (+ englische Gegenstücke).
+- Ablauf: Formular → `bestellung` / `friends` / `solo` legt `orders` (Status `pending`) an → Stripe Checkout → Webhook `stripe-webhook` (`checkout.session.completed`) → `fulfill()` legt Spielrunde/Gruppe/Ticket an und schickt die Bestellmail → `bestellt.html` fragt `status` ab.
+- Preise stehen im Code, in Cent, als Endpreise: Teams `PRICES` in `functions/api/shop/[[route]].js`, Friends `FRIENDS_PRICE`/`FRIENDS_PRICE_PLUS` in `lib/friends.js`, Solo je Fall (`price` in der Produktliste direkt unter `PRICES`).
+- Early Bird: Rabatt als Stripe-Coupon, gesteuert über `EARLYBIRD_*`.
+- `cron` (POST, Header `x-cron-key`): löst fällige Friends-Wochenrunden auf, verschickt fällige Feedback-Mails. Aufgerufen stündlich von der GitHub-Action.
+- Weitere Routen: `meta`, `friends-meta` (Preise, Shop offen?), `feedback` (GET/POST Bogen), `bewertungen` (freigegebene Bewertungen), `kontakt`, `widerruf`, `status`.
+
+### Admin (`/spiel/admin.html`)
+Zugriff mit dem Admin-Schlüssel (Header `x-admin`). Funktionen: Spielrunden anlegen/löschen, Bestellungen, Solo-Tickets und Friends-Gruppen anlegen und auflisten, Statistik, Feedback freigeben, Betrieb (Mails, KI-Verbrauch, Aufrufe, Fehler), Buchhaltung, Export.
+
+## API-Routen
+
+Alle Routen liefern JSON. Authentifizierung über Header:
+
+| Header | Wer |
+|---|---|
+| `x-admin` | Admin-Bereich |
+| `x-leitung` | Spielleitung einer Teams-Runde (Token aus `leitung/login`) |
+| `x-team` / `x-view` | Teamgerät / Zuschauergerät |
+| `x-solo` | Solo-Run |
+| `x-friends` | Friends-Spieler bzw. Organisator |
+| `x-cron-key` | GitHub-Action |
+
+**`/api/spiel/…`** (Teams und Admin)
+- Spiel: `GET state`, `GET akte`, `GET code`, `POST join`, `POST mitlesen`, `POST loesung`, `POST kontrolle`, `GET firma`, `POST firma/login`, `GET aria`, `POST aria/chat`, `POST aria/kennwort`, `POST bonus`, `POST bonus/fertig`, `GET sonder`, `POST sonder/chat`, `POST feedback`
+- Leitung: `POST leitung/login`, `GET leitung/state`, `POST leitung/aktion`, `GET leitung/aufloesung`
+- Admin: `POST admin/session`, `GET admin/sessions`, `POST admin/delete`, `GET admin/orders`, `POST admin/order-shipped`, `GET admin/stats`, `GET admin/export`, `GET admin/meta`, `GET admin/ops`, `GET admin/buchhaltung`, `GET admin/feedback`, `POST admin/feedback-approve`, `POST admin/feedback-run`
+- Nur Testrunden: `POST test/vorspulen` (Spielzeit vorspulen)
+
+**`/api/solo/…`**: `start`, `begin`, `state`, `answer`, `hint`, `verhoer`, `aufgeben`, `ticket`, `feedback`, `test/vorspulen`, `admin/list`, `admin/ticket`
+
+**`/api/friends/…`**: `claim`, `begin`, `state`, `answer`, `hint`, `verhoer`, `aufgeben`, `invite`, `org`, `org/start`, `org/reveal`, `feedback`, `admin/list`, `admin/group`
+
+**`/api/shop/…`**: siehe Abschnitt Shop.
+
+## Datenmodell (D1)
+
+Grundschema in `db/schema.sql`. Neue Spalten und Tabellen werden zusätzlich beim ersten Aufruf automatisch angelegt (`migrate()` in `lib/create.js`, eigene Migrationen in `lib/solo.js`, `lib/friends.js`, `lib/feedback.js`, `lib/ops.js`, `lib/contact.js`). **Neue Spalten immer an beiden Stellen eintragen** (schema.sql für neue Datenbanken, Migration für bestehende).
+
+| Tabelle | Inhalt |
+|---|---|
+| `sessions` | Teams-Spielrunde: Fall, Paket (`premium` 0/1/2), Status, Datum, `vars`, `secrets`, Beitritts- und Leitungscode, Testmodus, Sprache, Logo, max. Teams |
+| `teams` | Team einer Runde: Token, Stufenzeiten (`core_at`, `act2_at`, `solved_at`), Strafminuten, Fehlversuche, Hinweise, ARIA-Status, Bonus, `login_fails` |
+| `attempts` | jeder Lösungsversuch (Payload, richtig/falsch) |
+| `viewers` | Zuschauergeräte je Team |
+| `aria_msgs` | Chatverlauf ARIA und Sonderauftrag |
+| `stats_teams` | anonymisierte Statistik je Team nach Spielende |
+| `orders` | Bestellungen aller Produkte: Paket, Betrag (Cent), Status, Kontakt, Stripe-Session, Zahlungs-/Versanddaten, Feedback-Token |
+| `feedback` | Feedbackbögen und Bewertungen (Veröffentlichung nur mit Zustimmung und Freigabe) |
+| `solo_tickets`, `solo_runs`, `solo_chat`, `solo_scores` | Solo |
+| `friends_groups`, `friends_players`, `friends_chat` | Friends |
+| `ops_mail`, `ops_ai`, `ops_hits`, `ops_err`, `ops_alerts` | Betriebszähler (keine Inhalte, keine Empfänger) |
+| `contact_log` | Hash der IP für das Kontaktformular-Limit, nach 24 h gelöscht |
+
+## Umgebungsvariablen (Cloudflare Pages → Settings → Variables and Secrets)
+
+Nur Namen, keine Werte. Production und Preview haben je eigene Werte.
+
+| Name | Art | Zweck |
+|---|---|---|
+| `DB` | D1-Binding | Datenbank |
+| `ADMIN_KEY` | Secret | Zugang zum Admin-Bereich |
+| `CRON_KEY` | Secret | Schutz der Route `shop/cron` (gleicher Wert als GitHub-Repository-Secret `CRON_KEY`) |
+| `ANTHROPIC_API_KEY` | Secret | Claude API für ARIA, Verhörräume, Sonderauftrag. Fehlt er, antworten die Figuren im Notfallmodus mit festen Texten. |
+| `STRIPE_SECRET_KEY` | Secret | Stripe API |
+| `STRIPE_WEBHOOK_SECRET` | Secret | Signaturprüfung des Stripe-Webhooks |
+| `RESEND_API_KEY` | Secret | Mailversand |
+| `MAIL_FROM` | Text | Absender der automatischen Mails; ohne ihn werden keine Mails verschickt |
+| `ARIA_MODEL` | Text | Claude-Modell (Standard: `claude-haiku-4-5-20251001`) |
+| `SHOP_OPEN` | Text | `true` = Bestellungen möglich |
+| `ORDER_FAKE_PAY` | Text | `true` = Bestellung ohne Stripe gilt als bezahlt (nur Tests) |
+| `LAUNCH` | Text (Build) | `true` = auf `main` volle Seite statt Teaser |
+| `EARLYBIRD_PROZENT`, `EARLYBIRD_BIS`, `EARLYBIRD_COUPON` | Text | Early-Bird-Rabatt, Enddatum, Stripe-Coupon |
+| `KI_BUDGET_USD` | Text | Monatsbudget Claude API, Warnung bei 70 % (Standard 20) |
+| `MAIL_LIMIT_DAY`, `MAIL_LIMIT_MONTH` | Text | Mail-Kontingent für Warnungen (Standard 100 / 3000; 0 = kein Limit) |
+| `REQ_LIMIT_DAY` | Text | Aufruflimit pro Tag für Warnungen (Standard 100000; 0 = kein Limit) |
+| `ALERT_TO` | Text | Empfänger der Warnmails (Standard office@mordsteam.com) |
+| `PUBLIC_ORIGIN` | Text | Basis-URL in Mails (Standard https://mordsteam.com) |
+| `ASSETS` | automatisch | statische Dateien (von Pages bereitgestellt) |
+
+GitHub-Repository-Secret: `CRON_KEY`.
+
+## Build
+
+Cloudflare Pages führt `build.sh` aus und veröffentlicht `dist/`:
+- Branch `main` und `LAUNCH` ≠ `true` → **Teaser-Modus**: nur `teaser/index.html` und `teaser/impressum.html` als öffentliche Seite, dazu `site/spiel/` (nicht verlinkt, `noindex`) und die Assets.
+- Alle anderen Fälle (Branch `vorschau`, oder `LAUNCH=true`) → **volle Seite**: ganz `site/`.
+
+Die Functions (`functions/`) laufen in beiden Modi.
+
+## Deploy
+
+- **Production:** Push auf `main` → Cloudflare baut und veröffentlicht mordsteam.com.
+- **Vorschau:** `git push origin main:vorschau` → Preview-Deployment des Branches `vorschau` mit voller Seite. Variablen und Datenbank-Binding für Preview werden in Cloudflare getrennt von Production eingestellt.
 
 ```
 cd ~/Projekte/mordsteam
-git add .
+git add -A
 git commit -m "Was geändert wurde"
 git push
+git push origin main:vorschau
 ```
 
-- `main` → mordsteam.com (Teaser, solange `LAUNCH` nicht `true` ist)
-- Vorschau der vollen Seite: `git push origin main:vorschau`
+## Lokal testen
+
+Voraussetzung: Node.js. Wrangler wird per `npx` geladen.
+
+1. **Prüfskripte** (ohne Server), nach jeder Änderung an einem Fall:
+   ```
+   node tools/check_teams.mjs
+   node tools/check_solo001.mjs
+   node tools/check_solo002.mjs
+   node tools/check_soloplus.mjs
+   node tools/check_friends.mjs
+   ```
+   Alle müssen ohne „FEHLER“ enden.
+2. **Englische Seiten neu erzeugen** nach Änderungen an deutschen Seiten mit englischem Gegenstück: `python3 tools/en_pages.py`
+3. **Lokaler Server mit Datenbank**: Im Projektordner eine `wrangler.toml` und eine `.dev.vars` anlegen (beide stehen in `.gitignore` und dürfen nie committet werden – eine `wrangler.toml` im Repo würde die Einstellungen des Cloudflare-Projekts überschreiben):
+   ```toml
+   # wrangler.toml (nur lokal)
+   name = "mordsteam"
+   compatibility_date = "2024-09-01"
+   pages_build_output_dir = "dist"
+   [[d1_databases]]
+   binding = "DB"
+   database_name = "mordsteam"
+   database_id = "local"
+   ```
+   ```
+   # .dev.vars (nur lokal, Testwerte)
+   ADMIN_KEY=testkey
+   SHOP_OPEN=true
+   ORDER_FAKE_PAY=true
+   ```
+   Dann:
+   ```
+   CF_PAGES_BRANCH=vorschau sh build.sh
+   npx wrangler d1 execute mordsteam --local --file db/schema.sql
+   npx wrangler pages dev dist --port 8790
+   ```
+   Seite: http://localhost:8790, Admin: http://localhost:8790/spiel/admin.html (Schlüssel aus `.dev.vars`). Ohne `ANTHROPIC_API_KEY` laufen alle KI-Figuren im Notfallmodus. Testrunden (`test_mode`) lassen sich mit `test/vorspulen` vorspulen.
