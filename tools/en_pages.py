@@ -81,7 +81,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <div class="stack">
 <div class="eyebrow">Mordsteam Teams · for companies &amp; clubs</div>
 <h1>Which one of you did it?</h1>
-<p class="lead">The murder case in which your team plays the lead – with your names, your rooms and your in-jokes. Several teams investigate against each other, 50 to 90 minutes, no game master needed.</p>
+<p class="lead">The murder case in which your team plays the lead – with your names, your rooms and your in-jokes. One team against the clock or several teams against each other, 50 to 90 minutes, no game master needed.</p>
 <div class="actions">
 <a class="btn btn-red" href="#packages">Set up a case for my team</a>
 <a class="btn-text" href="#how">How it works</a>
@@ -101,7 +101,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 
 <section class="facts" aria-label="Key facts"><div class="wrap">
 <div><b>50 to 90 min</b><span>Basic with one act, Premium with a second act, Premium Plus with a finale with an AI assistant</span></div>
-<div><b>3–6 per team</b><span>as many teams as you like, investigating against each other</span></div>
+<div><b>3–6 per team</b><span>one team against the clock or as many as you like against each other</span></div>
 <div><b>Self-guided</b><span>instructions and a case desk instead of a host</span></div>
 <div><b>Play right away</b><span>straight after buying or whenever you like – in German or English</span></div>
 </div></section>
@@ -196,6 +196,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <section id="faq" class="section faq"><div class="wrap faq-grid">
 <div class="stack"><div class="eyebrow">FAQ</div><h2 class="h2">Questions?</h2></div>
 <div>
+<details><summary>Can we play with just one team?</summary><p>Yes. Then you play against the clock: the ranking and certificate show your time including penalty minutes. With several teams it becomes a contest – whoever solves the case first wins.</p></details>
 <details><summary>How many people fit in a team?</summary><p>3 to 6 is ideal. Each team enters its answers on one main device and can connect up to 5 more phones or laptops via QR code to follow along – so you can split up the evidence. More people? Just book one more team – that makes the competition more exciting, too.</p></details>
 <details><summary>Do we need a game master?</summary><p>No person needed. Instructions and the digital case desk guide you through the case: start, automatic hints, answer entry and award ceremony. One person from your group just starts the clock – and can still play along.</p></details>
 <details><summary>How long does a case take?</summary><p>Basic: 50 minutes, one act with four questions. Premium: 70 minutes – after act 1, the case desk unlocks a second act. Premium Plus: 90 minutes – in the finale you question ARIA, the AI assistant on your intranet. If a team gets stuck, HQ sends hints automatically.</p></details>
@@ -242,7 +243,7 @@ P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=Tru
 <article class="game live"><span class="tab">TEAMS</span><span class="smark ok">PLAY<br>NOW</span>
 <h3 class="gname"><span class="wm-r">MORDS</span>TEAM<span class="gp">TEAMS</span></h3>
 <p class="for">The murder-mystery team event for companies and clubs.</p>
-<p>Your boss has been poisoned, the evidence is gone – and one of you did it. Several teams investigate against each other, with your names and your rooms.</p>
+<p>Your boss has been poisoned, the evidence is gone – and one of you did it. One team against the clock or several teams against each other – with your names and your rooms.</p>
 <p class="meta">3–6 PLAYERS PER TEAM · ANY NUMBER OF TEAMS · 50–90 MIN · FROM €89 PER TEAM</p>
 <a class="btn btn-red" href="teams.html">Go to Mordsteam Teams</a>
 </article>
