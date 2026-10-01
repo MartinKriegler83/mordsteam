@@ -53,7 +53,23 @@
     if (m.earlybird) { document.getElementById("ebbox").hidden = false; document.querySelectorAll(".ebp").forEach((x) => (x.textContent = m.earlybird.prozent)); }
     rows();
   }).catch(() => rows());
-  function fail(msg, el) { err.textContent = msg; err.hidden = false; if (el && el.focus) el.focus(); }
+
+  // Fehlermeldung direkt beim betroffenen Feld zeigen (zusätzlich zur Meldung über dem Bestellknopf)
+  function markField(el, msg) {
+    document.querySelectorAll(".fielderr").forEach((x) => x.remove());
+    document.querySelectorAll("form .bad").forEach((x) => x.classList.remove("bad"));
+    if (!el || !msg) return;
+    el.classList.add("bad");
+    const p = document.createElement("p");
+    p.className = "fielderr"; p.setAttribute("role", "alert"); p.textContent = msg;
+    if (el.type === "radio") (el.closest(".check") || el).parentElement.appendChild(p);
+    else (el.closest(".field") || el.closest(".check") || el).insertAdjacentElement("afterend", p);
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => el.focus({ preventScroll: true }), 300);
+  }
+  document.addEventListener("input", (e) => { if (e.target.classList && e.target.classList.contains("bad")) markField(null); });
+  document.addEventListener("change", (e) => { if (e.target.classList && e.target.classList.contains("bad")) markField(null); });
+  function fail(msg, el) { err.textContent = msg; err.hidden = false; if (el && el.focus) markField(el, msg); else { markField(null); err.scrollIntoView({ behavior: "smooth", block: "center" }); } }
   form.addEventListener("submit", async (ev) => {
     ev.preventDefault();
     err.hidden = true;

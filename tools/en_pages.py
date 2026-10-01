@@ -450,7 +450,7 @@ P["friends-buy"] = dict(title="Order Friends – Mordsteam", robots="noindex", d
  body='''<main class="page shop"><div class="wrap">
 <div class="eyebrow">Order · Mordsteam Friends 001</div>
 <h1>Last Round at the Chalet</h1>
-<p class="lead">The mystery night for 4–8 friends, 45 minutes, everyone on their own device. After payment you get the invitation link for the group and your organiser page right away – on screen and by email.</p>
+<p class="lead">The mystery night for 4–8 friends, 45 or 70 minutes: everyone investigates for themselves on their own device. After payment you get the invitation link for the group and your organiser page right away – on screen and by email.</p>
 <div class="note" id="closed" hidden>Orders are not open yet. You can look at the form, but not submit it yet.</div>
 <div class="note" id="cancelled" hidden>The payment was cancelled. You can simply try again.</div>
 <form class="form" id="friends" novalidate>
@@ -709,12 +709,12 @@ P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy
 <span class="hint">Private individuals have the statutory right of withdrawal (see <a href="terms.html#ruecktritt" target="_blank" rel="noopener">terms section 8</a>).</span></div>
 </fieldset>
 <fieldset class="step"><legend><span>3</span> Review and pay</legend>
-<div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Solo 001 “Night Train to Venice” · 40 minutes · game language German</span><b id="sumprice">€8.90</b></div><p class="small">Final price. Code valid for 12 months, then replayable up to three times with a different killer. VAT exempt (small business scheme).</p></div>
+<div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Solo 001 “Night Train to Venice” · 40 minutes · game language German</span><b id="sumprice">€8.90</b></div><p class="small">Final price. Code valid for 12 months. After your first playthrough, replayable up to three times within 30 days with a different killer. Plus a €5 voucher for Mordsteam Friends or Teams. VAT exempt (small business scheme).</p></div>
 <label class="check" id="sofortbox" hidden><input type="checkbox" name="sofort"><span>I expressly request that you provide my code right after payment – I can still play whenever I like. I am aware that as a private individual I thereby lose my right of withdrawal (at the latest once the case has been played). *</span></label>
 <label class="check" id="ab18box" hidden><input type="checkbox" name="ab18"><span>I am at least 18 years old and agree that an AI plays the suspects in the interrogation room. My name is not sent to the AI provider. *</span></label>
 <label class="check"><input type="checkbox" name="agb"><span>I accept the <a href="terms.html" target="_blank">terms</a> and have read the <a href="privacy.html" target="_blank">privacy policy</a>. *</span></label>
 <p class="formerr" id="err" role="alert" hidden></p>
-<div><button class="btn btn-red" type="submit" id="submit">Order with obligation to pay – €8.90</button></div>
+<div><button class="btn btn-red" type="submit" id="submit">Order and pay – €8.90</button></div>
 <p class="hint small">Payment is handled securely by Stripe (card, Apple Pay, Google Pay and more). You'll see your code right afterwards.</p>
 </fieldset>
 </form>
@@ -839,7 +839,7 @@ P["privacy"] = dict(title="Privacy policy – Mordsteam", desc="How Mordsteam ha
 <p>For Mordsteam Solo, we ask for your feedback right in the browser at the end of the game (stars, difficulty, optionally a sentence and suggestions for improvement). This is voluntary. It is stored with your player name; your words are only published if you expressly agree – anonymously, with your first name or with your first name and the initial of your surname – and only after we approve them. After a replay we briefly ask once how it went; we never publish these answers.</p>
 <h2>4. Order and payment</h2>
 <p>For an order we process the chosen game with package or variant, the number of teams or players, the game language, your name, your email address, whether you order as a company or private individual, optionally phone and invoice company, and the details for personalising the case where the game provides for it (e.g. company or group name, place, rooms, names, title, role or quirks of the people who appear in the case, optionally your logo). The purpose is performance of the contract (Art. 6(1)(b) GDPR). If you choose a fictional cast, you don't provide any personal data for the personalisation.</p>
-<p>Payment and invoicing are handled by Stripe (Stripe Payments Europe, Ltd., Dublin, Ireland). Stripe receives your payment and billing data for this and processes it under its own responsibility; we never see card details. If you withdraw from a contract, we process the order number, name, email address, time and any note to handle and document the withdrawal (Art. 6(1)(b) and (c) GDPR). We send the order confirmation and the feedback email via the email service Resend (Resend, Inc., USA; sent via servers in the EU, safeguarded by EU standard contractual clauses). We keep invoice and payment data for as long as tax retention obligations require (in Austria usually seven years).</p>
+<p>Payment and invoicing are handled by Stripe (Stripe Payments Europe, Ltd., Dublin, Ireland). Stripe receives your payment and billing data for this – for orders as a company, club or organisation also your VAT number – and processes it under its own responsibility; we never see card details. If you withdraw from a contract, we process the order number, name, email address, time and any note to handle and document the withdrawal (Art. 6(1)(b) and (c) GDPR). We send the order confirmation and the feedback email via the email service Resend (Resend, Inc., USA; sent via servers in the EU, safeguarded by EU standard contractual clauses). We keep invoice and payment data for as long as tax retention obligations require (in Austria usually seven years).</p>
 <h2>5. Game round</h2>
 <p>For the game round we store the personalisation details, the names of the teams or players, times, answer attempts and hints used in a database at Cloudflare. On the players' devices only a login key is stored in the browser's local storage (no cookie, no tracking). 30 days after the game ends we delete the game round including game progress, answer attempts, chat histories and, where applicable, logo – if a case is never played, 13 months after the order at the latest; the personal data of the personalisation is then removed from the order. To develop our cases further, we keep anonymous statistics (e.g. playing times, number of wrong attempts and hints) without names.</p>
 <p><b>Mordsteam Friends:</b> The person ordering enters the first names of the players and one quirk each from a fixed list, and confirms that everyone agrees. We only use this information to set up the fictional case for the group (Art. 6(1)(b) GDPR). Whoever picks their name via the invitation link gets their own game progress; the others in the group only see who has joined or finished, and only see the ranking and times at the joint reveal. The names are stored only in the game round, not in the order. 30 days after the reveal we delete the round including names and game progress, a round that is never revealed 13 months after the order at the latest.</p>
@@ -883,7 +883,7 @@ P["imprint"] = dict(title="Imprint – Mordsteam", desc="Legal information about
 P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mordsteam.",
  body='''<main class="page"><div class="wrap prose">
 <h1>Terms and conditions</h1>
-<p class="small">Last updated: September 2026 · This is a translation for information. The <a href="/agb.html" hreflang="de">German version</a> is legally binding.</p>
+<p class="small">Last updated: October 2026 · This is a translation for information. The <a href="/agb.html" hreflang="de">German version</a> is legally binding.</p>
 
 <h2>1. Provider and scope</h2>
 <p>The provider is Mordsteam e.U., owner Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, Austria, register court Landesgericht Eisenstadt, email: <a href="mailto:office@mordsteam.com">office@mordsteam.com</a> (“we”). These terms apply to all orders via mordsteam.com, from businesses as well as consumers (“you”). Deviating conditions only apply if we agree to them in writing. The version valid at the time of your order applies.</p>
@@ -891,7 +891,8 @@ P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mor
 <h2>2. Our service</h2>
 <p>We provide digital murder-mystery games that you play online in your browser – depending on the game, together in teams, as a group or on your own (“game round”). What exactly is included follows from the description of the chosen game when ordering: game, package or variant, number of teams or players, playing time and, where applicable, personalisation. After payment you receive access codes with which you open and start the game round. Nothing is delivered physically.</p>
 <ul>
-<li>The game round is playable for 12 months from purchase. How often it can be started is stated in the game description: Teams and Friends rounds can be started once, Solo cases can be replayed up to three times within 30 days of the first playthrough (with a newly drawn killer). A started round runs for the stated playing time or chosen time window and ends.</li>
+<li>The game round is playable for 12 months from purchase. How often it can be started is stated in the game description: Teams and Friends rounds can be started once, Solo cases can be replayed up to three times within 30 days of the first playthrough (with a newly drawn killer). A started round runs for the stated playing time or chosen time window and ends. Once started, the clock runs without interruption; pausing is not possible.</li>
+<li>For Mordsteam Teams, the number of teams is limited to the number booked; up to 5 more devices per team can follow along.</li>
 <li>With Mordsteam Friends, every person entered plays on their own device via the invitation link. Anyone who doesn't play remains a suspect in the case; the round stays solvable for the others. The round ends with the joint reveal – once everyone has finished, at the latest when the playing time or the chosen time window is over.</li>
 <li>To play you need an internet-enabled device with an up-to-date browser. We are not responsible for web filters or blocks by your IT; we recommend opening mordsteam.com/spiel beforehand on the intended device.</li>
 <li>All cases are entirely fictional. Names and details you enter are built into a fictional story; the accusations made in it are not meant seriously.</li>
@@ -904,7 +905,7 @@ P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mor
 <h2>4. Prices, payment and discounts</h2>
 <ul>
 <li>All prices are final prices in euros. We are a small business; under § 6 (1) no. 27 of the Austrian VAT Act no VAT is charged.</li>
-<li>Payment is made in advance via our payment provider Stripe (e.g. card, Apple Pay, Google Pay). You receive the invoice by email.</li>
+<li>Payment is made in advance via our payment provider Stripe (e.g. card, Apple Pay, Google Pay). You receive the invoice by email. If you order as a company, club or organisation, the invoice includes your company address and VAT number.</li>
 <li>Discounts and vouchers (e.g. early bird) apply under the conditions published for them, cannot be combined and cannot be exchanged for cash. The <a href="early-bird.html">early bird conditions</a> form part of this contract if you choose the early bird discount.</li>
 <li>Solo voucher: every Mordsteam Solo case you buy comes with a €5 voucher code after your first playthrough. It can be redeemed once, only on an order of Mordsteam Friends or Teams (not on Solo cases). One voucher per order; it cannot be combined with the early bird or other offers.</li>
 </ul>

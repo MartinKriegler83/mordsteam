@@ -177,15 +177,27 @@
   }
 
   // ---------- Prüfen und senden ----------
+
+  // Fehlermeldung direkt beim betroffenen Feld zeigen (zusätzlich zur Meldung über dem Bestellknopf)
+  function markField(el, msg) {
+    document.querySelectorAll(".fielderr").forEach((x) => x.remove());
+    document.querySelectorAll("form .bad").forEach((x) => x.classList.remove("bad"));
+    if (!el || !msg) return;
+    el.classList.add("bad");
+    const p = document.createElement("p");
+    p.className = "fielderr"; p.setAttribute("role", "alert"); p.textContent = msg;
+    if (el.type === "radio") (el.closest(".check") || el).parentElement.appendChild(p);
+    else (el.closest(".field") || el.closest(".check") || el).insertAdjacentElement("afterend", p);
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => el.focus({ preventScroll: true }), 300);
+  }
+  document.addEventListener("input", (e) => { if (e.target.classList && e.target.classList.contains("bad")) markField(null); });
+  document.addEventListener("change", (e) => { if (e.target.classList && e.target.classList.contains("bad")) markField(null); });
   function showErr(msg, el) {
     const e = $("#err");
     e.textContent = msg; e.hidden = !msg;
-    form.querySelectorAll(".bad").forEach((x) => x.classList.remove("bad"));
-    if (el) {
-      el.classList.add("bad");
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      setTimeout(() => el.focus({ preventScroll: true }), 300);
-    } else if (msg) e.scrollIntoView({ behavior: "smooth", block: "center" });
+    markField(el || null, msg);
+    if (!el && msg) e.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   function collect() {
@@ -193,7 +205,7 @@
     const n = p ? 6 : 5;
     const vars = {};
     if (!fiktiv()) {
-      const need = (k) => { const el = form["v_" + k]; const val = el.value.trim(); if (!val) throw [`${T("Bitte ausfüllen:", "Please fill in:")} ${el.closest(".prow,.field").querySelector("h3,label").textContent.replace(" *", "")}`, el]; return val; };
+      const need = (k) => { const el = form["v_" + k]; const val = el.value.trim(); if (!val) { const lb = el.closest(".prow,.field").querySelector("h3,label").textContent.replace(" *", "").trim(); throw [`${T("Bitte ausfüllen:", "Please fill in:")} ${lb}${/[?!.]$/.test(lb) ? "" : "."}`, el]; } return val; };
       for (const k of ["FIRMA", "STADT", "RAUM_FEIER", "RAUM_TATORT", "PARK"]) vars[k] = need(k);
       const people = ["OPFER", "BOSS", ...[...Array(n)].map((_, i) => "S" + (i + 1))];
       for (const pre of people) {
