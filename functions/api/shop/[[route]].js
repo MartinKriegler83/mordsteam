@@ -153,6 +153,7 @@ async function bestellung(request, env) {
   const contact = { name: s(k.name), email: s(k.email, 160).toLowerCase(), telefon: s(k.telefon, 40), rechnung_firma: s(k.rechnung_firma) };
   if (!['b2b', 'b2c'].includes(k.kunde)) throw new InputError(L(site, "Bitte angeben, ob ihr als Unternehmen/Verein oder als Privatperson bestellt.", "Please tell us whether you are ordering as a company/club or as a private individual."));
   contact.kunde = k.kunde;
+  if (b.consent && b.consent.no_news) contact.no_news = true; // Widerspruch gegen Neuigkeiten per E-Mail (§ 174 Abs. 4 TKG 2021)
   if (contact.name.length < 2) throw new InputError(L(site, "Bitte deinen Namen angeben.", "Please enter your name."));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError(L(site, "Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."));
   const c = b.consent || {};
@@ -244,6 +245,7 @@ async function soloBestellung(request, env) {
   const GL = contact.lang === "en" ? L(site, "Englisch", "English") : L(site, "Deutsch", "German");
   if (!["b2b", "b2c"].includes(k.kunde)) throw new InputError(L(site, "Bitte angeben, ob du als Privatperson oder für ein Unternehmen bestellst.", "Please tell us whether you are ordering as a private individual or for a company."));
   contact.kunde = k.kunde;
+  if (b.consent && b.consent.no_news) contact.no_news = true; // Widerspruch gegen Neuigkeiten per E-Mail (§ 174 Abs. 4 TKG 2021)
   if (contact.name.length < 2) throw new InputError(L(site, "Bitte deinen Namen angeben.", "Please enter your name."));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError(L(site, "Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."));
   const c = b.consent || {};
@@ -317,6 +319,7 @@ async function friendsBestellung(request, env) {
   const GL = contact.lang === "en" ? L(site, "Englisch", "English") : L(site, "Deutsch", "German");
   if (!["b2b", "b2c"].includes(k.kunde)) throw new InputError(L(site, "Bitte angeben, ob du als Privatperson oder für ein Unternehmen bestellst.", "Please tell us whether you are ordering as a private individual or for a company."));
   contact.kunde = k.kunde;
+  if (b.consent && b.consent.no_news) contact.no_news = true; // Widerspruch gegen Neuigkeiten per E-Mail (§ 174 Abs. 4 TKG 2021)
   if (contact.name.length < 2) throw new InputError(L(site, "Bitte deinen Namen angeben.", "Please enter your name."));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError(L(site, "Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."));
   const c = b.consent || {};

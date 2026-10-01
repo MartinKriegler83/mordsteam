@@ -81,7 +81,7 @@
     if (new Set(low).size !== low.length) return fail(T("Zwei Personen haben denselben Namen. Bitte unterscheidbar machen, z. B. mit Initial.", "Two people have the same name. Please make them distinguishable, e.g. with an initial."));
     if (!form.zustimmung.checked) return fail(T("Bitte bestätigen, dass alle Genannten einverstanden sind.", "Please confirm that everyone named has agreed."), form.zustimmung);
     const contact = { name: form.c_name.value.trim(), email: form.c_email.value.trim(), kunde: form.kunde.value };
-    const consent = { zustimmung: true, sofort: form.sofort.checked, agb: form.agb.checked, ab18: form.ab18.checked };
+    const consent = { zustimmung: true, sofort: form.sofort.checked, agb: form.agb.checked, ab18: form.ab18.checked, no_news: !!(form.no_news && form.no_news.checked) };
     if (isPlus() && !consent.ab18) return fail(T("Bitte bestätigen, dass alle mindestens 18 Jahre alt und mit den KI-Doppelgängern einverstanden sind – oder den Krimiabend wählen.", "Please confirm that everyone is at least 18 and agrees to the AI doubles – or choose the Mystery Night."), form.ab18);
     if (contact.name.length < 2) return fail(T("Bitte deinen Namen angeben.", "Please enter your name."), form.c_name);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) return fail(T("Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."), form.c_email);

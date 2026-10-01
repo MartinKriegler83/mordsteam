@@ -48,7 +48,7 @@
     ev.preventDefault();
     err.hidden = true;
     const contact = { name: form.c_name.value.trim(), email: form.c_email.value.trim(), kunde: form.kunde.value };
-    const consent = { sofort: form.sofort.checked, agb: form.agb.checked, ab18: form.ab18.checked };
+    const consent = { sofort: form.sofort.checked, agb: form.agb.checked, ab18: form.ab18.checked, no_news: !!(form.no_news && form.no_news.checked) };
     const fall = form.fall.value;
     if (contact.name.length < 2) return fail(T("Bitte deinen Namen angeben.", "Please enter your name."), form.c_name);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) return fail(T("Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."), form.c_email);

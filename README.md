@@ -82,6 +82,7 @@ design/                  Designentwürfe (nicht ausgeliefert)
 ### Shop (`/api/shop/`)
 - Bestellseiten: `bestellen.html` (Teams), `friends-kaufen.html`, `solo-kaufen.html` (+ englische Gegenstücke).
 - Alle drei Bestellformulare haben das Feld Spielsprache (`lang`, unabhängig von der Website-Sprache `site`); es landet in `orders.contact.lang` und von dort in Spielrunde, Gruppe bzw. Ticket.
+- Alle drei Bestellformulare haben das Kästchen „Bitte keine Neuigkeiten per E-Mail“ (`consent.no_news`). Angekreuzt landet `no_news: true` in `orders.contact`. Ein späterer Newsletter an Kunden muss diese Bestellungen auslassen.
 - Ablauf: Formular → `bestellung` / `friends` / `solo` legt `orders` (Status `pending`) an → Stripe Checkout → Webhook `stripe-webhook` (`checkout.session.completed`) → `fulfill()` legt Spielrunde/Gruppe/Ticket an und schickt die Bestellmail → `bestellt.html` fragt `status` ab.
 - Preise stehen im Code, in Cent, als Endpreise: Teams `PRICES` in `functions/api/shop/[[route]].js`, Friends `FRIENDS_PRICE`/`FRIENDS_PRICE_PLUS` in `lib/friends.js`, Solo je Fall (`price` in der Produktliste direkt unter `PRICES`).
 - Early Bird: Rabatt als Stripe-Coupon, gesteuert über `EARLYBIRD_*`.

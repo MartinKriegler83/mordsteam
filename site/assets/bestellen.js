@@ -236,7 +236,7 @@
     const contact = { name: form.c_name.value.trim(), email: form.c_email.value.trim(), telefon: form.c_tel.value.trim(), rechnung_firma: form.c_firma.value.trim(), kunde: form.kunde.value };
     if (contact.name.length < 2) throw [T("Bitte deinen Namen angeben.", "Please enter your name."), form.c_name];
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw [T("Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."), form.c_email];
-    const consent = { sofort: form.sofort.checked, no_feedback: form.no_feedback.checked && !(META.earlybird && form.earlybird.checked), ab18: form.ab18.checked, zustimmung: form.zustimmung.checked, agb: form.agb.checked, logo_rechte: form.logo_rechte.checked };
+    const consent = { no_news: !!(form.no_news && form.no_news.checked), sofort: form.sofort.checked, no_feedback: form.no_feedback.checked && !(META.earlybird && form.earlybird.checked), ab18: form.ab18.checked, zustimmung: form.zustimmung.checked, agb: form.agb.checked, logo_rechte: form.logo_rechte.checked };
     const fk = fiktiv();
     if (!fk && logoData && !consent.logo_rechte) throw [T("Bitte bestätigen, dass ihr das Logo verwenden dürft.", "Please confirm that you may use the logo."), form.logo_rechte];
     if (!fk && !consent.zustimmung) throw [T("Bitte bestätigen, dass alle genannten Personen einverstanden sind.", "Please confirm that everyone named has agreed."), form.zustimmung];
