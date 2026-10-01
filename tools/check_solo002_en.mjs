@@ -77,8 +77,8 @@ for (let v = 0; v < DE.VARIANTS; v++) for (const c of DE.CULPRITS) {
 for (const [id, s] of Object.entries(lens)) if (s.size !== 1) fail(`Länge ${id}: ${[...s]}`);
 // Ärztin-Fenster muss in EN dieselben Zahlen zeigen wie DE (Frage 1 hängt daran)
 for (let v = 0; v < DE.VARIANTS; v++) {
-  const num = (L) => (L.find((d) => d.id === "aerztin").html.match(/<b>(\d+)\D+(\d+) min/i) || []).slice(1).join("-");
-  const a = num(EN.docs("vera", "Test", v)), b = (DE.docs("vera", "Test", v).find((d) => d.id === "aerztin").html.match(/etwa <b>(\d+) bis (\d+)/) || []).slice(1).join("-");
+  const num = (L) => (L.find((d) => d.id === "aerztin").html.match(/roughly (\d+)\D+(\d+) min/i) || []).slice(1).join("-");
+  const a = num(EN.docs("vera", "Test", v)), b = (DE.docs("vera", "Test", v).find((d) => d.id === "aerztin").html.match(/etwa (\d+) bis (\d+)/) || []).slice(1).join("-");
   if (!a || a !== b) fail(`v${v} Ärztin-Fenster ${a} ≠ ${b}`);
 }
 for (const [k, w] of found) fail(`deutscher Rest „${w}“ in ${k}`);

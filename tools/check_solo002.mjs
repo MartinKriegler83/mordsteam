@@ -9,7 +9,7 @@ for (let v = 0; v < C.VARIANTS; v++) for (const c of C.CULPRITS) {
   n++;
   const tag = `${c}/v${v}`, sol = C.solution(c, v), docs = C.docs(c, "Test", v);
   // Frage 1: genau ein Gegenstand im Fenster der Ärztin
-  const txt = docs.find((d) => d.id === "aerztin").html.match(/etwa <b>(\d+) bis (\d+) Minuten/);
+  const txt = docs.find((d) => d.id === "aerztin").html.match(/etwa (\d+) bis (\d+) Minuten/);
   const lo = hm("22:12") - Number(txt[2]), hi = hm("22:12") - Number(txt[1]);
   const inWin = Object.keys(C.ITEMS).filter((k) => { const t = hm(C.ITEMS[k].t); return t >= lo && t <= hi; });
   if (inWin.length !== 1 || inWin[0] !== sol.gift) fail(`${tag} Frage 1: ${inWin}`);
