@@ -373,7 +373,9 @@ function ariaPseudo(x) {
     for (const [l, t] of last) out = out.replace(new RegExp(`(^|[^\\p{L}])${esc(l)}(?![\\p{L}])`, "gu"), `$1${t}`);
     return out;
   };
-  const show = (text) => { let out = String(text); for (const [real, t] of full) out = out.split(t).join(String(real).trim()); return out.replace(/\[(?:FIRMA|CHEFIN|OBERBOSS|FEIERRAUM|COMPANY|BOSS|TOPBOSS|PARTYROOM|PERSON\d)\]/g, en ? "(unknown)" : "(unbekannt)"); };
+  // Genitiv: Die KI schreibt manchmal „[CHEFINs]“ oder „[BOSS's]“ – dann den Namen mit Genitiv einsetzen
+  const gen = (real) => (en ? "’s" : /[sßxz]$/i.test(real) ? "’" : "s");
+  const show = (text) => { let out = String(text); for (const [real, t] of full) { const r = String(real).trim(); out = out.replace(new RegExp(`\\[${esc(t.slice(1, -1))}(?:['’]?s)\\]`, "g"), r + gen(r)).split(t).join(r); } return out.replace(/\[(?:FIRMA|CHEFIN|OBERBOSS|FEIERRAUM|COMPANY|BOSS|TOPBOSS|PARTYROOM|PERSON\d)(?:['’]?s)?\]/g, en ? "(unknown)" : "(unbekannt)"); };
   const xp = { ...x, FIRMA: TK.FIRMA, OPFER: TK.OPFER, BOSS: TK.BOSS, RAUM_FEIER: TK.RAUM_FEIER };
   return { hide, show, xp };
 }
@@ -815,7 +817,7 @@ const sonderX = (session) => {
   const x = ariaX(session);
   const v = buildVars(session);
   const sec = JSON.parse(session.secrets), inp = JSON.parse(session.vars);
-  return { ...x, M_IDX: sec.M_IDX, T_IDX: sec.T_IDX, SCHEINFIRMA_TXT: String(v.SCHEINFIRMA || "").replace(/&amp;/g, "&"), T_NAME: String(inp[`S${sec.T_IDX + 1}`] || "") };
+  return { ...x, M_IDX: sec.M_IDX, T_IDX: sec.T_IDX, SCHEINFIRMA_TXT: String(v.SCHEINFIRMA || "").replace(/&amp;/g, "&"), T_NAME: String(inp[`S${sec.T_IDX + 1}`] || ""), T_ER: v.T_ER || "", T_HE: v.T_HE || "" };
 };
 async function sonderMsgs(env, team) {
   return (await env.DB.prepare("SELECT role, text FROM aria_msgs WHERE team_id=? AND role IN ('v-user','v-ai') ORDER BY id LIMIT 100").bind(team.id).all()).results
@@ -852,7 +854,7 @@ async function sonderChat({ request, env, team, session }) {
       method: "POST",
       headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({ model: env.ARIA_MODEL || "claude-haiku-4-5-20251001", max_tokens: 250, temperature: 0.6,
-        system: [{ type: "text", text: c.SONDER.system({ ...ps.xp, M_IDX: x.M_IDX, T_IDX: x.T_IDX, SCHEINFIRMA_TXT: x.SCHEINFIRMA_TXT, PIN: x.PIN, FACH: x.FACH }), cache_control: { type: "ephemeral" } }], messages }),
+        system: [{ type: "text", text: c.SONDER.system({ ...ps.xp, M_IDX: x.M_IDX, T_IDX: x.T_IDX, SCHEINFIRMA_TXT: x.SCHEINFIRMA_TXT, PIN: x.PIN, FACH: x.FACH, T_ER: x.T_ER, T_HE: x.T_HE }), cache_control: { type: "ephemeral" } }], messages }),
       signal: AbortSignal.timeout(20000),
     });
     const d = await r.json();
