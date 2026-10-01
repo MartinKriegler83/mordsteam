@@ -537,3 +537,4 @@ button.btn-big{margin-top:14px}
 .keypad span{display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #CFC6B3;border-radius:12px;background:#FFFDF8;padding:8px 4px;line-height:1.15}
 .keypad b{font-size:22px;font-weight:700}
 .keypad small{font-size:12px;letter-spacing:1px;color:#5A5D66}
+.so-sub{display:block;font-weight:600;font-size:14px;margin:10px 0 4px}

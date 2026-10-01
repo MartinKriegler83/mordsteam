@@ -5,6 +5,12 @@ const strip = (h) => h.replace(/<[^>]+>/g, " ");
 let err = 0, n = 0; const fail = (m) => { err++; console.log("FEHLER", m); }; const lens = {};
 for (let v = 0; v < C.TIME_SHIFTS.length; v++) for (const c of C.CULPRITS) {
   n++; const tag = `${c}/v${v}`, sol = C.solution(c, v), D = C.docs(c, "Test", v), doc = (id) => D.find((d) => d.id === id).html;
+  // Frage 3: Täter + widerlegende Tatsache; die Tatsache steht in Programm oder Durchsagen
+  { const [who, fact] = sol.taeter.split("|"); const q3 = C.QUESTIONS.find((q) => q.key === "taeter");
+    if (who !== c || !q3.options2.some((o) => o[0] === fact)) fail(`${tag} Frage 3 Lösung`);
+    if (new Set(Object.values(C.FACT_OF)).size !== 5) fail("FACT_OF nicht eindeutig");
+    const kw = { wc: "Rohrbruch", faehre: "Rollfähre", kirchberg: "vom Kirchberg", kinder: "Lampionbasteln", musik: "Winzermusik" }[fact];
+    if (!(doc("durchsagen") + doc("programm")).includes(kw) || !C.LIES[c].fact.includes(kw.replace("vom ", "").replace("Lampionbasteln", "Garten").replace("Rohrbruch", "Rohrbruch"))) fail(`${tag} Frage 3 Tatsache ${fact}`); }
   // Frage 2: genau eine AUS-Schaltung „Vorraum“ zwischen 22:18 (Ferdinand unten) und 23:00
   const rows = [...doc("lueftung").matchAll(/<td class="mono">(\d\d:\d\d)<\/td><td>(EIN|AUS)<\/td><td>([^<]+)<\/td>/g)];
   const cand = rows.filter((r) => r[2] === "AUS" && /Vorraum/.test(r[3]) && hm(r[1]) > hm("22:18") && hm(r[1]) < hm("23:00")).map((r) => r[1]);

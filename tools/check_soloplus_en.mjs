@@ -30,6 +30,7 @@ C.QUESTIONS.forEach((q, i) => {
   const d = DE.QUESTIONS[i];
   if (!d || q.key !== d.key || q.nr !== d.nr || q.type !== d.type) fail(`Frage ${i + 1} Struktur`);
   if (JSON.stringify((q.options || []).map((o) => o[0])) !== JSON.stringify((d.options || []).map((o) => o[0]))) fail(`Frage ${i + 1} Optionscodes`);
+  if (JSON.stringify((q.options2 || []).map((o) => o[0])) !== JSON.stringify((d.options2 || []).map((o) => o[0]))) fail(`Frage ${i + 1} Optionscodes 2`);
   residue(`Frage ${q.key}`, q.label + " " + q.hint + " " + (q.options || []).map((o) => o[1]).join(" "));
 });
 if (C.QUESTIONS.length !== DE.QUESTIONS.length) fail("Anzahl Fragen");

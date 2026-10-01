@@ -225,7 +225,9 @@
     const locked = S.questions.filter((x) => x.status === "locked");
     const hintList = (x) => x.hints.map((h, i) => `<div class="funknote"><b>${L("Hinweis", "Hint")} ${i + 1}</b>${h}</div>`).join("");
     let field = "";
-    if (q) field = q.type === "select"
+    const sel = (id, opts) => `<select id="${id}" class="so-select"><option value="">${L("Bitte wählen …", "Please choose …")}</option>${opts.map((o) => `<option value="${esc(o[0])}">${esc(o[1])}</option>`).join("")}</select>`;
+    if (q && q.type === "select2") field = `<span class="so-sub">${esc(q.sub[0])}</span>${sel("ans", q.options)}<span class="so-sub">${esc(q.sub[1])}</span>${sel("ans2", q.options2)}`;
+    else if (q) field = q.type === "select"
       ? `<select id="ans" class="so-select"><option value="">${L("Bitte wählen …", "Please choose …")}</option>${q.options.map((o) => `<option value="${esc(o[0])}">${esc(o[1])}</option>`).join("")}</select>`
       : q.type === "code" ? `<input id="ans" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" spellcheck="false" placeholder="0000" maxlength="4" class="so-time">`
       : `<input id="ans" type="text" inputmode="numeric" pattern="[0-9:]*" autocomplete="off" spellcheck="false" placeholder="hh:mm" maxlength="5" class="so-time"><span class="small">${L("Nur die vier Ziffern tippen – der Doppelpunkt kommt von selbst.", "Just type the four digits – the colon appears by itself.")}</span>`;
@@ -259,7 +261,7 @@
         inp.value = dg.length > 2 || (dg.length === 2 && !del) ? dg.slice(0, 2) + ":" + dg.slice(2) : dg;
       });
     }
-    if ($("check")) $("check").onclick = () => answer(q, inp.value);
+    if ($("check")) $("check").onclick = () => answer(q, q.type === "select2" ? ($("ans").value && $("ans2").value ? $("ans").value + "|" + $("ans2").value : "") : inp.value);
     if ($("hint")) $("hint").onclick = async () => {
       if (!armed) { armed = true; return fragenView(); }
       armed = false;
@@ -301,7 +303,7 @@
 
   async function answer(q, value) {
     if (busy) return;
-    if (!String(value || "").trim()) { verdict = { cls: "warn", html: q.type === "select" ? L("Bitte eine Antwort auswählen.", "Please choose an answer.") : q.type === "code" ? L("Bitte den Code eingeben.", "Please enter the code.") : L("Bitte eine Uhrzeit eingeben.", "Please enter a time.") }; return fragenView(); }
+    if (!String(value || "").trim()) { verdict = { cls: "warn", html: q.type === "select2" ? L("Bitte in beiden Feldern eine Antwort auswählen.", "Please choose an answer in both fields.") : q.type === "select" ? L("Bitte eine Antwort auswählen.", "Please choose an answer.") : q.type === "code" ? L("Bitte den Code eingeben.", "Please enter the code.") : L("Bitte eine Uhrzeit eingeben.", "Please enter a time.") }; return fragenView(); }
     if (q.type === "code" && String(value).replace(/[^0-9]/g, "").length !== 4) {
       verdict = { cls: "warn", html: L("Bitte alle vier Ziffern eingeben.", "Please enter all four digits.") }; fragenView();
       const i = $("ans"); if (i) { i.value = String(value); i.focus(); } return;
