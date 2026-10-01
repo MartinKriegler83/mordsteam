@@ -1,6 +1,6 @@
 // Early-Bird-Banner oben auf der Startseite. Er steht fest im HTML (sichtbar auch ohne Server);
 // dieses Skript gleicht ihn mit dem Shop ab: Prozentsatz, „nur noch bis …“ oder ausblenden, wenn die Aktion aus ist.
-// Gesteuert über die Cloudflare-Variablen EARLYBIRD_PROZENT (0 = aus, Standard 40) und EARLYBIRD_BIS – nach Änderung neu ausrollen.
+// Gesteuert über die Cloudflare-Variablen EARLYBIRD_PROZENT (0 = aus, Standard 25) und EARLYBIRD_BIS (Standard 2026-11-30) – nach Änderung neu ausrollen.
 (function () {
   if (location.protocol === "file:") return;
   var bar = document.getElementById("ebbar");

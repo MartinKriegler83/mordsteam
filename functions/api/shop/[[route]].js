@@ -4,9 +4,9 @@
 //   STRIPE_SECRET_KEY           sk_test_… (Vorschau) bzw. sk_live_… (Produktion)
 //   STRIPE_WEBHOOK_SECRET       whsec_… (Webhook-Endpunkt /api/shop/stripe-webhook)
 //   ORDER_FAKE_PAY=true         nur für Tests ohne Stripe: Bestellung gilt sofort als bezahlt
-//   Early Bird ist standardmäßig AN (40 %, Banner + Häkchen im Formular).
+//   Early Bird ist standardmäßig AN (25 %, bis 30.11.2026, Banner + Häkchen im Formular).
 //   EARLYBIRD_PROZENT=0          Aktion aus (anderer Wert = anderer Prozentsatz)
-//   EARLYBIRD_BIS=2026-11-30     optional: letzter Tag der Aktion (Banner zeigt dann „nur noch bis …“)
+//   EARLYBIRD_BIS=2026-11-30     optional: anderer letzter Tag der Aktion (Standard 2026-11-30, Banner zeigt „nur noch bis …“)
 //   EARLYBIRD_COUPON             optional: eigener Stripe-Gutschein. Ohne Angabe legt der Shop den Gutschein
 //                                „MORDSTEAM40“ (bzw. MORDSTEAM<Prozent>) beim ersten Bedarf selbst in Stripe an.
 //   RESEND_API_KEY, MAIL_FROM   optional: Bestätigungsmail über Resend (z. B. MAIL_FROM="Mordsteam <office@mordsteam.com>")
@@ -98,9 +98,9 @@ const shopOpen = (env) => String(env.SHOP_OPEN || "").toLowerCase() === "true";
 // Early Bird: läuft, solange EARLYBIRD_PROZENT gesetzt ist und EARLYBIRD_BIS (falls gesetzt) nicht vorbei ist
 function earlybird(env) {
   const raw = String(env.EARLYBIRD_PROZENT ?? "").trim();
-  const p = raw === "" ? 40 : Math.round(Number(raw));
+  const p = raw === "" ? 25 : Math.round(Number(raw));
   if (!(p > 0 && p < 100)) return null;
-  const bis = /^\d{4}-\d{2}-\d{2}$/.test(String(env.EARLYBIRD_BIS || "")) ? env.EARLYBIRD_BIS : null;
+  const bis = /^\d{4}-\d{2}-\d{2}$/.test(String(env.EARLYBIRD_BIS || "")) ? env.EARLYBIRD_BIS : "2026-11-30";
   if (bis && viennaDate() > bis) return null;
   return { prozent: p, bis };
 }

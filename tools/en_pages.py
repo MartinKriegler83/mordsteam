@@ -7,7 +7,7 @@ LOGO = '<svg width="30" height="30" viewBox="0 0 34 34" fill="none" stroke="#151
 
 
 
-EBBAR = """<div class="promo" id="ebbar"><div class="wrap"><span class="tag">EARLY BIRD</span><span><span class="ebp">40</span>% off your first Teams or Friends game<span class="star">*</span><span class="ebbis"></span></span><a href="early-bird.html">*Conditions</a></div></div>"""
+EBBAR = """<div class="promo" id="ebbar"><div class="wrap"><span class="tag">EARLY BIRD</span><span><span class="ebp">25</span>% off your first Teams or Friends game<span class="star">*</span><span class="ebbis"> – only until 30 November</span></span><a href="early-bird.html">*Conditions</a></div></div>"""
 
 def page(name, title, desc, body, robots=None, scripts="", home=False, promo=False):
     de = MAP[name]
@@ -486,10 +486,10 @@ P["friends-buy"] = dict(title="Order Friends – Mordsteam", robots="noindex", d
 </fieldset>
 <fieldset class="step"><legend><span>5</span> Review and pay</legend>
 <div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Friends 001 “Last Round at the Chalet” · 6 people · 45 minutes · game language German</span><b id="sumprice">€39.00</b></div>
-<div class="sumrow" id="ebrow" hidden><span>Early bird −<span class="ebp">40</span>%</span><b id="ebprice"></b></div>
+<div class="sumrow" id="ebrow" hidden><span>Early bird −<span class="ebp">25</span>%</span><b id="ebprice"></b></div>
 <p class="small">Final price for the whole group. Playable for 12 months, can be started once. VAT exempt (small business scheme).</p></div>
 <label class="check" id="ab18box" hidden><input type="checkbox" name="ab18"><span>All players are at least 18 years old (required for the AI interrogation room) and agree that an AI plays their doubles in the game – only with placeholders instead of real names and the chosen quirk. *</span></label>
-<label class="check" id="ebbox" hidden><input type="checkbox" name="earlybird"><span><b>Early bird: <span class="ebp">40</span>% off</b> your first game. In return: after the reveal you give us short feedback in the game (<a href="early-bird.html" target="_blank" rel="noopener">conditions</a>).</span></label>
+<label class="check" id="ebbox" hidden><input type="checkbox" name="earlybird"><span><b>Early bird: <span class="ebp">25</span>% off</b> your first game. In return: after the reveal you give us short feedback in the game (<a href="early-bird.html" target="_blank" rel="noopener">conditions</a>).</span></label>
 <p class="hint" id="voucherhint">Voucher code, e.g. from Mordsteam Solo? Enter it in the next step when paying.</p>
 <label class="check" id="sofortbox" hidden><input type="checkbox" name="sofort"><span>I expressly request that you set up our round and provide the links right after payment – we can still play whenever we like. I am aware that as a private individual I thereby lose my right of withdrawal (at the latest with the joint reveal). *</span></label>
 <label class="check"><input type="checkbox" name="no_news"><span>No news by email, please. Otherwise we'll occasionally tell you about new Mordsteam cases – you can unsubscribe in every email with one click.</span></label>
@@ -804,7 +804,7 @@ P["order"] = dict(title="Order – Mordsteam", robots="noindex", desc="Order cas
 <div class="summary" id="summary"></div>
 <label class="check" id="zustimmungbox"><input type="checkbox" name="zustimmung"><span>Everyone we have entered by name knows about it and agrees to appear in the fictional case – including as victim or suspect. *</span></label>
 <label class="check" id="ab18box" hidden><input type="checkbox" name="ab18"><span>All participants are at least 18 years old (required for ARIA in Premium Plus). *</span></label>
-<label class="check ebcheck" id="ebbox" hidden><input type="checkbox" name="earlybird"><span><b>Early bird: <span class="ebp">40</span>% off.</b> I'd like the discount and am happy to give short feedback after the game and write a review. <a href="early-bird.html" target="_blank">Conditions</a></span></label>
+<label class="check ebcheck" id="ebbox" hidden><input type="checkbox" name="earlybird"><span><b>Early bird: <span class="ebp">25</span>% off.</b> I'd like the discount and am happy to give short feedback after the game and write a review. <a href="early-bird.html" target="_blank">Conditions</a></span></label>
 <p class="hint" id="voucherhint">Voucher code, e.g. from Mordsteam Solo? Enter it in the next step when paying.</p>
 <label class="check" id="nofbbox"><input type="checkbox" name="no_feedback"><span>The day after the game we'll send you a short feedback request by email. Tick here if you'd rather not receive it.</span></label>
 <label class="check" id="sofortbox" hidden><input type="checkbox" name="sofort"><span>I expressly want you to set up my game round and provide the codes right after payment – we can still play whenever we like. I understand that as a private individual I thereby lose my right of withdrawal (at the latest once the round has been played). *</span></label>
@@ -966,11 +966,11 @@ P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mor
 <p>If any provision of these terms is invalid, the rest remains valid. Towards businesses, the invalid provision is replaced by a rule that comes closest to its purpose.</p>
 </div></main>''')
 
-P["early-bird"] = dict(title="Early bird – Mordsteam", desc="Early bird: 40% off your first Mordsteam game – the conditions.",
+P["early-bird"] = dict(title="Early bird – Mordsteam", desc="Early bird until 30 November 2026: 25% off your first Mordsteam game – the conditions.",
  body='''<main class="page"><div class="wrap prose">
 <div class="eyebrow">Early bird</div>
-<h1 class="h1-page">40% off your first Teams or Friends game</h1>
-<p class="lead">Mordsteam has just launched. Help us make our cases even better – and play your first case at 40% off.</p>
+<h1 class="h1-page">25% off your first Teams or Friends game</h1>
+<p class="lead">Mordsteam has just launched. Help us make our cases even better – and play your first case at 25% off. The offer applies to orders placed by 30 November 2026.</p>
 <h2>How it works</h2>
 <ul>
 <li>When ordering, tick the <b>early bird</b> box in the last step. The discount is deducted automatically at checkout – no code needed.</li>
@@ -985,7 +985,7 @@ P["early-bird"] = dict(title="Early bird – Mordsteam", desc="Early bird: 40% o
 <ul>
 <li>One discounted order per company or group, for your first game.</li>
 <li>Cannot be combined with other vouchers.</li>
-<li>Valid while the offer runs. We'll announce the end date here and in the banner in advance. Orders placed before then keep the discount, even if you play later.</li>
+<li>Valid for orders placed up to and including 30 November 2026. You can play later – the discount stays.</li>
 </ul>
 <p><a class="btn btn-red" href="order.html">Order a Teams case</a></p>
 </div></main>''')

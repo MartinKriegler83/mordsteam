@@ -163,7 +163,7 @@ Nur Namen, keine Werte. Production und Preview haben je eigene Werte.
 | `SHOP_OPEN` | Text | `true` = Bestellungen möglich |
 | `ORDER_FAKE_PAY` | Text | `true` = Bestellung ohne Stripe gilt als bezahlt (nur Tests) |
 | `LAUNCH` | Text (Build) | `true` = auf `main` volle Seite statt Teaser |
-| `EARLYBIRD_PROZENT`, `EARLYBIRD_BIS`, `EARLYBIRD_COUPON` | Text | Early-Bird-Rabatt, Enddatum, Stripe-Coupon |
+| `EARLYBIRD_PROZENT`, `EARLYBIRD_BIS`, `EARLYBIRD_COUPON` | Text | Early-Bird-Rabatt (Standard 25 %), Enddatum (Standard 2026-11-30), Stripe-Coupon |
 | `KI_BUDGET_USD` | Text | Monatsbudget Claude API, Warnung bei 70 % (Standard 20) |
 | `MAIL_LIMIT_DAY`, `MAIL_LIMIT_MONTH` | Text | Mail-Kontingent für Warnungen (Standard 100 / 3000; 0 = kein Limit) |
 | `REQ_LIMIT_DAY` | Text | Aufruflimit pro Tag für Warnungen (Standard 100000; 0 = kein Limit) |
