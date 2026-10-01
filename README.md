@@ -61,7 +61,7 @@ design/                  Designentwürfe (nicht ausgeliefert)
 
 ### Teams (`/spiel/`)
 - Eine **Spielrunde** (`sessions`) gehört zu einer Bestellung oder wird im Admin angelegt. Sie enthält die Eingaben des Bestellers (`vars`: Firma, Namen, Räume, Land, Sprache, Logo …) und die gewürfelten Falldaten (`secrets`: Täter, Uhrzeiten, Kontonummern, Passwörter …). Alle Texte entstehen zur Laufzeit aus Vorlage + `vars` + `secrets`.
-- Teams treten mit dem **Beitrittscode** bei (`join`), Zuschauergeräte über `mitlesen` (`viewers`). Die Spielleitung meldet sich mit dem **Leitungscode** an (`leitung/login`) und startet, pausiert, beendet.
+- Teams treten mit dem **Beitrittscode** bei (`join`), Zuschauergeräte über `mitlesen` (`viewers`). Die Spielleitung meldet sich mit dem **Leitungscode** an (`leitung/login`), öffnet, startet und beendet die Runde.
 - Stufen: Akt 1 (`wer`, `wann`, `warum`, `wo`), Premium zusätzlich Akt 2 (`helfer`, `fach`), Premium Plus zusätzlich Finale (`pin`, mit ARIA). Antworten gehen als ganze Stufe an `loesung`; Fehlversuche kosten Strafminuten, nach zwei Fehlversuchen gibt es `kontrolle`.
 - **Funksprüche** (automatische Hinweise) kommen nach Zeitplan je Paket (`HINTS` im Fall); für Akt 2 und Finale je Team relativ zum Akt-Start (`HINTS_REL`, `hintTimes()` in `lib/game.js`).
 - **Firmen-Intranet** (`firma`, `firma/login`): fiktive Intranetseiten der Kundenfirma; der Login-Bereich verlangt ein Passwort aus Hund + Jahr. Fehlversuche je Team werden gezählt (`teams.login_fails`), ab dem 3. und 6. zeigt die Fehlermeldung zusätzliche Hilfe.
