@@ -2,7 +2,7 @@
 # Aufruf: python3 tools/en_pages.py  – danach site/en/*.html committen.
 import os, html
 ROOT = os.path.join(os.path.dirname(__file__), "..", "site")
-MAP = {"index": "index", "teams": "teams", "friends": "friends", "solo": "solo", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "contact": "kontakt", "early-bird": "earlybird", "feedback": "feedback", "withdraw": "widerruf", "solo-buy": "solo-kaufen", "friends-buy": "friends-kaufen"}
+MAP = {"index": "index", "teams": "teams", "friends": "friends", "solo": "solo", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "contact": "kontakt", "early-bird": "earlybird", "feedback": "feedback", "withdraw": "widerruf", "solo-buy": "solo-kaufen", "friends-buy": "friends-kaufen", "newsletter": "newsletter"}
 LOGO = '<svg width="30" height="30" viewBox="0 0 34 34" fill="none" stroke="#15171C" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg>'
 
 
@@ -60,7 +60,7 @@ def page(name, title, desc, body, robots=None, scripts="", home=False, promo=Fal
 {scripts}
 <footer class="footer"><div class="wrap">
 <span class="brand"><span class="wm"><span class="wm-r">MORDS</span>TEAM</span></span>
-<nav aria-label="Legal"><a href="imprint.html">Imprint</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a><a href="withdraw.html">Withdraw from contract</a></nav>
+<nav aria-label="Legal"><a href="newsletter.html">Newsletter</a><a href="imprint.html">Imprint</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a><a href="withdraw.html">Withdraw from contract</a></nav>
 <span>© 2026 Mordsteam e.U.</span>
 </div></footer>
 <script src="/assets/menu.js" defer></script>
@@ -299,6 +299,7 @@ P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=Tru
 <h2>One of you has something to hide.</h2>
 <p>Find out who.</p>
 <a class="btn btn-ink" href="#games">Choose a case</a>
+<p class="small" style="margin-top:16px"><a href="newsletter.html" style="color:inherit">Be the first to hear about new cases – sign up for the newsletter</a></p>
 </div></section>
 </main>''')
 
@@ -842,7 +843,7 @@ P["privacy"] = dict(title="Privacy policy – Mordsteam", desc="How Mordsteam ha
 <p>For Mordsteam Solo, we ask for your feedback right in the browser at the end of the game (stars, difficulty, optionally a sentence and suggestions for improvement). This is voluntary. It is stored with your player name; your words are only published if you expressly agree – anonymously, with your first name or with your first name and the initial of your surname – and only after we approve them. After a replay we briefly ask once how it went; we never publish these answers.</p>
 <h2>4. Order and payment</h2>
 <p>For an order we process the chosen game with package or variant, the number of teams or players, the game language, your name, your email address, whether you order as a company or private individual, optionally phone and invoice company, and the details for personalising the case where the game provides for it (e.g. company or group name, place, rooms, names, title, role or quirks of the people who appear in the case, optionally your logo). The purpose is performance of the contract (Art. 6(1)(b) GDPR). If you choose a fictional cast, you don't provide any personal data for the personalisation.</p>
-<p>Payment and invoicing are handled by Stripe (Stripe Payments Europe, Ltd., Dublin, Ireland). Stripe receives your payment and billing data for this – for orders as a company, club or organisation also your VAT number – and processes it under its own responsibility; we never see card details. If you withdraw from a contract, we process the order number, name, email address, time and any note to handle and document the withdrawal (Art. 6(1)(b) and (c) GDPR). We send the order confirmation and the feedback email via the email service Resend (Resend, Inc., USA; sent via servers in the EU, safeguarded by EU standard contractual clauses). We occasionally send news about new Mordsteam cases to the email address from your order (§ 174(4) Austrian Telecommunications Act 2021, Art. 6(1)(f) GDPR). You can opt out when ordering and unsubscribe in every such email with one click. We keep invoice and payment data for as long as tax retention obligations require (in Austria usually seven years).</p>
+<p>Payment and invoicing are handled by Stripe (Stripe Payments Europe, Ltd., Dublin, Ireland). Stripe receives your payment and billing data for this – for orders as a company, club or organisation also your VAT number – and processes it under its own responsibility; we never see card details. If you withdraw from a contract, we process the order number, name, email address, time and any note to handle and document the withdrawal (Art. 6(1)(b) and (c) GDPR). We send the order confirmation and the feedback email via the email service Resend (Resend, Inc., USA; sent via servers in the EU, safeguarded by EU standard contractual clauses). News by email to customers: see section 7. We keep invoice and payment data for as long as tax retention obligations require (in Austria usually seven years).</p>
 <h2>5. Game round</h2>
 <p>For the game round we store the personalisation details, the names of the teams or players, times, answer attempts and hints used in a database at Cloudflare. On the players' devices only a login key is stored in the browser's local storage (no cookie, no tracking). 30 days after the game ends we delete the game round including game progress, answer attempts, chat histories and, where applicable, logo – if a case is never played, 13 months after the order at the latest; the personal data of the personalisation is then removed from the order. To develop our cases further, we keep anonymous statistics (e.g. playing times, number of wrong attempts and hints) without names.</p>
 <p><b>Mordsteam Friends:</b> The person ordering enters the first names of the players and one quirk each from a fixed list, and confirms that everyone agrees. We only use this information to set up the fictional case for the group (Art. 6(1)(b) GDPR). Whoever picks their name via the invitation link gets their own game progress; the others in the group only see who has joined or finished, and only see the ranking and times at the joint reveal. The names are stored only in the game round, not in the order. 30 days after the reveal we delete the round including names and game progress, a round that is never revealed 13 months after the order at the latest.</p>
@@ -852,9 +853,14 @@ P["privacy"] = dict(title="Privacy policy – Mordsteam", desc="How Mordsteam ha
 <p>In Mordsteam Solo Plus, the AI plays invented suspects. For this we only transmit the invented case data and your questions in the interrogation room – not your name. Please do not type personal data into your questions. We delete the conversations together with your playthroughs, 30 days after your last game ended.</p>
 <p>In Mordsteam Teams Premium Plus, the AI plays ARIA, the assistant on the case intranet, and – in the special assignment for fast teams – a character being interrogated. We replace real names (company, boss, suspects, rooms) with placeholders before transmission; only these placeholders, the invented case data and the chat messages are transmitted. We delete the conversations with the game round, 30 days after the game ended.</p>
 <p>Please don't enter real personal data in the chat – the AI character doesn't need it and only knows the world of the game. The number of messages per game round is limited. We store the chat history with the game round and delete it 30 days after the game ends. AI characters are labelled as AI; their answers may contain errors.</p>
-<h2>7. Contact form and email</h2>
+<h2 id="newsletter">7. Newsletter and customer analysis</h2>
+<p><b>Signing up on the website:</b> If you sign up for the newsletter, we store your email address, the language, the text of your consent and the time of sign-up and confirmation. You are only signed up once you click the link in our confirmation email (double opt-in). The legal basis is your consent (Art. 6(1)(a) GDPR, § 174(3) Austrian Telecommunications Act 2021); you can withdraw it at any time via the unsubscribe link in every email. To prevent abuse we store an encrypted short value of your IP address for 24 hours.</p>
+<p><b>Customers:</b> We occasionally send news about new Mordsteam cases to the email address from a paid order (§ 174(4) Austrian Telecommunications Act 2021, Art. 6(1)(f) GDPR) – unless you opted out when ordering. Beforehand we check the address against the ECG list of the Austrian regulator RTR; if it is listed, you won't receive a newsletter. You can unsubscribe in every email with one click.</p>
+<p><b>Sending:</b> For sending we transfer your email address, first name and language to our email service Resend (Resend, Inc., USA; safeguarded by EU standard contractual clauses). After you unsubscribe we keep the address marked as “unsubscribed” so that it is not added to the list again.</p>
+<p><b>Analysis:</b> Links in our newsletters contain a short tag (e.g. <code>?nl=2026-12</code>). It is not stored in your browser, only passed on to the next page, so that we can count how many visits and orders a newsletter brought; visits are counted without personal data. We also analyse whether and how often customers order again and whether a Solo voucher was redeemed (Art. 6(1)(f) GDPR – we want to know which games and newsletters are worthwhile). Only we use this analysis; it does not lead to any automated decisions.</p>
+<h2>8. Contact form and email</h2>
 <p>If you write to us using the contact form or by email, we process your name, email address and message to answer your enquiry (Art. 6(1)(b) or (f) GDPR). Messages from the form are delivered to our mailbox via our email service Resend (Resend, Inc., USA; sent via servers in the EU) and stored there. To prevent abuse, we also store a hashed short value of your IP address with the time and delete it after 24 hours. Our emails are processed via Apple iCloud.</p>
-<h2>8. Your rights</h2>
+<h2>9. Your rights</h2>
 <p>You have the right to access, rectification, erasure, restriction of processing, data portability and objection. Write to <a href="mailto:office@mordsteam.com">office@mordsteam.com</a>. You can also lodge a complaint with the Austrian Data Protection Authority: <a href="https://www.dsb.gv.at">www.dsb.gv.at</a>.</p>
 <p>Last updated: October 2026</p>
 </div></main>''')
@@ -1034,6 +1040,23 @@ P["withdraw"] = dict(title="Withdraw from contract – Mordsteam", desc="Withdra
 <p class="formerr" id="wferr" role="alert" hidden></p>
 <div><button class="btn btn-red" type="submit">Confirm withdrawal</button></div>
 <p class="small">By clicking “Confirm withdrawal” you send us your declaration of withdrawal for the order stated. You will immediately receive a confirmation by email with its content, date and time.</p>
+</form>
+</div></main>''')
+
+
+P["newsletter"] = dict(title="Newsletter – Mordsteam", desc="Be the first to hear about new Mordsteam cases: the Mordsteam newsletter.", scripts='<script src="/assets/newsletter.js"></script>',
+ body='''<main class="page"><div class="wrap prose">
+<div class="eyebrow">Newsletter</div>
+<h1>Be the first to hear about new cases</h1>
+<div class="note" id="nl-status" role="status" hidden></div>
+<p>About every six to eight weeks we write about what's new: new cases for Teams, Friends and Solo, seasonal mysteries and the occasional offer. No spam – you can unsubscribe in every email with one click.</p>
+<form id="nlf" class="form" novalidate>
+<div class="field"><label for="nl-email">Email</label><input id="nl-email" name="email" type="email" autocomplete="email" maxlength="200" required></div>
+<label class="check"><input type="checkbox" name="consent"><span>Yes, send me news about new Mordsteam cases by email. I can unsubscribe at any time with one click.</span></label>
+<div class="hp" aria-hidden="true"><label for="nl-web">Website</label><input id="nl-web" name="website" tabindex="-1" autocomplete="off"></div>
+<p class="small">After submitting you'll receive an email with a confirmation link. You are only signed up once you click it. More in our <a href="privacy.html#newsletter">privacy policy</a>.</p>
+<p class="formerr" id="nlerr" role="alert" hidden></p>
+<div><button class="btn btn-red" type="submit">Sign up</button></div>
 </form>
 </div></main>''')
 

@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Withdraw from contract – Mordsteam</title>
-<meta name="description" content="Withdraw from a contract with Mordsteam (private individuals).">
+<title>Newsletter – Mordsteam</title>
+<meta name="description" content="Be the first to hear about new Mordsteam cases: the Mordsteam newsletter.">
 
-<link rel="alternate" hreflang="de" href="https://mordsteam.com/widerruf.html">
-<link rel="alternate" hreflang="en" href="https://mordsteam.com/en/withdraw.html">
+<link rel="alternate" hreflang="de" href="https://mordsteam.com/newsletter.html">
+<link rel="alternate" hreflang="en" href="https://mordsteam.com/en/newsletter.html">
 <link rel="stylesheet" href="/assets/style.css">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
@@ -26,7 +26,7 @@
 <a href="teams.html">Teams</a>
 <a href="friends.html">Friends</a>
 <a href="solo.html">Solo</a>
-<a class="langlink" href="/widerruf.html" hreflang="de" lang="de" title="Deutsch">DE</a>
+<a class="langlink" href="/newsletter.html" hreflang="de" lang="de" title="Deutsch">DE</a>
 <a class="btn btn-ink" href="index.html#games">Play now</a>
 </nav>
 <details class="menu">
@@ -36,29 +36,26 @@
 <a href="teams.html">Teams</a>
 <a href="friends.html">Friends</a>
 <a href="solo.html">Solo</a>
-<a href="/widerruf.html" hreflang="de" lang="de">Deutsch</a>
+<a href="/newsletter.html" hreflang="de" lang="de">Deutsch</a>
 <a class="btn btn-red" href="index.html#games">Play now</a>
 </nav>
 </details>
 </div></header>
 <main class="page"><div class="wrap prose">
-<div class="eyebrow">Withdrawal</div>
-<h1>Withdraw from contract</h1>
-<p>As a <b>private individual</b> you can withdraw from your contract with us here as long as the right of withdrawal exists: within 14 days of ordering and before the game round has been played and ended. Orders placed as a company, club or organisation have no statutory right of withdrawal. Details are in our <a href="terms.html#ruecktritt">terms, section 8</a>.</p>
-<p><button class="btn btn-red" type="button" id="wr-start">Withdraw from contract</button></p>
-<form id="wf" class="form" novalidate hidden>
-<div class="two">
-<div class="field"><label for="wf-nr">Order number</label><input id="wf-nr" name="nr" maxlength="12" autocomplete="off" required><span class="hint">8 characters, shown in the confirmation email.</span></div>
-<div class="field"><label for="wf-email">Email address used for the order</label><input id="wf-email" name="email" type="email" autocomplete="email" maxlength="200" required></div>
-</div>
-<div class="field"><label for="wf-name">Name</label><input id="wf-name" name="name" autocomplete="name" maxlength="120" required></div>
-<div class="field"><label for="wf-grund">Note <span class="opt">optional</span></label><textarea id="wf-grund" name="grund" rows="3" maxlength="1000"></textarea><span class="hint">You don't have to give a reason.</span></div>
-<p class="formerr" id="wferr" role="alert" hidden></p>
-<div><button class="btn btn-red" type="submit">Confirm withdrawal</button></div>
-<p class="small">By clicking “Confirm withdrawal” you send us your declaration of withdrawal for the order stated. You will immediately receive a confirmation by email with its content, date and time.</p>
+<div class="eyebrow">Newsletter</div>
+<h1>Be the first to hear about new cases</h1>
+<div class="note" id="nl-status" role="status" hidden></div>
+<p>About every six to eight weeks we write about what's new: new cases for Teams, Friends and Solo, seasonal mysteries and the occasional offer. No spam – you can unsubscribe in every email with one click.</p>
+<form id="nlf" class="form" novalidate>
+<div class="field"><label for="nl-email">Email</label><input id="nl-email" name="email" type="email" autocomplete="email" maxlength="200" required></div>
+<label class="check"><input type="checkbox" name="consent"><span>Yes, send me news about new Mordsteam cases by email. I can unsubscribe at any time with one click.</span></label>
+<div class="hp" aria-hidden="true"><label for="nl-web">Website</label><input id="nl-web" name="website" tabindex="-1" autocomplete="off"></div>
+<p class="small">After submitting you'll receive an email with a confirmation link. You are only signed up once you click it. More in our <a href="privacy.html#newsletter">privacy policy</a>.</p>
+<p class="formerr" id="nlerr" role="alert" hidden></p>
+<div><button class="btn btn-red" type="submit">Sign up</button></div>
 </form>
 </div></main>
-<script src="/assets/widerruf.js"></script>
+<script src="/assets/newsletter.js"></script>
 <footer class="footer"><div class="wrap">
 <span class="brand"><span class="wm"><span class="wm-r">MORDS</span>TEAM</span></span>
 <nav aria-label="Legal"><a href="newsletter.html">Newsletter</a><a href="imprint.html">Imprint</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a><a href="withdraw.html">Withdraw from contract</a></nav>

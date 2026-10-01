@@ -90,7 +90,7 @@
     if (!consent.agb) return fail(T("Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."), form.agb);
     btn.disabled = true; const label = btn.innerHTML; btn.textContent = T("Weiter zur Zahlung …", "On to payment …");
     try {
-      const r = await fetch("/api/shop/friends", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: EN ? "en" : "de", lang: form.lang.value === "en" ? "en" : "de", variant: isPlus() ? "plus" : "basis", players: list.map((p) => ({ name: p.name, quirk: p.quirk })), mode: form.mode.value, days: Number(form.days.value), earlybird: !!(M.earlybird && form.earlybird.checked), contact, consent }) });
+      const r = await fetch("/api/shop/friends", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: EN ? "en" : "de", lang: form.lang.value === "en" ? "en" : "de", variant: isPlus() ? "plus" : "basis", players: list.map((p) => ({ name: p.name, quirk: p.quirk })), mode: form.mode.value, days: Number(form.days.value), earlybird: !!(M.earlybird && form.earlybird.checked), contact, consent, nl: new URLSearchParams(location.search).get("nl") || "" }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.redirect) throw new Error(d.error || T("Das hat nicht geklappt.", "That didn't work."));
       try { localStorage.removeItem(draftKey); } catch {}

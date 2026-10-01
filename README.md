@@ -82,15 +82,17 @@ design/                  Designentwürfe (nicht ausgeliefert)
 ### Shop (`/api/shop/`)
 - Bestellseiten: `bestellen.html` (Teams), `friends-kaufen.html`, `solo-kaufen.html` (+ englische Gegenstücke).
 - Alle drei Bestellformulare haben das Feld Spielsprache (`lang`, unabhängig von der Website-Sprache `site`); es landet in `orders.contact.lang` und von dort in Spielrunde, Gruppe bzw. Ticket.
-- Alle drei Bestellformulare haben das Kästchen „Bitte keine Neuigkeiten per E-Mail“ (`consent.no_news`). Angekreuzt landet `no_news: true` in `orders.contact`. Ein späterer Newsletter an Kunden muss diese Bestellungen auslassen.
+- Alle drei Bestellformulare haben das Kästchen „Bitte keine Neuigkeiten per E-Mail“ (`consent.no_news`). Angekreuzt landet `no_news: true` in `orders.contact`.
+- Newsletter-Kürzel: Links aus Newslettern tragen `?nl=<kürzel>`. `assets/menu.js` hängt es an interne Links (keine Speicherung im Browser) und zählt den Besuch (`nl-besuch`); die Bestellformulare schicken es mit, es landet in `orders.contact.nl`.
 - Ablauf: Formular → `bestellung` / `friends` / `solo` legt `orders` (Status `pending`) an → Stripe Checkout → Webhook `stripe-webhook` (`checkout.session.completed`) → `fulfill()` legt Spielrunde/Gruppe/Ticket an und schickt die Bestellmail → `bestellt.html` fragt `status` ab.
 - Preise stehen im Code, in Cent, als Endpreise: Teams `PRICES` in `functions/api/shop/[[route]].js`, Friends `FRIENDS_PRICE`/`FRIENDS_PRICE_PLUS` in `lib/friends.js`, Solo je Fall (`price` in der Produktliste direkt unter `PRICES`).
 - Early Bird: Rabatt als Stripe-Coupon, gesteuert über `EARLYBIRD_*`.
 - `cron` (POST, Header `x-cron-key`): löst fällige Friends-Wochenrunden auf, verschickt fällige Feedback-Mails. Aufgerufen stündlich von der GitHub-Action.
+- Newsletter (`lib/newsletter.js`): `POST newsletter` (Anmeldung, schickt Bestätigungsmail), `GET newsletter/bestaetigen?t=`, `GET newsletter/abmelden?t=`, `GET nl-besuch?nl=`. Nach jeder angelegten Bestellung ruft `fulfill()` `nlAfterOrder()` auf: bezahlte Bestellung ohne `no_news` → Kontakt (Quelle `kunde`), Abgleich mit der ECG-Liste, Übertragung zu Resend (Contacts, Segment je Sprache „Mordsteam DE/EN“, IDs in `nl_settings`). `no_news` bei einer späteren Bestellung meldet ab. Bei Resend Abgemeldete werden nie wieder aufgenommen.
 - Weitere Routen: `meta`, `friends-meta` (Preise, Shop offen?), `feedback` (GET/POST Bogen), `bewertungen` (freigegebene Bewertungen), `kontakt`, `widerruf`, `status`.
 
 ### Admin (`/spiel/admin.html`)
-Zugriff mit dem Admin-Schlüssel (Header `x-admin`). Funktionen: Spielrunden anlegen/löschen, Bestellungen, Solo-Tickets und Friends-Gruppen anlegen und auflisten, Statistik, Feedback freigeben, Betrieb (Mails, KI-Verbrauch, Aufrufe, Fehler), Buchhaltung (Einnahmen-Übersicht und Ausgaben-Checkliste im Tab „Bestellungen & Finanzen“), Export.
+Zugriff mit dem Admin-Schlüssel (Header `x-admin`). Funktionen: Spielrunden anlegen/löschen, Bestellungen, Solo-Tickets und Friends-Gruppen anlegen und auflisten, Statistik, Feedback freigeben, Betrieb (Mails, KI-Verbrauch, Aufrufe, Fehler), Buchhaltung (Einnahmen-Übersicht und Ausgaben-Checkliste im Tab „Bestellungen & Finanzen“), Export. Tab „Kunden & Newsletter“: Kundenauswertung je E-Mail-Adresse (Wiederkäufe, Solo-Gutschein über `orders.promo_code`, Bestellungen über Newsletter), Newsletter-Liste und Übertragung, Upload der ECG-Liste (Datei `ecg-liste.hash` der RTR: aneinandergereihte SHA-1-Werte à 20 Byte von Adresse bzw. `@domain`, wird im Browser in Teilen hochgeladen), Newsletter-Entwurf mit Vorschau → Broadcast-Entwurf in Resend (gesendet wird in Resend).
 
 ## API-Routen
 
@@ -108,7 +110,7 @@ Alle Routen liefern JSON. Fehlermeldungen kommen in der Spielsprache bzw., wenn 
 **`/api/spiel/…`** (Teams und Admin)
 - Spiel: `GET state`, `GET akte`, `GET code`, `POST join`, `POST mitlesen`, `POST loesung`, `POST kontrolle`, `GET firma`, `POST firma/login`, `GET aria`, `POST aria/chat`, `POST aria/kennwort`, `POST bonus`, `POST bonus/fertig`, `GET sonder`, `POST sonder/chat`, `POST feedback`
 - Leitung: `POST leitung/login`, `GET leitung/state`, `POST leitung/aktion`, `GET leitung/aufloesung`
-- Admin: `POST admin/session`, `GET admin/sessions`, `POST admin/delete`, `GET admin/orders`, `POST admin/order-shipped`, `GET admin/stats`, `GET admin/export`, `GET admin/meta`, `GET admin/ops`, `GET admin/buchhaltung`, `GET/POST admin/kosten`, `POST admin/kosten/loeschen`, `GET admin/feedback`, `POST admin/feedback-approve`, `POST admin/feedback-run`
+- Admin: `POST admin/session`, `GET admin/sessions`, `POST admin/delete`, `GET admin/orders`, `POST admin/order-shipped`, `GET admin/stats`, `GET admin/export`, `GET admin/meta`, `GET admin/ops`, `GET admin/buchhaltung`, `GET/POST admin/kosten`, `POST admin/kosten/loeschen`, `GET admin/feedback`, `POST admin/feedback-approve`, `POST admin/feedback-run`, `GET admin/kunden`, `GET admin/newsletter`, `POST admin/newsletter/sync`, `POST admin/newsletter/ecg` (`phase` start/chunk/done), `POST admin/newsletter/entwurf` (`preview: true` = nur Vorschau)
 - Nur Testrunden: `POST test/vorspulen` (Spielzeit vorspulen)
 
 **`/api/solo/…`** (Admin-Testticket: `admin/ticket` mit `case`, `lang`, `name`): `start`, `begin`, `state`, `answer`, `hint`, `verhoer`, `aufgeben`, `ticket`, `feedback`, `test/vorspulen`, `admin/list`, `admin/ticket`
@@ -135,7 +137,12 @@ Grundschema in `db/schema.sql`. Neue Spalten und Tabellen werden zusätzlich bei
 | `friends_groups`, `friends_players`, `friends_chat` | Friends |
 | `ops_mail`, `ops_ai`, `ops_hits`, `ops_err`, `ops_alerts` | Betriebszähler (keine Inhalte, keine Empfänger) |
 | `cost_items` | Ausgaben-Checkliste im Admin (Posten, Rhythmus, Betrag, betrieblicher Anteil, Beleg); Startliste wird einmal angelegt, Löschen setzt `deleted=1` |
-| `contact_log` | Hash der IP für das Kontaktformular-Limit, nach 24 h gelöscht |
+| `contact_log` | Hash der IP für das Limit von Kontaktformular und Newsletter-Anmeldung, nach 24 h gelöscht |
+| `nl_contacts` | Newsletter-Empfänger: Quelle (`kunde`/`anmeldung`), Status (`pending`/`active`/`unsub`/`ecg`), Sprache, Token für Bestätigen/Abmelden, Einwilligungstext mit Zeitpunkten, Übertragung zu Resend |
+| `nl_ecg` | ECG-Liste der RTR als SHA-1-Hex (nur die aktuelle Version) |
+| `nl_settings` | Resend-Segment-IDs, Stand der ECG-Liste |
+| `nl_visits` | Besuche über Newsletter-Links je Kürzel und Tag (ohne Personendaten) |
+| `nl_drafts` | an Resend geschickte Newsletter-Entwürfe |
 
 ## Umgebungsvariablen (Cloudflare Pages → Settings → Variables and Secrets)
 
@@ -149,7 +156,7 @@ Nur Namen, keine Werte. Production und Preview haben je eigene Werte.
 | `ANTHROPIC_API_KEY` | Secret | Claude API für ARIA, Verhörräume, Sonderauftrag. Fehlt er, antworten die Figuren im Notfallmodus mit festen Texten. |
 | `STRIPE_SECRET_KEY` | Secret | Stripe API |
 | `STRIPE_WEBHOOK_SECRET` | Secret | Signaturprüfung des Stripe-Webhooks |
-| `RESEND_API_KEY` | Secret | Mailversand |
+| `RESEND_API_KEY` | Secret | Mailversand; für den Newsletter (Kontakte, Segmente, Broadcasts) mit **Full access** |
 | `MAIL_FROM` | Text | Absender der automatischen Mails; ohne ihn werden keine Mails verschickt |
 | `ARIA_MODEL` | Text | Claude-Modell (Standard: `claude-haiku-4-5-20251001`) |
 | `SHOP_OPEN` | Text | `true` = Bestellungen möglich |
@@ -224,4 +231,4 @@ Voraussetzung: Node.js. Wrangler wird per `npx` geladen.
    npx wrangler d1 execute mordsteam --local --file db/schema.sql
    npx wrangler pages dev dist --port 8790
    ```
-   Seite: http://localhost:8790, Admin: http://localhost:8790/spiel/admin.html (Schlüssel aus `.dev.vars`). Ohne `ANTHROPIC_API_KEY` laufen alle KI-Figuren im Notfallmodus. Testrunden (`test_mode`) lassen sich mit `test/vorspulen` vorspulen.
+   Seite: http://localhost:8790, Admin: http://localhost:8790/spiel/admin.html (Schlüssel aus `.dev.vars`). Ohne `ANTHROPIC_API_KEY` laufen alle KI-Figuren im Notfallmodus. Testrunden (`test_mode`) lassen sich mit `test/vorspulen` vorspulen. Mails und Newsletter lokal testen: in `.dev.vars` `RESEND_API_KEY=test`, `MAIL_FROM=Mordsteam <test@example.com>` und `RESEND_API_BASE=http://127.0.0.1:8799` setzen und auf Port 8799 einen kleinen Ersatz-Server starten, der die Resend-Aufrufe (`/emails`, `/contacts`, `/segments`, `/broadcasts`) beantwortet. `RESEND_API_BASE` in Cloudflare nie setzen.

@@ -18,6 +18,7 @@ import { handleContact } from "../../../lib/contact.js";
 import { handleWithdraw, orderNo } from "../../../lib/withdraw.js";
 import { sendMail as opsMail } from "../../../lib/ops.js";
 import { enrichPayment } from "../../../lib/accounting.js";
+import { nlSignup, nlConfirm, nlUnsubscribe, nlVisit, nlAfterOrder, nlTag, migrateNewsletter } from "../../../lib/newsletter.js";
 import { createSoloTicket, migrateSolo } from "../../../lib/solo.js";
 import { createFriendsGroup, friendsGroupOfOrder, friendsPrice, FRIENDS_PRICE, FRIENDS_PRICE_PLUS, FRIENDS_CASES, friendsCase, friendsCron } from "../../../lib/friends.js";
 
@@ -56,6 +57,11 @@ export async function onRequest({ request, env, params }) {
     if (route === "friends-meta" && method === "GET") return friendsMeta(env, request);
     if (route === "kontakt" && method === "POST") return await handleContact(request, env);
     if (route === "widerruf" && method === "POST") return await handleWithdraw(request, env);
+    // Newsletter: Anmeldung mit Bestätigungsmail, Bestätigen/Abmelden per Link, Besuche über Newsletter-Links zählen
+    if (route === "newsletter" && method === "POST") return await nlSignup(request, env);
+    if (route === "newsletter/bestaetigen" && method === "GET") return await nlConfirm(request, env);
+    if (route === "newsletter/abmelden" && method === "GET") return await nlUnsubscribe(request, env);
+    if (route === "nl-besuch" && method === "GET") return await nlVisit(request, env);
     // Feedback nach dem Spiel
     if (route === "feedback" && method === "GET") {
       const f = await feedbackInfo(env, new URL(request.url).searchParams.get("f"));
@@ -154,6 +160,7 @@ async function bestellung(request, env) {
   if (!['b2b', 'b2c'].includes(k.kunde)) throw new InputError(L(site, "Bitte angeben, ob ihr als Unternehmen/Verein oder als Privatperson bestellt.", "Please tell us whether you are ordering as a company/club or as a private individual."));
   contact.kunde = k.kunde;
   if (b.consent && b.consent.no_news) contact.no_news = true; // Widerspruch gegen Neuigkeiten per E-Mail (§ 174 Abs. 4 TKG 2021)
+  if (nlTag(b.nl)) contact.nl = nlTag(b.nl);                 // kam über einen Newsletter-Link
   if (contact.name.length < 2) throw new InputError(L(site, "Bitte deinen Namen angeben.", "Please enter your name."));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError(L(site, "Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."));
   const c = b.consent || {};
@@ -246,6 +253,7 @@ async function soloBestellung(request, env) {
   if (!["b2b", "b2c"].includes(k.kunde)) throw new InputError(L(site, "Bitte angeben, ob du als Privatperson oder für ein Unternehmen bestellst.", "Please tell us whether you are ordering as a private individual or for a company."));
   contact.kunde = k.kunde;
   if (b.consent && b.consent.no_news) contact.no_news = true; // Widerspruch gegen Neuigkeiten per E-Mail (§ 174 Abs. 4 TKG 2021)
+  if (nlTag(b.nl)) contact.nl = nlTag(b.nl);                 // kam über einen Newsletter-Link
   if (contact.name.length < 2) throw new InputError(L(site, "Bitte deinen Namen angeben.", "Please enter your name."));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError(L(site, "Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."));
   const c = b.consent || {};
@@ -320,6 +328,7 @@ async function friendsBestellung(request, env) {
   if (!["b2b", "b2c"].includes(k.kunde)) throw new InputError(L(site, "Bitte angeben, ob du als Privatperson oder für ein Unternehmen bestellst.", "Please tell us whether you are ordering as a private individual or for a company."));
   contact.kunde = k.kunde;
   if (b.consent && b.consent.no_news) contact.no_news = true; // Widerspruch gegen Neuigkeiten per E-Mail (§ 174 Abs. 4 TKG 2021)
+  if (nlTag(b.nl)) contact.nl = nlTag(b.nl);                 // kam über einen Newsletter-Link
   if (contact.name.length < 2) throw new InputError(L(site, "Bitte deinen Namen angeben.", "Please enter your name."));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError(L(site, "Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."));
   const c = b.consent || {};
@@ -460,6 +469,7 @@ async function fulfill(env, id, origin) {
       const code = have ? have.code : await createSoloTicket(env, { caseId: SOLO_OFFERS[ct.produkt] ? ct.produkt : "solo-001", orderId: id, lang: ct.lang === "en" ? "en" : "de" });
       await env.DB.prepare("UPDATE orders SET status='fulfilled' WHERE id=?").bind(id).run();
       await soloMail(env, o, code, origin).catch(() => {});
+      await nlAfterOrder(env, o);
     } catch (e) {
       await env.DB.prepare("UPDATE orders SET status='paid' WHERE id=?").bind(id).run();
       throw e;
@@ -474,6 +484,7 @@ async function fulfill(env, id, origin) {
       // Namen aus der Bestellung entfernen – sie stehen nur noch in der Runde
       await env.DB.prepare("UPDATE orders SET status='fulfilled', vars=? WHERE id=?").bind(JSON.stringify({ FIRMA: "Mordsteam Friends", friends: { n: (f.players || []).length, mode: f.mode, days: f.days, plus: !!f.plus } }), id).run();
       await friendsMail(env, o, g, origin).catch(() => {});
+      await nlAfterOrder(env, o);
     } catch (e) {
       await env.DB.prepare("UPDATE orders SET status='paid' WHERE id=?").bind(id).run();
       throw e;
@@ -487,6 +498,7 @@ async function fulfill(env, id, origin) {
     });
     await env.DB.prepare("UPDATE orders SET status='fulfilled', session_id=? WHERE id=?").bind(s.id, id).run();
     await sendMail(env, o, s, origin).catch(() => {});
+    await nlAfterOrder(env, o);
   } catch (e) {
     await env.DB.prepare("UPDATE orders SET status='paid' WHERE id=?").bind(id).run();
     throw e;
@@ -618,6 +630,12 @@ async function recordPayment(env, id, cs) {
       if (inv && inv.number) await env.DB.prepare("UPDATE orders SET invoice_no=? WHERE id=?").bind(inv.number, id).run();
     }
     if (cs && cs.id) await enrichPayment(env, id, cs.id);
+    if (cs && cs.id) {
+      await migrateNewsletter(env);
+      const d = await stripe(env, "GET", `checkout/sessions/${cs.id}?expand[]=discounts.promotion_code`);
+      const pc = d && Array.isArray(d.discounts) && d.discounts.map((x) => x.promotion_code).find((x) => x && typeof x === "object");
+      await env.DB.prepare("UPDATE orders SET promo_code=?, discount_cents=? WHERE id=?").bind(pc ? pc.code : null, d && d.total_details ? d.total_details.amount_discount : null, id).run();
+    }
   } catch { /* Buchhaltungsdaten dürfen die Bestellung nie blockieren */ }
 }
 

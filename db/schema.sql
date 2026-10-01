@@ -9,3 +9,10 @@ CREATE TABLE IF NOT EXISTS stats_teams (session_id TEXT NOT NULL, team_no INTEGE
 CREATE TABLE IF NOT EXISTS aria_msgs (id INTEGER PRIMARY KEY AUTOINCREMENT, team_id TEXT NOT NULL, at INTEGER NOT NULL, role TEXT NOT NULL, text TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS feedback (id TEXT PRIMARY KEY, order_id TEXT NOT NULL UNIQUE, created_at INTEGER NOT NULL, variant TEXT NOT NULL, lang TEXT, paket TEXT, rating INTEGER, nps INTEGER, answers TEXT, review TEXT, publish TEXT NOT NULL DEFAULT 'no', publish_name TEXT, approved INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE IF NOT EXISTS cost_items (id TEXT PRIMARY KEY, name TEXT NOT NULL, anbieter TEXT, art TEXT NOT NULL, betrag_cents INTEGER, waehrung TEXT NOT NULL DEFAULT 'EUR', anteil INTEGER, seit TEXT, beleg TEXT, hinweis TEXT, sort INTEGER NOT NULL DEFAULT 0, deleted INTEGER NOT NULL DEFAULT 0, updated_at INTEGER);
+-- Newsletter (lib/newsletter.js legt die Tabellen auch selbst an; orders bekommt dort promo_code und discount_cents)
+CREATE TABLE IF NOT EXISTS nl_contacts (email TEXT PRIMARY KEY, lang TEXT NOT NULL DEFAULT 'de', name TEXT, source TEXT NOT NULL, status TEXT NOT NULL, token TEXT NOT NULL, created_at INTEGER NOT NULL, confirmed_at INTEGER, consent TEXT, unsub_at INTEGER, synced_at INTEGER, sync_error TEXT);
+CREATE TABLE IF NOT EXISTS nl_ecg (h TEXT PRIMARY KEY, v INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS nl_settings (k TEXT PRIMARY KEY, v TEXT);
+CREATE TABLE IF NOT EXISTS nl_visits (tag TEXT NOT NULL, day TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (tag, day));
+CREATE TABLE IF NOT EXISTS nl_drafts (id TEXT PRIMARY KEY, tag TEXT NOT NULL, lang TEXT NOT NULL, subject TEXT NOT NULL, broadcast_id TEXT, created_at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS nl_contacts_token ON nl_contacts (token);

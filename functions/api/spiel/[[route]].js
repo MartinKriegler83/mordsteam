@@ -9,6 +9,7 @@ import {
 
 import { migrate, createGameSession, InputError } from "../../../lib/create.js";
 import { logAI, opsSummary } from "../../../lib/ops.js";
+import { customers, nlAdmin, syncAll, ecgUpload, nlDraft } from "../../../lib/newsletter.js";
 import { migrateFeedback, dueFeedback, runFeedbackMails } from "../../../lib/feedback.js";
 import { localize, countryOf, COUNTRIES, COUNTRY_ORDER, randomCast, castToEnglish } from "../../../lib/countries.js";
 
@@ -65,6 +66,12 @@ export async function onRequest(ctx) {
       if (route === "admin/kosten/loeschen" && method === "POST") { const b = await request.json().catch(() => ({})); return json(await costDelete(env, b.id)); }
       if (route === "admin/buchhaltung" && method === "GET") { const u = new URL(request.url); return json(await accountingSummary(env, Date.parse((u.searchParams.get("von") || "2000-01-01") + "T00:00:00+02:00"), Date.parse((u.searchParams.get("bis") || "2999-12-31") + "T23:59:59+02:00"))); }
       if (route === "admin/ops" && method === "GET") return json(await opsSummary(env));
+      // Kunden & Newsletter
+      if (route === "admin/kunden" && method === "GET") return json(await customers(env));
+      if (route === "admin/newsletter" && method === "GET") return json(await nlAdmin(env));
+      if (route === "admin/newsletter/sync" && method === "POST") return json(await syncAll(env));
+      if (route === "admin/newsletter/ecg" && method === "POST") { try { return json(await ecgUpload(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
+      if (route === "admin/newsletter/entwurf" && method === "POST") { try { return json(await nlDraft(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); return fail(e.message, 502); } }
       if (route === "admin/feedback-run" && method === "POST") { const b = await body(request); return json({ sent: await runFeedbackMails(env, new URL(request.url).origin, { force: !!b.force }) }); }
       if (route === "admin/feedback-approve" && method === "POST") {
         // Auswahl für die Website: „page“ = Unterseite des Produkts (Teams/Solo), „home“ = Startseite (2–3 Stimmen)

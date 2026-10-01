@@ -58,7 +58,7 @@
     if (!consent.agb) return fail(T("Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."), form.agb);
     btn.disabled = true; const label = btn.textContent; btn.textContent = T("Weiter zur Zahlung …", "On to payment …");
     try {
-      const r = await fetch("/api/shop/solo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: EN ? "en" : "de", lang: form.lang.value === "en" ? "en" : "de", fall, contact, consent }) });
+      const r = await fetch("/api/shop/solo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: EN ? "en" : "de", lang: form.lang.value === "en" ? "en" : "de", fall, contact, consent, nl: new URLSearchParams(location.search).get("nl") || "" }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.redirect) throw new Error(d.error || T("Das hat nicht geklappt.", "That didn't work."));
       location.href = d.redirect;

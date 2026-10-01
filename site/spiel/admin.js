@@ -29,6 +29,8 @@
       friendsList = await fetch("/api/friends/admin/list", { headers: H() }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
       ops = await MS.api("GET", "admin/ops", null, H()).catch(() => null);
       kosten = await MS.api("GET", "admin/kosten", null, H()).catch(() => null);
+      kunden = await MS.api("GET", "admin/kunden", null, H()).catch(() => null);
+      nlData = await MS.api("GET", "admin/newsletter", null, H()).catch(() => null);
       render(list.sessions, ord.orders, st.stats);
     } catch (e) {
       if (e.status === 401 || e.status === 503) { try { sessionStorage.removeItem("ms_admin"); } catch {} key = null; return keyView(e.status === 401 ? "Schlüssel falsch." : e.message); }
@@ -84,9 +86,10 @@
   let friendsMsg = "", friendsList = null;
   let soloMsg = "", soloList = null, ops = null, last = [[], [], {}];
   let kosten = null, kostenEdit = null, kostenMsg = "";
+  let kunden = null, nlData = null, nlMsg = "", nlSyncMsg = "", nlPrev = "", nlForm = { lang: "de" }, kundenAll = false;
   let tab = "uebersicht";
   try { tab = sessionStorage.getItem("ms_admtab") || "uebersicht"; } catch {}
-  const TABS = [["uebersicht", "Übersicht"], ["finanzen", "Bestellungen & Finanzen"], ["runden", "Spielrunden & Tests"], ["statistik", "Spielstatistik"], ["system", "Kapazität & System"], ["feedback", "Feedback"]];
+  const TABS = [["uebersicht", "Übersicht"], ["finanzen", "Bestellungen & Finanzen"], ["runden", "Spielrunden & Tests"], ["statistik", "Spielstatistik"], ["system", "Kapazität & System"], ["feedback", "Feedback"], ["kunden", "Kunden & Newsletter"]];
   const tabBar = () => `<nav class="admtabs" role="tablist">${TABS.map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${l}${k === "system" && ops && (ops.errors.today || ops.alerts.some((a) => Date.now() - a.at < 86400000)) ? ' <span class="dot"></span>' : ""}</button>`).join("")}</nav>`;
   const eur = (c) => (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
   const usd = (x) => (x || 0).toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " $";
@@ -197,6 +200,80 @@
       <label class="check small"><input type="checkbox" id="stattests" ${statTests ? "checked" : ""}><span>Testrunden einbeziehen</span></label>
       <div style="overflow-x:auto"><table class="grid small"><tr><th>Paket</th><th>Daten</th><th>Akt 1 gelöst</th><th>Akt 1 Min.</th><th>Akt 2 Min.</th><th>Finale Min.</th><th>Hinweise bis Akt 1</th><th>Fehler je Frage</th></tr>
       <tr><th>Basic</th>${col("basis", stats.basis)}</tr><tr><th>Premium</th>${col("premium", stats.premium)}</tr><tr><th>Premium Plus</th>${col("plus", stats.plus)}</tr></table></div></div>`;
+  }
+
+  // ---------- Kunden: Wiederkäufe, Gutscheine, Newsletter-Wirkung ----------
+  function customersPanel() {
+    if (!kunden) return `<div class="panel"><div class="eyebrow">Kunden</div><p class="small">Kundenauswertung konnte nicht geladen werden.</p></div>`;
+    const k = kunden.kpi, e = MS.esc, pct = (x) => Math.round(x * 100) + " %";
+    const d = (t) => t ? new Date(t).toLocaleDateString("de-AT") : "–";
+    const NS = { active: "aktiv", pending: "unbestätigt", unsub: "abgemeldet", ecg: "ECG-Liste", "–": "–" };
+    const list = kundenAll ? kunden.list : kunden.list.slice(0, 30);
+    return `<div class="panel"><div class="eyebrow">Kunden · kommen sie wieder?</div>
+      <div class="tiles" style="margin-top:10px">
+        ${tile("Kunden (E-Mail-Adressen)", k.customers, 0, `${n0(k.orders)} bezahlte Bestellungen`)}
+        ${tile("Umsatz gesamt", k.cents, 0, `Ø ${eur(k.customers ? k.cents / k.customers : 0)} pro Kunde`, eur)}
+        ${tile("Wiederkäufer", k.repeat, 0, `${pct(k.repeat_rate)} der Kunden haben mehr als einmal gekauft`)}
+        ${tile("Tage bis zum 2. Kauf", k.days_to_second == null ? 0 : Math.round(k.days_to_second), 0, k.days_to_second == null ? "noch keine Wiederkäufe" : "Median")}
+        ${tile("Solo → Gruppe", k.solo_up, 0, `von ${n0(k.solo_first)} Kunden, die mit Solo angefangen haben`)}
+        ${tile("Solo-Gutscheine eingelöst", k.voucher_used, 0, `davon ${n0(k.voucher_same)} vom selben Kunden`)}
+        ${tile("Bestellungen über Newsletter", k.nl_orders, 0, "Links mit Newsletter-Kürzel")}
+      </div>
+      ${kunden.list.length ? `<div style="overflow-x:auto;margin-top:12px"><table class="grid small"><tr><th>Kunde</th><th>Käufe</th><th>Umsatz</th><th>Erster / letzter Kauf</th><th>Teams · Friends · Solo</th><th>Gutschein</th><th>Newsletter</th></tr>
+        ${list.map((c) => `<tr><td><b>${e(c.name || "–")}</b><br><span class="mono">${e(c.email)}</span>${c.kunde === "b2b" ? ' <span class="chip">Firma</span>' : ""}</td><td>${c.orders}${c.orders > 1 ? " ★" : ""}</td><td class="mono">${eur(c.cents)}</td><td>${d(c.first)}<br>${d(c.last)}</td><td>${c.products.teams} · ${c.products.friends} · ${c.products.solo}</td><td>${c.voucher || "–"}</td><td>${NS[c.news] || e(c.news)}</td></tr>`).join("")}</table></div>
+        ${kunden.list.length > 30 ? `<p class="small"><button class="btn btn-line" type="button" id="kall">${kundenAll ? "Nur die letzten 30 zeigen" : `Alle ${kunden.list.length} zeigen`}</button></p>` : ""}` : `<p class="small" style="margin-top:10px">Noch keine bezahlten Bestellungen.</p>`}
+      <p class="small" style="margin-top:8px">Gezählt werden bezahlte Bestellungen, zusammengefasst nach E-Mail-Adresse. ★ = mehr als ein Kauf.</p></div>`;
+  }
+
+  // ---------- Newsletter: Liste, ECG-Abgleich, Entwurf ----------
+  function newsletterPanel() {
+    const n = nlData, e = MS.esc;
+    if (!n) return `<div class="panel"><div class="eyebrow">Newsletter</div><p class="small">Newsletter-Daten konnten nicht geladen werden.</p></div>`;
+    const c = (src, st) => n.counts.filter((x) => (!src || x.source === src) && x.status === st).reduce((a, x) => a + x.n, 0);
+    const synced = n.counts.filter((x) => x.status === "active").reduce((a, x) => a + (x.synced || 0), 0);
+    const active = c(null, "active");
+    const ecgAge = n.ecg.at ? Math.floor((Date.now() - n.ecg.at) / 86400000) : null;
+    const f = nlForm, v = (x) => e(f[x] || "");
+    return `<div class="panel"><div class="eyebrow">Newsletter · Liste</div>
+      <div class="tiles" style="margin-top:10px">
+        ${tile("Empfänger aktiv", active, 0, `${n0(c("kunde", "active"))} Kunden · ${n0(c("anmeldung", "active"))} Anmeldungen`)}
+        ${tile("In Resend übertragen", synced, 0, active - synced > 0 ? `${active - synced} noch offen` : "alles übertragen")}
+        ${tile("Unbestätigt", c("anmeldung", "pending"), 0, "Bestätigungslink noch nicht geklickt")}
+        ${tile("Gesperrt / abgemeldet", c(null, "ecg") + c(null, "unsub"), 0, `${n0(c(null, "ecg"))} ECG-Liste · ${n0(c(null, "unsub"))} abgemeldet`)}
+      </div>
+      ${!n.key ? `<p class="err">RESEND_API_KEY fehlt – Übertragung und Entwürfe gehen erst, wenn der Schlüssel gesetzt ist.</p>` : ""}
+      ${n.errors.length ? `<p class="err">Letzter Übertragungsfehler: ${e(n.errors[0].sync_error)}</p>` : ""}
+      <div class="actions-row" style="margin-top:10px"><button class="btn btn-red" type="button" id="nlsync">Kunden nachtragen und übertragen</button></div>
+      ${nlSyncMsg ? `<p class="small"><b>${e(nlSyncMsg)}</b></p>` : ""}
+      <p class="small">Neue Kunden und bestätigte Anmeldungen werden automatisch übertragen. Der Knopf trägt ältere Bestellungen nach und wiederholt Fehlgeschlagenes. Wer sich bei Resend abgemeldet hat, wird nie wieder aufgenommen.</p>
+
+      <div class="eyebrow" style="margin-top:18px">ECG-Liste der RTR</div>
+      <p class="small">${n.ecg.at ? `Stand: ${new Date(n.ecg.at).toLocaleDateString("de-AT")} · ${n0(n.ecg.count)} Einträge${ecgAge > 30 ? ` · <b style="color:var(--red)">älter als 30 Tage – vor dem nächsten Newsletter neu hochladen</b>` : ""}` : `<b style="color:var(--red)">Noch keine Liste hochgeladen.</b> Ohne Liste werden Kunden ungeprüft übertragen.`}</p>
+      <p class="small">Die Datei <span class="mono">ecg-liste.hash</span> bekommst du bei der RTR. Hochladen ersetzt die alte Liste; Kunden, die jetzt auf der Liste stehen, werden automatisch aus Resend entfernt.</p>
+      <div class="actions-row"><input type="file" id="ecgfile" accept=".hash,application/octet-stream"><button class="btn btn-line" type="button" id="ecgup">Liste hochladen</button></div>
+      <p class="small" id="ecgout"></p>
+
+      <div class="eyebrow" style="margin-top:18px">Wirkung je Newsletter</div>
+      ${n.tags.length ? `<table class="grid small" style="margin-top:6px"><tr><th>Kürzel</th><th>Besuche</th><th>Bestellungen</th><th>Umsatz</th></tr>${n.tags.map((t) => `<tr><td class="mono">${e(t.tag)}</td><td>${n0(t.visits)}</td><td>${n0(t.orders)}</td><td class="mono">${eur(t.cents)}</td></tr>`).join("")}</table>
+        <p class="small">Öffnungen und Klicks zeigt Resend unter Broadcasts. Besuche = Aufrufe der Website über einen Newsletter-Link.</p>` : `<p class="small">Noch kein Newsletter verschickt.</p>`}
+    </div>
+    <div class="panel"><div class="eyebrow">Newsletter schreiben</div>
+      <p class="small" style="margin:6px 0 10px">Hier schreiben, Vorschau prüfen, dann als Entwurf an Resend schicken. Abgeschickt wird in Resend unter <b>Broadcasts</b>: Entwurf öffnen, an dich selbst testen, dann „Send“. Je Sprache ein eigener Entwurf (Deutsch und Englisch haben getrennte Listen).</p>
+      <form id="nlform" class="form">
+        <div class="two"><div class="field"><label>Kürzel *</label><input name="tag" placeholder="2026-12" maxlength="40" value="${v("tag")}"><span class="hint">Wird an alle Links zu mordsteam.com gehängt. Kleinbuchstaben, Ziffern, Bindestrich.</span></div>
+        <div class="field"><label>Sprache</label><select name="lang"><option value="de" ${f.lang !== "en" ? "selected" : ""}>Deutsch</option><option value="en" ${f.lang === "en" ? "selected" : ""}>Englisch</option></select></div></div>
+        <div class="field"><label>Betreff *</label><input name="subject" maxlength="150" value="${v("subject")}"></div>
+        <div class="field"><label>Vorschautext</label><input name="preheader" maxlength="150" placeholder="Erscheint im Postfach neben dem Betreff" value="${v("preheader")}"></div>
+        <div class="field"><label>Überschrift</label><input name="headline" maxlength="120" value="${v("headline")}"></div>
+        <div class="field"><label>Text *</label><textarea name="text" rows="9">${v("text")}</textarea><span class="hint">Leerzeile = neuer Absatz · „- “ am Zeilenanfang = Aufzählung · **fett** · [Linktext](https://mordsteam.com/…)</span></div>
+        <div class="two"><div class="field"><label>Knopf-Text</label><input name="button" maxlength="60" placeholder="z. B. Zum neuen Fall" value="${v("button")}"></div>
+        <div class="field"><label>Knopf-Link</label><input name="button_url" maxlength="300" placeholder="https://mordsteam.com/teams.html" value="${v("button_url")}"></div></div>
+        <div class="actions-row"><button class="btn btn-line" type="button" id="nlprev">Vorschau</button><button class="btn btn-red" type="submit">Als Entwurf an Resend</button></div>
+        <p class="small">${e(nlMsg)}</p>
+      </form>
+      ${nlPrev ? `<iframe title="Vorschau" style="width:100%;height:640px;border:1px solid #ddd;border-radius:8px;margin-top:10px;background:#fff" srcdoc="${e(nlPrev)}"></iframe>` : ""}
+      ${n.drafts.length ? `<div class="eyebrow" style="margin-top:14px">Entwürfe in Resend</div><table class="grid small"><tr><th>Datum</th><th>Kürzel</th><th>Sprache</th><th>Betreff</th></tr>${n.drafts.map((x) => `<tr><td>${new Date(x.created_at).toLocaleDateString("de-AT")}</td><td class="mono">${e(x.tag)}</td><td>${x.lang.toUpperCase()}</td><td>${e(x.subject)}</td></tr>`).join("")}</table>` : ""}
+    </div>`;
   }
 
   // ---------- Ausgaben: Kostenliste (Checkliste für die E/A-Rechnung) ----------
@@ -323,6 +400,7 @@
       ${tab === "statistik" ? statsPanel(stats) + soloStatsPanel() : ""}
       ${tab === "system" ? systemPanel() : ""}
       ${tab === "feedback" ? feedbackPanel() : ""}
+      ${tab === "kunden" ? customersPanel() + newsletterPanel() : ""}
       ${tab === "runden" ? `<div class="panel"><div class="eyebrow">Alle Runden</div>
         <div class="list-sessions" style="margin-top:10px">${sessions.length ? sessions.map((s) => `<div class="sess">
           <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${MS.esc(s.label || s.id)}</b><span class="chip ${({ open: "open", running: "run", finished: "fin" })[s.status] || ""}">${s.status}</span></div>
@@ -426,6 +504,51 @@
           <p class="small">Region nach dem Rechnungsland aus Stripe. Unternehmen = als Unternehmen bestellt oder UID angegeben. Stripe-Gebühren sind eigene Ausgaben (Rechnung bzw. Gebührenaufstellung von Stripe).</p>`;
       } catch (e2) { out.innerHTML = `<p class="err">${MS.esc(e2.message)}</p>`; }
     };
+
+    // Kunden & Newsletter
+    const kall = document.getElementById("kall"); if (kall) kall.onclick = () => { kundenAll = !kundenAll; render(...last); };
+    const nls = document.getElementById("nlsync");
+    if (nls) nls.onclick = async () => {
+      nls.disabled = true; nls.textContent = "Überträgt …";
+      try { const d = await MS.api("POST", "admin/newsletter/sync", {}, H()); alertBox(`Übertragen: ${d.ok} · ECG-Liste: ${d.ecg} · abgemeldet: ${d.unsub}${d.errors ? ` · Fehler: ${d.errors} (${d.error})` : ""}`); }
+      catch (e2) { alertBox(e2.message); }
+      load();
+    };
+    const nlf = document.getElementById("nlform");
+    if (nlf) {
+      const grab = () => (nlForm = Object.fromEntries(new FormData(nlf).entries()));
+      document.getElementById("nlprev").onclick = async () => {
+        grab();
+        try { const d = await MS.api("POST", "admin/newsletter/entwurf", { ...nlForm, preview: true }, H()); nlPrev = d.html; nlMsg = ""; } catch (e2) { nlMsg = e2.message; }
+        render(...last);
+      };
+      nlf.onsubmit = async (ev) => {
+        ev.preventDefault(); grab();
+        if (!confirm(`Entwurf „${nlForm.subject}“ (${nlForm.lang === "en" ? "Englisch" : "Deutsch"}) an Resend schicken? Verschickt wird erst, wenn du ihn in Resend absendest.`)) return;
+        try { const d = await MS.api("POST", "admin/newsletter/entwurf", nlForm, H()); nlPrev = d.html; nlMsg = "Entwurf liegt jetzt in Resend unter Broadcasts. Dort an dich selbst testen und dann senden."; } catch (e2) { nlMsg = e2.message; }
+        load();
+      };
+    }
+    const eup = document.getElementById("ecgup");
+    if (eup) eup.onclick = async () => {
+      const out = document.getElementById("ecgout"), file = document.getElementById("ecgfile").files[0];
+      if (!file) { out.textContent = "Bitte zuerst die Datei auswählen."; return; }
+      const buf = new Uint8Array(await file.arrayBuffer());
+      if (!buf.length || buf.length % 20) { out.textContent = "Das ist keine gültige ECG-Hash-Datei (Größe passt nicht)."; return; }
+      eup.disabled = true;
+      try {
+        const total = buf.length / 20, { v } = await MS.api("POST", "admin/newsletter/ecg", { phase: "start" }, H());
+        for (let i = 0; i < total; i += 2000) {
+          const hashes = [];
+          for (let j = i; j < Math.min(total, i + 2000); j++) { let h = ""; for (let b = 0; b < 20; b++) h += buf[j * 20 + b].toString(16).padStart(2, "0"); hashes.push(h); }
+          await MS.api("POST", "admin/newsletter/ecg", { phase: "chunk", v, hashes }, H());
+          out.textContent = `Lädt hoch … ${Math.min(total, i + 2000).toLocaleString("de-AT")} von ${total.toLocaleString("de-AT")}`;
+        }
+        const d = await MS.api("POST", "admin/newsletter/ecg", { phase: "done", v }, H());
+        alertBox(`ECG-Liste aktualisiert: ${d.count.toLocaleString("de-AT")} Einträge. Aus der Newsletter-Liste entfernt: ${d.removed}.`);
+        load();
+      } catch (e2) { out.textContent = e2.message; eup.disabled = false; }
+    };
     const stc = document.getElementById("stattests");
     if (stc) stc.onchange = () => { statTests = stc.checked; load(); };
     root.querySelectorAll("[data-ship]").forEach((b) => (b.onclick = async () => {
@@ -436,6 +559,8 @@
       await MS.api("POST", "admin/delete", { id: b.dataset.del }, H()); load();
     }));
   }
+
+  function alertBox(m) { nlSyncMsg = m; }
 
   load();
 })();
