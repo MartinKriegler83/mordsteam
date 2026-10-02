@@ -99,7 +99,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 </div>
 </div></section>
 <section class="tvid-sec" aria-label="Teaser video"><div class="wrap">
-<div class="tvid" data-video="teams"><video muted loop playsinline preload="none" aria-label="Teaser video Teams"></video><button class="tvid-sound" type="button" aria-pressed="false" data-on="Sound on" data-off="Sound off">Sound on</button></div>
+<div class="tvid" data-video="teams-en"><video muted loop playsinline preload="none" aria-label="Teaser video Teams"></video><button class="tvid-sound" type="button" aria-pressed="false" data-on="Sound on" data-off="Sound off">Sound on</button></div>
 </div></section>
 <script src="/assets/teaser.js" defer></script>
 
@@ -338,7 +338,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 </div>
 </div></section>
 <section class="tvid-sec" aria-label="Teaser video"><div class="wrap">
-<div class="tvid" data-video="friends"><video muted loop playsinline preload="none" aria-label="Teaser video Friends"></video><button class="tvid-sound" type="button" aria-pressed="false" data-on="Sound on" data-off="Sound off">Sound on</button></div>
+<div class="tvid" data-video="friends-en"><video muted loop playsinline preload="none" aria-label="Teaser video Friends"></video><button class="tvid-sound" type="button" aria-pressed="false" data-on="Sound on" data-off="Sound off">Sound on</button></div>
 </div></section>
 <script src="/assets/teaser.js" defer></script>
 
@@ -539,7 +539,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 </div>
 </div></section>
 <section class="tvid-sec" aria-label="Teaser video"><div class="wrap">
-<div class="tvid" data-video="solo"><video muted loop playsinline preload="none" aria-label="Teaser video Solo"></video><button class="tvid-sound" type="button" aria-pressed="false" data-on="Sound on" data-off="Sound off">Sound on</button></div>
+<div class="tvid" data-video="solo-en"><video muted loop playsinline preload="none" aria-label="Teaser video Solo"></video><button class="tvid-sound" type="button" aria-pressed="false" data-on="Sound on" data-off="Sound off">Sound on</button></div>
 </div></section>
 <script src="/assets/teaser.js" defer></script>
 
