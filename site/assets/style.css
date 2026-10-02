@@ -134,6 +134,7 @@ p{margin:0}
 .footer .wrap{display:flex;flex-direction:column;gap:16px;padding-top:32px;padding-bottom:32px}
 .footer a{color:var(--muted)}
 .footer nav{display:flex;flex-wrap:wrap;gap:20px}
+.footer .social a{color:var(--paper)}
 .footer .brand{font-family:var(--serif);font-weight:900;font-size:20px;color:var(--paper)}
 
 /* ---------- Tablet / Desktop ---------- */
