@@ -111,7 +111,12 @@ body.desk::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:
 .clk-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#9A968C;margin-bottom:3px}
 .desk .clock .clk-time{font-family:var(--mono);font-weight:500;font-size:30px;color:#FF5A4E;text-shadow:0 0 14px rgba(255,70,60,.5);letter-spacing:1px}
 .clock.urgent .clk-time{animation:blink 1s steps(2) infinite}
-.clock.late .clk-time{color:#FFB4AE;font-size:22px}
+.clock.urgent.red .clk-time{color:#FF5A4E;animation:blink .6s steps(2) infinite}
+.clock.late .clk-time{color:#FF5A4E}
+.clk-row{display:flex;align-items:baseline;gap:6px;white-space:nowrap}
+.clock .clk-over{font-family:var(--mono);font-weight:500;font-size:15px;color:#FFB4AE}
+.desk .clock.late .clk-time{font-size:22px}
+.desk .clock .clk-over{font-size:16px}
 @keyframes blink{50%{opacity:.35}}
 @keyframes pulse{50%{opacity:.4}}
 /* Aktenreiter */
@@ -304,7 +309,7 @@ button.btn-big{margin-top:14px}
   .v-links{width:auto;margin:0}
 }
 @media (min-width:1100px){.evid{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media (max-width:420px){.desk .clock .clk-time{font-size:24px}.clk-label{font-size:9px}.desk .tabs button{padding:10px 12px;font-size:14px}}
+@media (max-width:420px){.desk .clock .clk-time{font-size:24px}.desk .clock.late .clk-time{font-size:18px}.desk .clock .clk-over{font-size:14px}.clk-label{font-size:9px}.desk .tabs button{padding:10px 12px;font-size:14px}}
 @media print{body.desk{background:#fff;color:#000}body.desk::before{display:none}.toast{display:none!important}}
 /* Abschluss: Siegerehrung, Auflösung, Danke */
 .final{max-width:900px;margin:0 auto;display:grid;gap:24px}

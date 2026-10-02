@@ -24,7 +24,7 @@
   const paket = () => form.paket.value;
   const premium = () => paket() !== "basis";
   const fiktiv = () => form.besetzung.value === "fiktiv";
-  const TN = EN ? { basis: "Basic, 50 minutes", premium: "Premium, 70 minutes", plus: "Premium Plus, 90 minutes" } : { basis: "Basic, 50 Minuten", premium: "Premium, 70 Minuten", plus: "Premium Plus, 90 Minuten" };
+  const TN = EN ? { basis: "Basic, 50-minute countdown", premium: "Premium, 70-minute countdown", plus: "Premium Plus, 90-minute countdown" } : { basis: "Basic, Countdown 50 Min.", premium: "Premium, Countdown 70 Min.", plus: "Premium Plus, Countdown 90 Min." };
   const field = (key) => META.fields.find((f) => f.key === key);
 
   function input(key, label, hint, cls = "") {

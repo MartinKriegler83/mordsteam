@@ -97,8 +97,9 @@
     else {
       const left = S.started_at + S.duration_min * 60000 - now;
       const pen = S.penalty_min ? `<span class="pen" title="${t("Strafzeit", "Penalty time")}">+${S.penalty_min} ${t("Min.", "min")}</span>` : "";
-      clock.className = "clock" + (left > 0 && left < 600000 ? " urgent" : left <= 0 ? " late" : "");
-      clock.innerHTML = `<span class="clk"><span class="clk-label">${left > 0 ? t("Übergabe in", "Handover in") : t("Übergabe verpasst", "Handover missed")}</span><b class="clk-time">${MS.dur(left > 0 ? left : now - S.started_at)}</b>${pen}</span>`;
+      const cd = MS.countdown(left);
+      clock.className = "clock" + cd.cls;
+      clock.innerHTML = `<span class="clk"><span class="clk-label">${left > 0 ? t("Übergabe in", "Handover in") : t("Übergabe verpasst", "Handover missed")}</span>${cd.html}${pen}</span>`;
     }
     const nh = $("nexthint");
     if (nh && S.next_hint) nh.textContent = MS.dur(Math.max(0, S.next_hint.time - now));

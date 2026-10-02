@@ -32,7 +32,7 @@ export const SOLO_PRICE = 890;                                        // Mordste
 // Solo-Fälle im Shop (Endpreise in Cent). plus = mit KI-Verhörraum (ab 18)
 export const SOLO_OFFERS = {
   "solo-001": { price: 890, no: "Solo 001", de: "Nachtzug nach Venedig", en: "Night Train to Venice", min: 40, head: ["Der Nachtzug wartet.", "The night train is waiting."], goal: ["bis Udine", "until Udine"] },
-  "solo-002": { price: 890, no: "Solo 002", de: "Applaus für einen Toten", en: "Applause for a Dead Man", min: 30, head: ["Der Vorhang ist gefallen.", "The curtain has fallen."], goal: ["bis die Polizei im Theater ist", "until the police reach the theatre"] },
+  "solo-002": { price: 890, no: "Solo 002", de: "Applaus für einen Toten", en: "Applause for a Dead Man", min: 35, head: ["Der Vorhang ist gefallen.", "The curtain has fallen."], goal: ["bis die Polizei im Theater ist", "until the police reach the theatre"] },
   "solo-plus-001": { price: 1590, no: "Solo Plus", de: "Der letzte Jahrgang", en: "The Last Vintage", min: 45, plus: true, head: ["Das Weinfest wartet.", "The wine festival is waiting."], goal: ["bis die Polizei aus Krems kommt", "until the police arrive from Krems"] },
 };
 const soloOffer = (id) => SOLO_OFFERS[id] || SOLO_OFFERS["solo-001"];
@@ -282,7 +282,7 @@ async function soloBestellung(request, env) {
       ...(contact.kunde === "b2b" ? { tax_id_collection: { enabled: true } } : {}),
       line_items: [{ quantity: 1, price_data: { currency: "eur", unit_amount: F.price,
         product_data: { name: L(site, `Mordsteam ${F.no} „${F.de}“`, `Mordsteam ${F.no} “${F.en}”`),
-          description: L(site, `Krimi für eine Person, ${F.min} Minuten${F.plus ? " mit KI-Verhörraum" : ""} · Code gültig bis ${validUntil} · Spielsprache ${GL}`, `Murder mystery for one person, ${F.min} minutes${F.plus ? " with AI interrogation room" : ""} · code valid until ${validUntil} · game language ${GL}`) } } }],
+          description: L(site, `Krimi für eine Person, Countdown ${F.min} Min.${F.plus ? " mit KI-Verhörraum" : ""} · Code gültig bis ${validUntil} · Spielsprache ${GL}`, `Murder mystery for one person, ${F.min}-minute countdown${F.plus ? " with AI interrogation room" : ""} · code valid until ${validUntil} · game language ${GL}`) } } }],
       metadata: { order_id: id }, payment_intent_data: { metadata: { order_id: id } },
       invoice_creation: { enabled: true, invoice_data: {
         description: L(site, `Mordsteam ${F.no} „${F.de}“, digitaler Krimi für eine Person, spielbar bis ${validUntil}.`, `Mordsteam ${F.no} “${F.en}”, digital murder mystery for one person, playable until ${validUntil}.`),
@@ -362,7 +362,7 @@ async function friendsBestellung(request, env) {
       ...(contact.kunde === "b2b" ? { tax_id_collection: { enabled: true } } : {}),
       line_items: [{ quantity: 1, price_data: { currency: "eur", unit_amount: full,
         product_data: { name: L(site, `Mordsteam Friends 001 „${C.TITLE}“ – ${vName} für ${n} Personen`, `Mordsteam Friends 001 “Last Round at the Chalet” – ${vName} for ${n} people`),
-          description: L(site, `${lim} Minuten${plus ? " mit KI-Verhörraum" : ""}, gespielt ${modeTxt} · spielbar bis ${validUntil} · Spielsprache ${GL}`, `${lim} minutes${plus ? " with AI interrogation room" : ""}, played ${modeTxt} · playable until ${validUntil} · game language ${GL}`) } } }],
+          description: L(site, `Countdown ${lim} Min.${plus ? " mit KI-Verhörraum" : ""}, gespielt ${modeTxt} · spielbar bis ${validUntil} · Spielsprache ${GL}`, `${lim}-minute countdown${plus ? " with AI interrogation room" : ""}, played ${modeTxt} · playable until ${validUntil} · game language ${GL}`) } } }],
       metadata: { order_id: id }, payment_intent_data: { metadata: { order_id: id } },
       invoice_creation: { enabled: true, invoice_data: {
         description: L(site, `Mordsteam Friends 001, digitaler ${plus ? "Krimiabend Plus mit KI-Verhörraum" : "Krimiabend"} für ${n} Personen, einmal spielbar bis ${validUntil}.`, `Mordsteam Friends 001, digital ${plus ? "Mystery Night Plus with AI interrogation room" : "mystery night"} for ${n} people, playable once until ${validUntil}.`),
@@ -535,6 +535,7 @@ async function sendMail(env, o, s, origin) {
 <li>${T(`Sind alle Teams angemeldet, startet ihr den Fall auf der Organisator-Seite (Knopf „Fall starten“). Die Uhr läuft für alle gleichzeitig: ${MIN[o.paket] || 60} Minuten, ohne Pause. Erst ab dem Start können sich weitere Geräte pro Team per QR-Code zum Mitlesen verbinden (im Tab „Einsatz“).`, `Once all teams have joined, start the case on the organiser page (“Start case” button). The clock runs for everyone at the same time: ${MIN[o.paket] || 60} minutes, without a pause. Only once the case has started can more devices per team follow along via QR code (in the “Briefing” tab).`)}</li>
 <li>${T("Haben alle Teams gelöst, endet die Runde automatisch und alle sehen Rangliste und Auflösung. Schafft es ein Team nicht in der Zeit, beendet ihr die Runde auf der Organisator-Seite selbst.", "Once all teams have solved it, the round ends automatically and everyone sees the ranking and the solution. If a team doesn't make it in time, end the round yourself on the organiser page.")}</li>
 </ol>
+<p><b>${T("Zeitplanung:", "Timing:")}</b> ${T("Plant das Zeitlimit als Obergrenze. Schnelle Teams sind oft nach der Hälfte fertig – die Zusatzermittlung hält sie beschäftigt.", "Plan the time limit as a maximum. Fast teams are often done after half the time – the bonus investigation keeps them busy.")}</p>
 <p><b>${T("Tipp:", "Tip:")}</b> ${T(`Öffnet ein paar Tage vorher ${host}/spiel auf einem Firmengerät. Lädt die Seite, bremst euch kein Webfilter.`, `A few days before, open ${host}/spiel on a company device. If the page loads, no web filter will get in your way.`)}</p>
 ${c.earlybird ? `<p><b>Early Bird:</b> ${T("Danke, dass ihr uns helft! Nach dem Spiel melden wir uns für euer Feedback.", "Thanks for helping us! After the game we'll be in touch for your feedback.")}</p>` : ""}
 <p>${T("Die Rechnung kommt separat per Mail von unserem Zahlungsanbieter.", "The invoice will be sent separately by our payment provider.")}</p>

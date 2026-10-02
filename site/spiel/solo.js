@@ -148,8 +148,9 @@
     const tm = S.train_start + Math.floor(el / 60000), train = `${pad(Math.floor(tm / 60) % 24)}:${pad(tm % 60)}`;
     const pen = S.penalty_min ? `<span class="pen">${L(`+${S.penalty_min} Min. Strafe`, `+${S.penalty_min} min penalty`)}</span>` : "";
     $("fallname").textContent = `${U().clock} ${train} · ${S.title}`;
-    clock.className = "clock" + (left <= 0 ? " late" : left < 5 * 60000 ? " urgent" : "");
-    clock.innerHTML = `<span class="clk"><span class="clk-label">${left > 0 ? U().until : U().late}</span><b class="clk-time">${MS.dur(left > 0 ? left : el)}</b>${pen}</span>`;
+    const cd = MS.countdown(left);
+    clock.className = "clock" + cd.cls;
+    clock.innerHTML = `<span class="clk"><span class="clk-label">${left > 0 ? U().until : U().late}</span>${cd.html}${pen}</span>`;
   }
   setInterval(tick, 1000);
 

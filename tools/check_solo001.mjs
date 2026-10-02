@@ -10,7 +10,7 @@ for (let v = 0; v < C.TIME_SHIFTS.length; v++) for (const c of C.CULPRITS) {
   const tag = `${c}/v${v}`, sol = C.solution(c, v), D = C.docs(c, "Test", v);
   const doc = (id) => (D.find((d) => d.id === id) || {}).html || "";
   if (!doc("tuer").includes(`>${sol.zeit}<`)) fail(`${tag} Tatzeit ${sol.zeit} fehlt im Türprotokoll`);
-  if (!/einlassen oder hinausgehen/.test(doc("tuer"))) fail(`${tag} Taster-Erklärung fehlt`);
+  if (!/eingelassen oder hinausgegangen/.test(doc("tuer"))) fail(`${tag} Taster-Erklärung fehlt`);
   const all = D.map((d) => d.html).join(" ");
   if (/2 × Pfefferminztee/.test(all)) fail(`${tag} 2 × Pfefferminztee`);
   const kofler = all.split("Anton Kofler, Dienstabteil 1")[1] || "";

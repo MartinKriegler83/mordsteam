@@ -307,9 +307,9 @@ async function firmaLogin({ request, env, team, session }) {
     const n = (team.login_fails || 0) + 1;
     await env.DB.prepare("UPDATE teams SET login_fails=? WHERE id=?").bind(n, team.id).run();
     let m = L(lg, "Benutzername oder Passwort falsch.", "Wrong user name or password.");
-    if (n >= 6) m += " " + L(lg, "Helpdesk: Den treuesten Begleiter kennt sogar die Lokalzeitung – und das Jahr steht im Mitarbeiterporträt im Intranet.",
+    if (n >= 4) m += " " + L(lg, "Helpdesk: Den treuesten Begleiter kennt sogar die Lokalzeitung – und das Jahr steht im Mitarbeiterporträt im Intranet.",
       "Helpdesk: Even the local paper knows the most loyal companion – and the year is in the staff portrait on the intranet.");
-    else if (n >= 3) m += " " + L(lg, "Passwort-Hinweis des Kontos: „Name meines treuesten Begleiters + das Jahr, in dem ich hier angefangen habe“ – alles klein, ohne Leerzeichen.",
+    else if (n >= 2) m += " " + L(lg, "Passwort-Hinweis des Kontos: „Name meines treuesten Begleiters + das Jahr, in dem ich hier angefangen habe“ – alles klein, ohne Leerzeichen.",
       "Account password hint: “Name of my most loyal companion + the year I started here” – all lower case, no spaces.");
     return fail(m, 403);
   }
@@ -334,7 +334,9 @@ async function loesung({ request, env, team, session }) {
   if (!allOk) {
     await env.DB.prepare("UPDATE teams SET wrong=wrong+1, penalty_min=penalty_min+?, last_attempt_at=?, last_result=? WHERE id=?")
       .bind(RULES.wrongPenaltyMin, now, JSON.stringify({ stage, result }), team.id).run();
-    return json({ correct: false, penalty_min: RULES.wrongPenaltyMin });
+    const nWrong = (team.wrong || 0) + 1;
+    const right = nWrong >= RULES.countAfterWrong ? { right: Object.values(result).filter(Boolean).length, of: qs.length } : {};
+    return json({ correct: false, penalty_min: RULES.wrongPenaltyMin, ...right });
   }
   const premium = isPremium(session);
   if (stage === 1) {
@@ -599,7 +601,8 @@ function solutionInfo(session) {
     tier: tierOf(session),
     taeter: who.taeter,
     answers: qs.map((q) => ({ key: q.key, label: render(q.label, v), answer: sol[q.key],
-      detail: q.key === "wer" ? who.taeter : q.key === "pin" ? L(langOf(session), `Kennwort der Notiz bei ARIA: ${v.ROOM_NEU}`, `Password of the note in ARIA: ${v.ROOM_NEU}`) : "" })),
+      detail: q.key === "wer" ? who.taeter : q.key === "pin" ? L(langOf(session), `Kennwort der Notiz bei ARIA: ${v.ROOM_NEU}`, `Password of the note in ARIA: ${v.ROOM_NEU}`)
+        : q.key === "anteil" ? L(langOf(session), `Scheinrechnungen ${v.SCHEIN_SUMME} minus Fachinhalt ${v.FACH_SUMME}`, `Fake invoices ${v.SCHEIN_SUMME} minus locker contents ${v.FACH_SUMME}`) : "" })),
     story: render(c.META.story, v),
     story2: premium ? render(c.META.story2, v) : null,
     story3: plus && c.META.story3 ? render(c.META.story3, v) : null,

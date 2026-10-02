@@ -80,7 +80,7 @@ for (let v = 0; v < DE.TIME_SHIFTS.length; v++) for (const c of DE.CULPRITS) {
   // gleiche inhaltliche Prüfungen wie im DE-Skript
   const doc = (id) => (dEN.find((d) => d.id === id) || {}).html || "";
   if (!doc("tuer").includes(`>${sEN.zeit}<`)) fail(`${tag} Tatzeit ${sEN.zeit} fehlt im Türprotokoll`);
-  if (!/letting in or leaving/.test(doc("tuer"))) fail(`${tag} Taster-Erklärung fehlt`);
+  if (!/let in or left/.test(doc("tuer"))) fail(`${tag} Taster-Erklärung fehlt`);
   const all = dEN.map((d) => d.html).join(" ");
   if (/2 × peppermint tea/i.test(all)) fail(`${tag} 2 × peppermint tea`);
   const kofler = all.split("Anton Kofler, staff compartment 1")[1] || "";

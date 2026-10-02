@@ -512,3 +512,5 @@ p.small{font-size:14px;color:#5A5D66}
 .logobox{min-width:0;max-width:100%}
 .logobox input[type=file]{width:100%;min-width:0;max-width:100%;overflow:hidden}
 fieldset.step{grid-template-columns:minmax(0,1fr)}
+
+.ico-cd{display:inline-block;width:.85em;height:.85em;vertical-align:-.06em;margin-right:.3em;flex:none}

@@ -43,6 +43,13 @@ const MS = {
     if (!r.ok) { const e = new Error(d.error || MS.t("Fehler ", "Error ") + r.status); e.status = r.status; throw e; }
     return d;
   },
+  // Countdown-Anzeige für alle Spiele: ab 5 Min. blinken, ab 2 Min. rot blinken, nach Ablauf „00:00“ in Rot und daneben „+ mm:ss“
+  countdown(left) {
+    const cls = left <= 0 ? " late" : left < 2 * 60000 ? " urgent red" : left < 5 * 60000 ? " urgent" : "";
+    const html = left > 0 ? `<b class="clk-time">${this.dur(left)}</b>`
+      : `<span class="clk-row"><b class="clk-time">00:00</b><b class="clk-over">+&nbsp;${this.dur(-left)}</b></span>`;
+    return { cls, html };
+  },
   dur(ms) {
     const neg = ms < 0; ms = Math.abs(ms);
     const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;

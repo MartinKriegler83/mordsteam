@@ -115,8 +115,9 @@
     const now = Date.now() + off, el = now - S.started_at, left = S.limit_min * 60000 - el;
     const pen = S.penalty_min ? `<span class="pen">+${S.penalty_min} ${t("Min. Strafe", "min penalty")}</span>` : "";
     $("fallname").textContent = `${place} ${hut(S.clock_start + Math.floor(el / 60000))} · ${S.title}`;
-    clock.className = "clock" + (left <= 0 ? " late" : left < 5 * 60000 ? " urgent" : "");
-    clock.innerHTML = `<span class="clk"><span class="clk-label">${left > 0 ? S.clock_label : S.late_label}</span><b class="clk-time">${MS.dur(left > 0 ? left : el)}</b>${pen}</span>`;
+    const cd = MS.countdown(left);
+    clock.className = "clock" + cd.cls;
+    clock.innerHTML = `<span class="clk"><span class="clk-label">${left > 0 ? S.clock_label : S.late_label}</span>${cd.html}${pen}</span>`;
   }
   setInterval(tick, 1000);
 
@@ -153,7 +154,7 @@
       <div class="brief-top"><span class="eyebrow">${esc(b.eyebrow)}</span><span class="conf">Friends · ${S.limit_min} ${MIN()}</span></div>
       <h1>${b.title}</h1><p class="sub">${b.text}${S.begun ? t(" Die Uhr oben läuft bereits.", " The clock at the top is already running.") : ""}</p>
       <ol class="steps">${b.steps.map((x, i) => `<li><span class="n">${i + 1}</span><div><b>${esc(x[0])}</b><span>${esc(x[1])}</span></div></li>`).join("")}</ol>
-      <h2 class="qhead">${S.questions.length === 4 ? t("Deine vier Fragen", "Your four questions") : t("Deine drei Fragen", "Your three questions")}</h2>
+      <h2 class="qhead">${({ 3: t("Deine drei Fragen", "Your three questions"), 4: t("Deine vier Fragen", "Your four questions"), 5: t("Deine fünf Fragen", "Your five questions") })[S.questions.length] || t("Deine Fragen", "Your questions")}</h2>
       <div class="qcards">${S.questions.map((q) => `<div><i>${pad(q.nr)}</i><span>${esc(q.label)}</span></div>`).join("")}</div>
       ${S.begun ? "" : `<p class="small" style="margin-bottom:12px">${t("Die Uhr startet, sobald du die Akte oder die Fragen öffnest, und lässt sich dann nicht mehr anhalten.", "The clock starts as soon as you open the case file or the questions, and can’t be stopped after that.")}</p>`}
       <button type="button" class="btn btn-red btn-big" id="toAkte">${S.begun ? t("Zur Akte →", "To the case file →") : t("Akte öffnen – die Uhr startet →", "Open the case file – the clock starts →")}</button>
