@@ -514,3 +514,11 @@ p.small{font-size:14px;color:#5A5D66}
 fieldset.step{grid-template-columns:minmax(0,1fr)}
 
 .ico-cd{display:inline-block;width:.85em;height:.85em;vertical-align:-.06em;margin-right:.3em;flex:none}
+/* Teaser-Video auf den Fallseiten */
+.tvid-sec{background:var(--ink);padding:40px 0}
+.tvid{position:relative;margin:0 auto;border-radius:14px;overflow:hidden;background:#000;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.tvid.quer{max-width:960px;aspect-ratio:16/9}
+.tvid.hoch{max-width:min(420px,100%);aspect-ratio:9/16;max-height:82vh}
+.tvid video{display:block;width:100%;height:100%;object-fit:cover}
+.tvid-sound{position:absolute;right:12px;bottom:12px;font:600 14px/1 var(--sans);color:#fff;background:rgba(21,23,28,.72);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:10px 16px;min-height:40px;cursor:pointer}
+.tvid-sound:hover{background:rgba(179,38,30,.9)}
