@@ -25,8 +25,8 @@ import { createFriendsGroup, friendsGroupOfOrder, friendsPrice, FRIENDS_PRICE, F
 // Sprache der Webseite (Fehlermeldungen, Stripe, Mail) – getrennt von der Spielsprache
 const L = (lang, de, en) => (lang === "en" ? en : de);
 
-// Firmenbuchnummer nach der Eintragung hier eintragen (erscheint in der Vertragsbestätigung, § 14 UGB)
-const COMPANY_FN = "";
+// Firmenbuchnummer (erscheint in der Vertragsbestätigung, § 14 UGB) – eingetragen am 2.10.2026
+const COMPANY_FN = "689638z";
 export const PRICES = { basis: 8900, premium: 11900, plus: 14900 };   // Cent pro Team, Endpreise
 export const SOLO_PRICE = 890;                                        // Mordsteam Solo Basic, Endpreis
 // Solo-Fälle im Shop (Endpreise in Cent). plus = mit KI-Verhörraum (ab 18)

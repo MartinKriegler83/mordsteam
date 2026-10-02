@@ -831,7 +831,7 @@ P["privacy"] = dict(title="Privacy policy – Mordsteam", desc="How Mordsteam ha
 <h1>Privacy policy</h1>
 <p class="small">This is a translation of our German privacy policy. In case of doubt, the <a href="/datenschutz.html" hreflang="de">German version</a> applies.</p>
 <h2>1. Controller</h2>
-<p>Mordsteam e.U., owner Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, Austria<br>Email: <a href="mailto:office@mordsteam.com">office@mordsteam.com</a></p>
+<p>Mordsteam e.U., owner Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, Austria (FN 689638z, Landesgericht Eisenstadt)<br>Email: <a href="mailto:office@mordsteam.com">office@mordsteam.com</a></p>
 <h2>2. Visiting the website</h2>
 <p>The website is delivered via Cloudflare (Cloudflare, Inc., USA, and affiliated companies). Technically necessary connection data such as IP address, time, page requested and browser identifier are processed to deliver the site securely and quickly (Art. 6(1)(f) GDPR). Cloudflare is certified under the EU-US Data Privacy Framework.</p>
 <p>To see how often which pages are visited, we use Cloudflare Web Analytics. It works without cookies and without storing anything in your browser and does not build profiles of individual visitors; we only see aggregated figures (e.g. page views, country, device type). The legal basis is our legitimate interest in improving the website (Art. 6(1)(f) GDPR). For operations, we also count server requests and emails sent only as numbers per day – without IP addresses, recipients or content.</p>
@@ -874,7 +874,7 @@ P["imprint"] = dict(title="Imprint – Mordsteam", desc="Legal information about
 <p>Sportplatzgasse 16<br>7152 Pamhagen<br>Austria</p>
 <p>Email: <a href="mailto:office@mordsteam.com">office@mordsteam.com</a><br>Contact form: <a href="contact.html">mordsteam.com/en/contact</a></p>
 <h2>Company register</h2>
-<p>Registered seat: Pamhagen<br>Company register number: <!-- FN -->to be added after registration<br>Register court: Landesgericht Eisenstadt</p>
+<p>Registered seat: Pamhagen<br>Company register number: FN 689638z<br>Register court: Landesgericht Eisenstadt</p>
 <h2>Business purpose</h2>
 <p>Development and online sale of digital murder-mystery and puzzle games for companies, clubs and private individuals.</p>
 <h2>VAT</h2>
@@ -895,7 +895,7 @@ P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mor
 <p class="small">Last updated: October 2026 · This is a translation for information. The <a href="/agb.html" hreflang="de">German version</a> is legally binding.</p>
 
 <h2>1. Provider and scope</h2>
-<p>The provider is Mordsteam e.U., owner Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, Austria, register court Landesgericht Eisenstadt, email: <a href="mailto:office@mordsteam.com">office@mordsteam.com</a> (“we”). These terms apply to all orders via mordsteam.com, from businesses as well as consumers (“you”). Deviating conditions only apply if we agree to them in writing. The version valid at the time of your order applies.</p>
+<p>The provider is Mordsteam e.U., owner Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, Austria, company register number FN 689638z, register court Landesgericht Eisenstadt, email: <a href="mailto:office@mordsteam.com">office@mordsteam.com</a> (“we”). These terms apply to all orders via mordsteam.com, from businesses as well as consumers (“you”). Deviating conditions only apply if we agree to them in writing. The version valid at the time of your order applies.</p>
 
 <h2>2. Our service</h2>
 <p>We provide digital murder-mystery games that you play online in your browser – depending on the game, together in teams, as a group or on your own (“game round”). What exactly is included follows from the description of the chosen game when ordering: game, package or variant, number of teams or players, playing time and, where applicable, personalisation. After payment you receive access codes with which you open and start the game round. Nothing is delivered physically.</p>
