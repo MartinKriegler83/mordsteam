@@ -173,7 +173,6 @@ button.btn-big{margin-top:14px}
 .ev .ttl{font-family:var(--serif);font-weight:700;font-size:17px;line-height:1.2;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}
 .ev .gel{position:absolute;right:8px;bottom:8px;border:2px solid var(--red);color:var(--red);font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;padding:1px 5px;transform:rotate(-9deg);text-transform:uppercase;opacity:.85}
 .ev.seen{filter:saturate(.7) brightness(.93)}
-.ev .neu{position:absolute;right:8px;bottom:8px;background:var(--red);color:#fff;font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;padding:2px 6px;transform:rotate(-6deg);text-transform:uppercase;animation:pulse 1.4s infinite}
 .ev.k-press{background:#E6E2D8;background-image:repeating-linear-gradient(#E6E2D8 0 5px,#DFDACF 5px 6px)}
 .ev.k-note{}
 .ev.k-receipt{background:#fff;border-bottom:3px dashed #BDB5A3}

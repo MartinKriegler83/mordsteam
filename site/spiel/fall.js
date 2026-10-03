@@ -155,10 +155,10 @@
     renderView();
   }
 
-  // Zähler am Reiter „Akte“: ungelesene Beweisstücke aus Akt 2 und dem Finale
+  // Zähler am Reiter „Akte“: ungelesene Beweisstücke (wie bei Solo und Friends)
   function akteBadge() {
     const b = $("aktebadge"); if (!b) return;
-    const n = running() && docs ? docs.filter((d) => d.act >= 2 && !seen.has(d.id)).length : 0;
+    const n = running() && docs ? docs.filter((d) => !seen.has(d.id)).length : 0;
     b.hidden = !n; b.textContent = n;
   }
   function renderView() {
@@ -316,8 +316,9 @@
 
   // Auswahlliste der Verdächtigen (Buchstabe – Name) statt Tippfeld
   const hasSus = () => Array.isArray(S.suspects) && S.suspects.length > 0;
-  function susSelect(id, attr, key, val) {
-    return `<select id="${id}" ${attr}="${key}"><option value="">${t("Person wählen …", "Choose a person …")}</option>${S.suspects.map((p) => `<option value="${p[0]}" ${val === p[0] ? "selected" : ""}>${p[0]} – ${p[1]}</option>`).join("")}</select>`;
+  // byName: Wert ist der Name (Komplizen-Frage), sonst der Buchstabe
+  function susSelect(id, attr, key, val, byName = false) {
+    return `<select id="${id}" ${attr}="${key}"><option value="">${t("Person wählen …", "Choose a person …")}</option>${S.suspects.map((p) => { const v = byName ? p[1] : p[0]; return `<option value="${v}" ${val && (val === v || MS.esc(val) === v) ? "selected" : ""}>${p[0]} – ${p[1]}</option>`; }).join("")}</select>`;
   }
 
   // ---------- Zusatzermittlung (alle Pakete) und Sonderauftrag (Premium Plus) ----------
@@ -464,7 +465,7 @@
     const read = docs.filter((d) => seen.has(d.id)).length;
     root.innerHTML = `${VIEWER ? `<p class="viewer-note">${t("Mitlesegerät · Lösungen gibt euer Team am Hauptgerät ein.", "Follow-along device · your team enters answers on the main device.")}</p>` : ""}<div class="deskhead"><h2>${t("Fallakte", "Case file")}</h2><span>${read} / ${docs.length} ${t("gelesen", "read")}</span></div>
       <div class="evid">${docs.map((d, i) => `${d.act >= 2 && (i === 0 || docs[i - 1].act !== d.act) ? `<div class="actdiv"><span class="conf">${d.act === 3 ? "Finale" : t("Akt 2", "Act 2")}</span><b>${d.act === 3 ? t("Die letzte Notiz", "The last note") : t("Neue Beweisstücke von der Zentrale", "New evidence from HQ")}</b></div>` : ""}<button type="button" class="ev ${kindClass(d)} ${seen.has(d.id) ? "seen" : ""}" data-doc="${i}" style="--r:${ROT[i % ROT.length]}deg">
-        <span class="ev-nr">${t("Nr.", "No.")} ${pad(i + 1)}</span><span class="kind">${MS.esc(d.kind)}</span><span class="ttl">${d.title}</span>${seen.has(d.id) ? `<span class="gel">${t("Gelesen", "Read")}</span>` : d.act >= 2 ? `<span class="neu">${t("Neu", "New")}</span>` : ""}</button>`).join("")}</div>`;
+        <span class="ev-nr">${t("Nr.", "No.")} ${pad(i + 1)}</span><span class="kind">${MS.esc(d.kind)}</span><span class="ttl">${d.title}</span>${seen.has(d.id) ? `<span class="gel">${t("Gelesen", "Read")}</span>` : `<span class="gel neu">${t("Neu", "New")}</span>`}</button>`).join("")}</div>`;
     root.querySelectorAll("[data-doc]").forEach((b) => (b.onclick = () => { openDoc = Number(b.dataset.doc); renderView(); scrollTo(0, 0); }));
   }
 
@@ -628,7 +629,7 @@
     const top = verdict && verdict.cls === "good" ? vHtml : "", v = verdict && verdict.cls !== "good" ? vHtml : "";
     const qrows = () => S.questions.map((q, i) => `<div class="qrow"><span class="qn">${q.nr}</span><div class="qf">
           <label for="q_${q.key}">${q.label}</label><span class="hint">${MS.esc(q.hint)}</span>
-          ${q.pattern === "letter" && hasSus() ? susSelect(`q_${q.key}`, "data-q", q.key, draft[q.key] || "")
+          ${(q.pattern === "letter" || q.pattern === "name") && hasSus() ? susSelect(`q_${q.key}`, "data-q", q.key, draft[q.key] || "", q.pattern === "name")
             : `<input id="q_${q.key}" data-q="${q.key}" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="${i < S.questions.length - 1 ? "next" : "done"}" value="${MS.esc(draft[q.key] || "")}">`}
           ${hintsFor(q.key)}</div></div>`).join("");
     const ctip = S.check_available ? `<div class="ctip"><div><b>${t("Kontrolltipp", "Check")}</b><p>${t(`Zeigt, welche der Antworten, die gerade im Formular stehen, schon stimmen. Kostet ${S.rules.check} Minuten Strafzeit.`, `Shows which of the answers currently in the form are already correct. Costs ${S.rules.check} minutes of penalty time.`)}</p></div>
