@@ -474,9 +474,7 @@ p.small{font-size:14px;color:#5A5D66}
   .section{padding:72px 0}
   .hero{padding:64px 0 72px}
   .cta .wrap{padding-top:80px;padding-bottom:80px}
-  #fuerwen,#whoisitfor{padding-bottom:16px}
 }
-#fuerwen,#whoisitfor{padding-bottom:8px}
 /* Fall 001: weniger Luft zwischen Schlagworten und den Punkten */
 @media (min-width:900px){
   .case .case-grid{row-gap:0}
