@@ -307,8 +307,7 @@ P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=Tru
 <p class="cta-nl"><a href="newsletter.html">Be the first to hear about new cases – sign up for the <b>newsletter</b></a></p>
 </div></section>
 <section class="sig" aria-label="Mordsteam"><div class="wrap">
-<svg class="sig-lupe" viewBox="0 0 34 34" aria-hidden="true"><g fill="none" stroke="#15171C" stroke-width="3"><circle cx="14" cy="14" r="9"/><line x1="20.5" y1="20.5" x2="29" y2="29" stroke-linecap="round"/></g><circle class="dot" cx="14" cy="14" r="3.5" fill="#B3261E"/></svg>
-<p class="sig-wm"><span class="r">MORDS</span>TEAM</p>
+<div class="sig-row"><svg class="sig-lupe" viewBox="3 3 28 28" aria-hidden="true"><g fill="none" stroke="#15171C" stroke-width="3"><circle cx="14" cy="14" r="9"/><line x1="20.5" y1="20.5" x2="29" y2="29" stroke-linecap="round"/></g><circle class="dot" cx="14" cy="14" r="3.5" fill="#B3261E"/></svg><p class="sig-wm"><span class="r">MORDS</span>TEAM</p></div>
 <p class="sig-frage">Can you crack the case?</p>
 </div></section>
 </main>''')
