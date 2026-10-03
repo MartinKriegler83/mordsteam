@@ -458,7 +458,7 @@
   }
 
   // ---------- Akte ----------
-  const kindClass = (d) => ({ Presse: "k-press", Notiz: "k-note", Beleg: "k-receipt", Belege: "k-receipt", "E-Mail": "k-mail", Systemauszug: "k-sys" })[d.kk || d.kind] || "";
+  const kindClass = (d) => ({ Presse: "k-press", Notiz: "k-note", Beleg: "k-receipt", Belege: "k-receipt", Nachweise: "k-receipt", "E-Mail": "k-mail", Systemauszug: "k-sys" })[d.kk || d.kind] || "";
   const ROT = [-1.4, 0.9, -0.5, 1.2, -1, 0.6, -0.2, 1.4];
 
   function viewAkte() {
