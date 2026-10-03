@@ -10,6 +10,17 @@
   const EN = document.documentElement.lang === "en";
   const T = (de, en) => (EN ? en : de);
 
+  // Welcher Teams-Fall? Fall 001 (Firmen) oder Fall 002 (Vereine) – Texte mit data-c1/data-c2 werden umgeschaltet
+  const caseId = () => (form.fall && form.fall.value === "fall-002" ? "fall-002" : "fall-001");
+  const isVerein = () => caseId() === "fall-002";
+  const LABELS2 = {
+    FIRMA: [T("Vereinsname *", "Club name *"), ""],
+    VEREINSART: [T("Vereinsart *", "Type of club *"), T("Danach richten sich Pokale, Musik und Tombola im Fall", "Trophies, music and raffle in the case follow this")],
+    STADT: [T("Ort *", "Town *"), ""],
+    FEST: [T("Name eures Fests *", "Name of your fête *"), T("z. B. Sommerfest, Feuerwehrfest, Frühschoppen", "e.g. Summer Fair, Fire Brigade Fête")],
+    FESTPLATZ: [T("Wo findet das Fest statt? *", "Where is it held? *"), T("z. B. Sportplatz, Festwiese", "e.g. the sports ground, the village green")],
+    VEREINSHEIM: [T("Vereinsheim *", "Clubhouse *"), T("z. B. Kantine, Feuerwehrhaus, Probelokal", "e.g. clubhouse, fire station, band room")],
+  };
   const LABELS = {
     FIRMA: [T("Firmenname *", "Company name *"), ""],
     STADT: [T("Stadt *", "City *"), ""],
@@ -38,14 +49,30 @@
     return `<div class="prow"><h3 class="subhead">${title}</h3><div class="pgrid">${anrede(prefix + "_ANR")}${input(prefix, T("Vor- und Nachname *", "First and last name *"), "")}${input(prefix + "_FKT", T("Funktion *", "Role *"), "")}${field(prefix + "_ABT") ? input(prefix + "_ABT", T("Abteilung *", "Department *"), "") : ""}</div></div>`;
   }
 
+  function select(key, label, hint) {
+    const f = field(key);
+    return `<div class="field"><label for="v_${key}">${label}</label><select id="v_${key}" name="v_${key}">${(f.options || []).map((o) => `<option value="${esc(o[0])}">${esc(o[1])}</option>`).join("")}</select>${hint ? `<span class="hint">${hint}</span>` : ""}</div>`;
+  }
+  function caseTexts() {
+    const v = isVerein();
+    form.querySelectorAll("[data-c1]").forEach((x) => (x.hidden = v));
+    form.querySelectorAll("[data-c2]").forEach((x) => (x.hidden = !v));
+    document.querySelectorAll(".casenr").forEach((x) => (x.textContent = META.nr || "001"));
+  }
   function build() {
-    $("#f-firma").innerHTML = `<div class="two">${input("FIRMA", ...LABELS.FIRMA)}${input("STADT", ...LABELS.STADT)}</div>
+    $("#f-firma").innerHTML = isVerein()
+      ? `<div class="two">${input("FIRMA", ...LABELS2.FIRMA)}${select("VEREINSART", ...LABELS2.VEREINSART)}</div>
+      <div class="two">${input("STADT", ...LABELS2.STADT)}${input("FEST", ...LABELS2.FEST)}</div>
+      <div class="two">${input("FESTPLATZ", ...LABELS2.FESTPLATZ)}${input("VEREINSHEIM", ...LABELS2.VEREINSHEIM)}</div>`
+      : `<div class="two">${input("FIRMA", ...LABELS.FIRMA)}${input("STADT", ...LABELS.STADT)}</div>
       <div class="two">${input("RAUM_FEIER", ...LABELS.RAUM_FEIER)}${input("RAUM_TATORT", ...LABELS.RAUM_TATORT)}</div>
       <div class="two">${input("PARK", ...LABELS.PARK)}<div></div></div>`;
     $("#f-opfer").innerHTML = person("OPFER", T("Das Opfer", "The victim"));
-    $("#f-boss").innerHTML = person("BOSS", T("Der Oberboss", "The top boss"));
+    $("#f-boss").innerHTML = person("BOSS", isVerein() ? T("Bekommt den Kassabericht", "Receives the treasurer's report") : T("Der Oberboss", "The top boss"));
+    caseTexts();
     $("#f-sus").innerHTML = [1, 2, 3, 4, 5, 6].map((i) => `<div class="susrow" data-i="${i}">${person("S" + i, `${T("Verdächtige/r", "Suspect")} ${i}${i === 6 ? ` <span class="opt">${T("nur Premium und Premium Plus", "Premium and Premium Plus only")}</span>` : ""}`)}</div>`).join("");
     // Länder und Spielsprache
+    if ($("#land").options.length) return;
     const land = $("#land");
     land.innerHTML = META.laender.map(([k, n]) => `<option value="${k}">${esc(k === "XX" ? T("Anderes Land (fiktiver Ort)", "Other country (fictional place)") : n)}</option>`).join("");
     land.value = EN ? "GB" : "AT";
@@ -104,12 +131,12 @@
     $("#pb-sum").textContent = eur(sum);
     const v = (k) => (form["v_" + k]?.value || "").trim();
     $("#summary").innerHTML = `<dl>
-      <dt>${T("Paket", "Package")}</dt><dd>${T(`Fall 001 „${esc(META.fall)}“`, `Case 001 “${esc(META.fall)}”`)} – ${TN[paket()]}</dd>
+      <dt>${T("Paket", "Package")}</dt><dd>${T(`Fall ${META.nr || "001"} „${esc(META.fall)}“`, `Case ${META.nr || "001"} “${esc(META.fall)}”`)} – ${TN[paket()]}</dd>
       <dt>${T("Spielsprache", "Game language")}</dt><dd>${esc(form.lang.options[form.lang.selectedIndex].text)}</dd>
       <dt>${T("Land", "Country")}</dt><dd>${esc(form.land.options[form.land.selectedIndex]?.text || "")}</dd>
       <dt>Teams</dt><dd>${n} × ${eur(META.prices[paket()])}</dd>
       <dt>${T("Spielbar", "Playable")}</dt><dd>${T("sofort nach dem Bezahlen, 12 Monate lang, einmal startbar", "right after paying, for 12 months, can be started once")}</dd>
-      ${fk ? `<dt>${T("Besetzung", "Cast")}</dt><dd>${T("Fiktive Firma mit erfundenen Figuren", "Fictional company with invented characters")}</dd>` : `<dt>${T("Firma", "Company")}</dt><dd>${esc(v("FIRMA") || "–")}</dd>
+      ${fk ? `<dt>${T("Besetzung", "Cast")}</dt><dd>${isVerein() ? T("Fiktiver Verein mit erfundenen Figuren", "Fictional club with invented characters") : T("Fiktive Firma mit erfundenen Figuren", "Fictional company with invented characters")}</dd>` : `<dt>${isVerein() ? T("Verein", "Club") : T("Firma", "Company")}</dt><dd>${esc(v("FIRMA") || "–")}</dd>
       <dt>${T("Opfer", "Victim")}</dt><dd>${esc(v("OPFER") || "–")}</dd>
       <dt>${T("Verdächtige", "Suspects")}</dt><dd>${[...Array(p ? 6 : 5)].map((_, i) => esc(v("S" + (i + 1)) || "–")).join(", ")}</dd>`}
       ${eb ? `<dt>Early Bird</dt><dd>−${eb} % (−${eur(full - sum)})</dd>` : ""}
@@ -174,6 +201,8 @@
       if (d._logo) setLogo(d._logo);
     }
     if (qp === "basis" || qp === "premium" || qp === "plus") form.querySelector(`input[name=paket][value=${qp}]`).checked = true;
+    const qf = new URLSearchParams(location.search).get("fall");
+    if (form.fall && (qf === "002" || qf === "001")) form.querySelector(`input[name=fall][value=fall-${qf}]`).checked = true;
   }
 
   // ---------- Prüfen und senden ----------
@@ -206,7 +235,7 @@
     const vars = {};
     if (!fiktiv()) {
       const need = (k) => { const el = form["v_" + k]; const val = el.value.trim(); if (!val) { const lb = el.closest(".prow,.field").querySelector("h3,label").textContent.replace(" *", "").trim(); throw [`${T("Bitte ausfüllen:", "Please fill in:")} ${lb}${/[?!.]$/.test(lb) ? "" : "."}`, el]; } return val; };
-      for (const k of ["FIRMA", "STADT", "RAUM_FEIER", "RAUM_TATORT", "PARK"]) vars[k] = need(k);
+      for (const k of isVerein() ? ["FIRMA", "VEREINSART", "STADT", "FEST", "FESTPLATZ", "VEREINSHEIM"] : ["FIRMA", "STADT", "RAUM_FEIER", "RAUM_TATORT", "PARK"]) vars[k] = need(k);
       const people = ["OPFER", "BOSS", ...[...Array(n)].map((_, i) => "S" + (i + 1))];
       for (const pre of people) {
         for (const suf of ["_ANR", "", "_FKT", "_ABT"]) {
@@ -244,7 +273,7 @@
     if (!contact.kunde) throw [T("Bitte angeben, ob ihr als Unternehmen/Verein oder als Privatperson bestellt.", "Please tell us whether you are ordering as a company/club or as a private individual."), form.kunde[0]];
     if (contact.kunde === "b2c" && !consent.sofort) throw [T("Bitte bestätigen, dass wir eure Spielrunde gleich nach dem Bezahlen anlegen dürfen.", "Please confirm that we may set up your game round right after payment."), form.sofort];
     if (!consent.agb) throw [T("Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."), form.agb];
-    return { paket: paket(), teams: Number(form.teams.value), vars: fk ? {} : vars, land: form.land.value, contact, consent, logo: fk ? null : logoData, besetzung: fk ? "fiktiv" : "echt", earlybird: !!(META.earlybird && form.earlybird.checked), lang: form.lang.value === "en" ? "en" : "de", site: EN ? "en" : "de" };
+    return { fall: caseId(), paket: paket(), teams: Number(form.teams.value), vars: fk ? {} : vars, land: form.land.value, contact, consent, logo: fk ? null : logoData, besetzung: fk ? "fiktiv" : "echt", earlybird: !!(META.earlybird && form.earlybird.checked), lang: form.lang.value === "en" ? "en" : "de", site: EN ? "en" : "de" };
   }
 
   async function submit(ev) {
@@ -267,11 +296,23 @@
     }
   }
 
+  async function loadMeta() {
+    const r = await fetch(`/api/shop/meta?case=${caseId()}${EN ? "&lang=en" : ""}`);
+    META = await r.json();
+    if (!r.ok) throw new Error();
+  }
+  // Fall gewechselt: Felder neu aufbauen, Eingaben mit gleichem Namen bleiben erhalten
+  async function switchCase() {
+    save();
+    try { await loadMeta(); } catch { return; }
+    build(); restore(); update();
+  }
   async function init() {
     try {
-      const r = await fetch("/api/shop/meta" + (EN ? "?lang=en" : ""));
-      META = await r.json();
-      if (!r.ok) throw new Error();
+      const qf = new URLSearchParams(location.search).get("fall");
+      let d = null; try { d = JSON.parse(localStorage.getItem(DRAFT) || "null"); } catch {}
+      if (form.fall) { const want = qf === "002" || qf === "001" ? `fall-${qf}` : d && d.fall; const el = want && form.querySelector(`input[name=fall][value="${want}"]`); if (el) el.checked = true; }
+      await loadMeta();
     } catch {
       form.innerHTML = `<p class="note">${T("Das Bestellformular ist gerade nicht erreichbar. Bitte später nochmals versuchen oder an office@mordsteam.com schreiben.", "The order form is not available right now. Please try again later or write to office@mordsteam.com.")}</p>`;
       return;
@@ -287,6 +328,7 @@
     form.addEventListener("input", () => { update(); save(); });
     form.addEventListener("change", () => { update(); save(); });
     form.addEventListener("submit", submit);
+    form.querySelectorAll("input[name=fall]").forEach((x) => x.addEventListener("change", switchCase));
     $("#logo").addEventListener("change", (e) => loadLogo(e.target.files[0]));
     $("#logodel").addEventListener("click", () => { setLogo(null); form.logo_rechte.checked = false; save(); });
   }

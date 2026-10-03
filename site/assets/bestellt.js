@@ -18,8 +18,8 @@
     var langName=d.lang==="en"?T("Englisch","English"):T("Deutsch","German");
     show('<div class="eyebrow">'+T("Bezahlt · Fall angelegt","Paid · case created")+'</div>'+
       '<h1>'+T("Euer Fall ist bereit.","Your case is ready.")+'</h1>'+
-      '<p class="lead">'+T('Fall 001 für '+esc(d.firma)+' – '+(TN[d.paket]||d.paket)+', '+d.teams+' Team'+(d.teams>1?"s":"")+', Spielsprache '+langName+'. Spielbar ab sofort, 12 Monate lang – einmal startbar. Bitte diese Seite speichern oder die Codes notieren.',
-        'Case 001 for '+esc(d.firma)+' – '+(TN[d.paket]||d.paket)+', '+d.teams+' team'+(d.teams>1?"s":"")+', game language '+langName+'. Playable right away, for 12 months – it can be started once. Please save this page or write down the codes.')+'</p>'+
+      '<p class="lead">'+T('Fall '+(d.fall_nr||'001')+' für '+esc(d.firma)+' – '+(TN[d.paket]||d.paket)+', '+d.teams+' Team'+(d.teams>1?"s":"")+', Spielsprache '+langName+'. Spielbar ab sofort, 12 Monate lang – einmal startbar. Bitte diese Seite speichern oder die Codes notieren.',
+        'Case '+(d.fall_nr||'001')+' for '+esc(d.firma)+' – '+(TN[d.paket]||d.paket)+', '+d.teams+' team'+(d.teams>1?"s":"")+', game language '+langName+'. Playable right away, for 12 months – it can be started once. Please save this page or write down the codes.')+'</p>'+
       '<div class="codes">'+
       '<div class="codecard dark"><small>'+T("ORGANISATOR-CODE · NICHT WEITERGEBEN","ORGANISER CODE · DON'T PASS ON")+'</small><div class="code">'+esc(d.org_code)+'</div><p>'+T("Damit öffnet und startet ihr den Fall und seht am Ende die Auflösung. Nicht an die Teams weitergeben.","Use it to open and start the case and to see the solution at the end. Don't pass it on to the teams.")+'</p></div>'+
       '<div class="codecard"><small>'+T("SPIELCODE FÜR DIE TEAMS","GAME CODE FOR THE TEAMS")+'</small><div class="code">'+esc(d.join_code)+'</div><p>'+T("Den bekommen alle Teams, wenn ihr spielt – zusammen mit dem Link.","All teams get this when you play, together with the link.")+'</p></div>'+

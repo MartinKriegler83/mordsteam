@@ -74,7 +74,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
  desc="A murder case starring your team – for companies and clubs. A 50 to 90 minute countdown, competing investigator teams, no game master needed.",
  body='''<nav class="subnav" aria-label="Mordsteam Teams"><div class="wrap">
 <b><span>Mordsteam</span> Teams</b>
-<a href="#how">How it works</a><a href="#case">Case 001</a><a href="#packages">Packages</a><a href="#faq">FAQ</a>
+<a href="#how">How it works</a><a href="#case">Case 001</a><a href="#case002">Case 002</a><a href="#packages">Packages</a><a href="#faq">FAQ</a>
 <a class="btn btn-red" href="order.html">Order</a>
 </div></nav>
 <main id="top">
@@ -105,7 +105,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <script src="/assets/teaser.js" defer></script>
 
 <section class="facts" aria-label="Key facts"><div class="wrap">
-<div><b><svg class="ico-cd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="14" r="8"/><path d="M12 14v-4M9 2h6M12 2v4M19 7l1.5-1.5"/></svg>50 to 90 min</b><span>Countdown – Basic with one act, Premium with a second act, Premium Plus with a finale with an AI assistant</span></div>
+<div><b><svg class="ico-cd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="14" r="8"/><path d="M12 14v-4M9 2h6M12 2v4M19 7l1.5-1.5"/></svg>50 to 90 min</b><span>Countdown – Basic with one act, Premium with a second act, Premium Plus with an AI finale</span></div>
 <div><b>3–6 per team</b><span>one team against the clock or as many as you like against each other</span></div>
 <div><b>Self-guided</b><span>instructions and a case desk instead of a host</span></div>
 <div><b>Play right away</b><span>straight after buying or whenever you like – in German or English</span></div>
@@ -115,7 +115,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <div class="stack" style="margin-bottom:28px"><div class="eyebrow">Who it's for</div><h2 class="h2">Made for every team with secrets</h2></div>
 <div class="audience two">
 <div class="aud"><span class="status live">CASE 001 · BOOK NOW</span><h3>Companies</h3><ul class="list"><li>Team building and offsites</li><li>Onboarding new teams</li><li>Ideal for virtual teams</li></ul></div>
-<div class="aud"><span class="status plan">CASE 002 · COMING SOON</span><h3>Clubs</h3><ul class="list"><li>Club nights and anniversaries</li><li>Holiday parties and outings</li><li>Sports, music and cultural clubs</li></ul></div>
+<div class="aud"><span class="status live">CASE 002 · BOOK NOW</span><h3>Clubs</h3><ul class="list"><li>Club nights and anniversaries</li><li>Holiday parties and outings</li><li>Sports, fire brigade, music, theatre and culture</li></ul></div>
 </div>
 </div></section>
 
@@ -123,8 +123,8 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <div class="eyebrow">How it works</div>
 <h2 class="h2">Three steps from form to crime scene</h2>
 <div class="steps">
-<div class="step"><span class="num">1</span><div><h3>Enter your teams</h3><p>Your boss as the victim, the top boss waiting for the folder, five suspects from your group (Premium and Premium Plus: six), plus rooms and teams. Who did it is decided at random – not even the organiser knows in advance.</p></div></div>
-<div class="step"><span class="num">2</span><div><h3>Get your file</h3><p>Your personal case file arrives digitally on laptop, phone or tablet. Plus your own case intranet – with your logo – and the case desk for every team.</p></div></div>
+<div class="step"><span class="num">1</span><div><h3>Enter your teams</h3><p>Choose your case (company or club), then the victim – your boss or your club's chair –, who should receive the evidence, five suspects from your group (Premium and Premium Plus: six), plus places and teams. Who did it is decided at random – not even the organiser knows in advance.</p></div></div>
+<div class="step"><span class="num">2</span><div><h3>Get your file</h3><p>Your personal case file arrives digitally on laptop, phone or tablet. Plus your own case website – company intranet or club website, with your logo – and the case desk for every team.</p></div></div>
 <div class="step"><span class="num">3</span><div><h3>Investigate and solve the case</h3><p>Will you find all the crucial clues? Enter everything correctly at the case desk and you've solved the case. At the end: an award ceremony, the big reveal and certificates to download.</p></div></div>
 </div>
 <p class="rolebox"><b>How it works:</b> Everyone is a detective. The culprit is a role in the case that randomly carries the name of one of you – not even they know it. Nobody has to act or lie.</p>
@@ -151,6 +151,32 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <li>Your own case intranet with your logo, full of clues</li>
 <li>Red herrings with a wink – nobody is shown up, and the victim survives</li>
 </ul>
+<div class="actions"><a class="btn btn-red" href="order.html?fall=001">Order case 001</a></div>
+</div></section>
+
+<section id="case002" class="section case"><div class="wrap case-grid">
+<div class="stack">
+<div class="eyebrow">Case 002 · Cold Cash · for clubs</div>
+<h2 class="h2">After the fête, your chair is in the fridge trailer. And the cash box is gone.</h2>
+<p class="lead">Sunday, just before midnight: your club's fête is over and the helpers are clearing up. Your chair – or president, chief, captain – is found locked in the refrigerated trailer, badly chilled but alive. The cash box with the cash book has vanished. At 7:00 the brewery collects the empties, and in the evening the annual general meeting wants the treasurer's report.</p>
+<p><b>Everything happens in your club:</b></p>
+<div class="objects"><span>your chair as the victim</span><span>your members as suspects</span><span>your fête and your club website</span></div>
+</div>
+<div class="clues" aria-label="Examples from the case file">
+<div class="clue"><small>TEMPERATURE LOGGER</small><span>When did the door close?<br>??:?? · door closed · set point ?? °C</span></div>
+<div class="clue"><small>SHIFT ROTA</small><span>What colour is your wristband?<br>bar · barbecue · token till · clear-up</span></div>
+<div class="clue dark"><small>CASE DESK</small><div class="codebox" aria-label="Four-digit solution code"><i>?</i><i>?</i><i>?</i><i>?</i></div><span class="hint">Enter your answers, solve the case, make the podium.</span></div>
+<div class="clue"><small>HONORARY CHAIR · AI INTERROGATION</small><span>Premium Plus only:<br>“Everything used to be simpler …”</span></div>
+</div>
+<ul class="list case-points">
+<li>Act 1: Who? When did the door close? How much money is missing? Where is the cash box?</li>
+<li>Premium: act 2 – who helped at the token till, and where is the money from previous years?</li>
+<li>Premium Plus: finale with an AI interrogation of your honorary chair – who knows everything about the club but loves to ramble</li>
+<li>Fits sports, fire brigade, music, theatre and culture clubs: trophies, music and raffle follow your club</li>
+<li>The culprit is always drawn at random from your group – different every round, nobody knows in advance</li>
+<li>Completely different puzzles from case 001 – play both and you won't recognise a single one</li>
+</ul>
+<div class="actions"><a class="btn btn-red" href="order.html?fall=002">Order case 002</a></div>
 </div></section>
 
 <section id="packages" class="section"><div class="wrap stack">
@@ -176,7 +202,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <span class="badge">THE FULL EXPERIENCE</span>
 <h3>Premium Plus</h3><p class="sub"><svg class="ico-cd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="14" r="8"/><path d="M12 14v-4M9 2h6M12 2v4M19 7l1.5-1.5"/></svg>90-minute countdown · two acts and an AI finale</p>
 <p class="price">€149 per team</p><p class="per">around €30 per person in teams of 5</p>
-<ul class="list"><li>Everything in Premium</li><li>Finish early and the bonus investigation earns you extra minutes for the ranking</li><li>Finale with ARIA, the AI assistant on your intranet: she helps you crack the PIN to the locker – followed by the final cash count</li><li>A surprise for teams that finish before minute 70 – with an AI interrogation as a special assignment</li><li>For participants aged 18 and over</li></ul>
+<ul class="list"><li>Everything in Premium</li><li>Finish early and the bonus investigation earns you extra minutes for the ranking</li><li>AI finale: case 001 with ARIA, the AI assistant on the intranet (PIN and cash count), case 002 with an AI interrogation of the honorary chair (code and start year)</li><li>A surprise for teams that finish before minute 70 – with an AI interrogation as a special assignment</li><li>For participants aged 18 and over</li></ul>
 <a class="btn btn-line" href="order.html?paket=plus">Order Premium Plus</a>
 </div>
 </div>
@@ -189,7 +215,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 
 <section class="section duo"><div class="wrap">
 <div class="privacy"><h2>Privacy, taken seriously</h2>
-<ul class="list"><li>Only names and roles, no emails or photos of your players</li><li>Case website and case desk protected and hidden from search engines</li><li>All data automatically deleted 30 days after the game</li><li>All suspects and the victim agree beforehand – you confirm this when ordering</li><li>Your logo only with confirmed permission – it appears only in your case intranet</li></ul>
+<ul class="list"><li>Only names and roles, no emails or photos of your players</li><li>Case website and case desk protected and hidden from search engines</li><li>All data automatically deleted 30 days after the game</li><li>All suspects and the victim agree beforehand – you confirm this when ordering</li><li>Your logo only with confirmed permission – it appears only on your case website</li></ul>
 </div>
 </div></section>
 
@@ -202,20 +228,21 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <section id="faq" class="section faq"><div class="wrap faq-grid">
 <div class="stack"><div class="eyebrow">FAQ</div><h2 class="h2">Questions?</h2></div>
 <div>
+<details><summary>Which case suits us?</summary><p>Case 001 “The Red Folder” is set in your company – with your boss as the victim, ideal for team building. Case 002 “Cold Cash” is set in your club – after the club fête, with your chair as the victim. Process, packages and prices are the same, the puzzles completely different. So you can play both, one after the other.</p></details>
 <details><summary>Who is the culprit?</summary><p>Always someone from your group – drawn at random, new every round. Not even the organiser knows in advance, and neither does the culprit. Everyone who appears in the case should have agreed beforehand.</p></details>
 <details><summary>Can we play with just one team?</summary><p>Yes. Then you play against the clock: the ranking and certificate show your time including penalty minutes. With several teams it becomes a contest – whoever solves the case first wins.</p></details>
 <details><summary>How many people fit in a team?</summary><p>3 to 6 is ideal. Each team enters its answers on one main device and can connect up to 5 more phones or laptops via QR code to follow along – so you can split up the evidence. More of you? Then split up: 12 people play best as 3 teams of 4 – with at least 4 per team everyone stays involved, and several teams make the contest more exciting. The order form works out the right number of teams for you.</p></details>
 <details><summary>Do we need a game master?</summary><p>No person needed. Instructions and the digital case desk guide you through the case: start, automatic hints, answer entry and award ceremony. One person from your group just starts the clock – and can still play along.</p></details>
 <details><summary>Can we pause?</summary><p>No. From the start the clock runs for all teams at the same time and without a pause – that keeps the contest fair. So plan the playing time in one go.</p></details>
-<details><summary>How much time do you have?</summary><p>The countdown is your maximum time, not a fixed playing time: Basic 50 minutes (one act with four questions), Premium 70 minutes (after act 1, the case desk unlocks a second act), Premium Plus 90 minutes (with a finale with ARIA, the AI assistant on your intranet). How fast you finish depends on how experienced you are at solving puzzles. We played every case in many test runs and set the time so that it can be solved within it. If the countdown runs out, you keep playing until you as organisers end the round – the clock then shows in red how far over you are. If a team gets stuck, HQ sends hints automatically.</p></details>
-<details><summary>Can we play in English?</summary><p>Yes. You choose the game language (German or English) when you order – independently of the language of this website. The whole case, the intranet, the case desk and ARIA then speak that language.</p></details>
+<details><summary>How much time do you have?</summary><p>The countdown is your maximum time, not a fixed playing time: Basic 50 minutes (one act with four questions), Premium 70 minutes (after act 1, the case desk unlocks a second act), Premium Plus 90 minutes (with an AI finale). How fast you finish depends on how experienced you are at solving puzzles. We played every case in many test runs and set the time so that it can be solved within it. If the countdown runs out, you keep playing until you as organisers end the round – the clock then shows in red how far over you are. If a team gets stuck, HQ sends hints automatically.</p></details>
+<details><summary>Can we play in English?</summary><p>Yes. You choose the game language (German or English) when you order – independently of the language of this website. The whole case, the case website, the case desk and the AI in the finale then speak that language.</p></details>
 <details><summary>Which countries does the case work in?</summary><p>The case is localised for your country: police, currency, number plates, bank details, phone numbers and cities fit – for the countries of Europe as well as the USA, Canada, Australia and New Zealand. For all other countries we set it in a fictional place.</p></details>
-<details><summary>What do we need to play?</summary><p>One laptop, tablet or smartphone with internet per team – for the case file, intranet, answer entry and ranking. Up to 5 more devices per team can follow along via QR code. That's all you need.</p></details>
-<details><summary>Can we use AI or Google?</summary><p>Please don't – with one exception: ARIA, the AI assistant in the game (Premium Plus only), helps you in the grand finale. Otherwise the case is built to be solved with brainpower – outside AI and search engines only spoil the fun. A matter of honour among detectives.</p></details>
+<details><summary>What do we need to play?</summary><p>One laptop, tablet or smartphone with internet per team – for the case file, case website, answer entry and ranking. Up to 5 more devices per team can follow along via QR code. That's all you need.</p></details>
+<details><summary>Can we use AI or Google?</summary><p>Please don't – with one exception: the AI in the game (Premium Plus only) – ARIA in case 001, the honorary chair in case 002 – helps you in the grand finale. Otherwise the case is built to be solved with brainpower – outside AI and search engines only spoil the fun. A matter of honour among detectives.</p></details>
 <details><summary>How gruesome is it?</summary><p>Not at all. A crime story with a wink – no blood, no shock effects, and nobody is shown up.</p></details>
-<details><summary>Do we have to enter real names?</summary><p>No. But it's most fun with your real colleagues and rooms – you can also choose a fictional company with invented characters.</p></details>
-<details><summary>What age is it for?</summary><p>Our cases are written for adults – with a poisoning, fraud and dark humour. Premium Plus with the AI assistant ARIA is intended for participants aged 18 and over. If younger people play along, for example apprentices, choose Basic or Premium: no AI runs there.</p></details>
-<details><summary>Our IT blocks AI tools – will ARIA still work?</summary><p>Usually, yes. Your devices only connect to mordsteam.com; ARIA runs via our server and only knows the invented world of the case. We don't send real names from your personalisation to the AI provider but replace them with placeholders first. If your policies prohibit AI applications altogether, check briefly with your IT or choose Premium without ARIA. Tip for all packages: open mordsteam.com/spiel on a company device beforehand – then you know no web filter will get in the way.</p></details>
+<details><summary>Do we have to enter real names?</summary><p>No. But it's most fun with your real colleagues and rooms – you can also choose a fictional company or club with invented characters.</p></details>
+<details><summary>What age is it for?</summary><p>Our cases are written for adults – with a poisoning or a fridge trailer, fraud and dark humour. Premium Plus with AI (ARIA or the honorary chair's interrogation) is intended for participants aged 18 and over. If younger people play along, for example apprentices or the club's youth section, choose Basic or Premium: no AI runs there.</p></details>
+<details><summary>Our IT blocks AI tools – will the AI finale still work?</summary><p>Usually, yes. Your devices only connect to mordsteam.com; the AI runs via our server and only knows the invented world of the case. We don't send real names from your personalisation to the AI provider but replace them with placeholders first. If your policies prohibit AI applications altogether, check briefly with your IT or choose Premium without AI. Tip for all packages: open mordsteam.com/spiel on a company device beforehand – then you know no web filter will get in the way.</p></details>
 <details><summary>How quickly do we get the case?</summary><p>Immediately, in all three packages. After paying you see your game code right on the screen and can start straight away – or any time in the next 12 months. Each case can be started once. Everything is digital, nothing is shipped.</p></details>
 <details><summary>Can we use a voucher?</summary><p>Yes: enter the €5 voucher from Mordsteam Solo in the payment step. One voucher per order, not combinable with the early bird discount.</p></details>
 <details><summary>Do we get an invoice?</summary><p>Yes, automatically by email – with the company address and VAT number you enter when paying.</p></details>
@@ -753,23 +780,30 @@ P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy
 </form>
 </div></main>''')
 
-P["order"] = dict(title="Order – Mordsteam", robots="noindex", desc="Order case 001 “The Red Folder”: enter your details, pay, get your game code immediately.",
+P["order"] = dict(title="Order – Mordsteam", robots="noindex", desc="Order Mordsteam Teams: case 001 “The Red Folder” for companies or case 002 “Cold Cash” for clubs – enter your details, pay, get your game code immediately.",
  scripts='<div class="pricebar" id="pricebar"><div class="wrap"><span id="pb-text"></span><strong id="pb-sum"></strong></div></div>\n<script src="/assets/bestellen.js"></script>',
  body='''<main class="page shop"><div class="wrap">
-<div class="eyebrow">Order · Case 001</div>
+<div class="eyebrow">Order · Teams · Case <span class="casenr">001</span></div>
 <h1>Order your case</h1>
 <p class="lead">Enter who appears in your case, pay – and get your game code immediately. Takes about 5 minutes.</p>
 <div class="note" id="closed" hidden>Orders are not open yet. You can look at the form but can't submit it yet.</div>
 <div class="note" id="cancelled" hidden>The payment was cancelled. Your entries are still here – you can simply try again.</div>
 <form class="form" id="order" novalidate>
 
-<fieldset class="step"><legend><span>1</span> Package and teams</legend>
+<fieldset class="step"><legend><span>1</span> Case</legend>
+<div class="pick two-pick" role="radiogroup" aria-label="Case">
+<label class="pickcard"><input type="radio" name="fall" value="fall-001" checked><span><b>Case 001 · The Red Folder</b><small>For companies and teams<br>Poisoning at the strategy evening</small></span></label>
+<label class="pickcard"><input type="radio" name="fall" value="fall-002"><span><b>Case 002 · Cold Cash</b><small>For clubs<br>Locked in the refrigerated trailer after the club fête</small></span></label>
+</div>
+</fieldset>
+
+<fieldset class="step"><legend><span>2</span> Package and teams</legend>
 <div class="pick" role="radiogroup" aria-label="Package">
 <label class="pickcard"><input type="radio" name="paket" value="basis" checked><span><b>Basic</b><small>50-minute countdown<br>Act 1 with four questions</small><em>€89 per team</em></span></label>
 <label class="pickcard"><input type="radio" name="paket" value="premium"><span><b>Premium</b><small>70-minute countdown<br>Act 1 + act 2 with two more, even trickier tasks</small><em>€119 per team</em></span></label>
-<label class="pickcard"><input type="radio" name="paket" value="plus"><span><b>Premium Plus</b><small>90-minute countdown<br>Acts 1 &amp; 2 + finale with ARIA, the AI assistant on the intranet</small><em>€149 per team</em></span></label>
+<label class="pickcard"><input type="radio" name="paket" value="plus"><span><b>Premium Plus</b><small>90-minute countdown<br>Acts 1 &amp; 2 + finale <span data-c1>with ARIA, the AI assistant on the intranet</span><span data-c2 hidden>with an AI interrogation of the honorary chair</span></small><em>€149 per team</em></span></label>
 </div>
-<p class="note" id="plusnote" hidden>ARIA is intended for participants aged 18 and over. If younger people play along, for example apprentices, please choose Basic or Premium – no AI runs there.</p>
+<p class="note" id="plusnote" hidden><span data-c1>ARIA is</span><span data-c2 hidden>The AI interrogation is</span> intended for participants aged 18 and over. If younger people play along, for example <span data-c1>apprentices</span><span data-c2 hidden>the club's youth section</span>, please choose Basic or Premium – no AI runs there.</p>
 <div class="two">
 <div class="field"><label for="teams">Number of teams *</label>
 <select id="teams" name="teams"></select>
@@ -783,35 +817,37 @@ P["order"] = dict(title="Order – Mordsteam", robots="noindex", desc="Order cas
 <div class="two">
 <div class="field"><label for="lang">Game language *</label>
 <select id="lang" name="lang"><option value="en">English</option><option value="de">German</option></select>
-<span class="hint">The language of the case file, intranet, case desk and ARIA – independent of this website.</span></div>
+<span class="hint">The language of the case file, <span data-c1>intranet, case desk and ARIA</span><span data-c2 hidden>club website, case desk and AI interrogation</span> – independent of this website.</span></div>
 <div class="field"><label for="land">Country *</label>
 <select id="land" name="land"></select>
 <span class="hint">Police, currency, number plates, bank details and cities in the case will match your country.</span></div>
 </div>
-<p class="steplead">The case is most fun with real people and places: your boss as the victim, colleagues as suspects, your rooms as the crime scene. If you'd rather not enter anyone, you get an invented company with invented characters.</p>
+<p class="steplead" data-c1>The case is most fun with real people and places: your boss as the victim, colleagues as suspects, your rooms as the crime scene. If you'd rather not enter anyone, you get an invented company with invented characters.</p>
+<p class="steplead" data-c2 hidden>The case is most fun with real people and places: your chair as the victim, club members as suspects, your fête and clubhouse as the crime scene. If you'd rather not enter anyone, you get an invented club with invented characters.</p>
 <div class="pick two-pick" role="radiogroup" aria-label="Cast">
-<label class="pickcard"><input type="radio" name="besetzung" value="echt" checked><span><b>With your company</b><small>Your names, your rooms, your logo<br>recommended</small></span></label>
-<label class="pickcard"><input type="radio" name="besetzung" value="fiktiv"><span><b>Fictional company</b><small>Invented company and characters<br>no data entry</small></span></label>
+<label class="pickcard"><input type="radio" name="besetzung" value="echt" checked><span><b><span data-c1>With your company</span><span data-c2 hidden>With your club</span></b><small><span data-c1>Your names, your rooms, your logo</span><span data-c2 hidden>Your names, your fête, your logo</span><br>recommended</small></span></label>
+<label class="pickcard"><input type="radio" name="besetzung" value="fiktiv"><span><b><span data-c1>Fictional company</span><span data-c2 hidden>Fictional club</span></b><small><span data-c1>Invented company and characters</span><span data-c2 hidden>Invented club and characters</span><br>no data entry</small></span></label>
 </div>
-<p class="note" id="fiktivnote" hidden>You play in an invented company with invented characters – which one, the case will tell you. The steps for company, victim and suspects are skipped.</p>
+<p class="note" id="fiktivnote" hidden><span data-c1>You play in an invented company with invented characters – which one, the case will tell you. The steps for company, victim and suspects are skipped.</span><span data-c2 hidden>You play in an invented club with invented characters – which one, the case will tell you. The steps for club, victim and suspects are skipped.</span></p>
 </fieldset>
 
-<fieldset class="step" data-real><legend><span>2</span> Your company</legend>
+<fieldset class="step" data-real><legend><span>2</span> <span data-c1>Your company</span><span data-c2 hidden>Your club</span></legend>
 <div id="f-firma"></div>
-<div class="field"><label for="logo">Company logo <span class="opt">optional</span></label>
+<div class="field"><label for="logo"><span data-c1>Company logo</span><span data-c2 hidden>Club logo</span> <span class="opt">optional</span></label>
 <div class="logobox"><img id="logoprev" alt="" hidden><input id="logo" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"><button type="button" class="linkbtn" id="logodel" hidden>Remove logo</button></div>
-<span class="hint">Appears on the case intranet. PNG or SVG with a transparent background looks best.</span></div>
-<label class="check" id="logorechte" hidden><input type="checkbox" name="logo_rechte"><span>We may use this logo for our internal team event. *</span></label>
+<span class="hint">Appears <span data-c1>on the case intranet</span><span data-c2 hidden>on the club website in the case</span>. PNG or SVG with a transparent background looks best.</span></div>
+<label class="check" id="logorechte" hidden><input type="checkbox" name="logo_rechte"><span>We may use this logo for our <span data-c1>internal team event</span><span data-c2 hidden>club game</span>. *</span></label>
 </fieldset>
 
-<fieldset class="step" data-real><legend><span>3</span> Victim and top boss</legend>
-<p class="steplead">The victim is your boss – don't worry, it ends well. The top boss is above them, for example the group CEO or the board chair.</p>
+<fieldset class="step" data-real><legend><span>3</span> <span data-c1>Victim and top boss</span><span data-c2 hidden>Victim and treasurer's report</span></legend>
+<p class="steplead" data-c1>The victim is your boss – don't worry, it ends well. The top boss is above them, for example the group CEO or the board chair.</p>
+<p class="steplead" data-c2 hidden>The victim is your chair (or president, chief …) – don't worry, it ends well. Add whoever is to receive the treasurer's report at the annual general meeting, for example the auditor or the mayor.</p>
 <div id="f-opfer" class="person"></div>
 <div id="f-boss" class="person"></div>
 </fieldset>
 
 <fieldset class="step" data-real><legend><span>4</span> The suspects</legend>
-<p class="steplead">Five colleagues (Premium and Premium Plus: six). One of them becomes the culprit at random – not even we know who in advance. Good picks are people who play along and can laugh at themselves.</p>
+<p class="steplead">Five <span data-c1>colleagues</span><span data-c2 hidden>club members</span> (Premium and Premium Plus: six). One of them becomes the culprit at random – not even we know who in advance. Good picks are people who play along and can laugh at themselves.</p>
 <div id="f-sus"></div>
 </fieldset>
 
@@ -822,7 +858,7 @@ P["order"] = dict(title="Order – Mordsteam", robots="noindex", desc="Order cas
 </div>
 <div class="two">
 <div class="field"><label for="c_tel">Phone <span class="opt">optional</span></label><input id="c_tel" name="c_tel" type="tel" maxlength="40" autocomplete="tel"></div>
-<div class="field"><label for="c_firma">Company on the invoice <span class="opt">optional</span></label><input id="c_firma" name="c_firma" maxlength="120" autocomplete="organization"><span class="hint">You enter the billing address and VAT number when paying.</span></div>
+<div class="field"><label for="c_firma"><span data-c1>Company</span><span data-c2 hidden>Club</span> on the invoice <span class="opt">optional</span></label><input id="c_firma" name="c_firma" maxlength="120" autocomplete="organization"><span class="hint">You enter the billing address and VAT number when paying.</span></div>
 </div>
 <div class="field"><span class="label">You are ordering as *</span>
 <label class="check"><input type="radio" name="kunde" value="b2b"><span>Company, club or organisation</span></label>
@@ -833,7 +869,7 @@ P["order"] = dict(title="Order – Mordsteam", robots="noindex", desc="Order cas
 <fieldset class="step"><legend><span>6</span> Review and pay</legend>
 <div class="summary" id="summary"></div>
 <label class="check" id="zustimmungbox"><input type="checkbox" name="zustimmung"><span>Everyone we have entered by name knows about it and agrees to appear in the fictional case – including as victim or suspect. *</span></label>
-<label class="check" id="ab18box" hidden><input type="checkbox" name="ab18"><span>All participants are at least 18 years old (required for ARIA in Premium Plus). *</span></label>
+<label class="check" id="ab18box" hidden><input type="checkbox" name="ab18"><span>All participants are at least 18 years old (required for <span data-c1>ARIA</span><span data-c2 hidden>the AI interrogation</span> in Premium Plus). *</span></label>
 <label class="check ebcheck" id="ebbox" hidden><input type="checkbox" name="earlybird"><span><b>Early bird: <span class="ebp">25</span>% off.</b> I'd like the discount and am happy to give short feedback after the game and write a review. <a href="early-bird.html" target="_blank">Conditions</a></span></label>
 <p class="hint" id="voucherhint">Voucher code, e.g. from Mordsteam Solo? Enter it in the next step when paying.</p>
 <label class="check" id="nofbbox"><input type="checkbox" name="no_feedback"><span>The day after the game we'll send you a short feedback request by email. Tick here if you'd rather not receive it.</span></label>

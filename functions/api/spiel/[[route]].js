@@ -860,7 +860,7 @@ async function bonusAnswer({ request, env, team, session }) {
   if (key === "s_ziel") {
     if (!sonderEligible(session, team)) return fail(L(lg, "Den Sonderauftrag gibt es nur für Premium Plus und nur, wenn der Fall vor Minute 70 gelöst wurde.", "The special assignment is only for Premium Plus and only if the case was solved before minute 70."), 403);
     if (!val) return fail(L(lg, "Bitte ein Ziel wählen.", "Please choose a destination."));
-    ok = val === "z" + c.zielOf(JSON.parse(session.secrets)); add = c.SONDER_BONUS;
+    ok = val === c.SONDER.options()[c.zielOf(JSON.parse(session.secrets))][0]; add = c.SONDER_BONUS;
   } else {
     const q = c.BONUS.find((x) => x.key === key);
     if (!q) return fail("Unbekannte Frage.");

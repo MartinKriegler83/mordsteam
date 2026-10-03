@@ -41,6 +41,10 @@ const NAMES = { basis: "Basic (50 Min.)", premium: "Premium (70 Min.)", plus: "P
 const NAMES_EN = { basis: "Basic (50 min)", premium: "Premium (70 min)", plus: "Premium Plus (90 min)" };
 const LEAD_DAYS = 1;                                                  // alles digital: spielbar ab morgen
 const CASE_ID = "fall-001";
+// Teams-Fälle im Shop: Fall 001 (Firmen), Fall 002 (Vereine)
+const TEAM_CASES = ["fall-001", "fall-002"];
+const caseIdOf = (x) => (TEAM_CASES.includes(x) ? x : CASE_ID);
+const caseNr = (id) => id.slice(-3);
 
 export async function onRequest({ request, env, params }) {
   if (!env.DB) return fail("Datenbank nicht eingerichtet.", 500);
@@ -107,7 +111,8 @@ function earlybird(env) {
 const addDays = (dateStr, d) => { const t = new Date(dateStr + "T12:00:00Z"); t.setUTCDate(t.getUTCDate() + d); return t.toISOString().slice(0, 10); };
 
 function meta(env, request) {
-  const c = CASES[CASE_ID];
+  const caseId = caseIdOf(new URL(request.url).searchParams.get("case"));
+  const c = CASES[caseId];
   const today = viennaDate();
   const site = new URL(request.url).searchParams.get("lang") === "en" ? "en" : "de";
   const FE = c.FIELDS_EN || {};
@@ -118,13 +123,16 @@ function meta(env, request) {
     open: shopOpen(env),
     earlybird: earlybird(env),
     fall: site === "en" ? c.EN.META.title : c.META.title,
+    case_id: caseId, nr: caseNr(caseId),
+    cases: TEAM_CASES.map((id) => ({ id, nr: caseNr(id), title: site === "en" ? CASES[id].EN.META.title : CASES[id].META.title, audience: site === "en" ? CASES[id].EN.META.audience : CASES[id].META.audience })),
     fiktiv: !!c.FICTIONS,
     laender: [...names, xx],
     sprachen: [["de", site === "en" ? "German" : "Deutsch"], ["en", site === "en" ? "English" : "Englisch"]],
     prices: PRICES,
     earliest: addDays(today, LEAD_DAYS),
     suspects: { basis: c.suspectCount(false), premium: c.suspectCount(true), plus: c.suspectCount(true) },
-    fields: c.FIELDS.map(([key, label, example, type]) => ({ key, label: site === "en" && FE[key] ? FE[key][0] : label, example: site === "en" && FE[key] ? FE[key][1] : example, type: type || "text" })),
+    fields: c.FIELDS.map(([key, label, example, type, opts]) => ({ key, label: site === "en" && FE[key] ? FE[key][0] : label, example: site === "en" && FE[key] ? FE[key][1] : example, type: type || "text",
+      options: opts ? opts.map((o) => [o[0], site === "en" ? o[2] : o[1]]) : null })),
   });
 }
 
@@ -145,14 +153,15 @@ async function bestellung(request, env) {
   const validUntil = addDays(today, 365);
   const land = COUNTRY_ORDER.includes(b.land) ? b.land : "AT";
   // Fiktive Besetzung: handverlesen (AT/DE/CH) oder per Generator mit typischen Namen und Städten des Landes
-  const F = (CASES[CASE_ID].FICTIONS || {})[land] || [];
+  const caseId = caseIdOf(b.fall), C = CASES[caseId];
+  const F = (C.FICTIONS || {})[land] || [];
   const fiktiv = b.besetzung === "fiktiv";
   let cast = b.vars || {};
   if (fiktiv) {
-    cast = F.length ? F[randInt(F.length)] : randomCast(land, lang, randInt);
-    if (F.length && lang === "en") cast = castToEnglish(cast);
+    cast = F.length ? F[randInt(F.length)] : (C.randomCast || randomCast)(land, lang, randInt);
+    if (F.length && lang === "en") cast = (C.castToEnglish || castToEnglish)(cast);
   }
-  const vars = normalizeVars(CASE_ID, { ...cast, LAND: land }, premium, false, site);
+  const vars = normalizeVars(caseId, { ...cast, LAND: land }, premium, false, site);
 
   const k = b.contact || {};
   const s = (x, max = 120) => String(x ?? "").trim().slice(0, max);
@@ -167,8 +176,9 @@ async function bestellung(request, env) {
   if (fiktiv) contact.fiktiv = true;
   contact.lang = lang;
   contact.site = site;
+  contact.fall = caseId;
   if (!fiktiv && !c.zustimmung) throw new InputError(L(site, "Bitte bestätigen, dass alle genannten Personen einverstanden sind.", "Please confirm that everyone named has agreed."));
-  if (paket === "plus" && !c.ab18) throw new InputError(L(site, "Premium Plus mit ARIA ist für Teilnehmende ab 18 Jahren. Bitte bestätigen oder Basic bzw. Premium wählen.", "Premium Plus with ARIA is for participants aged 18 and over. Please confirm or choose Basic or Premium."));
+  if (paket === "plus" && !c.ab18) throw new InputError(L(site, "Premium Plus mit KI ist für Teilnehmende ab 18 Jahren. Bitte bestätigen oder Basic bzw. Premium wählen.", "Premium Plus with AI is for participants aged 18 and over. Please confirm or choose Basic or Premium."));
   // Sofortiger Beginn: ausdrückliches Verlangen + Kenntnis vom Verlust des Rücktrittsrechts (§ 18 Abs. 1 Z 1 und Z 11 FAGG)
   if (contact.kunde === "b2c") {
     if (!c.sofort) throw new InputError(L(site, "Bitte bestätigen, dass wir eure Spielrunde gleich nach dem Bezahlen anlegen dürfen.", "Please confirm that we may set up your game round right after payment."));
@@ -199,7 +209,7 @@ async function bestellung(request, env) {
   const origin = new URL(request.url).origin;
   const pre = site === "en" ? "/en" : "";
   const done = `${origin}${pre}/${site === "en" ? "ordered" : "bestellt"}.html?o=${id}&k=${token}`;
-  const title = lang === "en" ? CASES[CASE_ID].EN.META.title : CASES[CASE_ID].META.title;
+  const title = lang === "en" ? C.EN.META.title : C.META.title;
   const langName = L(site, lang === "en" ? "Englisch" : "Deutsch", lang === "en" ? "English" : "German");
   if (env.STRIPE_SECRET_KEY) {
     const cs = await stripe(env, "POST", "checkout/sessions", {
@@ -216,7 +226,7 @@ async function bestellung(request, env) {
       line_items: [{
         quantity: teams,
         price_data: { currency: "eur", unit_amount: PRICES[paket],
-          product_data: { name: L(site, `Mordsteam Fall 001 „${title}“ – ${NAMES[paket]}`, `Mordsteam Case 001 “${title}” – ${NAMES_EN[paket]}`),
+          product_data: { name: L(site, `Mordsteam Fall ${caseNr(caseId)} „${title}“ – ${NAMES[paket]}`, `Mordsteam Case ${caseNr(caseId)} “${title}” – ${NAMES_EN[paket]}`),
             description: L(site, `Pro Team · sofort spielbar, gültig bis ${validUntil} · Spielsprache ${langName}`, `Per team · playable right away, valid until ${validUntil} · game language ${langName}`) } },
       }],
       metadata: { order_id: id },
@@ -398,7 +408,7 @@ async function status(request, env) {
   }
   const ct = JSON.parse(order.contact || "{}");
   const out = { status: order.status, paket: order.paket, teams: order.teams, event_date: order.event_date, amount_cents: order.amount_cents,
-    firma: JSON.parse(order.vars).FIRMA, lang: ct.lang || "de", land: JSON.parse(order.vars).LAND || "AT", earlybird: ct.earlybird || 0, nr: orderNo(order.id), kunde: ct.kunde || "" };
+    firma: JSON.parse(order.vars).FIRMA, lang: ct.lang || "de", land: JSON.parse(order.vars).LAND || "AT", earlybird: ct.earlybird || 0, nr: orderNo(order.id), kunde: ct.kunde || "", fall_nr: caseNr(caseIdOf(ct.fall)) };
   if (order.paket === "solo") {
     out.produkt = "solo";
     const SF = soloOffer(ct.produkt);
@@ -493,7 +503,7 @@ async function fulfill(env, id, origin) {
   }
   try {
     const s = await createGameSession(env, {
-      case_id: CASE_ID, tier: TIER[o.paket] ?? 0, event_date: o.event_date, vars, max_teams: o.teams, lang: ct.lang === "en" ? "en" : "de",
+      case_id: caseIdOf(ct.fall), tier: TIER[o.paket] ?? 0, event_date: o.event_date, vars, max_teams: o.teams, lang: ct.lang === "en" ? "en" : "de",
       label: `Bestellung · ${vars.FIRMA}`, logo: o.logo,
     });
     await env.DB.prepare("UPDATE orders SET status='fulfilled', session_id=? WHERE id=?").bind(s.id, id).run();
@@ -513,7 +523,8 @@ async function sendMail(env, o, s, origin) {
   const site = c.site === "en" ? "en" : "de";
   const lang = c.lang === "en" ? "en" : "de";
   const T = (de, en) => (site === "en" ? en : de);
-  const title = lang === "en" ? CASES[CASE_ID].EN.META.title : CASES[CASE_ID].META.title;
+  const caseId = caseIdOf(c.fall), nr = caseNr(caseId);
+  const title = lang === "en" ? CASES[caseId].EN.META.title : CASES[caseId].META.title;
   const e = (x) => String(x).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
   const q = lang === "en" ? "&lang=en" : "";
   const host = origin.replace(/^https?:\/\//, "");
@@ -522,8 +533,8 @@ async function sendMail(env, o, s, origin) {
 <div style="font-family:Georgia,serif;font-weight:900;font-size:28px;letter-spacing:.5px;margin-bottom:6px"><span style="color:#B3261E">MORDS</span><span style="color:#15171C">TEAM</span></div>
 <h2 style="font-family:Georgia,serif">${T("Euer Fall ist bereit.", "Your case is ready.")}</h2>
 <p>${T("Hallo", "Hi")} ${e(c.name)},</p>
-<p>${T(`danke für eure Bestellung von <b>Fall 001 „${e(title)}“ – ${NAMES[o.paket] || o.paket}</b> für ${o.teams} Team${o.teams === 1 ? "" : "s"} bei ${e(vars.FIRMA)}. Spielbar ab sofort, 12 Monate lang – einmal startbar. Spielsprache: <b>${lang === "en" ? "Englisch" : "Deutsch"}</b>.`,
-  `thank you for ordering <b>Case 001 “${e(title)}” – ${NAMES_EN[o.paket] || o.paket}</b> for ${o.teams} team${o.teams === 1 ? "" : "s"} at ${e(vars.FIRMA)}. Playable right away, for 12 months – it can be started once. Game language: <b>${lang === "en" ? "English" : "German"}</b>.`)}</p>
+<p>${T(`danke für eure Bestellung von <b>Fall ${nr} „${e(title)}“ – ${NAMES[o.paket] || o.paket}</b> für ${o.teams} Team${o.teams === 1 ? "" : "s"} bei ${e(vars.FIRMA)}. Spielbar ab sofort, 12 Monate lang – einmal startbar. Spielsprache: <b>${lang === "en" ? "Englisch" : "Deutsch"}</b>.`,
+  `thank you for ordering <b>Case ${nr} “${e(title)}” – ${NAMES_EN[o.paket] || o.paket}</b> for ${o.teams} team${o.teams === 1 ? "" : "s"} at ${e(vars.FIRMA)}. Playable right away, for 12 months – it can be started once. Game language: <b>${lang === "en" ? "English" : "German"}</b>.`)}</p>
 <table style="border-collapse:collapse;margin:14px 0">
 <tr><td style="padding:6px 12px 6px 0">${T("Organisator-Code (nicht weitergeben):", "Organiser code (don't pass on):")}</td><td style="font-family:monospace;font-size:18px"><b>${e(s.org_code)}</b></td></tr>
 <tr><td style="padding:6px 12px 6px 0">${T("Spielcode für die Teams:", "Game code for the teams:")}</td><td style="font-family:monospace;font-size:18px"><b>${e(s.join_code)}</b></td></tr>

@@ -85,16 +85,17 @@ for (let i = 0; i < 1200; i++) {
     const yrs = F.pokalJahre(sec);
     if (new Set(yrs).size !== yrs.length || new Set(sec.INV).size !== sec.INV.length) fail(`Vitrine doppelt ${yrs}`);
     if (sol.pokal !== String(sec.INV[0])) fail("Pokal-Lösung");
+    if (sec.ROLES[sec.M_IDX] === "R5") fail("Komplize ist laut Schichtplan an der Bonkassa eingeteilt – widerspricht dem Chat");
     if (!strip(v.CHRONIK_ROWS).includes(`${sec.STROM}`)) fail("Stromausfall-Jahr fehlt in der Chronik");
   }
   if (tier >= 2) {
     if (new Set([sec.GRUENDUNG, sec.WIESE, sec.ZELT]).size !== 3 || sec.ZELT <= sec.WIESE) fail("Chronik-Jahre");
     if (strip(v.CHRONIK_ROWS).includes(String(sec.ZELT))) fail("Code-Jahr steht in der Chronik");
-    const fc = [...v.FESTCHRONIK.matchAll(/<tr><td>(\d{4})<\/td><td>(\d+)<\/td><td>([^<]+)<\/td><\/tr>/g)].map((m) => ({ y: Number(m[1]), r: Number(m[3].replace(/[^0-9]/g, "")) / Number(m[2]) }));
+    const fc = [...v.FESTCHRONIK.matchAll(/<tr><td>(\d{4})<\/td><td>([\d.,]+)<\/td><td>([^<]+)<\/td><\/tr>/g)].map((m) => ({ y: Number(m[1]), r: Number(m[3].replace(/[^0-9]/g, "")) / Number(m[2].replace(/[^0-9]/g, "")) }));
     const f = { EUR: 1 }; void f;
     const pre = fc.filter((x) => x.y < sec.START).map((x) => x.r), post = fc.filter((x) => x.y >= sec.START).map((x) => x.r);
     if (!pre.length || !post.length || Math.min(...pre) <= Math.max(...post)) fail(`Festchronik zeigt den Start nicht klar (${sec.START})`);
-    if (!F.GRUENDE[F.zielOf(sec)]) fail("Sonderauftrag ungültig");
+    { const o = F.SONDER.options(); if (!o[F.zielOf(sec)] || new Set(o.map((x) => x[0])).size !== o.length) fail("Sonderauftrag ungültig"); }
     const fb = F.ARIA.fallback({ ...cast, ...sec }, "Wonach hat sich jemand bei dir erkundigt?");
     if (!fb.includes(String(sec.ZELT))) fail("Notfall-Antwort nennt das Code-Jahr nicht");
   }
