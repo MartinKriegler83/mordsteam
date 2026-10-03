@@ -552,3 +552,6 @@ fieldset.step{grid-template-columns:minmax(0,1fr)}
 .pcard-link{margin-top:auto;font-family:var(--mono);font-size:13px;letter-spacing:.06em;color:var(--red);text-decoration:none;border-top:1px dashed var(--line);padding-top:12px}
 .pcard-link:hover{color:var(--red-dark)}
 @media (min-width:1000px){.facts.four b{font-size:26px}}
+/* Helle Abschnitte wechseln zwischen den zwei Beigetönen (Klassen setzt tools/zebra.py, nach dem Einblenden von Bewertungen menu.js) */
+main > section.bg-a{background:var(--paper)}
+main > section.bg-b{background:var(--paper-2)}

@@ -28,6 +28,6 @@
       return '<figure class="review"><span class="rs" aria-label="' + r.rating + '/5">' + "★★★★★".slice(0, r.rating) + '</span><p>' + (EN ? "“" : "„") + esc(r.text) + (EN ? "”" : "“") + '</p><small>' +
         esc((r.name || (r.produkt === "solo" || r.produkt === "friends" ? (EN ? "Investigator" : "Ermittler/in") : r.von === "spieler" ? (EN ? "Player" : "Mitspieler/in") : (EN ? "Investigator team" : "Ermittlerteam"))) + (sec.dataset.ort === "home" ? (r.produkt === "solo" ? " · Mordsteam Solo" : r.produkt === "friends" ? " · Mordsteam Friends" : " · Mordsteam Teams") : "")) + "</small></figure>";
     }).join("");
-    sec.hidden = false;
+    sec.hidden = false; if (window.msZebra) window.msZebra();
   }).catch(function () {});
 })();

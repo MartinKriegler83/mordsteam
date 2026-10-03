@@ -13,3 +13,13 @@ document.querySelectorAll("details.menu").forEach((m) => m.addEventListener("cli
     try { const u = new URL(h, location.href); if (u.origin !== location.origin || u.searchParams.has("nl")) return; u.searchParams.set("nl", tag); a.setAttribute("href", u.pathname + u.search + u.hash); } catch {}
   });
 })();
+
+// Abschnitts-Hintergründe neu verteilen (gleiche Regel wie tools/zebra.py), z. B. nachdem die Bewertungen eingeblendet wurden
+window.msZebra = function () {
+  let n = 0;
+  document.querySelectorAll("main > section").forEach((s) => {
+    s.classList.remove("bg-a", "bg-b");
+    if (s.hidden || /\b(facts|cta|sig|bh|tvid-sec)\b/.test(s.className)) return;
+    s.classList.add(n++ % 2 ? "bg-b" : "bg-a");
+  });
+};

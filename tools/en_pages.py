@@ -1,6 +1,8 @@
 # Erzeugt die englischen Seiten unter site/en/ (Kopf, Menü und Fußzeile gemeinsam).
 # Aufruf: python3 tools/en_pages.py  – danach site/en/*.html committen.
-import os, html
+import os, html, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from zebra import finish
 ROOT = os.path.join(os.path.dirname(__file__), "..", "site")
 MAP = {"index": "index", "teams": "teams", "friends": "friends", "solo": "solo", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "contact": "kontakt", "early-bird": "earlybird", "feedback": "feedback", "withdraw": "widerruf", "solo-buy": "solo-kaufen", "friends-buy": "friends-kaufen", "newsletter": "newsletter"}
 LOGO = '<svg width="30" height="30" viewBox="0 0 34 34" fill="none" stroke="#15171C" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg>'
@@ -115,7 +117,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <div class="stack" style="margin-bottom:28px"><div class="eyebrow">Who it's for</div><h2 class="h2">Made for every team with secrets</h2></div>
 <div class="audience two">
 <div class="aud"><span class="status live">CASE 001 · BOOK NOW</span><h3>Companies</h3><ul class="list"><li>Team building and offsites</li><li>Onboarding new teams</li><li>Ideal for virtual teams</li></ul></div>
-<div class="aud"><span class="status live">CASE 002 · BOOK NOW</span><h3>Clubs</h3><ul class="list"><li>Club nights and anniversaries</li><li>Holiday parties and outings</li><li>Sports, fire brigade, music, theatre and culture</li></ul></div>
+<div class="aud"><span class="status live">CASE 002 · BOOK NOW</span><h3>Clubs</h3><ul class="list"><li>Club nights and anniversaries</li><li>Team building and fun activities</li><li>Sports, fire brigade, music, theatre and culture</li></ul></div>
 </div>
 </div></section>
 
@@ -127,7 +129,6 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <div class="step"><span class="num">2</span><div><h3>Get your file</h3><p>Your personal case file arrives digitally on laptop, phone or tablet. Plus your own case website – company intranet or club website, with your logo – and the case desk for every team.</p></div></div>
 <div class="step"><span class="num">3</span><div><h3>Investigate and solve the case</h3><p>Will you find all the crucial clues? Enter everything correctly at the case desk and you've solved the case. At the end: an award ceremony, the big reveal and certificates to download.</p></div></div>
 </div>
-<p class="rolebox"><b>How it works:</b> Everyone is a detective. The culprit is a role in the case that randomly carries the name of one of you – not even they know it. Nobody has to act or lie.</p>
 </div></section>
 
 <section id="case" class="section case"><div class="wrap case-grid">
@@ -402,10 +403,9 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <div class="step"><span class="num">2</span><div><h3>Share the link</h3><p>You get one invitation link for the group. Everyone opens it on their own device and taps their name. Play at the same time on one evening – together or on a video call – or over 3, 5 or 7 days, whenever each of you has time.</p></div></div>
 <div class="step"><span class="num">3</span><div><h3>Investigate and reveal</h3><p>Everyone for themselves – talking is allowed, but every tip helps the competition: read the evidence, check alibis, solve the questions. Once everyone is done, the reveal comes for all at the same time – with a ranking, the culprit's confession and a fun award for everyone.</p></div></div>
 </div>
-<p class="rolebox"><b>How it works:</b> Everyone is a detective. The culprit is a role in the case that randomly carries the name of one of you – not even they know it. They investigate like everyone else and may find out it was them. Nobody has to act or lie.</p>
 </div></section>
 
-<section class="section" style="background:var(--paper-2)"><div class="wrap stack">
+<section class="section"><div class="wrap stack">
 <div class="eyebrow">Two ways to play</div>
 <h2 class="h2">Together in the evening – or whenever each of you has time</h2>
 <div class="modes">
@@ -629,7 +629,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 </ul>
 </div></section>
 
-<section id="case2" class="section case" style="background:var(--paper)"><div class="wrap case-grid">
+<section id="case2" class="section case"><div class="wrap case-grid">
 <div class="stack">
 <div class="eyebrow">Solo 002 · Applause for a Dead Man</div>
 <h2 class="h2">The curtain falls. The star doesn't get up again.</h2>
@@ -1128,6 +1128,7 @@ P["newsletter"] = dict(title="Newsletter – Mordsteam", desc="Be the first to h
 
 for name, p in P.items():
     out = page(name, p["title"], p["desc"], p["body"], p.get("robots"), p.get("scripts", ""), p.get("home", False), p.get("promo", False))
+    out = finish(out, "en")
     with open(os.path.join(ROOT, "en", name + ".html"), "w") as f:
         f.write(out)
 print("ok", len(P))
