@@ -408,6 +408,7 @@ button.btn-big{margin-top:14px}
 .aria-form{display:flex;gap:8px;align-items:flex-end}
 .aria-form textarea{flex:1;min-width:0;font:inherit;font-size:15px;padding:10px 12px;border:1.5px solid #CFC6EC;border-radius:10px;resize:none;background:#fff;color:#1B1F2A}
 .aria-form textarea:focus{outline:3px solid rgba(123,77,232,.3);border-color:#7B4DE8}
+.aria-tip{align-self:stretch;margin-top:4px;padding:9px 12px;border-left:4px solid var(--red,#B3261E);background:#FFF6D6;font-size:14.5px;line-height:1.45;color:#1B1F2A}
 .aria-meta{font-size:12.5px;color:#5A6378;margin:0}
 .aria-lock,.aria-note{border:1.5px dashed #7B4DE8;border-radius:12px;padding:12px;background:#fff;display:grid;gap:8px}
 .aria-note{border-style:solid;background:#F1ECFF}

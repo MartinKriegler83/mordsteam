@@ -30,7 +30,11 @@
   }
 
   async function act(aktion) {
-    if (aktion === "starten" && !confirm(t("Fall jetzt starten? Die Uhr läuft dann für alle Teams ohne Pause – und jeder Fall lässt sich nur einmal starten.", "Start the case now? The clock then runs for all teams without a pause – and each case can only be started once."))) return;
+    if (aktion === "starten") {
+      const n = (S.ranking || []).length, max = S.max_teams || n;
+      const warn = n < max ? t(`Erst ${n} von ${max} gebuchten Teams ${n === 1 ? "ist" : "sind"} angemeldet. Teams, die später dazukommen, steigen mit bereits laufender Uhr ein.\n\n`, `Only ${n} of ${max} booked teams have joined. Teams that join later start with the clock already running.\n\n`) : "";
+      if (!confirm(warn + t("Fall jetzt starten? Die Uhr läuft dann für alle Teams ohne Pause – und jeder Fall lässt sich nur einmal starten.", "Start the case now? The clock then runs for all teams without a pause – and each case can only be started once."))) return;
+    }
     if (aktion === "beenden" && !confirm(t("Runde wirklich beenden? Danach ist die Akte für alle Teams gesperrt.", "Really end the round? The file will then be locked for all teams."))) return;
     try { await MS.api("POST", "leitung/aktion", { aktion }, { "x-leitung": token }); msg = ""; }
     catch (e) { msg = e.message; }
@@ -43,6 +47,7 @@
       const d = await MS.api("GET", "leitung/aufloesung", null, { "x-leitung": token });
       solutionHtml = `<div class="panel" style="margin-top:18px"><div class="eyebrow">${t("Auflösung", "Solution")}</div>
         <ol class="list" style="margin:10px 0">${d.answers.map((a) => `<li><b>${a.label}</b><br><span class="mono">${MS.esc(a.answer)}</span>${a.detail ? ` · ${MS.esc(a.detail)}` : ""}</li>`).join("")}</ol>
+        ${(d.extra || []).map((a) => `${a.section ? `<p class="eyebrow" style="margin-top:12px">${MS.esc(a.section)}</p>` : ""}<p style="margin:6px 0"><b>${a.label}</b><br><span class="mono">${MS.esc(a.answer)}</span>${a.detail ? ` · ${MS.esc(a.detail)}` : ""}</p>`).join("")}
         <p>${d.story}</p>${d.story2 ? `<p style="margin-top:10px">${d.story2}</p>` : ""}${d.story3 ? `<p style="margin-top:10px">${d.story3}</p>` : ""}</div>`;
     } catch (e) { msg = e.message; }
     render();
@@ -54,8 +59,8 @@
     const now = Date.now() + offset;
     let steps = "";
     if (S.status === "created") steps = `<p>${t("Bereit, wann immer ihr es seid: Öffnet den Fall, dann können sich die Teams mit dem Spielcode anmelden. Gestartet wird erst im nächsten Schritt.", "Ready whenever you are: open the case and the teams can join with the game code. The clock only starts in the next step.")}</p><button class="btn btn-red" id="a-open">${t("Fall öffnen", "Open case")}</button>`;
-    if (S.status === "open") steps = `<p>${t("Die Teams melden sich jetzt an. Startet den Fall, wenn alle bereit sind – die Uhr läuft dann für alle gleichzeitig und ohne Pause.", "The teams are joining now. Start the case when everyone is ready – the clock then runs for everyone at the same time, without a pause.")}</p><button class="btn btn-red" id="a-start">${t("Fall starten", "Start case")}</button>`;
-    if (S.status === "running") steps = `<p>${t("Läuft seit", "Running for")} <b class="mono">${MS.dur(now - S.started_at)}</b>. ${t(`Übergabe der Mappe (Spielende) nach ${S.duration_min} Minuten (${MS.esc(S.tier_name || "")}). Haben alle Teams gelöst und ihre Zusatzermittlung abgeschlossen, endet die Runde automatisch und alle sehen Rangliste und Auflösung. Schafft es ein Team nicht, beendet ihr die Runde hier selbst.`, `Handover of the folder (end of game) after ${S.duration_min} minutes (${MS.esc(S.tier_name || "")}). Once all teams have solved it and closed their bonus investigation, the round ends automatically and everyone sees the ranking and the solution. If a team doesn't make it, end the round here yourself.`)}</p><button class="btn btn-line" id="a-stop">${t("Runde beenden", "End round")}</button>`;
+    if (S.status === "open") steps = `<p>${t("Die Teams melden sich jetzt an. Startet den Fall, wenn alle bereit sind – die Uhr läuft dann für alle gleichzeitig und ohne Pause.", "The teams are joining now. Start the case when everyone is ready – the clock then runs for everyone at the same time, without a pause.")}</p><p><b>${t(`${(S.ranking || []).length} von ${S.max_teams} Teams angemeldet`, `${(S.ranking || []).length} of ${S.max_teams} teams joined`)}</b></p><button class="btn btn-red" id="a-start">${t("Fall starten", "Start case")}</button>`;
+    if (S.status === "running") steps = `<p>${t("Läuft seit", "Running for")} <b class="mono">${MS.dur(now - S.started_at)}</b>. ${t(`Übergabe der Mappe (Spielende) nach ${S.duration_min} Minuten (${MS.esc(S.tier_name || "")}). Haben alle Teams gelöst und ihre Zusatzermittlung abgeschlossen, endet die Runde automatisch und alle sehen Rangliste und Auflösung. Schafft es ein Team nicht, beendet ihr die Runde hier selbst. Plant das Zeitlimit als Obergrenze: Schnelle Teams sind oft nach der Hälfte fertig – die Zusatzermittlung hält sie beschäftigt.`, `Handover of the folder (end of game) after ${S.duration_min} minutes (${MS.esc(S.tier_name || "")}). Once all teams have solved it and closed their bonus investigation, the round ends automatically and everyone sees the ranking and the solution. If a team doesn't make it, end the round here yourself. Plan the time limit as a maximum: fast teams are often done after half the time – the bonus investigation keeps them busy.`)}</p><button class="btn btn-line" id="a-stop">${t("Runde beenden", "End round")}</button>`;
     if (S.status === "finished") steps = `<p>${t("Die Runde ist beendet. Die Urkunden der Teams könnt ihr unten in der Rangliste öffnen und speichern. Rangliste und Urkunden bleiben 30 Tage abrufbar, dann werden alle Daten gelöscht.", "The round has ended. You can open and save the teams' certificates in the ranking below. Ranking and certificates remain available for 30 days, then all data is deleted.")}</p>`;
     root.innerHTML = `<div class="stack" style="gap:18px;max-width:900px">
       <div class="panel"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">

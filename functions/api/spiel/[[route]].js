@@ -614,12 +614,28 @@ function solutionInfo(session) {
     answers: qs.map((q) => ({ key: q.key, label: render(q.label, v), answer: sol[q.key],
       detail: q.key === "wer" ? who.taeter : q.key === "pin" ? L(langOf(session), `Kennwort der Notiz bei ARIA: ${v.ROOM_NEU}`, `Password of the note in ARIA: ${v.ROOM_NEU}`)
         : q.key === "anteil" ? L(langOf(session), `Scheinrechnungen ${v.SCHEIN_SUMME} minus Fachinhalt ${v.FACH_SUMME}`, `Fake invoices ${v.SCHEIN_SUMME} minus locker contents ${v.FACH_SUMME}`) : "" })),
+    extra: extraSolutions(session, c, v, plus),
     story: render(c.META.story, v),
     story2: premium ? render(c.META.story2, v) : null,
     story3: plus && c.META.story3 ? render(c.META.story3, v) : null,
   };
 }
 
+// Zusatzfragen und Sonderauftrag für die Auflösung (Organisator und Teams nach Spielende)
+function extraSolutions(session, c, v, plus) {
+  if (!c.BONUS) return [];
+  const lg = langOf(session), secrets = JSON.parse(session.secrets), sol = c.bonusSolution(secrets);
+  const names = Object.fromEntries(suspectList(v));
+  const who = (s) => String(s || "").split("").filter((l) => names[l]).map((l) => `${l} – ${names[l]}`).join(", ") || String(s || "");
+  const out = c.BONUS.map((q, i) => ({ key: q.key, section: i === 0 ? L(lg, "Zusatzermittlung", "Bonus investigation") : "", label: render(q.label, v),
+    answer: q.pattern === "letter" || q.pattern === "letters" ? who(sol[q.key]) : sol[q.key], detail: "" }));
+  if (plus && c.SONDER) {
+    const opts = c.SONDER.options();
+    out.push({ key: "s_ziel", section: L(lg, "Sonderauftrag", "Special assignment"), label: render(c.SONDER.label, v),
+      answer: opts[c.zielOf(secrets)][1], detail: L(lg, "Antwort im Verhör, sobald ein Beweis vorgehalten wird", "revealed in the interrogation once evidence is put forward") });
+  }
+  return out;
+}
 async function aufloesung({ session }) {
   const ok = session.status === "finished" || (session.status === "running" && (!!session.test_mode ||
     Date.now() - session.started_at >= RULES.solutionAfterMin * 60000));
@@ -858,7 +874,11 @@ async function sonderGet({ env, team, session }) {
   const c = caseOf(session);
   if (!sonderEligible(session, team)) return json({ open: false });
   const msgs = await sonderMsgs(env, team);
-  return json({ open: true, msgs, used: msgs.filter((m) => m.role === "user").length, max: c.SONDER_MAX, max_chars: ARIA_LIMITS.maxChars });
+  const asked = msgs.filter((m) => m.role === "user");
+  // Funkspruch: nach tipAfter Fragen ohne vorgehaltenen Beweis ein Hinweis, wie man {M} zum Reden bringt
+  const S = c.SONDER, n = S.tipAfter || 0;
+  const tip = n && asked.length >= n && S.evidence && !asked.slice(0, n).some((m) => S.evidence.test(m.text)) ? usText(sonderX(session), render(S.tip, buildVars(session))) : null;
+  return json({ open: true, msgs, used: asked.length, max: c.SONDER_MAX, max_chars: ARIA_LIMITS.maxChars, tip });
 }
 async function sonderChat({ request, env, team, session }) {
   const c = caseOf(session), lg = langOf(session);

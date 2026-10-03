@@ -294,7 +294,7 @@
     const r = $("reveal");
     if (r) r.onclick = () => {
       $("revealbox").innerHTML = `<div class="answers">${A.answers.map((a, i) => `<div><i>${pad(i + 1)}</i><span>${a.label}</span><b>${MS.esc(a.answer)}${a.detail ? ` · ${MS.esc(a.detail)}` : ""}</b></div>`).join("")}
-</div>
+</div>${(A.extra || []).map((a, i) => `${a.section ? `<p class="eyebrow" style="margin-top:18px">${MS.esc(a.section)}</p>` : ""}<div class="answers"><div><i>${a.key === "s_ziel" ? "★" : "+" + (i + 1)}</i><span>${a.label}</span><b>${MS.esc(a.answer)}${a.detail ? ` · ${MS.esc(a.detail)}` : ""}</b></div></div>`).join("")}
         <p class="story">${A.story}</p>${A.story2 ? `<p class="story" style="margin-top:14px">${A.story2}</p>` : ""}${A.story3 ? `<p class="story" style="margin-top:14px">${A.story3}</p>` : ""}`;
     };
   }
@@ -366,7 +366,8 @@
       </section>`;
   }
   function sonderLog() {
-    const m = (sonder ? sonder.msgs : []).map((x) => `<div class="aria-b ${x.role === "user" ? "me" : "bot"}">${nl2br(x.text)}</div>`).join("");
+    const m = (sonder ? sonder.msgs : []).map((x) => `<div class="aria-b ${x.role === "user" ? "me" : "bot"}">${nl2br(x.text)}</div>`).join("")
+      + (sonder && sonder.tip ? `<div class="aria-tip">${MS.esc(sonder.tip)}</div>` : "");
     return (m || `<p class="aria-empty">${t("Noch keine Fragen gestellt.", "No questions asked yet.")}</p>`) + (sBusy ? `<div class="aria-b bot typing"><span></span><span></span><span></span></div>` : "");
   }
   async function loadSonder() {
