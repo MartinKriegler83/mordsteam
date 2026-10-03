@@ -54,7 +54,7 @@ export async function onRequest(ctx) {
     if (route.startsWith("admin/")) {
       if (!env.ADMIN_KEY) return fail("ADMIN_KEY ist in dieser Umgebung nicht gesetzt (oder das Deployment ist älter als die Variable).", 503);
       if ((request.headers.get("x-admin") || "").trim() !== String(env.ADMIN_KEY).trim()) return fail("Nicht berechtigt.", 401);
-      if (route === "admin/meta" && method === "GET") return adminMeta();
+      if (route === "admin/meta" && method === "GET") return adminMeta(request);
       if (route === "admin/sessions" && method === "GET") return adminList(env);
       if (route === "admin/session" && method === "POST") return adminCreate(request, env);
       if (route === "admin/delete" && method === "POST") return adminDelete(request, env);
@@ -233,6 +233,8 @@ async function teamState({ env, team, session, viewer, request }) {
     max_viewers: RULES.maxViewers,
     firma: v.FIRMA,
     fall: c.META.title,
+    case_id: session.case_id || "fall-001",
+    ui: uiTexts(c, v),
     intro: c.META.intro ? render(c.META.intro, v) : "",
     opfer: String(JSON.parse(session.vars).OPFER || ""),
     boss: String(JSON.parse(session.vars).BOSS || ""),
@@ -272,6 +274,12 @@ async function teamState({ env, team, session, viewer, request }) {
   });
 }
 
+// Texte der Oberfläche je Fall (Fall 002 …); Fall 001 nutzt die Standardtexte in fall.js
+function uiTexts(c, v) {
+  if (!c.UI) return null;
+  const vv = { ...v, WRONG: RULES.wrongPenaltyMin };
+  return Object.fromEntries(Object.entries(c.UI).map(([k, t]) => [k, Array.isArray(t) ? t.map((x) => render(x, vv)) : render(String(t), vv)]));
+}
 async function akte({ team, session, viewer }) {
   const c = caseOf(session);
   const v = buildVars(session);
@@ -293,12 +301,16 @@ async function firma({ session }) {
   const slug = firmaRaw.toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
     .replace(/\b(gmbh|ag|kg|og|e\.?u\.?|co)\b/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "firma";
   const tld = { US: "com", XX: "com", GB: "co.uk", AU: "com.au", NZ: "co.nz" }[v.LAND] || v.LAND.toLowerCase();
-  return json({ name: firmaRaw, logo: session.logo || null, domain: `intranet.${slug}.${tld}`, intranet: !!w.intranet, login_label: w.login.label || "Login",
-    pages: [...w.pages.map((p) => ({ id: p.id, title: p.title, html: usText(v, (p.id === "news" && isPlus(session) && c.ARIA ? c.ARIA.news : "")) + render(p.html, v) })),
-      ...(isPlus(session) && c.ARIA ? [{ id: "aria", title: "ARIA", aria: true, html: "" }] : [])] });
+  const prefix = (c.UI && c.UI.domainPrefix) || "intranet";
+  const ariaTitle = c.ARIA && typeof c.ARIA.title === "function" ? c.ARIA.title(ariaX(session), langOf(session) === "en") : "ARIA";
+  return json({ name: firmaRaw, logo: session.logo || null, domain: `${prefix}.${slug}.${tld}`, intranet: !!w.intranet, login_label: w.login.label || "Login",
+    pages: [...w.pages.map((p) => ({ id: p.id, title: p.title, html: usText(v, (p.id === "news" && isPlus(session) && c.ARIA && c.ARIA.news ? c.ARIA.news : "")) + render(p.html, v) })),
+      ...(isPlus(session) && c.ARIA ? [{ id: "aria", title: ariaTitle, aria: true, html: "" }] : [])] });
 }
 
 function partnerPassword(session) {
+  const c = caseOf(session);
+  if (c.FIRMA_WEB.login.password) return c.FIRMA_WEB.login.password({ ...JSON.parse(session.vars), ...JSON.parse(session.secrets) });
   const x = JSON.parse(session.secrets);
   return `${x.HUND || "Bruno"}${x.JAHR || x.GRUENDUNG || "2011"}`.toLowerCase();
 }
@@ -312,6 +324,8 @@ async function firmaLogin({ request, env, team, session }) {
     const n = (team.login_fails || 0) + 1;
     await env.DB.prepare("UPDATE teams SET login_fails=? WHERE id=?").bind(n, team.id).run();
     let m = L(lg, "Benutzername oder Passwort falsch.", "Wrong user name or password.");
+    const lo = c.FIRMA_WEB.login;
+    if (lo.hint2) { if (n >= 4) m += " " + lo.hint4; else if (n >= 2) m += " " + lo.hint2; return fail(m, 403); }
     if (n >= 4) m += " " + L(lg, "Helpdesk: Den treuesten Begleiter kennt sogar die Lokalzeitung – und das Jahr steht im Mitarbeiterporträt im Intranet.",
       "Helpdesk: Even the local paper knows the most loyal companion – and the year is in the staff portrait on the intranet.");
     else if (n >= 2) m += " " + L(lg, "Passwort-Hinweis des Kontos: „Name meines treuesten Begleiters + das Jahr, in dem ich hier angefangen habe“ – alles klein, ohne Leerzeichen.",
@@ -400,14 +414,24 @@ async function ariaMsgs(env, team) {
 }
 async function ariaGet({ env, team, session }) {
   const c = caseOf(session);
-  if (!isPlus(session) || !c.ARIA) return fail(L(langOf(session), "ARIA gibt es nur im Paket Premium Plus.", "ARIA is only available in the Premium Plus package."), 404);
+  if (!isPlus(session) || !c.ARIA) return fail(L(langOf(session), `${ariaName(c, session)} gibt es nur im Paket Premium Plus.`, `${ariaName(c, session)} is only available in the Premium Plus package.`), 404);
   const live = stageOf(session, team) >= 3;
   const msgs = live ? await ariaMsgs(env, team) : [];
   return json({
     live, msgs,
     used: msgs.filter((m) => m.role === "user").length, max: ARIA_LIMITS.maxMsgs, max_chars: ARIA_LIMITS.maxChars,
-    unlocked: !!team.aria_unlocked_at, note: team.aria_unlocked_at ? usText(ariaX(session), c.ARIA.note(ariaX(session))) : null,
+    lock: !!c.ARIA.checkPassword,
+    unlocked: !!team.aria_unlocked_at, note: team.aria_unlocked_at && c.ARIA.note ? usText(ariaX(session), c.ARIA.note(ariaX(session))) : null,
+    tip: ariaTip(c.ARIA, msgs.filter((m) => m.role === "user"), session),
   });
+}
+// Name der KI-Figur im Finale (Fall 001: ARIA, Fall 002: Ehrenobmann/-obfrau)
+const ariaName = (c, session) => (c.ARIA && typeof c.ARIA.title === "function" ? c.ARIA.title(ariaX(session), langOf(session) === "en") : "ARIA");
+// Funkspruch nach tipAfter Fragen ohne die entscheidende Frage (nur Fälle, die das vorsehen)
+function ariaTip(A, asked, session) {
+  const n = A.tipAfter || 0;
+  if (!n || !A.evidence || asked.length < n || asked.slice(0, n).some((m) => A.evidence.test(m.text))) return null;
+  return render(A.tip, buildVars(session));
 }
 // Zeitsperre gegen Dauerfeuer (gilt für das ganze Team, alle Geräte)
 async function ariaGate(env, team) {
@@ -418,13 +442,13 @@ async function ariaGate(env, team) {
 async function ariaChat({ request, env, team, session }) {
   const c = caseOf(session);
   const lg = langOf(session);
-  if (!isPlus(session) || !c.ARIA || stageOf(session, team) < 3) return fail(L(lg, "ARIA ist noch nicht freigeschaltet.", "ARIA isn't unlocked yet."), 403);
+  if (!isPlus(session) || !c.ARIA || stageOf(session, team) < 3) return fail(L(lg, `${ariaName(c, session)} ist noch nicht freigeschaltet.`, `${ariaName(c, session)} isn't unlocked yet.`), 403);
   const b = await body(request);
   const text = String(b.text || "").replace(/\s+/g, " ").trim().slice(0, ARIA_LIMITS.maxChars);
   if (!text) return fail(L(lg, "Bitte eine Frage eingeben.", "Please enter a question."));
   const used = (await env.DB.prepare("SELECT COUNT(*) AS n FROM aria_msgs WHERE team_id=? AND role='user'").bind(team.id).first()).n;
-  if (used >= ARIA_LIMITS.maxMsgs) return fail(L(lg, "ARIA braucht eine Pause: Euer Team hat alle Nachrichten verbraucht. Die Hinweise der Zentrale kommen trotzdem.", "ARIA needs a break: your team has used up all its messages. Headquarters will still send hints."), 429);
-  if (!(await ariaGate(env, team))) return fail(L(lg, "ARIA tippt noch … einen Moment.", "ARIA is still typing … one moment."), 429);
+  if (used >= ARIA_LIMITS.maxMsgs) return fail(L(lg, `${ariaName(c, session)} braucht eine Pause: Euer Team hat alle Nachrichten verbraucht. Die Hinweise der Zentrale kommen trotzdem.`, `${ariaName(c, session)} needs a break: your team has used up all its messages. Headquarters will still send hints.`), 429);
+  if (!(await ariaGate(env, team))) return fail(L(lg, `${ariaName(c, session)} tippt noch … einen Moment.`, `${ariaName(c, session)} is still typing … one moment.`), 429);
   const now = Date.now();
   await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, now, "user", text).run();
   const x = ariaX(session);
@@ -458,7 +482,7 @@ async function ariaChat({ request, env, team, session }) {
     if (!reply) throw new Error("leer");
   } catch (e) {
     if (!logged && env.ANTHROPIC_API_KEY) await logAI(env, null, false);   // Zeitüberschreitung, Netzwerkfehler
-    reply = usText(x, c.ARIA.fallback(x));
+    reply = usText(x, c.ARIA.fallback(x, text));
   }
   await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, Date.now(), "assistant", reply).run();
   return json({ ok: true });
@@ -466,7 +490,8 @@ async function ariaChat({ request, env, team, session }) {
 async function ariaKennwort({ request, env, team, session }) {
   const c = caseOf(session);
   const lg = langOf(session);
-  if (!isPlus(session) || !c.ARIA || stageOf(session, team) < 3) return fail(L(lg, "ARIA ist noch nicht freigeschaltet.", "ARIA isn't unlocked yet."), 403);
+  if (!isPlus(session) || !c.ARIA || stageOf(session, team) < 3) return fail(L(lg, `${ariaName(c, session)} ist noch nicht freigeschaltet.`, `${ariaName(c, session)} isn't unlocked yet.`), 403);
+  if (!c.ARIA.checkPassword) return fail(L(lg, "Hier gibt es keine geschützte Notiz.", "There is no protected note here."), 404);
   const x = ariaX(session);
   if (team.aria_unlocked_at) return json({ ok: true, note: usText(x, c.ARIA.note(x)) });
   const b = await body(request);
@@ -554,6 +579,8 @@ async function leitungState({ env, session }) {
     premium: isPremium(session),
     tier: tierOf(session),
     tier_name: TIER_NAMES[tierOf(session)],
+    ui_end: caseOf(session).UI ? uiTexts(caseOf(session), buildVars(session)).leitungEnd : null,
+    ui_akte: caseOf(session).UI ? caseOf(session).UI.akte : null,
     max_teams: session.max_teams || RULES.maxTeams,
     now: Date.now(),
     started_at: session.started_at,
@@ -644,14 +671,15 @@ async function aufloesung({ session }) {
 }
 
 // ---------- Admin ----------
-function adminMeta() {
-  const c = CASES["fall-001"];
+function adminMeta(request) {
+  const id = new URL(request.url).searchParams.get("case");
+  const c = CASES[CASES[id] ? id : "fall-001"];
   return json({
-    cases: [{ id: "fall-001", title: c.META.title }],
+    cases: Object.entries(CASES).map(([k, x]) => ({ id: k, title: x.META.title, audience: x.META.audience })),
     tiers: TIER_NAMES,
     countries: COUNTRY_ORDER.map((k) => ({ code: k, de: COUNTRIES[k].de, en: COUNTRIES[k].en })),
     langs: ["de", "en"],
-    fields: c.FIELDS.map(([key, label, example, type]) => ({ key, label, example, type: type || "text" })),
+    fields: c.FIELDS.map(([key, label, example, type, opts]) => ({ key, label, example, type: type || "text", options: opts || null })),
   });
 }
 async function adminList(env) {
@@ -667,9 +695,10 @@ async function adminCreate(request, env) {
     // Schnelltest: fiktive Besetzung wie im Shop (AT/DE/CH handverlesen, sonst Generator)
     if (b.cast === "fiktiv") {
       const land = COUNTRY_ORDER.includes(b.vars?.LAND) ? b.vars.LAND : "AT";
-      const F = (CASES["fall-001"].FICTIONS || {})[land] || [];
-      let cast = F.length ? F[randInt(F.length)] : randomCast(land, b.lang, randInt);
-      if (F.length && b.lang === "en") cast = castToEnglish(cast);
+      const cc = CASES[b.case_id] || CASES["fall-001"];
+      const F = (cc.FICTIONS || {})[land] || [];
+      let cast = F.length ? F[randInt(F.length)] : (cc.randomCast || randomCast)(land, b.lang, randInt);
+      if (F.length && b.lang === "en") cast = (cc.castToEnglish || castToEnglish)(cast);
       b.vars = { ...cast, LAND: land };
       if (!b.label) b.label = `Schnelltest ${TIER_NAMES[Number(b.tier) || 0]} · ${land}/${b.lang === "en" ? "EN" : "DE"} · ${cast.FIRMA}`;
     }

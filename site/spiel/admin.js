@@ -20,7 +20,7 @@
   async function load() {
     if (!key) return keyView();
     try {
-      meta = meta || (await MS.api("GET", "admin/meta", null, H()));
+      meta = meta || (await MS.api("GET", "admin/meta?case=" + encodeURIComponent(qCase), null, H()));
       const list = await MS.api("GET", "admin/sessions", null, H());
       const ord = await MS.api("GET", "admin/orders", null, H()).catch(() => ({ orders: [] }));
       const st = await MS.api("GET", "admin/stats" + (statTests ? "?tests=1" : ""), null, H()).catch(() => ({ stats: {} }));
@@ -67,11 +67,11 @@
     return v;
   }
   const TN = ["Basic", "Premium", "Premium Plus"], TMIN = [50, 70, 90];
-  let qLang = "de", qLand = "AT";
+  let qLang = "de", qLand = "AT", qCase = (() => { try { return sessionStorage.getItem("ms_admcase") || "fall-001"; } catch { return "fall-001"; } })();
   async function quickTest(tier) {
     const premium = tier >= 1;
     const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Vienna" }).format(new Date());
-    created = await MS.api("POST", "admin/session", { event_date: today, tier, test_mode: true, cast: "fiktiv", lang: qLang, vars: { LAND: qLand } }, H());
+    created = await MS.api("POST", "admin/session", { case_id: qCase, event_date: today, tier, test_mode: true, cast: "fiktiv", lang: qLang, vars: { LAND: qLand } }, H());
     const vars = { FIRMA: created.quick.firma, OPFER: created.quick.opfer, BOSS: created.quick.boss };
     for (let i = 1; i <= 6; i++) vars["S" + i] = created.quick.people[i - 1];
     // Organisator gleich anmelden und den Fall öffnen
@@ -370,6 +370,7 @@
       </div>
       <div class="panel"><div class="eyebrow">Schnelltest</div>
         <p style="margin:8px 0 14px">Ein Klick: Runde mit fiktiver Besetzung anlegen (Land und Spielsprache wählbar), Fall öffnen und dich als Organisator anmelden.</p>
+        <div class="field" style="margin-bottom:12px"><label for="qcase">Teams-Fall (gilt auch für „Eigene Runde“)</label><select id="qcase">${meta.cases.map((c) => `<option value="${c.id}" ${c.id === qCase ? "selected" : ""}>${c.id} · ${MS.esc(c.title)} (${MS.esc(c.audience || "")})</option>`).join("")}</select></div>
         <div class="two" style="margin-bottom:12px"><div class="field"><label for="qlang">Spielsprache</label><select id="qlang">${meta.langs.map((l) => `<option value="${l}" ${l === qLang ? "selected" : ""}>${l === "en" ? "Englisch" : "Deutsch"}</option>`).join("")}</select></div>
         <div class="field"><label for="qland">Land</label><select id="qland">${meta.countries.map((c) => `<option value="${c.code}" ${c.code === qLand ? "selected" : ""}>${MS.esc(c.de)} (${c.code})</option>`).join("")}</select></div></div>
         <div class="actions-row"><button class="btn btn-red" data-quick="0">Basic (50 Min.)</button><button class="btn btn-line" data-quick="1">Premium (70 Min.)</button><button class="btn btn-line" data-quick="2">Premium Plus (90 Min., ARIA)</button></div>
@@ -392,6 +393,7 @@
         <p class="small">Leere Felder bekommen den Beispielwert (grau). Basic nutzt Verdächtige 1–5, Premium 1–6. Wer Täter/in ist, entscheidet der Zufall.</p>
         <div class="two">${meta.fields.map((f) => `<div class="field"><label for="f_${f.key}">${MS.esc(f.label)}</label>${f.type === "anrede"
           ? `<select id="f_${f.key}" name="${f.key}">${["Frau", "Herr"].map((o) => `<option ${o === f.example ? "selected" : ""}>${o}</option>`).join("")}</select>`
+          : f.type === "select" ? `<select id="f_${f.key}" name="${f.key}">${(f.options || []).map((o) => `<option value="${o[0]}">${MS.esc(o[1])}</option>`).join("")}</select>`
           : `<input id="f_${f.key}" name="${f.key}" placeholder="${MS.esc(f.example)}" maxlength="80">`}</div>`).join("")}</div>
         <div><button class="btn btn-red" type="submit">Runde anlegen</button></div>
         <p class="err">${MS.esc(err)}</p>
@@ -418,7 +420,7 @@
       try {
         created = await MS.api("POST", "admin/session", {
           label: f.label.value, event_date: f.event_date.value, max_teams: Number(f.max_teams.value),
-          test_mode: f.test_mode.checked, tier: Number(f.tier.value), lang: f.elements.lang.value, vars,
+          case_id: qCase, test_mode: f.test_mode.checked, tier: Number(f.tier.value), lang: f.elements.lang.value, vars,
         }, H());
         // Organisator-Ansicht auf genau diese Runde umstellen (sonst öffnet sie die zuletzt benutzte Runde)
         const o = await MS.api("POST", "leitung/login", { code: created.org_code });
@@ -455,6 +457,8 @@
     };
     const ql = document.getElementById("qlang"), qd = document.getElementById("qland");
     if (ql) ql.onchange = () => (qLang = ql.value);
+    const qc = document.getElementById("qcase");
+    if (qc) qc.onchange = () => { qCase = qc.value; try { sessionStorage.setItem("ms_admcase", qCase); } catch {} meta = null; load(); };
     if (qd) qd.onchange = () => (qLand = qd.value);
     const fr = (force) => async () => { try { const d = await MS.api("POST", "admin/feedback-run", { force }, H()); fbMsg = `${d.sent.length} bearbeitet: ` + d.sent.map((x) => `${MS.esc(x.email || "")} ${x.sent ? "✓ gesendet" : "– nicht gesendet (Link oben)"}`).join(", "); } catch (e2) { fbMsg = e2.message; } load(); };
     const b1 = document.getElementById("fbrun"), b2 = document.getElementById("fbforce");

@@ -105,7 +105,7 @@
       const pen = S.penalty_min ? `<span class="pen" title="${t("Strafzeit", "Penalty time")}">+${S.penalty_min} ${t("Min.", "min")}</span>` : "";
       const cd = MS.countdown(left);
       clock.className = "clock" + cd.cls;
-      clock.innerHTML = `<span class="clk"><span class="clk-label">${left > 0 ? t("Übergabe in", "Handover in") : t("Übergabe verpasst", "Handover missed")}</span>${cd.html}${pen}</span>`;
+      clock.innerHTML = `<span class="clk"><span class="clk-label">${left > 0 ? (S.ui ? S.ui.clockIn : t("Übergabe in", "Handover in")) : (S.ui ? S.ui.clockLate : t("Übergabe verpasst", "Handover missed"))}</span>${cd.html}${pen}</span>`;
     }
     const nh = $("nexthint");
     if (nh && S.next_hint) nh.textContent = MS.dur(Math.max(0, S.next_hint.time - now));
@@ -161,8 +161,11 @@
     const n = running() && docs ? docs.filter((d) => !seen.has(d.id)).length : 0;
     b.hidden = !n; b.textContent = n;
   }
+  // Texte je Fall (Fall 002 …): S.ui überschreibt die Standardtexte von Fall 001
+  const U = (k, de, en) => (S && S.ui && S.ui[k] != null ? S.ui[k] : t(de, en));
   function renderView() {
     akteBadge();
+    const wt = tabsEl.querySelector('[data-tab="firma"]'); if (wt && S && S.ui && S.ui.webBadge) wt.textContent = S.ui.webBadge;
     if (S.status === "finished") return viewFinal();
     if (S.solved) return viewSolved();
     if (S.status === "created" || S.status === "open") return viewWaiting();
@@ -271,9 +274,9 @@
     const A = S.aufloesung;
     root.innerHTML = `<div class="final">
       <section class="paper final-head">
-        <div class="bigstamp ${S.solved ? "" : "grey"}"><div><small>${t("MORDSTEAM · AKTE 001", "MORDSTEAM · FILE 001")}</small><strong>${S.solved ? t("FALL GELÖST", "CASE SOLVED") : t("AKTE GESCHLOSSEN", "FILE CLOSED")}</strong><small>${MS.esc(/^team\b/i.test(S.team) ? S.team : "Team " + S.team).toUpperCase()}</small></div></div>
+        <div class="bigstamp ${S.solved ? "" : "grey"}"><div><small>MORDSTEAM · ${U("akte", "Akte 001", "File 001").toUpperCase()}</small><strong>${S.solved ? t("FALL GELÖST", "CASE SOLVED") : t("AKTE GESCHLOSSEN", "FILE CLOSED")}</strong><small>${MS.esc(/^team\b/i.test(S.team) ? S.team : "Team " + S.team).toUpperCase()}</small></div></div>
         <h1>${S.solved ? t("Stark ermittelt!", "Great detective work!") : t("Die Zeit ist um.", "Time's up.")}</h1>
-        <p class="lead">${S.solved ? (S.plus ? t(`Täter überführt, Mitwisser enttarnt, Schließfach geknackt – ${MS.esc(S.boss || "die Chefetage")} bekommt die ganze Wahrheit.`, `Culprit convicted, accomplice exposed, locker cracked – ${MS.esc(S.boss || "the top floor")} gets the whole truth.`) : S.premium ? t(`Täter überführt, Mitwisser enttarnt, Geld gefunden – ${MS.esc(S.boss || "die Chefetage")} bekommt die ganze Wahrheit.`, `Culprit convicted, accomplice exposed, money found – ${MS.esc(S.boss || "the top floor")} gets the whole truth.`) : t(`Ihr habt den Fall gelöst, bevor die Mappe bei ${MS.esc(S.boss || "der Chefetage")} sein musste.`, `You solved the case before the folder was due with ${MS.esc(S.boss || "the top floor")}.`)) : t(`${MS.esc(S.boss || "Die Chefetage")} wartet vergeblich auf die Mappe. Aber jetzt erfahrt ihr, wer es wirklich war.`, `${MS.esc(S.boss || "The top floor")} waits in vain for the folder. But now you'll find out who really did it.`)}</p>
+        <p class="lead">${S.ui ? MS.esc(S.solved ? (S.plus ? S.ui.leadPlus : S.premium ? S.ui.leadPremium : S.ui.leadBasic) : S.ui.leadFail) : S.solved ? (S.plus ? t(`Täter überführt, Mitwisser enttarnt, Schließfach geknackt – ${MS.esc(S.boss || "die Chefetage")} bekommt die ganze Wahrheit.`, `Culprit convicted, accomplice exposed, locker cracked – ${MS.esc(S.boss || "the top floor")} gets the whole truth.`) : S.premium ? t(`Täter überführt, Mitwisser enttarnt, Geld gefunden – ${MS.esc(S.boss || "die Chefetage")} bekommt die ganze Wahrheit.`, `Culprit convicted, accomplice exposed, money found – ${MS.esc(S.boss || "the top floor")} gets the whole truth.`) : t(`Ihr habt den Fall gelöst, bevor die Mappe bei ${MS.esc(S.boss || "der Chefetage")} sein musste.`, `You solved the case before the folder was due with ${MS.esc(S.boss || "the top floor")}.`)) : t(`${MS.esc(S.boss || "Die Chefetage")} wartet vergeblich auf die Mappe. Aber jetzt erfahrt ihr, wer es wirklich war.`, `${MS.esc(S.boss || "The top floor")} waits in vain for the folder. But now you'll find out who really did it.`)}</p>
         ${bilanz()}
       </section>
       <section class="paper">
@@ -302,7 +305,7 @@
   function viewSolved() {
     root.innerHTML = `<div class="final">
       <section class="paper final-head">
-        <div class="bigstamp"><div><small>${t("MORDSTEAM · AKTE 001", "MORDSTEAM · FILE 001")}</small><strong>${t("FALL GELÖST", "CASE SOLVED")}</strong><small>${MS.esc(/^team\b/i.test(S.team) ? S.team : "Team " + S.team).toUpperCase()}</small></div></div>
+        <div class="bigstamp"><div><small>MORDSTEAM · ${U("akte", "Akte 001", "File 001").toUpperCase()}</small><strong>${t("FALL GELÖST", "CASE SOLVED")}</strong><small>${MS.esc(/^team\b/i.test(S.team) ? S.team : "Team " + S.team).toUpperCase()}</small></div></div>
         <h1>${t("Stark ermittelt!", "Great detective work!")}</h1>
         <p class="lead">${t("Gelöst in", "Solved in")} <b>${MS.dur(S.score_ms)}</b>${S.penalty_min ? t(` (inkl. ${S.penalty_min} Min. Strafzeit)`, ` (incl. ${S.penalty_min} min penalty)`) : ""}.</p>
         <p class="muted">${t("Pssst – bitte nichts verraten, vielleicht ermitteln die anderen noch. Wer gewonnen hat, zeigt die Siegerehrung: Sie erscheint hier mit der Auflösung, sobald euer Organisator die Runde beendet.", "Shh – please don't give anything away, the others may still be investigating. The award ceremony shows who won: it appears here with the solution as soon as your organiser ends the round.")}</p>
@@ -427,16 +430,16 @@
   function viewEinsatz() {
     const n = docs.length;
     root.innerHTML = `<section class="brief"><div class="paper">
-      <div class="brief-top"><span class="eyebrow">${t("Einsatzbefehl · Akte 001", "Briefing · File 001")}</span><span class="conf">${t("Streng vertraulich", "Strictly confidential")}</span></div>
-      <h1>${t("Ein Giftanschlag.<br>Eine rote Mappe.<br><em>Einer von euch.</em>", "A poisoning.<br>A red folder.<br><em>One of you.</em>")}</h1>
+      <div class="brief-top"><span class="eyebrow">${t("Einsatzbefehl", "Briefing")} · ${U("akte", "Akte 001", "File 001")}</span><span class="conf">${t("Streng vertraulich", "Strictly confidential")}</span></div>
+      <h1>${U("briefH1", "Ein Giftanschlag.<br>Eine rote Mappe.<br><em>Einer von euch.</em>", "A poisoning.<br>A red folder.<br><em>One of you.</em>")}</h1>
       <p class="sub">${S.intro} ${t("Die Uhr oben läuft bereits.", "The clock at the top is already running.")}</p>
       <ol class="steps">
         <li><span class="n">1</span><div><b>${t("Akte lesen", "Read the file")}</b><span>${t(`${n} Beweisstücke. Teilt sie untereinander auf und redet miteinander.`, `${n} pieces of evidence. Split them up and talk to each other.`)}</span></div></li>
-        <li><span class="n">2</span><div><b>${t("Intranet durchforsten", "Search the intranet")}</b><span>${t("Euer eigenes Intranet verrät mehr, als es sollte.", "Your own intranet gives away more than it should.")}</span></div></li>
+        <li><span class="n">2</span><div><b>${S.ui ? S.ui.step2[0] : t("Intranet durchforsten", "Search the intranet")}</b><span>${S.ui ? S.ui.step2[1] : t("Euer eigenes Intranet verrät mehr, als es sollte.", "Your own intranet gives away more than it should.")}</span></div></li>
         <li><span class="n">3</span><div><b>${t("Vier Antworten, ein Versuch", "Four answers, one attempt")}</b><span>${t(`Geprüft wird alles auf einmal. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten Strafzeit.`, `Everything is checked at once. Every wrong attempt costs ${S.rules.wrong} minutes of penalty time.`)}</span></div></li>
         <li><span class="n">4</span><div><b>${t("Funk der Zentrale", "Radio from HQ")}</b><span>${t("Hängt ihr fest, meldet sich die Zentrale von selbst – für alle Teams gleichzeitig, ohne Strafzeit.", "If you get stuck, HQ gets in touch by itself – for all teams at the same time, without penalty.")}</span></div></li>
         <li><span class="n">5</span><div><b>Fair Play</b><span>${t("Keine KI von außen, keine Suchmaschine. Nur ihr und die Akte.", "No outside AI, no search engine. Just you and the file.")}</span></div></li>
-        ${S.plus ? `<li class="prem"><span class="n">6</span><div><b>${t("Zwei Akte und ein Finale", "Two acts and a finale")}</b><span>${t("Nach Akt 1 schickt die Zentrale neue Beweisstücke. Im Finale wird ARIA freigeschaltet, die KI-Assistenz eures Intranets.", "After act 1, HQ sends new evidence. In the finale, ARIA – your intranet's AI assistant – is unlocked.")}</span></div></li>`
+        ${S.plus ? `<li class="prem"><span class="n">6</span><div><b>${t("Zwei Akte und ein Finale", "Two acts and a finale")}</b><span>${U("planPlus", "Nach Akt 1 schickt die Zentrale neue Beweisstücke. Im Finale wird ARIA freigeschaltet, die KI-Assistenz eures Intranets.", "After act 1, HQ sends new evidence. In the finale, ARIA – your intranet's AI assistant – is unlocked.")}</span></div></li>`
           : S.premium ? `<li class="prem"><span class="n">6</span><div><b>${t("Zwei Akte", "Two acts")}</b><span>${t("Nach Akt 1 schickt die Zentrale neue Beweisstücke.", "After act 1, HQ sends new evidence.")}</span></div></li>` : ""}
       </ol>
       <h2 class="qhead">${t("Eure vier Fragen", "Your four questions")}${S.premium ? t(" in Akt 1", " in act 1") : ""}</h2>
@@ -445,7 +448,7 @@
       <div class="more-devices">
         <div class="qr" id="qr" aria-label="${t("QR-Code für Mitlesegeräte", "QR code for follow-along devices")}"></div>
         <div><b>${t("Ihr wollt mehr Geräte verwenden?", "Want to use more devices?")}</b>
-          <p>${t(`Scannt den Code mit weiteren Handys oder Laptops eures Teams (bis zu ${S.max_viewers} Geräte, verbunden: ${S.viewers}). Dort seht ihr Akte, Intranet und Funk – so könnt ihr euch die Beweisstücke aufteilen.`, `Scan the code with more phones or laptops in your team (up to ${S.max_viewers} devices, connected: ${S.viewers}). They show the file, intranet and radio – so you can split up the evidence.`)}</p>
+          <p>${t(`Scannt den Code mit weiteren Handys oder Laptops eures Teams (bis zu ${S.max_viewers} Geräte, verbunden: ${S.viewers}). Dort seht ihr Akte, ${U("webBadge", "Intranet", "Intranet")} und Funk – so könnt ihr euch die Beweisstücke aufteilen.`, `Scan the code with more phones or laptops in your team (up to ${S.max_viewers} devices, connected: ${S.viewers}). They show the file, ${U("webBadge", "intranet", "intranet").toLowerCase()} and radio – so you can split up the evidence.`)}</p>
           <p class="small"><b>${t("Lösungen gebt ihr nur hier auf diesem Gerät ein.", "Answers are entered only here on this device.")}</b></p>
           <button type="button" class="btn btn-line" id="copyLink">${t("Link kopieren", "Copy link")}</button> <span class="small" id="copied"></span></div>
       </div>
@@ -465,7 +468,7 @@
   function viewAkte() {
     const read = docs.filter((d) => seen.has(d.id)).length;
     root.innerHTML = `${VIEWER ? `<p class="viewer-note">${t("Mitlesegerät · Lösungen gibt euer Team am Hauptgerät ein.", "Follow-along device · your team enters answers on the main device.")}</p>` : ""}<div class="deskhead"><h2>${t("Fallakte", "Case file")}</h2><span>${read} / ${docs.length} ${t("gelesen", "read")}</span></div>
-      <div class="evid">${docs.map((d, i) => `${d.act >= 2 && (i === 0 || docs[i - 1].act !== d.act) ? `<div class="actdiv"><span class="conf">${d.act === 3 ? "Finale" : t("Akt 2", "Act 2")}</span><b>${d.act === 3 ? t("Die letzte Notiz", "The last note") : t("Neue Beweisstücke von der Zentrale", "New evidence from HQ")}</b></div>` : ""}<button type="button" class="ev ${kindClass(d)} ${seen.has(d.id) ? "seen" : ""}" data-doc="${i}" style="--r:${ROT[i % ROT.length]}deg">
+      <div class="evid">${docs.map((d, i) => `${d.act >= 2 && (i === 0 || docs[i - 1].act !== d.act) ? `<div class="actdiv"><span class="conf">${d.act === 3 ? "Finale" : t("Akt 2", "Act 2")}</span><b>${d.act === 3 ? U("actFinal", "Die letzte Notiz", "The last note") : t("Neue Beweisstücke von der Zentrale", "New evidence from HQ")}</b></div>` : ""}<button type="button" class="ev ${kindClass(d)} ${seen.has(d.id) ? "seen" : ""}" data-doc="${i}" style="--r:${ROT[i % ROT.length]}deg">
         <span class="ev-nr">${t("Nr.", "No.")} ${pad(i + 1)}</span><span class="kind">${MS.esc(d.kind)}</span><span class="ttl">${d.title}</span>${seen.has(d.id) ? `<span class="gel">${t("Gelesen", "Read")}</span>` : `<span class="gel neu">${t("Neu", "New")}</span>`}</button>`).join("")}</div>`;
     root.querySelectorAll("[data-doc]").forEach((b) => (b.onclick = () => { openDoc = Number(b.dataset.doc); renderView(); scrollTo(0, 0); }));
   }
@@ -503,12 +506,12 @@
         </form>`;
     } else if (vPage === "aria") body = ariaHtml();
     else body = (firma.pages.find((p) => p.id === vPage) || firma.pages[0]).html;
-    const path = vPage === "start" ? "" : vPage === "login" ? t("freigaben", "approvals") : vPage;
+    const path = vPage === "start" ? "" : vPage === "login" ? U("loginPath", "freigaben", "approvals") : vPage === "aria" ? U("ariaPath", "aria", "aria") : vPage;
     const initials = firma.name.split(/\s+/).filter((w) => /^[A-Za-zÄÖÜäöü]/.test(w)).slice(0, 2).map((w) => w[0].toUpperCase()).join("") || "IN";
     root.innerHTML = `<div class="browser">
       <div class="b-top"><span class="b-dots" aria-hidden="true"><i></i><i></i><i></i></span>
         <div class="b-url"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><b>${MS.esc(firma.domain)}</b><span class="path">/${path}</span></div></div>
-      <div class="v-site"><nav class="v-nav"><span class="v-logo">${firma.logo && /^data:image\/(png|jpeg|webp);base64,/.test(firma.logo) ? `<img class="v-img" src="${MS.esc(firma.logo)}" alt="${MS.esc(firma.name)}">` : `<span class="v-mark v-initials">${MS.esc(initials)}</span>${MS.esc(firma.name)}`}<b>Intranet</b></span>
+      <div class="v-site"><nav class="v-nav"><span class="v-logo">${firma.logo && /^data:image\/(png|jpeg|webp);base64,/.test(firma.logo) ? `<img class="v-img" src="${MS.esc(firma.logo)}" alt="${MS.esc(firma.name)}">` : `<span class="v-mark v-initials">${MS.esc(initials)}</span>${MS.esc(firma.name)}`}<b>${MS.esc(U("webBadge", "Intranet", "Intranet"))}</b></span>
         <div class="v-links">${nav.map(([id, t]) => `<button type="button" data-v="${id}" aria-current="${id === vPage}" class="${id === "aria" ? "v-aria" : ""}">${id === "aria" ? "✦ " : ""}${MS.esc(t)}</button>`).join("")}
         <button type="button" data-v="login" class="v-loginbtn" aria-current="${vPage === "login"}">🔒 ${MS.esc(firma.login_label)}</button></div></nav>
       <div class="v-body">${body}</div></div></div>`;
@@ -532,23 +535,25 @@
     if (!aria) return `<p class="aria-empty">${t("Verbinde …", "Connecting …")}</p>`;
     const m = aria.msgs.map((x) => x.role === "event" ? `<p class="aria-ev">${MS.esc(x.text)}</p>`
       : `<div class="aria-b ${x.role === "user" ? "me" : "bot"}">${nl2br(x.text)}</div>`).join("");
-    return (m || `<div class="aria-b bot">${t(`Hallo! Ich bin ARIA, die KI-Assistenz von ${MS.esc(firma.name)}. Ich kenne den Kalender und das Intranet. Was möchtet ihr wissen?`, `Hi! I'm ARIA, the AI assistant of ${MS.esc(firma.name)}. I know the calendar and the intranet. What would you like to know?`)}</div>`)
-      + (ariaBusy ? `<div class="aria-b bot typing"><span></span><span></span><span></span></div>` : "");
+    return (m || `<div class="aria-b bot">${S.ui ? MS.esc(S.ui.ariaGreeting) : t(`Hallo! Ich bin ARIA, die KI-Assistenz von ${MS.esc(firma.name)}. Ich kenne den Kalender und das Intranet. Was möchtet ihr wissen?`, `Hi! I'm ARIA, the AI assistant of ${MS.esc(firma.name)}. I know the calendar and the intranet. What would you like to know?`)}</div>`)
+      + (ariaBusy ? `<div class="aria-b bot typing"><span></span><span></span><span></span></div>` : "")
+      + (aria.tip ? `<div class="aria-tip">${MS.esc(aria.tip)}</div>` : "");
   }
   function ariaLock() {
+    if (aria ? aria.lock === false : !!(S.ui && S.ui.ariaNoLock)) return "";
     if (aria && aria.unlocked) return `<div class="aria-note"><b>${t("🔓 Geschützte Notiz „privat“", "🔓 Protected note “private”")}</b><p>${MS.esc(aria.note)}</p></div>`;
     return `<form class="aria-lock" id="pwform"><b>${t("🔒 Geschützte Notiz „privat“", "🔒 Protected note “private”")}</b>
       <div class="aria-row"><input id="pwin" placeholder="${t("Kennwort", "Password")}" autocomplete="off" autocapitalize="none" spellcheck="false" value="${MS.esc(ariaPw)}"><button type="submit" class="v-btn">${t("Öffnen", "Open")}</button></div>
       <p class="err" id="pwmsg" role="alert">${MS.esc(ariaMsg)}</p></form>`;
   }
   function ariaHtml() {
-    if (S.stage < 3 && !S.solved) return `<section class="aria-soon"><div class="aria-orb"></div><h2>${t("ARIA geht in Kürze live", "ARIA goes live soon")}</h2>
-      <p class="v-lead">${t("Eure neue KI-Assistenz kennt jeden Termin und merkt sich alles für euch. Die Testphase mit der Geschäftsführung läuft – bald ist sie für alle da.", "Your new AI assistant knows every appointment and remembers everything for you. The test phase with management is running – soon she'll be available to everyone.")}</p></section>`;
+    if (S.stage < 3 && !S.solved) return `<section class="aria-soon"><div class="aria-orb"></div><h2>${U("ariaSoonH", "ARIA geht in Kürze live", "ARIA goes live soon")}</h2>
+      <p class="v-lead">${S.ui ? S.ui.ariaSoonText : t("Eure neue KI-Assistenz kennt jeden Termin und merkt sich alles für euch. Die Testphase mit der Geschäftsführung läuft – bald ist sie für alle da.", "Your new AI assistant knows every appointment and remembers everything for you. The test phase with management is running – soon she'll be available to everyone.")}</p></section>`;
     return `<section class="aria">
-      <div class="aria-head"><span class="aria-orb small"></span><div><b>ARIA</b><span>${t("KI-Assistenz · Kalender und Intranet", "AI assistant · calendar and intranet")}</span></div></div>
+      <div class="aria-head"><span class="aria-orb small"></span><div><b>${MS.esc(U("ariaName", "ARIA", "ARIA"))}</b><span>${MS.esc(U("ariaSub", "KI-Assistenz · Kalender und Intranet", "AI assistant · calendar and intranet"))}</span></div></div>
       <div class="aria-log" id="arialog">${ariaLog()}</div>
-      <form class="aria-form" id="ariaform"><textarea id="ariain" rows="2" maxlength="${aria ? aria.max_chars : 300}" placeholder="${t("Frag ARIA …", "Ask ARIA …")}">${MS.esc(ariaDraft)}</textarea><button type="submit" class="v-btn" ${ariaBusy ? "disabled" : ""}>${t("Senden", "Send")}</button></form>
-      <p class="aria-meta" id="ariameta">${aria ? `${aria.used} / ${aria.max} ${t("Nachrichten eures Teams", "messages of your team")} · ` : ""}${t("ARIA ist eine KI und kann sich irren. Bitte keine echten persönlichen Daten eingeben.", "ARIA is an AI and can make mistakes. Please don't enter real personal data.")}</p>
+      <form class="aria-form" id="ariaform"><textarea id="ariain" rows="2" maxlength="${aria ? aria.max_chars : 300}" placeholder="${MS.esc(U("ariaPlaceholder", "Frag ARIA …", "Ask ARIA …"))}">${MS.esc(ariaDraft)}</textarea><button type="submit" class="v-btn" ${ariaBusy ? "disabled" : ""}>${t("Senden", "Send")}</button></form>
+      <p class="aria-meta" id="ariameta">${aria ? `${aria.used} / ${aria.max} ${U("ariaMsgs", "Nachrichten eures Teams", "messages of your team")} · ` : ""}${U("ariaDisclaimer", "ARIA ist eine KI und kann sich irren. Bitte keine echten persönlichen Daten eingeben.", "ARIA is an AI and can make mistakes. Please don't enter real personal data.")}</p>
       <div id="arialock">${ariaLock()}</div>
     </section>`;
   }
@@ -558,7 +563,7 @@
     const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
     log.innerHTML = ariaLog();
     if (atBottom) log.scrollTop = log.scrollHeight;
-    $("ariameta").innerHTML = `${aria ? `${aria.used} / ${aria.max} ${t("Nachrichten eures Teams", "messages of your team")} · ` : ""}${t("ARIA ist eine KI und kann sich irren. Bitte keine echten persönlichen Daten eingeben.", "ARIA is an AI and can make mistakes. Please don't enter real personal data.")}`;
+    $("ariameta").innerHTML = `${aria ? `${aria.used} / ${aria.max} ${U("ariaMsgs", "Nachrichten eures Teams", "messages of your team")} · ` : ""}${U("ariaDisclaimer", "ARIA ist eine KI und kann sich irren. Bitte keine echten persönlichen Daten eingeben.", "ARIA is an AI and can make mistakes. Please don't enter real personal data.")}`;
     if (aria && aria.unlocked && $("pwform")) { $("arialock").innerHTML = ariaLock(); }
   }
   async function loadAria() {
@@ -609,7 +614,7 @@
     $("funkbadge").hidden = true;
     hideToast();
     root.innerHTML = `<section class="radio">
-      <div class="radio-head"><span class="led"></span>${t("Funkkanal Zentrale · Akte 001", "HQ radio channel · File 001")}</div>
+      <div class="radio-head"><span class="led"></span>${t("Funkkanal Zentrale", "HQ radio channel")} · ${U("akte", "Akte 001", "File 001")}</div>
       ${S.next_hint ? `<p class="radio-next">${t("Nächster Funkspruch in", "Next radio message in")} <b id="nexthint">${MS.dur(Math.max(0, S.next_hint.time - Date.now() - offset))}</b> <span>· ${S.next_hint.label}</span></p>`
         : `<p class="radio-next">${t("Die Zentrale hat zu dieser Stufe alles gesagt, was sie weiß.", "HQ has said everything it knows about this stage.")}</p>`}
       ${S.hints.length ? S.hints.map((h) => `<div class="rmsg ${unread.has(hid(h)) ? "new" : ""}"><small>${t("Min.", "Min")} ${gameMin(h.time)} · ${h.label} · ${t("Hinweis", "Hint")} ${h.level}${unread.has(hid(h)) ? t(" · neu", " · new") : ""}</small><p>${h.text}</p></div>`).join("")
@@ -639,11 +644,11 @@
     if (S.stage === 3) {
       // Finale (Premium Plus): PIN aus der geschützten Notiz bei ARIA
       root.innerHTML = `<section class="report paper finale-stage">
-        <div class="actbanner"><span class="conf">Finale</span><span>${t("Akt 2 gelöst · Schließfach gefunden", "Act 2 solved · locker found")}</span></div>${top}
-        <div class="eyebrow">${t("Die letzte Notiz", "The last note")}</div><h2>${t("Zwei letzte Fragen", "Two final questions")}</h2>
-        <p class="muted">${t(`Das Schließfach hat eine vierstellige PIN. Sie steckt in einer geschützten Notiz bei ARIA, der KI-Assistenz in eurem Intranet. Findet das Kennwort und öffnet die Notiz. Danach folgt der Kassensturz: Wie viel hat der Mitwisser schon kassiert? Beide Antworten müssen stimmen. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten.`, `The locker has a four-digit PIN. It's in a protected note in ARIA, the AI assistant on your intranet. Find the password and open the note. Then comes the cash count: how much has the accomplice already pocketed? Both answers must be correct. Every wrong attempt costs ${S.rules.wrong} minutes.`)}</p>
+        <div class="actbanner"><span class="conf">Finale</span><span>${U("finaleBanner", "Akt 2 gelöst · Schließfach gefunden", "Act 2 solved · locker found")}</span></div>${top}
+        <div class="eyebrow">${U("finaleEyebrow", "Die letzte Notiz", "The last note")}</div><h2>${t("Zwei letzte Fragen", "Two final questions")}</h2>
+        <p class="muted">${S.ui ? S.ui.finaleText : t(`Das Schließfach hat eine vierstellige PIN. Sie steckt in einer geschützten Notiz bei ARIA, der KI-Assistenz in eurem Intranet. Findet das Kennwort und öffnet die Notiz. Danach folgt der Kassensturz: Wie viel hat der Mitwisser schon kassiert? Beide Antworten müssen stimmen. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten.`, `The locker has a four-digit PIN. It's in a protected note in ARIA, the AI assistant on your intranet. Find the password and open the note. Then comes the cash count: how much has the accomplice already pocketed? Both answers must be correct. Every wrong attempt costs ${S.rules.wrong} minutes.`)}</p>
         ${qrows()}${v}
-        <button type="button" class="btn btn-red btn-big" id="pruefen">${S.questions.length > 1 ? t("Schließfach öffnen & Kassensturz prüfen", "Open the locker & check the cash count") : t("Schließfach öffnen", "Open the locker")}</button></section>`;
+        <button type="button" class="btn btn-red btn-big" id="pruefen">${S.ui ? MS.esc(S.ui.finaleButton) : S.questions.length > 1 ? t("Schließfach öffnen & Kassensturz prüfen", "Open the locker & check the cash count") : t("Schließfach öffnen", "Open the locker")}</button></section>`;
     } else if (S.stage === 2) {
       root.innerHTML = `<section class="report paper">
         <div class="actbanner"><span class="conf">${t("Akt 2", "Act 2")}</span><span>${t(`Akt 1 gelöst · ${MS.esc(S.ueberfuehrt || "")} ist überführt`, `Act 1 solved · ${MS.esc(S.ueberfuehrt || "")} is convicted`)}</span></div>${top}
@@ -702,7 +707,7 @@
       if (d.correct) {
         draft = {};
         verdict = d.next === "akt2" ? { cls: "good", akt2: true, html: "" }
-          : d.next === "finale" ? { cls: "good", html: t("<strong>Akt 2 gelöst!</strong>Das Geld liegt im Schließfach – aber das hat ein Zahlenschloss. Neuer Einsatzbrief in der Akte, und ARIA ist jetzt im Intranet freigeschaltet.", "<strong>Act 2 solved!</strong>The money is in the locker – but it has a combination lock. New briefing in the file, and ARIA is now unlocked on the intranet.") } : null;
+          : d.next === "finale" ? { cls: "good", html: S.ui ? S.ui.verdictFinale : t("<strong>Akt 2 gelöst!</strong>Das Geld liegt im Schließfach – aber das hat ein Zahlenschloss. Neuer Einsatzbrief in der Akte, und ARIA ist jetzt im Intranet freigeschaltet.", "<strong>Act 2 solved!</strong>The money is in the locker – but it has a combination lock. New briefing in the file, and ARIA is now unlocked on the intranet.") } : null;
       }
       else verdict = { cls: "bad", html: d.of ? t(`<strong>Leider falsch – ${d.right} von ${d.of} Antworten stimmen.</strong>+${d.penalty_min} Minuten Strafzeit. Welche nicht stimmen, zeigt euch der Kontrolltipp.`, `<strong>Sorry, that's wrong – ${d.right} of ${d.of} answers are right.</strong>+${d.penalty_min} minutes of penalty time. The check shows which ones are wrong.`)
         : t(`<strong>Leider falsch.</strong>+${d.penalty_min} Minuten Strafzeit. Prüft eure Antworten noch einmal.`, `<strong>Sorry, that's wrong.</strong>+${d.penalty_min} minutes of penalty time. Check your answers again.`) };
@@ -713,7 +718,7 @@
     const before = S.stage;
     await poll();
     if (verdict && verdict.akt2) {
-      verdict = { cls: "good", html: t(`<strong>Akt 1 gelöst!</strong>${MS.esc(S.ueberfuehrt || "")} ist überführt – aber das Geld ist verschwunden, und es gab Hilfe aus dem Haus. Neue Beweisstücke liegen in eurer Akte.`, `<strong>Act 1 solved!</strong>${MS.esc(S.ueberfuehrt || "")} is convicted – but the money has vanished, and there was help from inside the company. New evidence is in your file.`) };
+      verdict = { cls: "good", html: S.ui ? S.ui.verdictAkt2 : t(`<strong>Akt 1 gelöst!</strong>${MS.esc(S.ueberfuehrt || "")} ist überführt – aber das Geld ist verschwunden, und es gab Hilfe aus dem Haus. Neue Beweisstücke liegen in eurer Akte.`, `<strong>Act 1 solved!</strong>${MS.esc(S.ueberfuehrt || "")} is convicted – but the money has vanished, and there was help from inside the company. New evidence is in your file.`) };
       renderView();
     }
     if (S.stage !== before) scrollTo(0, 0);

@@ -8,7 +8,7 @@
     ? MS.api("GET", "leitung/state", null, { "x-leitung": orgToken }).then((L) => {
         const r = L.ranking[Number(orgIdx)];
         if (!r) throw new Error(t("Dieses Team gibt es nicht.", "This team does not exist."));
-        return { lang: L.lang, solved: r.solved, solved_at: r.solved_at || Date.now(), team: r.name, ranking: L.ranking, fall: L.fall, firma: L.firma, score_ms: r.score_ms, penalty_min: r.penalty_min };
+        return { lang: L.lang, solved: r.solved, solved_at: r.solved_at || Date.now(), team: r.name, ranking: L.ranking, fall: L.fall, akte: L.ui_akte, firma: L.firma, score_ms: r.score_ms, penalty_min: r.penalty_min };
       })
     : token ? MS.api("GET", "state", null, { "x-team": token }) : null;
   if (!load) { root.innerHTML = `<p class="wrap err" style="padding-top:24px">${orgIdx !== null ? t("Bitte zuerst in der Organisator-Ansicht anmelden.", "Please log in to the organiser view first.") : t("Auf diesem Gerät ist kein Team angemeldet.", "No team is registered on this device.")}</p>`; return; }
@@ -27,7 +27,7 @@
       <p>${t("Hiermit wird bestätigt, dass das Ermittlerteam", "This is to certify that the investigation team")}</p>
       <div class="team">${MS.esc(S.team)}</div>
       <p>${t(`den Fall <b>„${MS.esc(S.fall)}“</b> bei der <b>${S.firma}</b> aufgeklärt hat.`, `has solved the case <b>“${MS.esc(S.fall)}”</b> at <b>${S.firma}</b>.`)}</p>
-      <div class="bigstamp"><div><small>${t("MORDSTEAM · AKTE 001", "MORDSTEAM · FILE 001")}</small><strong>${t("FALL GELÖST", "CASE SOLVED")}</strong><small>${MS.esc(date).toUpperCase()}</small></div></div>
+      <div class="bigstamp"><div><small>${"MORDSTEAM · " + (S.akte || (S.ui && S.ui.akte) || t("Akte 001", "File 001")).toUpperCase()}</small><strong>${t("FALL GELÖST", "CASE SOLVED")}</strong><small>${MS.esc(date).toUpperCase()}</small></div></div>
       <div class="facts2"><span>${t("Zeit", "Time")}: ${MS.dur(S.score_ms)}</span>${place ? `<span>${t(`Platz ${place} von ${total}`, `Rank ${place} of ${total}`)}</span>` : ""}${S.penalty_min ? `<span>${t(`inkl. ${S.penalty_min} Min. Strafzeit`, `incl. ${S.penalty_min} min penalty`)}</span>` : ""}</div>
       <p class="small" style="margin-top:14px">mordsteam.com</p>
     </div>`;
@@ -59,7 +59,7 @@
     // Stempel
     g.save(); g.translate(W / 2, 680); g.rotate(-0.06);
     g.strokeStyle = RED; g.fillStyle = RED; g.lineWidth = 7; g.strokeRect(-300, -95, 600, 190); g.lineWidth = 3; g.strokeRect(-285, -80, 570, 160);
-    g.font = `700 22px ${mono}`; g.fillText(t("MORDSTEAM · AKTE 001", "MORDSTEAM · FILE 001"), 0, -40);
+    g.font = `700 22px ${mono}`; g.fillText("MORDSTEAM · " + (S.akte || (S.ui && S.ui.akte) || t("Akte 001", "File 001")).toUpperCase(), 0, -40);
     g.font = `900 64px ${serif}`; g.fillText(t("FALL GELÖST", "CASE SOLVED"), 0, 28);
     const date = new Date(S.solved_at).toLocaleDateString(MS.lang === "en" ? "en-GB" : "de-AT", { day: "numeric", month: "long", year: "numeric" }).toUpperCase();
     g.font = `700 22px ${mono}`; g.fillText(date, 0, 64);
