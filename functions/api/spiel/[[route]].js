@@ -3,7 +3,7 @@
 import { accountingSummary, migrateAccounting, region, REGION_LABEL, costList, costSave, costDelete } from "../../../lib/accounting.js";
 import {
   CASES, caseOf, langOf, RULES, json, fail, randInt, randomToken, randomCode, esc, viennaDate,
-  buildVars, render, checkAnswers, hintTimes, hardEnd, refreshStatus, finishIfAllSolved, recordStats, expired, purgeSession, ranking, teamScore,
+  buildVars, render, checkAnswers, norm, same, hintLabel, namesToLetters, hintTimes, hardEnd, refreshStatus, finishIfAllSolved, recordStats, expired, purgeSession, ranking, teamScore,
   isPremium, isPlus, tierOf, TIER_NAMES, stageOf, stageQuestions,
 } from "../../../lib/game.js";
 
@@ -11,7 +11,9 @@ import { migrate, createGameSession, InputError } from "../../../lib/create.js";
 import { logAI, opsSummary } from "../../../lib/ops.js";
 import { customers, nlAdmin, syncAll, ecgUpload, nlDraft } from "../../../lib/newsletter.js";
 import { migrateFeedback, dueFeedback, runFeedbackMails } from "../../../lib/feedback.js";
-import { localize, countryOf, COUNTRIES, COUNTRY_ORDER, randomCast, castToEnglish } from "../../../lib/countries.js";
+import { localize, countryOf, COUNTRIES, COUNTRY_ORDER, randomCast, castToEnglish, americanize, isUS } from "../../../lib/countries.js";
+// USA: amerikanisches Englisch auch für Texte, die nicht über render() laufen (ARIA, Sonderauftrag)
+const usText = (x, t, prompt = false) => (isUS(x) ? americanize(t, prompt) : t);
 
 // Sprache: bei Team-/Organisator-Aufrufen die Spielsprache der Runde, sonst der Header x-lang der Seite
 const L = (lang, de, en) => (lang === "en" ? en : de);
@@ -205,7 +207,7 @@ async function teamState({ env, team, session, viewer, request }) {
   const stage = stageOf(session, team);
   const premium = isPremium(session);
   const lg = langOf(session);
-  const label = (q) => { const i = [...c.QUESTIONS, ...c.QUESTIONS2].findIndex((x) => x.key === q); return q === "pin" ? "Finale" : L(lg, `Frage ${i + 1}`, `Question ${i + 1}`); };
+  const label = (q) => hintLabel(session, q);
   // Automatische Funksprüche: nur für die Stufe, in der das Team gerade steckt, und nur wenn ihr Zeitpunkt erreicht ist
   const now = Date.now();
   let hints = [], nextHint = null;
@@ -245,7 +247,9 @@ async function teamState({ env, team, session, viewer, request }) {
     tier_name: TIER_NAMES[tierOf(session)],
     plus: isPlus(session),
     stage,
-    questions: stageQuestions(session, stage < 4 ? stage : 1).map((q, i) => ({ key: q.key, nr: offset + i + 1, label: render(q.label, v), hint: q.hint })),
+    questions: stageQuestions(session, stage < 4 ? stage : 1).map((q, i) => ({ key: q.key, nr: offset + i + 1, label: render(q.label, v), hint: q.hint, pattern: q.pattern })),
+    // Verdächtige als Auswahlliste für die Buchstaben-Fragen (stehen ohnehin in der Akte)
+    suspects: suspectList(v),
     questions_act1: c.QUESTIONS.map((q) => render(q.label, v)),
     core_ok: !!team.core_at,
     solved: !!team.solved_at,
@@ -289,7 +293,7 @@ async function firma({ session }) {
     .replace(/\b(gmbh|ag|kg|og|e\.?u\.?|co)\b/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "firma";
   const tld = { US: "com", XX: "com", GB: "co.uk", AU: "com.au", NZ: "co.nz" }[v.LAND] || v.LAND.toLowerCase();
   return json({ name: firmaRaw, logo: session.logo || null, domain: `intranet.${slug}.${tld}`, intranet: !!w.intranet, login_label: w.login.label || "Login",
-    pages: [...w.pages.map((p) => ({ id: p.id, title: p.title, html: (p.id === "news" && isPlus(session) && c.ARIA ? c.ARIA.news : "") + render(p.html, v) })),
+    pages: [...w.pages.map((p) => ({ id: p.id, title: p.title, html: usText(v, (p.id === "news" && isPlus(session) && c.ARIA ? c.ARIA.news : "")) + render(p.html, v) })),
       ...(isPlus(session) && c.ARIA ? [{ id: "aria", title: "ARIA", aria: true, html: "" }] : [])] });
 }
 
@@ -401,7 +405,7 @@ async function ariaGet({ env, team, session }) {
   return json({
     live, msgs,
     used: msgs.filter((m) => m.role === "user").length, max: ARIA_LIMITS.maxMsgs, max_chars: ARIA_LIMITS.maxChars,
-    unlocked: !!team.aria_unlocked_at, note: team.aria_unlocked_at ? c.ARIA.note(ariaX(session)) : null,
+    unlocked: !!team.aria_unlocked_at, note: team.aria_unlocked_at ? usText(ariaX(session), c.ARIA.note(ariaX(session))) : null,
   });
 }
 // Zeitsperre gegen Dauerfeuer (gilt für das ganze Team, alle Geräte)
@@ -440,7 +444,7 @@ async function ariaChat({ request, env, team, session }) {
       headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
         model: env.ARIA_MODEL || "claude-haiku-4-5-20251001", max_tokens: 300, temperature: 0.6,
-        system: [{ type: "text", text: c.ARIA.system(ps.xp), cache_control: { type: "ephemeral" } }],
+        system: [{ type: "text", text: usText(x, c.ARIA.system(ps.xp), true), cache_control: { type: "ephemeral" } }],
         messages,
       }),
       signal: AbortSignal.timeout(20000),
@@ -453,7 +457,7 @@ async function ariaChat({ request, env, team, session }) {
     if (!reply) throw new Error("leer");
   } catch (e) {
     if (!logged && env.ANTHROPIC_API_KEY) await logAI(env, null, false);   // Zeitüberschreitung, Netzwerkfehler
-    reply = c.ARIA.fallback(x);
+    reply = usText(x, c.ARIA.fallback(x));
   }
   await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, Date.now(), "assistant", reply).run();
   return json({ ok: true });
@@ -463,7 +467,7 @@ async function ariaKennwort({ request, env, team, session }) {
   const lg = langOf(session);
   if (!isPlus(session) || !c.ARIA || stageOf(session, team) < 3) return fail(L(lg, "ARIA ist noch nicht freigeschaltet.", "ARIA isn't unlocked yet."), 403);
   const x = ariaX(session);
-  if (team.aria_unlocked_at) return json({ ok: true, note: c.ARIA.note(x) });
+  if (team.aria_unlocked_at) return json({ ok: true, note: usText(x, c.ARIA.note(x)) });
   const b = await body(request);
   const pw = String(b.kennwort || "").trim().slice(0, 60);
   if (!pw) return fail(L(lg, "Bitte ein Kennwort eingeben.", "Please enter a password."));
@@ -473,7 +477,7 @@ async function ariaKennwort({ request, env, team, session }) {
   await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, now, "event", ok ? L(lg, `🔓 Kennwort „${pw}“ – Notiz geöffnet`, `🔓 Password “${pw}” – note opened`) : L(lg, `🔒 Kennwort „${pw}“ – falsch`, `🔒 Password “${pw}” – wrong`)).run();
   if (!ok) return json({ ok: false });
   await env.DB.prepare("UPDATE teams SET aria_unlocked_at=? WHERE id=?").bind(now, team.id).run();
-  return json({ ok: true, note: c.ARIA.note(x) });
+  return json({ ok: true, note: usText(x, c.ARIA.note(x)) });
 }
 
 // Nur in Testrunden: Spielzeit vorspulen (bis zum nächsten Hinweis der aktuellen Stufe oder um x Minuten)
@@ -584,6 +588,12 @@ async function leitungAktion({ request, env, session }) {
     return json({ ok: true });
   }
   return fail(L(lg, "Unbekannte Aktion.", "Unknown action."));
+}
+
+// [Buchstabe, Name] der Verdächtigen, nach Buchstaben sortiert (Namen sind schon HTML-escaped)
+function suspectList(v) {
+  const n = Number(v.N) || 0, L = v.LETTERS || [];
+  return Array.from({ length: n }, (_, i) => [L[i], v[`S${i + 1}`]]).filter((x) => x[0] && x[1]).sort((a, b) => a[0].localeCompare(b[0]));
 }
 
 function solutionInfo(session) {
@@ -759,7 +769,7 @@ function bonusView(session, team) {
   const st = (k) => (B[k] ? (B[k].ok ? "ok" : "wrong") : "open");
   const out = {
     per: c.BONUS_MIN, min: team.bonus_min || 0, done: !!team.bonus_done_at,
-    questions: c.BONUS.map((q) => ({ key: q.key, label: render(q.label, v), hint: q.hint, status: st(q.key),
+    questions: c.BONUS.map((q) => ({ key: q.key, label: render(q.label, v), hint: q.hint, pattern: q.pattern, status: st(q.key),
       answer: B[q.key] ? String(B[q.key].v) : null, solution: B[q.key] ? sol[q.key] : null })),
     sonder: null, sonder_missed: isPlus(session) && !!c.SONDER && !sonderEligible(session, team),
   };
@@ -799,10 +809,9 @@ async function bonusAnswer({ request, env, team, session }) {
     if (!q) return fail("Unbekannte Frage.");
     if (!val.trim()) return fail(L(lg, "Bitte eine Antwort eingeben.", "Please enter an answer."));
     const sol = c.bonusSolution(JSON.parse(session.secrets));
-    const n = { time: (x) => { const d = String(x || "").replace(/[^0-9]/g, ""); return d.length === 3 ? `0${d[0]}:${d.slice(1)}` : d.length === 4 ? `${d.slice(0, 2)}:${d.slice(2)}` : d; },
-      letter: (x) => String(x || "").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 1),
-      letters: (x) => [...new Set(String(x || "").toUpperCase().replace(/[^A-Z]/g, ""))].sort().join("") }[q.pattern];
-    ok = n(val) !== "" && n(val) === n(sol[key]);
+    const n = norm[q.pattern];
+    const given = q.pattern === "letter" || q.pattern === "letters" ? namesToLetters(session, val) : val;
+    ok = same(n(given), n(sol[key]));
     add = c.BONUS_MIN;
   }
   B[key] = { v: val, ok, at: Date.now() };
@@ -864,7 +873,7 @@ async function sonderChat({ request, env, team, session }) {
       method: "POST",
       headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({ model: env.ARIA_MODEL || "claude-haiku-4-5-20251001", max_tokens: 250, temperature: 0.6,
-        system: [{ type: "text", text: c.SONDER.system({ ...ps.xp, M_IDX: x.M_IDX, T_IDX: x.T_IDX, SCHEINFIRMA_TXT: x.SCHEINFIRMA_TXT, PIN: x.PIN, FACH: x.FACH, T_ER: x.T_ER, T_HE: x.T_HE }), cache_control: { type: "ephemeral" } }], messages }),
+        system: [{ type: "text", text: usText(x, c.SONDER.system({ ...ps.xp, M_IDX: x.M_IDX, T_IDX: x.T_IDX, SCHEINFIRMA_TXT: x.SCHEINFIRMA_TXT, PIN: x.PIN, FACH: x.FACH, T_ER: x.T_ER, T_HE: x.T_HE }), true), cache_control: { type: "ephemeral" } }], messages }),
       signal: AbortSignal.timeout(20000),
     });
     const d = await r.json();
@@ -875,7 +884,7 @@ async function sonderChat({ request, env, team, session }) {
     if (!reply) throw new Error("leer");
   } catch (e) {
     if (!logged && env.ANTHROPIC_API_KEY) await logAI(env, null, false);
-    reply = c.SONDER.fallback(x, text);
+    reply = usText(x, c.SONDER.fallback(x, text));
   }
   await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, Date.now(), "v-ai", reply).run();
   return json({ ok: true });

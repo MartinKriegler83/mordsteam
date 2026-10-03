@@ -301,6 +301,12 @@
     bindBonus();
   }
 
+  // Auswahlliste der Verdächtigen (Buchstabe – Name) statt Tippfeld
+  const hasSus = () => Array.isArray(S.suspects) && S.suspects.length > 0;
+  function susSelect(id, attr, key, val) {
+    return `<select id="${id}" ${attr}="${key}"><option value="">${t("Person wählen …", "Choose a person …")}</option>${S.suspects.map((p) => `<option value="${p[0]}" ${val === p[0] ? "selected" : ""}>${p[0]} – ${p[1]}</option>`).join("")}</select>`;
+  }
+
   // ---------- Zusatzermittlung (alle Pakete) und Sonderauftrag (Premium Plus) ----------
   function bonusHtml() {
     const B = S.bonus;
@@ -309,7 +315,9 @@
       : `<p class="bres n">✗ ${t("Leider falsch", "Sorry, wrong")} (${t("richtig", "correct")}: ${MS.esc(q.solution || "")})</p>`;
     const qs = B.questions.map((q, i) => `<div class="qrow"><span class="qn">${i + 1}</span><div class="qf">
         <label for="b_${q.key}">${q.label}</label><span class="hint">${MS.esc(q.hint)}</span>
-        ${q.status === "open" && !B.done && !VIEWER ? `<div class="brow"><input id="b_${q.key}" data-b="${q.key}" autocomplete="off" spellcheck="false" value="${MS.esc(bDraft[q.key] || "")}"><button type="button" class="btn btn-line" data-bsend="${q.key}">${t("Antworten", "Answer")}</button></div>`
+        ${q.status === "open" && !B.done && !VIEWER ? `<div class="brow">${q.pattern === "letter" && hasSus() ? susSelect(`b_${q.key}`, "data-b", q.key, bDraft[q.key] || "")
+            : q.pattern === "letters" && hasSus() ? `<span class="bpair">${susSelect(`b_${q.key}`, "data-bpart", q.key, (bDraft[q.key] || "").split(" ")[0] || "")}${susSelect(`b_${q.key}_2`, "data-bpart", q.key, (bDraft[q.key] || "").split(" ")[1] || "")}</span>`
+            : `<input id="b_${q.key}" data-b="${q.key}" autocomplete="off" spellcheck="false" value="${MS.esc(bDraft[q.key] || "")}">`}<button type="button" class="btn btn-line" data-bsend="${q.key}">${t("Antworten", "Answer")}</button></div>`
           : q.status === "open" ? `<p class="bres">${t("nicht beantwortet", "not answered")}</p>` : `<p class="bans">${MS.esc(q.answer || "")}</p>${res(q)}`}
       </div></div>`).join("");
     const sd = B.sonder;
@@ -349,7 +357,17 @@
   function bindBonus() {
     if (!S.bonus) return;
     root.querySelectorAll("[data-b]").forEach((inp) => { inp.oninput = () => (bDraft[inp.dataset.b] = inp.value); });
-    root.querySelectorAll("[data-bsend]").forEach((b) => (b.onclick = () => bonusSend(b.dataset.bsend, (root.querySelector(`[data-b="${b.dataset.bsend}"]`) || {}).value || "")));
+    const bparts = (k) => [...root.querySelectorAll(`[data-bpart="${k}"]`)].map((x) => x.value);
+    root.querySelectorAll("[data-bpart]").forEach((sel) => { sel.oninput = () => (bDraft[sel.dataset.bpart] = bparts(sel.dataset.bpart).join(" ")); });
+    root.querySelectorAll("[data-bsend]").forEach((b) => (b.onclick = () => {
+      const k = b.dataset.bsend, parts = bparts(k);
+      if (parts.length) {
+        if (parts.some((x) => !x)) { bMsg = t("Bitte zwei Personen wählen.", "Please choose two people."); return viewSolved(); }
+        if (parts[0] === parts[1]) { bMsg = t("Bitte zwei verschiedene Personen wählen.", "Please choose two different people."); return viewSolved(); }
+        return bonusSend(k, parts.join(" "));
+      }
+      bonusSend(k, (root.querySelector(`[data-b="${k}"]`) || {}).value || "");
+    }));
     const ss = $("ssend"); if (ss) ss.onclick = () => bonusSend("s_ziel", $("s_ziel").value);
     const bd = $("bdone");
     if (bd) bd.onclick = async () => {
@@ -590,7 +608,8 @@
     const top = verdict && verdict.cls === "good" ? vHtml : "", v = verdict && verdict.cls !== "good" ? vHtml : "";
     const qrows = () => S.questions.map((q, i) => `<div class="qrow"><span class="qn">${q.nr}</span><div class="qf">
           <label for="q_${q.key}">${q.label}</label><span class="hint">${MS.esc(q.hint)}</span>
-          <input id="q_${q.key}" data-q="${q.key}" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="${i < S.questions.length - 1 ? "next" : "done"}" value="${MS.esc(draft[q.key] || "")}">
+          ${q.pattern === "letter" && hasSus() ? susSelect(`q_${q.key}`, "data-q", q.key, draft[q.key] || "")
+            : `<input id="q_${q.key}" data-q="${q.key}" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="${i < S.questions.length - 1 ? "next" : "done"}" value="${MS.esc(draft[q.key] || "")}">`}
           ${hintsFor(q.key)}</div></div>`).join("");
     const ctip = S.check_available ? `<div class="ctip"><div><b>${t("Kontrolltipp", "Check")}</b><p>${t(`Zeigt, welche der Antworten, die gerade im Formular stehen, schon stimmen. Kostet ${S.rules.check} Minuten Strafzeit.`, `Shows which of the answers currently in the form are already correct. Costs ${S.rules.check} minutes of penalty time.`)}</p></div>
           <button type="button" class="btn ${checkArmed ? "btn-ink" : "btn-line"}" id="check">${checkArmed ? t(`Ja, Kontrolltipp nutzen (+${S.rules.check} Min.)`, `Yes, use the check (+${S.rules.check} min)`) : t("Kontrolltipp nutzen", "Use the check")}</button>
@@ -663,7 +682,8 @@
         verdict = d.next === "akt2" ? { cls: "good", akt2: true, html: "" }
           : d.next === "finale" ? { cls: "good", html: t("<strong>Akt 2 gelöst!</strong>Das Geld liegt im Schließfach – aber das hat ein Zahlenschloss. Neuer Einsatzbrief in der Akte, und ARIA ist jetzt im Intranet freigeschaltet.", "<strong>Act 2 solved!</strong>The money is in the locker – but it has a combination lock. New briefing in the file, and ARIA is now unlocked on the intranet.") } : null;
       }
-      else verdict = { cls: "bad", html: t(`<strong>Leider falsch.</strong>+${d.penalty_min} Minuten Strafzeit. Prüft eure Antworten noch einmal.`, `<strong>Sorry, that's wrong.</strong>+${d.penalty_min} minutes of penalty time. Check your answers again.`) };
+      else verdict = { cls: "bad", html: d.of ? t(`<strong>Leider falsch – ${d.right} von ${d.of} Antworten stimmen.</strong>+${d.penalty_min} Minuten Strafzeit. Welche nicht stimmen, zeigt euch der Kontrolltipp.`, `<strong>Sorry, that's wrong – ${d.right} of ${d.of} answers are right.</strong>+${d.penalty_min} minutes of penalty time. The check shows which ones are wrong.`)
+        : t(`<strong>Leider falsch.</strong>+${d.penalty_min} Minuten Strafzeit. Prüft eure Antworten noch einmal.`, `<strong>Sorry, that's wrong.</strong>+${d.penalty_min} minutes of penalty time. Check your answers again.`) };
       checkRes = "";
     } catch (err) { verdict = { cls: "warn", html: MS.esc(err.message) }; }
     busy = false;
