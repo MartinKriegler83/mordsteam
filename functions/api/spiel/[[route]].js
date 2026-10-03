@@ -201,6 +201,7 @@ async function teamState({ env, team, session, viewer, request }) {
     team.view_token = randomToken(16);
     await env.DB.prepare("UPDATE teams SET view_token=? WHERE id=?").bind(team.view_token, team.id).run();
   }
+  await bonusTimeout(env, session, team);
   const c = caseOf(session);
   const v = buildVars(session);
   const rank = await ranking(env, session);
@@ -761,6 +762,15 @@ function sonderEligible(session, team) {
   const c = caseOf(session);
   return isPlus(session) && !!c.SONDER && !!team.solved_at && !!session.started_at && team.solved_at - session.started_at <= c.SONDER_MIN * 60000;
 }
+// Zusatzermittlung und Sonderauftrag laufen nur bis zum Ende der gebuchten Spielzeit (50/70/90 Min.)
+const bonusEnd = (session) => session.started_at + session.duration_min * 60000;
+async function bonusTimeout(env, session, team) {
+  if (!team.solved_at || team.bonus_done_at || !session.started_at || session.status !== "running" || Date.now() <= bonusEnd(session)) return;
+  const now = Date.now();
+  await env.DB.prepare("UPDATE teams SET bonus_done_at=? WHERE id=? AND bonus_done_at IS NULL").bind(now, team.id).run();
+  team.bonus_done_at = now;
+  await finishIfAllSolved(env, session, now);
+}
 function bonusView(session, team) {
   const c = caseOf(session);
   if (!team.solved_at || !c.BONUS) return null;
@@ -769,6 +779,7 @@ function bonusView(session, team) {
   const st = (k) => (B[k] ? (B[k].ok ? "ok" : "wrong") : "open");
   const out = {
     per: c.BONUS_MIN, min: team.bonus_min || 0, done: !!team.bonus_done_at,
+    ends_at: bonusEnd(session), expired: Date.now() > bonusEnd(session),
     questions: c.BONUS.map((q) => ({ key: q.key, label: render(q.label, v), hint: q.hint, pattern: q.pattern, status: st(q.key),
       answer: B[q.key] ? String(B[q.key].v) : null, solution: B[q.key] ? sol[q.key] : null })),
     sonder: null, sonder_missed: isPlus(session) && !!c.SONDER && !sonderEligible(session, team),
@@ -794,7 +805,8 @@ async function bonusAnswer({ request, env, team, session }) {
   const c = caseOf(session), lg = langOf(session);
   if (!team.solved_at) return fail(L(lg, "Die Zusatzermittlung gibt es nach dem Lösen.", "The bonus investigation comes after solving."), 409);
   if (session.status !== "running") return fail(L(lg, "Die Runde ist beendet.", "The round has ended."), 409);
-  if (team.bonus_done_at) return fail(L(lg, "Eure Ermittlung ist abgeschlossen.", "Your investigation is closed."), 409);
+  await bonusTimeout(env, session, team);
+  if (team.bonus_done_at) return fail(Date.now() > bonusEnd(session) ? L(lg, "Die Spielzeit ist abgelaufen – die Zusatzermittlung ist geschlossen.", "Time is up – the bonus investigation is closed.") : L(lg, "Eure Ermittlung ist abgeschlossen.", "Your investigation is closed."), 409);
   const b = await body(request);
   const key = String(b.key || ""), val = String(b.value ?? "").slice(0, 60);
   const B = bonusOf(team);
@@ -852,6 +864,8 @@ async function sonderChat({ request, env, team, session }) {
   const c = caseOf(session), lg = langOf(session);
   if (!sonderEligible(session, team)) return fail(L(lg, "Den Sonderauftrag gibt es hier nicht.", "There is no special assignment here."), 403);
   if (bonusOf(team).s_ziel) return fail(L(lg, "Der Sonderauftrag ist schon beantwortet.", "The special assignment has already been answered."), 409);
+  await bonusTimeout(env, session, team);
+  if (team.bonus_done_at) return fail(L(lg, "Die Ermittlung ist abgeschlossen.", "The investigation is closed."), 409);
   const b = await body(request);
   const text = String(b.text || "").replace(/\s+/g, " ").trim().slice(0, ARIA_LIMITS.maxChars);
   if (!text) return fail(L(lg, "Bitte eine Frage eingeben.", "Please enter a question."));

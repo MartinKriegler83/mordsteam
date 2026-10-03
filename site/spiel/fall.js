@@ -32,7 +32,7 @@
   let vLogin = { u: "", p: "" };      // Eingaben im Partner-Login bleiben stehen
   let aria = null, ariaDraft = "", ariaPw = "", ariaBusy = false, ariaMsg = "";  // ARIA-Chat (Premium Plus)
   let draft = {};
-  let bDraft = {}, bBusy = false, bMsg = "", doneArmed = false;   // Zusatzermittlung
+  let bDraft = {}, bBusy = false, bMsg = "", doneArmed = false, bExpiredPolled = false;   // Zusatzermittlung
   let sonder = null, sDraft = "", sBusy = false;                    // Sonderauftrag (Premium Plus)
   let lastKey = "", lastStage = null;
   let verdict = null;        // { cls: 'bad'|'warn'|'good', html }
@@ -93,7 +93,13 @@
   function tick() {
     if (!S) return;
     const now = Date.now() + offset;
-    if (!running() || !S.started_at) { clock.innerHTML = ""; }
+    const B = S.bonus;
+    if (S.solved && S.status === "running" && B && !B.done && B.ends_at) {
+      // Fall gelöst: Die Uhr läuft weiter – als Zeit für die Zusatzermittlung bis zum Ende der Spielzeit
+      const left = B.ends_at - now;
+      if (left > 0) { const cd = MS.countdown(left); clock.className = "clock" + cd.cls; clock.innerHTML = `<span class="clk"><span class="clk-label">${t("Zeit für Bonusfragen", "Time for bonus questions")}</span>${cd.html}</span>`; }
+      else { clock.innerHTML = ""; if (!bExpiredPolled) { bExpiredPolled = true; setTimeout(poll, 1500); } }
+    } else if (!running() || !S.started_at) { clock.innerHTML = ""; }
     else {
       const left = S.started_at + S.duration_min * 60000 - now;
       const pen = S.penalty_min ? `<span class="pen" title="${t("Strafzeit", "Penalty time")}">+${S.penalty_min} ${t("Min.", "min")}</span>` : "";
@@ -149,7 +155,14 @@
     renderView();
   }
 
+  // Zähler am Reiter „Akte“: ungelesene Beweisstücke aus Akt 2 und dem Finale
+  function akteBadge() {
+    const b = $("aktebadge"); if (!b) return;
+    const n = running() && docs ? docs.filter((d) => d.act >= 2 && !seen.has(d.id)).length : 0;
+    b.hidden = !n; b.textContent = n;
+  }
   function renderView() {
+    akteBadge();
     if (S.status === "finished") return viewFinal();
     if (S.solved) return viewSolved();
     if (S.status === "created" || S.status === "open") return viewWaiting();
@@ -308,6 +321,13 @@
   }
 
   // ---------- Zusatzermittlung (alle Pakete) und Sonderauftrag (Premium Plus) ----------
+  // Was in der Zusatzermittlung noch offen ist (für die Warnung vor dem Abschließen)
+  function openItems() {
+    const B = S.bonus; if (!B) return [];
+    const out = B.sonder && B.sonder.status === "open" ? [t("Sonderauftrag", "special assignment")] : [];
+    B.questions.forEach((q, i) => { if (q.status === "open") out.push(t(`Bonusfrage ${i + 1}`, `bonus question ${i + 1}`)); });
+    return out;
+  }
   function bonusHtml() {
     const B = S.bonus;
     if (!B) return "";
@@ -333,16 +353,16 @@
           <div class="brow"><select id="s_ziel"><option value="">${t("Ziel wählen …", "Choose a destination …")}</option>${sd.options.map((o) => `<option value="${o[0]}">${MS.esc(o[1])}</option>`).join("")}</select><button type="button" class="btn btn-line" id="ssend">${t("Antworten", "Answer")}</button></div></div></div>`
           : sd.status === "open" ? "" : `<p class="bans">${MS.esc(sd.answer || "")}</p>${sd.status === "ok" ? `<p class="bres y">✓ ${t("Richtig", "Correct")} – −${sd.bonus} ${t("Min.", "min")}</p>` : `<p class="bres n">✗ ${t("Leider falsch", "Sorry, wrong")} (${t("richtig", "correct")}: ${MS.esc(sd.solution || "")})</p>`}`}
       </section>` : "";
-    return `<section class="report paper bonus">
+    return `${sonderPart}<section class="report paper bonus">
         <div class="eyebrow">${t("Zusatzermittlung", "Bonus investigation")}</div>
         <h2>${t("Noch Zeit? Holt euch Bonusminuten!", "Time left? Earn bonus minutes!")}</h2>
         <p class="muted">${t(`Drei Fragen aus eurer Akte – jede hat genau einen Versuch. Jede richtige Antwort zieht ${B.per} Minuten von eurer Wertung ab. Am Lösen ändert das nichts, nur an der Rangliste.`, `Three questions from your file – each has exactly one attempt. Every correct answer takes ${B.per} minutes off your score. It doesn't affect solving, only the ranking.`)}${B.min ? ` <b>${t(`Bisher: −${B.min} Min.`, `So far: −${B.min} min.`)}</b>` : ""}</p>
         ${B.sonder_missed ? `<p class="small">${t("Teams, die Premium Plus vor Minute 70 komplett lösen, bekommen hier eine Überraschung.", "Teams who solve Premium Plus completely before minute 70 get a surprise here.")}</p>` : ""}
-        ${qs}
+        ${B.expired && !B.questions.some((q) => q.status !== "open") ? `<p class="bres">${t("Für die Zusatzermittlung ist keine Zeit mehr – die Spielzeit ist abgelaufen.", "There's no time left for the bonus investigation – the game time is up.")}</p>` : qs}
         <p class="err" id="bmsg" role="alert">${MS.esc(bMsg)}</p>
-        ${B.done ? `<p class="bres y">${t("Ermittlung abgeschlossen. Die Auflösung kommt, sobald alle Teams fertig sind oder euer Organisator die Runde beendet.", "Investigation closed. The solution appears once all teams are done or your organiser ends the round.")}</p>`
-          : VIEWER ? "" : `<button type="button" class="btn ${doneArmed ? "btn-ink" : "btn-line"}" id="bdone">${doneArmed ? t("Ja, Ermittlung abschließen", "Yes, close the investigation") : t("Ermittlung abschließen", "Close the investigation")}</button>`}
-      </section>${sonderPart}`;
+        ${B.done ? `<p class="bres y">${B.expired ? t("Die Spielzeit ist abgelaufen, die Ermittlung ist geschlossen.", "Time is up, the investigation is closed.") + " " : ""}${t("Die Auflösung kommt, sobald alle Teams fertig sind oder euer Organisator die Runde beendet.", "The solution appears once all teams are done or your organiser ends the round.")}</p>`
+          : VIEWER ? "" : `${doneArmed && openItems().length ? `<p class="warnbox">${t("Noch offen", "Still open")}: ${openItems().join(", ")}. ${t("Trotzdem abschließen? Danach sind keine Antworten mehr möglich.", "Close anyway? No more answers are possible afterwards.")}</p>` : ""}<button type="button" class="btn ${doneArmed ? "btn-ink" : "btn-line"}" id="bdone">${doneArmed ? t("Ja, Ermittlung abschließen", "Yes, close the investigation") : t("Ermittlung abschließen", "Close the investigation")}</button>`}
+      </section>`;
   }
   function sonderLog() {
     const m = (sonder ? sonder.msgs : []).map((x) => `<div class="aria-b ${x.role === "user" ? "me" : "bot"}">${nl2br(x.text)}</div>`).join("");
@@ -444,7 +464,7 @@
     const read = docs.filter((d) => seen.has(d.id)).length;
     root.innerHTML = `${VIEWER ? `<p class="viewer-note">${t("Mitlesegerät · Lösungen gibt euer Team am Hauptgerät ein.", "Follow-along device · your team enters answers on the main device.")}</p>` : ""}<div class="deskhead"><h2>${t("Fallakte", "Case file")}</h2><span>${read} / ${docs.length} ${t("gelesen", "read")}</span></div>
       <div class="evid">${docs.map((d, i) => `${d.act >= 2 && (i === 0 || docs[i - 1].act !== d.act) ? `<div class="actdiv"><span class="conf">${d.act === 3 ? "Finale" : t("Akt 2", "Act 2")}</span><b>${d.act === 3 ? t("Die letzte Notiz", "The last note") : t("Neue Beweisstücke von der Zentrale", "New evidence from HQ")}</b></div>` : ""}<button type="button" class="ev ${kindClass(d)} ${seen.has(d.id) ? "seen" : ""}" data-doc="${i}" style="--r:${ROT[i % ROT.length]}deg">
-        <span class="ev-nr">${t("Nr.", "No.")} ${pad(i + 1)}</span><span class="kind">${MS.esc(d.kind)}</span><span class="ttl">${d.title}</span>${seen.has(d.id) ? `<span class="gel">${t("Gelesen", "Read")}</span>` : ""}</button>`).join("")}</div>`;
+        <span class="ev-nr">${t("Nr.", "No.")} ${pad(i + 1)}</span><span class="kind">${MS.esc(d.kind)}</span><span class="ttl">${d.title}</span>${seen.has(d.id) ? `<span class="gel">${t("Gelesen", "Read")}</span>` : d.act >= 2 ? `<span class="neu">${t("Neu", "New")}</span>` : ""}</button>`).join("")}</div>`;
     root.querySelectorAll("[data-doc]").forEach((b) => (b.onclick = () => { openDoc = Number(b.dataset.doc); renderView(); scrollTo(0, 0); }));
   }
 
@@ -455,7 +475,7 @@
   function viewDoc() {
     const d = docs[openDoc];
     if (!d) { openDoc = null; return viewAkte(); }
-    seen.add(d.id); MS.set("ms_seen", JSON.stringify([...seen]));
+    seen.add(d.id); MS.set("ms_seen", JSON.stringify([...seen])); akteBadge();
     lastDocId = d.id; MS.set("ms_doc", d.id);
     const prev = openDoc > 0 ? openDoc - 1 : null, next = openDoc < docs.length - 1 ? openDoc + 1 : null;
     const pbtn = (i, dir) => `<button type="button" data-go="${i}" class="${dir}"><small>${dir === "prev" ? `← ${t("Nr.", "No.")} ` + pad(i + 1) : `${t("Nr.", "No.")} ` + pad(i + 1) + " →"}</small>${docs[i].title}</button>`;
@@ -618,10 +638,10 @@
       // Finale (Premium Plus): PIN aus der geschützten Notiz bei ARIA
       root.innerHTML = `<section class="report paper finale-stage">
         <div class="actbanner"><span class="conf">Finale</span><span>${t("Akt 2 gelöst · Schließfach gefunden", "Act 2 solved · locker found")}</span></div>${top}
-        <div class="eyebrow">${t("Die letzte Notiz", "The last note")}</div><h2>${t("Knackt das Zahlenschloss!", "Crack the combination lock!")}</h2>
-        <p class="muted">${t(`Das Schließfach hat eine vierstellige PIN. Sie steckt in einer geschützten Notiz bei ARIA, der KI-Assistenz in eurem Intranet. Findet das Kennwort, öffnet die Notiz – und tragt die PIN hier ein. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten.`, `The locker has a four-digit PIN. It's in a protected note in ARIA, the AI assistant on your intranet. Find the password, open the note – and enter the PIN here. Every wrong attempt costs ${S.rules.wrong} minutes.`)}</p>
+        <div class="eyebrow">${t("Die letzte Notiz", "The last note")}</div><h2>${t("Zwei letzte Fragen", "Two final questions")}</h2>
+        <p class="muted">${t(`Das Schließfach hat eine vierstellige PIN. Sie steckt in einer geschützten Notiz bei ARIA, der KI-Assistenz in eurem Intranet. Findet das Kennwort und öffnet die Notiz. Danach folgt der Kassensturz: Wie viel hat der Mitwisser schon kassiert? Beide Antworten müssen stimmen. Jeder Fehlversuch kostet ${S.rules.wrong} Minuten.`, `The locker has a four-digit PIN. It's in a protected note in ARIA, the AI assistant on your intranet. Find the password and open the note. Then comes the cash count: how much has the accomplice already pocketed? Both answers must be correct. Every wrong attempt costs ${S.rules.wrong} minutes.`)}</p>
         ${qrows()}${v}
-        <button type="button" class="btn btn-red btn-big" id="pruefen">${t("Schließfach öffnen", "Open the locker")}</button></section>`;
+        <button type="button" class="btn btn-red btn-big" id="pruefen">${S.questions.length > 1 ? t("Schließfach öffnen & Kassensturz prüfen", "Open the locker & check the cash count") : t("Schließfach öffnen", "Open the locker")}</button></section>`;
     } else if (S.stage === 2) {
       root.innerHTML = `<section class="report paper">
         <div class="actbanner"><span class="conf">${t("Akt 2", "Act 2")}</span><span>${t(`Akt 1 gelöst · ${MS.esc(S.ueberfuehrt || "")} ist überführt`, `Act 1 solved · ${MS.esc(S.ueberfuehrt || "")} is convicted`)}</span></div>${top}
