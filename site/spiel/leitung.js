@@ -76,7 +76,7 @@
         <button class="tipbtn" id="copy" type="button">${t("Link kopieren", "Copy link")}</button></div>` : ""}
       <div class="panel"><div class="eyebrow">${t(`Teams und Rangliste · ${S.ranking.length} von ${S.max_teams} Teams angemeldet`, `Teams and ranking · ${S.ranking.length} of ${S.max_teams} teams joined`)}</div>
         ${S.ranking.length ? `<table class="rank"><thead><tr><th>#</th><th>Team</th><th>${t("Stand", "Status")}</th><th>${t("Fehlversuche", "Wrong attempts")}</th><th>${t("Zeit", "Time")}</th><th>${t("Urkunde", "Certificate")}</th></tr></thead><tbody>
-        ${S.ranking.map((r, i) => `<tr><td class="n">${r.rank || "–"}</td><td>${MS.esc(r.name)}</td><td>${MS.stage(r, S.tier)}</td><td>${r.wrong}</td><td class="mono">${r.solved ? MS.dur(r.score_ms) : "–"}</td><td>${r.solved ? `<a class="tipbtn" href="/spiel/urkunde.html?org=${i}" target="_blank" rel="noopener">${t("Öffnen", "Open")}</a>` : "–"}</td></tr>`).join("")}
+        ${S.ranking.map((r, i) => `<tr><td class="n">${r.rank || "–"}</td><td>${MS.esc(r.name)}${r.sonder ? ` <span class="sbadge">🕵 ${t("Sonderermittler", "Special investigators")}</span>` : ""}</td><td>${MS.stage(r, S.tier)}</td><td>${r.wrong}</td><td class="mono">${r.solved ? MS.dur(r.score_ms) : "–"}</td><td>${r.solved ? `<a class="tipbtn" href="/spiel/urkunde.html?org=${i}" target="_blank" rel="noopener">${t("Öffnen", "Open")}</a>` : "–"}</td></tr>`).join("")}
         </tbody></table>` : `<p class="muted">${t("Noch kein Team angemeldet.", "No team has joined yet.")}</p>`}
       </div>
       ${S.solution_available ? `<div><button class="btn btn-ink" id="a-sol">${t("Auflösung anzeigen", "Show solution")}</button></div>` : ""}

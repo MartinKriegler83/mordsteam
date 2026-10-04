@@ -190,13 +190,15 @@
     </div>`;
   }
 
+  // Auszeichnung für gelösten Sonderauftrag (zählt nicht in die Zeit)
+  const SB = (r) => r.sonder ? ` <span class="sbadge" title="${t("Sonderauftrag gelöst", "Special assignment solved")}">🕵 ${t("Sonderermittler", "Special investigators")}</span>` : "";
   // Podest der ersten drei gelösten Teams
   function podium() {
     const top = S.ranking.filter((r) => r.solved).slice(0, 3);
     if (!top.length) return `<p class="nopod">${t("Diesmal hat kein Team den Fall rechtzeitig geknackt. Wer es war, lacht sich ins Fäustchen – noch.", "This time no team cracked the case in time. The culprit is laughing up their sleeve – for now.")}</p>`;
     const order = [top[1], top[0], top[2]];
     return `<div class="podium">${order.map((r, i) => r ? `<div class="pod p${r.rank} ${r.name === S.team ? "me" : ""}">
-      <span class="pod-name">${MS.esc(r.name)}</span><span class="pod-time">${MS.dur(r.score_ms)}</span>
+      <span class="pod-name">${MS.esc(r.name)}${r.sonder ? " 🕵" : ""}</span><span class="pod-time">${MS.dur(r.score_ms)}</span>
       <div class="pod-block"><b>${r.rank}</b></div></div>` : `<div class="pod empty"></div>`).join("")}</div>`;
   }
 
@@ -349,18 +351,18 @@
         <div class="eyebrow">${t("Überraschung · nur für schnelle Teams", "Surprise · fast teams only")}</div>
         <div class="verdict good">${sd.surprise}</div>
         <h2>${t("Sonderauftrag", "Special assignment")}</h2>
-        <p class="muted">${MS.esc(sd.task)} ${t(`Ihr habt ${sd.max} Fragen. Richtig gelöst: −${sd.bonus} Min. auf eure Wertung. Nur ein Versuch.`, `You have ${sd.max} questions. Solved correctly: −${sd.bonus} min off your score. One attempt only.`)}</p>
+        <p class="muted">${MS.esc(sd.task)} ${t(`Ihr habt ${sd.max} Fragen. Richtig gelöst gibt es die Auszeichnung „Sonderermittler“ in der Rangliste – an eurer Zeit ändert es nichts. Nur ein Versuch.`, `You have ${sd.max} questions. Solve it and you earn the “Special investigators” award in the ranking – it doesn’t change your time. One attempt only.`)}</p>
         <div class="aria-log" id="slog">${sonderLog()}</div>
         ${sd.status === "open" && !B.done && !VIEWER ? `<form class="aria-form" id="sform"><textarea id="sin" rows="2" maxlength="300" placeholder="${t("Frage an die verhörte Person …", "Question for the person being interrogated …")}">${MS.esc(sDraft)}</textarea><button type="submit" class="v-btn" ${sBusy ? "disabled" : ""}>${t("Fragen", "Ask")}</button></form>
           <p class="aria-meta" id="smeta">${sonder ? `${sonder.used} / ${sonder.max} ${t("Fragen", "questions")} · ` : ""}${t("Die verhörte Person wird von einer KI gespielt.", "The person is played by an AI.")}</p>
           <div class="qrow"><span class="qn">★</span><div class="qf"><label for="s_ziel">${MS.esc(sd.label)}</label>
           <div class="brow"><select id="s_ziel"><option value="">${t("Ziel wählen …", "Choose a destination …")}</option>${sd.options.map((o) => `<option value="${o[0]}">${MS.esc(o[1])}</option>`).join("")}</select><button type="button" class="btn btn-line" id="ssend">${t("Antworten", "Answer")}</button></div></div></div>`
-          : sd.status === "open" ? "" : `<p class="bans">${MS.esc(sd.answer || "")}</p>${sd.status === "ok" ? `<p class="bres y">✓ ${t("Richtig", "Correct")} – −${sd.bonus} ${t("Min.", "min")}</p>` : `<p class="bres n">✗ ${t("Leider falsch", "Sorry, wrong")} (${t("richtig", "correct")}: ${MS.esc(sd.solution || "")})</p>`}`}
+          : sd.status === "open" ? "" : `<p class="bans">${MS.esc(sd.answer || "")}</p>${sd.status === "ok" ? `<p class="bres y">✓ ${t("Richtig", "Correct")} – 🕵 ${t("Sonderermittler", "Special investigators")}</p>` : `<p class="bres n">✗ ${t("Leider falsch", "Sorry, wrong")} (${t("richtig", "correct")}: ${MS.esc(sd.solution || "")})</p>`}`}
       </section>` : "";
     return `${sonderPart}<section class="report paper bonus">
         <div class="eyebrow">${t("Zusatzermittlung", "Bonus investigation")}</div>
         <h2>${t("Noch Zeit? Holt euch Bonusminuten!", "Time left? Earn bonus minutes!")}</h2>
-        <p class="muted">${t(`Drei Fragen aus eurer Akte – jede hat genau einen Versuch. Jede richtige Antwort zieht ${B.per} Minuten von eurer Wertung ab. Am Lösen ändert das nichts, nur an der Rangliste.`, `Three questions from your file – each has exactly one attempt. Every correct answer takes ${B.per} minutes off your score. It doesn't affect solving, only the ranking.`)}${B.min ? ` <b>${t(`Bisher: −${B.min} Min.`, `So far: −${B.min} min.`)}</b>` : ""}</p>
+        <p class="muted">${t(`Drei Fragen aus eurer Akte – jede hat genau einen Versuch. Jede richtige Antwort zieht ${B.per} Minuten von eurer Wertung ab. Am Lösen ändert das nichts, nur an der Rangliste. Die Zusatzermittlung bekommt jedes Team, das vor Spielende löst.`, `Three questions from your file – each has exactly one attempt. Every correct answer takes ${B.per} minutes off your score. It doesn't affect solving, only the ranking. Every team that solves before the end gets the bonus investigation.`)}${B.min ? ` <b>${t(`Bisher: −${B.min} Min.`, `So far: −${B.min} min.`)}</b>` : ""}</p>
         ${B.sonder_missed ? `<p class="small">${t("Teams, die Premium Plus vor Minute 70 komplett lösen, bekommen hier eine Überraschung.", "Teams who solve Premium Plus completely before minute 70 get a surprise here.")}</p>` : ""}
         ${B.expired && !B.questions.some((q) => q.status !== "open") ? `<p class="bres">${t("Für die Zusatzermittlung ist keine Zeit mehr – die Spielzeit ist abgelaufen.", "There's no time left for the bonus investigation – the game time is up.")}</p>` : qs}
         <p class="err" id="bmsg" role="alert">${MS.esc(bMsg)}</p>
@@ -727,7 +729,7 @@
   // ---------- Rangliste ----------
   function rankTable() {
     return `<table class="rank"><thead><tr><th>#</th><th>Team</th><th>${t("Stand", "Status")}</th><th>${t("Zeit", "Time")}</th></tr></thead><tbody>
-      ${S.ranking.map((r) => `<tr class="${r.name === S.team ? "me" : ""}"><td class="n">${r.rank || "–"}</td><td>${MS.esc(r.name)}${r.name === S.team ? t(" (ihr)", " (you)") : ""}</td>
+      ${S.ranking.map((r) => `<tr class="${r.name === S.team ? "me" : ""}"><td class="n">${r.rank || "–"}</td><td>${MS.esc(r.name)}${r.name === S.team ? t(" (ihr)", " (you)") : ""}${SB(r)}</td>
       <td>${MS.stage(r, S.tier)}</td><td class="mono">${r.solved ? MS.dur(r.score_ms) : "–"}</td></tr>`).join("")}
     </tbody></table>`;
   }

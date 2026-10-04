@@ -834,7 +834,7 @@ function bonusView(session, team) {
     const right = opts[c.zielOf(JSON.parse(session.secrets))];
     out.sonder = { surprise: render(c.SONDER.surprise, v), task: render(c.SONDER.task, v), label: render(c.SONDER.label, v), options: opts,
       status: st("s_ziel"), answer: B.s_ziel ? (opts.find((o) => o[0] === B.s_ziel.v) || [, ""])[1] : null,
-      solution: B.s_ziel ? right[1] : null, bonus: c.SONDER_BONUS, max: c.SONDER_MAX, min_limit: c.SONDER_MIN };
+      solution: B.s_ziel ? right[1] : null, max: c.SONDER_MAX, min_limit: c.SONDER_MIN };
   }
   return out;
 }
@@ -860,7 +860,7 @@ async function bonusAnswer({ request, env, team, session }) {
   if (key === "s_ziel") {
     if (!sonderEligible(session, team)) return fail(L(lg, "Den Sonderauftrag gibt es nur für Premium Plus und nur, wenn der Fall vor Minute 70 gelöst wurde.", "The special assignment is only for Premium Plus and only if the case was solved before minute 70."), 403);
     if (!val) return fail(L(lg, "Bitte ein Ziel wählen.", "Please choose a destination."));
-    ok = val === c.SONDER.options()[c.zielOf(JSON.parse(session.secrets))][0]; add = c.SONDER_BONUS;
+    ok = val === c.SONDER.options()[c.zielOf(JSON.parse(session.secrets))][0]; add = 0;  // keine Minuten, nur Auszeichnung (Entscheidung 4.10.2026)
   } else {
     const q = c.BONUS.find((x) => x.key === key);
     if (!q) return fail("Unbekannte Frage.");
