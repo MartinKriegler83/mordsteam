@@ -391,9 +391,10 @@ p.small{font-size:14px;color:#5A5D66}
 .nav-desktop a[aria-current="page"]{color:var(--red);text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:2px}
 /* Marken-Hero */
 /* Hintergrund des Marken-Heros – EIN Schalter zum Zurückstellen:
-   ganz schwarz (aktuell):        --bh-bg:#000;         --bh-glow:none;
-   vorher (Anthrazit mit Schein): --bh-bg:var(--ink);   --bh-glow:radial-gradient(640px 460px at 50% 34%,rgba(255,236,190,.16),transparent 70%); */
-:root{--bh-bg:#000;--bh-glow:none}
+   Anthrazit flach wie Leisten und Fußzeile (aktuell): --bh-bg:var(--ink); --bh-glow:none;
+   ganz schwarz:                                      --bh-bg:#000;       --bh-glow:none;
+   Anthrazit mit hellem Schein (bis 4.10.2026):       --bh-bg:var(--ink); --bh-glow:radial-gradient(640px 460px at 50% 34%,rgba(255,236,190,.16),transparent 70%); */
+:root{--bh-bg:var(--ink);--bh-glow:none}
 .bh{position:relative;overflow:hidden;background:var(--bh-bg);color:var(--paper);padding:64px 0 128px}
 .bh::before{content:"";position:absolute;inset:0;background:var(--bh-glow);pointer-events:none}
 .bh .wrap{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px}
