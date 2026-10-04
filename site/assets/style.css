@@ -556,3 +556,6 @@ main > section.bg-b{background:var(--paper-2)}
 /* Fußzeile: Themenseiten (Suchbegriffe) als eigene, dezente Zeile */
 .footer .ideas a{color:var(--muted)}
 @media (min-width:900px){.footer .wrap{flex-wrap:wrap}.footer .ideas{order:10;flex-basis:100%;gap:14px 20px;font-size:13px}}
+/* Links im Fließtext von Listen (z. B. „Für wen“): dezent unterstrichen */
+a.inlink{color:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;text-decoration-color:var(--red)}
+a.inlink:hover{color:var(--red)}
