@@ -187,6 +187,10 @@ button.btn-big{margin-top:14px}
 .pager button{background:rgba(255,255,255,.04);border:1px solid #4A4D55;color:var(--paper);border-radius:6px;padding:10px 14px;font:inherit;font-size:14px;cursor:pointer;max-width:49%;text-align:left;min-height:48px;line-height:1.3}
 .pager button.next{text-align:right;margin-left:auto}
 .pager button:hover{border-color:var(--folder)}
+.pager.three{display:grid;grid-template-columns:1fr minmax(0,1fr) 1fr;align-items:stretch}
+.pager.three button{max-width:none;width:100%;margin-left:0}
+.pager .cur{border:1px solid var(--folder);background:rgba(200,160,80,.10);color:var(--paper);border-radius:6px;padding:10px 14px;font-size:14px;line-height:1.3;text-align:center;min-height:48px;font-weight:600}
+@media(max-width:620px){.pager.three{grid-template-columns:1fr 1fr;grid-template-areas:"c c" "p n"}.pager.three .cur{grid-area:c}.pager.three>.prev,.pager.three>span{grid-area:p}.pager.three>.next{grid-area:n}}
 .pager small{display:block;font-family:var(--mono);font-size:10.5px;color:#A8A396;letter-spacing:1.5px;margin-bottom:2px}
 /* Browserfenster */
 .browser{max-width:1120px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 24px 54px rgba(0,0,0,.6);background:#fff}
