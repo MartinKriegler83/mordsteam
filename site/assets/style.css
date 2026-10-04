@@ -541,6 +541,7 @@ fieldset.step{grid-template-columns:minmax(0,1fr)}
 @media (min-width:700px){.facts.four .wrap{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (min-width:1000px){.facts.four .wrap{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .choose{max-width:1000px;margin:64px auto 0}
+#wahl .choose{margin-top:0}
 .choose-h{font-family:var(--serif);font-weight:900;font-size:clamp(26px,3vw,36px);text-align:center;margin:0 0 44px}
 .choose-grid{display:grid;gap:48px}
 @media (min-width:800px){.choose-grid{grid-template-columns:1fr 1fr;gap:28px}}

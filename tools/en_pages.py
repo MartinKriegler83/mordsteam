@@ -301,6 +301,9 @@ P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=Tru
 <a class="btn btn-red" href="solo.html">Go to Mordsteam Solo</a>
 </article>
 </div>
+</div></section>
+
+<section id="wahl" class="section"><div class="wrap">
 <div class="choose" aria-labelledby="choose-t">
 <h3 id="choose-t" class="choose-h">Teams or Friends?</h3>
 <div class="choose-grid">
