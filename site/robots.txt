@@ -1,3 +1,5 @@
 User-agent: *
 Disallow: /spiel/
 Disallow: /api/
+
+Sitemap: https://mordsteam.com/sitemap.xml

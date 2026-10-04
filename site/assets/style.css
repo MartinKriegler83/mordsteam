@@ -553,3 +553,6 @@ fieldset.step{grid-template-columns:minmax(0,1fr)}
 /* Helle Abschnitte wechseln zwischen den zwei Beigetönen (Klassen setzt tools/zebra.py, nach dem Einblenden von Bewertungen menu.js) */
 main > section.bg-a{background:var(--paper)}
 main > section.bg-b{background:var(--paper-2)}
+/* Fußzeile: Themenseiten (Suchbegriffe) als eigene, dezente Zeile */
+.footer .ideas a{color:var(--muted)}
+@media (min-width:900px){.footer .wrap{flex-wrap:wrap}.footer .ideas{order:10;flex-basis:100%;gap:14px 20px;font-size:13px}}
