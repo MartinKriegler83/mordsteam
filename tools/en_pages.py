@@ -309,7 +309,7 @@ P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=Tru
 <li>you want to solve it <b>together</b> and grow as a team</li>
 <li>you have a <b>shared date</b> – on site or on a video call</li>
 <li>you're a bigger group: from 3 people, larger groups play in <b>several teams</b></li>
-<li>it's for a <b>department, company party or club</b></li>
+<li>it's for a <b>department, offsite or club</b></li>
 </ul>
 <a class="pcard-link" href="teams.html">More about Teams →</a>
 </div>
