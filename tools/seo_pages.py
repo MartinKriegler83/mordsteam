@@ -73,9 +73,11 @@ def page(p):
     out = h + "\n" + main + foot_tpl
     return finish(out, "de")
 
-TEAMS_OFFER = ("FÜR FIRMEN UND VEREINE", "Mordsteam Teams", "Personalisierter Fall mit euren Namen. Basic 89 €, Premium 119 €, Premium Plus mit KI-Finale 149 € – pro Team, beliebig viele Teams.", "teams.html", "Teams ansehen")
-FRIENDS_OFFER = ("FÜR 4–8 FREUNDE", "Mordsteam Friends", "Der Krimiabend, bei dem ihr selbst die Verdächtigen seid – jeder am eigenen Handy. Ab 29 € für bis zu 4 Personen.", "friends.html", "Friends ansehen")
-SOLO_OFFER = ("FÜR EINE PERSON", "Mordsteam Solo", "Drei Fälle zum Allein-Lösen am Handy, ca. 30–45 Minuten, ab 8,90 € – mit 5-€-Gutschein für Friends oder Teams.", "solo.html", "Solo ansehen")
+# Angebotskarten: einheitlich Produkt · Zielgruppe als Abzeichen, Titel = was es ist (keine Fallnummern im Titel)
+FIRMEN_OFFER = ("TEAMS · FÜR FIRMEN", "Krimi-Teamevent für Firmen", "Ein Kriminalfall in eurer Firma, mit euren Namen. Basic 89 €, Premium 119 €, Premium Plus mit KI-Finale 149 € – pro Team, beliebig viele Teams.", "teams.html", "Teams ansehen")
+VEREINE_OFFER = ("TEAMS · FÜR VEREINE", "Krimi-Teamevent für Vereine", "Nach dem Vereinsfest ist die Festkassa weg – und jemand aus dem Verein war's. Gleiche Pakete und Preise wie für Firmen.", "teams.html#fall002", "Vereinsfall ansehen")
+FRIENDS_OFFER = ("FRIENDS · 4–8 PERSONEN", "Krimiabend für Freunde", "Ihr seid die Verdächtigen – jeder ermittelt am eigenen Handy. Ab 29 € für bis zu 4 Personen.", "friends.html", "Friends ansehen")
+SOLO_OFFER = ("SOLO · 1 PERSON", "Krimi für dich allein", "Drei Fälle zum Allein-Lösen am Handy, 30–45 Minuten, ab 8,90 € – mit 5-€-Gutschein für Friends oder Teams.", "solo.html", "Solo ansehen")
 
 PAGES = [
   dict(slug="teamevent-online", title="Teamevent online: Krimi-Teamevent für Remote-Teams | Mordsteam",
@@ -87,7 +89,7 @@ PAGES = [
     why="Bei Online-Teamevents schalten viele nach zehn Minuten innerlich ab. Ein Fall, in dem die eigenen Kolleginnen und Kollegen verdächtig sind, hält alle bei der Sache: Beweisstücke aufteilen, Alibis vergleichen, gemeinsam entscheiden – im Videocall oder im Büro.",
     points=["Personalisiert: eure Firma, eure Namen, eure Räume – auf Wunsch auch fiktiv", "Ohne Moderator: Anleitung und digitale Fallzentrale führen durch das Spiel", "Remote, hybrid oder vor Ort: jedes Team braucht nur ein Gerät, bis zu 5 weitere lesen per QR-Code mit", "Ein Team gegen die Uhr oder mehrere Teams im Wettkampf, mit Rangliste und Urkunde", "Auf Deutsch oder Englisch – ideal für internationale Teams"],
     steps=[("Bestellen und personalisieren", "Fall und Paket wählen, Namen und Abteilungen eintragen – oder eine fiktive Besetzung nehmen."), ("Spielcode erhalten", "Direkt nach dem Bezahlen bekommt ihr eure Links. Gespielt wird, wann ihr wollt – innerhalb von 12 Monaten."), ("Ermitteln und lösen", "Die Uhr startet für alle Teams gleichzeitig. Wer den Fall zuerst löst, gewinnt.")],
-    offers_h2="Das passende Paket für euer Team", offers=[TEAMS_OFFER, FRIENDS_OFFER],
+    offers_h2="Das passende Paket für euer Team", offers=[FIRMEN_OFFER, FRIENDS_OFFER],
     offers_note="Preise pro Team, inkl. allem – keine Versandkosten, keine Spielleitung nötig. Rechnung mit Firmenadresse und UID automatisch per E-Mail.",
     faq=[("Wie funktioniert ein Online-Teamevent mit Mordsteam?", "Jedes Team öffnet seine digitale Fallakte und die Fall-Website im Browser. Ihr sprecht euch im Videocall oder im Raum ab und gebt eure Lösung in der Fallzentrale ein. Hinweise kommen automatisch, ein Moderator ist nicht nötig."),
          ("Wie viele Personen können mitmachen?", "Ideal sind 3 bis 6 Personen pro Team. Die Zahl der Teams ist offen – so spielt auch eine ganze Abteilung gleichzeitig gegeneinander."),
@@ -105,7 +107,7 @@ PAGES = [
     why="Viele Teambuilding-Formate sind entweder Vortrag oder Pflichtübung. Beim Krimi arbeiten die Leute tatsächlich zusammen: Wer welche Information hat, wer den Überblick behält, wer die richtige Frage stellt – das zeigt sich im Spiel von selbst. Und weil Kolleginnen und Kollegen die Verdächtigen sind, lernen sich auch neue Teammitglieder schnell kennen.",
     points=["Für Offsites, Strategietage und Workshops als Programmpunkt", "Onboarding: neue Kolleg:innen spielen mit und lernen Namen und Abteilungen kennen", "Fun Activity für zwischendurch – 50, 70 oder 90 Minuten Countdown", "Vor Ort, hybrid oder remote: jedes Team braucht nur ein Gerät", "Mehrere Teams im Wettkampf, mit Rangliste und Urkunde – ganz ohne Moderator"],
     steps=[("Fall und Paket wählen", "Basic (50 Min.), Premium mit zweitem Akt (70 Min.) oder Premium Plus mit KI-Finale (90 Min.)."), ("Personalisieren", "Namen, Abteilungen und Räume eintragen – oder eine fiktive Besetzung nehmen."), ("Spielen", "Eine Person startet die Uhr und kann trotzdem mitspielen. Alles Weitere führt die Fallzentrale.")],
-    offers_h2="Für Firmen und Vereine", offers=[TEAMS_OFFER, ("FÜR VEREINE", "Fall 002 „Eiskalt kassiert“", "Der Krimi für den Verein: Nach dem Vereinsfest ist die Festkassa weg – und jemand aus dem Verein war's. Gleiche Preise wie für Firmen.", "bestellen.html?fall=002", "Vereinsfall bestellen")],
+    offers_h2="Für Firmen und Vereine", offers=[FIRMEN_OFFER, VEREINE_OFFER],
     offers_note="Ein Fall lässt sich innerhalb von 12 Monaten einmal starten – ihr könnt also schon jetzt für das nächste Offsite bestellen.",
     faq=[("Wie viele Leute können mitmachen?", "So viele ihr wollt: Ihr bildet Teams zu 3 bis 6 Personen und bestellt die passende Anzahl Teams. Alle Teams spielen denselben Fall gleichzeitig gegeneinander."),
          ("Eignet sich das für das Onboarding neuer Mitarbeitender?", "Ja. Neue Kolleginnen und Kollegen kommen im Fall mit Namen und Abteilung vor und arbeiten im Team mit Leuten zusammen, die sie sonst erst nach Wochen kennenlernen würden."),
@@ -123,7 +125,7 @@ PAGES = [
     why="Ein Krimidinner ist Unterhaltung. Ein Krimi-Teamevent ist Zusammenarbeit: Die Teams müssen Beweise auswerten, sich absprechen und unter Zeitdruck entscheiden. Genau das macht es zu einem echten Teambuilding.",
     points=["Keine Schauspieler, keine Location-Bindung, kein Mindestumsatz", "Personalisiert mit euren Namen, Abteilungen und Räumen", "Mehrere Teams gleichzeitig im Wettkampf, mit Rangliste", "Im Büro, im Lokal, im Seminarhotel oder online", "Festpreis pro Team, sofort spielbar"],
     steps=[("Fall und Paket wählen", "Basic (50 Min.), Premium mit zweitem Akt (70 Min.) oder Premium Plus mit KI-Finale (90 Min.)."), ("Besetzung eintragen", "Wer ist das Opfer, wer verdächtig? Mit echten Namen oder fiktiver Besetzung."), ("Spielen", "Die Fallzentrale startet die Uhr für alle Teams. Am Ende gibt es Auflösung, Rangliste und Urkunde.")],
-    offers_h2="Krimi-Teamevent statt Krimidinner", offers=[TEAMS_OFFER, FRIENDS_OFFER],
+    offers_h2="Krimi-Teamevent statt Krimidinner", offers=[FIRMEN_OFFER, FRIENDS_OFFER],
     offers_note="Für den Krimiabend im Freundeskreis gibt es Mordsteam Friends – jeder spielt am eigenen Handy.",
     faq=[("Ist Mordsteam ein Krimidinner?", "Nicht ganz: Es gibt keine Schauspieler und kein festes Menü. Euer Team löst den Fall selbst – ihr könnt aber gerne dabei essen."),
          ("Für wie viele Personen eignet sich das Firmenevent?", "Für kleine Teams ab 3 Personen bis zu großen Gruppen mit vielen Teams. Ideal sind 3 bis 6 Personen pro Team."),
@@ -139,9 +141,9 @@ PAGES = [
     cta="Vereinsfall konfigurieren", cta_href="bestellen.html?fall=002",
     why_h2="Ein Abend, über den der Verein noch lange redet",
     why="Ob Sportverein, Feuerwehr, Musikverein, Theatergruppe oder Kulturverein: Jeder kennt Fest, Schichtplan, Bonkassa und Leergut. Genau daraus ist der Fall gebaut – mit Wörtern, die zu eurer Vereinsart passen.",
-    points=["Fall 002 „Eiskalt kassiert“ – für Vereine geschrieben", "Personalisiert: Vereinsname, Festplatz, Vereinsheim, Obfrau oder Obmann", "Mehrere Teams gegeneinander, mit Siegerehrung und Urkunde", "Im Vereinsheim auf Handy oder Laptop – kein Beamer, keine Spielleitung", "Ideal für Vereinsabend, Saisonabschluss, Jubiläum oder Kameradschaftsabend"],
+    points=["Eigener Vereinsfall „Eiskalt kassiert“ – für Vereine geschrieben", "Personalisiert: Vereinsname, Festplatz, Vereinsheim, Obfrau oder Obmann", "Mehrere Teams gegeneinander, mit Siegerehrung und Urkunde", "Im Vereinsheim auf Handy oder Laptop – kein Beamer, keine Spielleitung", "Ideal für Vereinsabend, Saisonabschluss, Jubiläum oder Kameradschaftsabend"],
     steps=[("Vereinsart wählen", "Sport, Feuerwehr, Musik, Theater oder Kultur – der Fall übernimmt die passenden Begriffe."), ("Besetzung eintragen", "Vereinsname, Festplatz und die Mitglieder, die verdächtig sein dürfen."), ("Spielen", "Die Uhr läuft für alle Teams gleichzeitig. Wer die Kassa zuerst findet, gewinnt.")],
-    offers_h2="Der Vereinsfall", offers=[("FALL 002 · JETZT BUCHBAR", "„Eiskalt kassiert“", "Basic 89 €, Premium 119 €, Premium Plus mit KI-Verhör des Ehrenobmanns 149 € – pro Team.", "bestellen.html?fall=002", "Vereinsfall bestellen"), FRIENDS_OFFER],
+    offers_h2="Für Vereine und Freundeskreise", offers=[VEREINE_OFFER, FRIENDS_OFFER],
     offers_note="Die Vereinsart ändert nur die Wörter im Fall (Pokal, Anekdoten, Tombolapreis), nie die Lösung oder die Spieldauer.",
     faq=[("Für welche Vereine passt der Krimi?", "Für Sportvereine, Freiwillige Feuerwehren, Musikvereine, Theatergruppen und Kulturvereine – und alle anderen Vereine, die Feste feiern."),
          ("Wie viele Mitglieder können mitspielen?", "Ihr bildet Teams zu 3 bis 6 Personen. Die Zahl der Teams ist offen."),
