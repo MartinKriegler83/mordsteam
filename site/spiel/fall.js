@@ -486,7 +486,7 @@
     const pbtn = (i, dir) => `<button type="button" data-go="${i}" class="${dir}"><small>${dir === "prev" ? `← ${t("Nr.", "No.")} ` + pad(i + 1) : `${t("Nr.", "No.")} ` + pad(i + 1) + " →"}</small>${docs[i].title}</button>`;
     root.innerHTML = `<div class="docbar"><button type="button" class="back" id="back">${t("← Alle Beweisstücke", "← All evidence")}</button><span class="docpos">${t("Nr.", "No.")} ${pad(openDoc + 1)} / ${docs.length} · ${MS.esc(d.kind)}</span></div>
       <article class="doc" data-wm="${MS.esc((watermark + "   ").repeat(40))}"><div class="doc-inner">${d.html}</div></article>
-      <div class="pager">${prev !== null ? pbtn(prev, "prev") : "<span></span>"}${next !== null ? pbtn(next, "next") : ""}</div>`;
+      <div class="pager three">${prev !== null ? pbtn(prev, "prev") : "<span></span>"}<div class="cur"><small>${t("Nr.", "No.")} ${pad(openDoc + 1)}</small>${d.title}</div>${next !== null ? pbtn(next, "next") : "<span></span>"}</div>`;
     wrapTables(".doc table");
     $("back").onclick = () => { openDoc = null; lastDocId = null; MS.del("ms_doc"); renderView(); };
     root.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => { openDoc = Number(b.dataset.go); renderView(); scrollTo(0, 0); }));

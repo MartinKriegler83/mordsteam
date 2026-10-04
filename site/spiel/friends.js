@@ -252,7 +252,7 @@
     const wm = ("MORDSTEAM FRIENDS · " + String(S.name).replace(/&[^;]+;/g, "") + "   ").repeat(40);
     root.innerHTML = `<div class="docbar"><button type="button" class="back" id="back">${t("← Alle Beweisstücke", "← All evidence")}</button><span class="docpos">${nr} ${pad(openDoc + 1)} / ${S.docs.length} · ${esc(d.kind)}</span></div>
       <article class="doc" data-wm="${esc(wm)}"><div class="doc-inner">${d.html}</div></article>
-      <div class="pager">${prev !== null ? pb(prev, "prev") : "<span></span>"}${next !== null ? pb(next, "next") : `<button type="button" class="next" id="toQ2"><small>${t("Weiter →", "Next →")}</small>${t("Zu den Fragen", "To the questions")}</button>`}</div>`;
+      <div class="pager three">${prev !== null ? pb(prev, "prev") : "<span></span>"}<div class="cur"><small>${nr} ${pad(openDoc + 1)}</small>${esc(d.title)}</div>${next !== null ? pb(next, "next") : `<button type="button" class="next" id="toQ2"><small>${t("Weiter →", "Next →")}</small>${t("Zu den Fragen", "To the questions")}</button>`}</div>`;
     root.querySelectorAll(".doc table").forEach((tb) => { const w = document.createElement("div"); w.className = "tablewrap"; tb.before(w); w.append(tb); });
     $("back").onclick = () => { openDoc = null; render(); };
     root.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => { openDoc = Number(b.dataset.go); render(); scrollTo(0, 0); }));
