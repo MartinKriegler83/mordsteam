@@ -104,7 +104,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <section class="tvid-sec" aria-label="Teaser video"><div class="wrap">
 <div class="tvid" data-video="teams-en"><video muted loop playsinline preload="none" aria-label="Teaser video Teams"></video><button class="tvid-sound" type="button" aria-pressed="false" data-on="Sound on" data-off="Sound off">Sound on</button></div>
 </div></section>
-<script src="/assets/teaser.js" defer></script>
+<script src="/assets/teaser.js?v=2" defer></script>
 
 <section class="facts" aria-label="Key facts"><div class="wrap">
 <div><b><svg class="ico-cd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="14" r="8"/><path d="M12 14v-4M9 2h6M12 2v4M19 7l1.5-1.5"/></svg>50 to 90 min</b><span>Countdown – Basic with one act, Premium with a second act, Premium Plus with an AI finale</span></div>
@@ -387,7 +387,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <section class="tvid-sec" aria-label="Teaser video"><div class="wrap">
 <div class="tvid" data-video="friends-en"><video muted loop playsinline preload="none" aria-label="Teaser video Friends"></video><button class="tvid-sound" type="button" aria-pressed="false" data-on="Sound on" data-off="Sound off">Sound on</button></div>
 </div></section>
-<script src="/assets/teaser.js" defer></script>
+<script src="/assets/teaser.js?v=2" defer></script>
 
 <section class="facts" aria-label="Key facts"><div class="wrap">
 <div><b>4–8 investigators</b><span>each on their own phone, tablet or laptop</span></div>
@@ -588,7 +588,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <section class="tvid-sec" aria-label="Teaser video"><div class="wrap">
 <div class="tvid" data-video="solo-en"><video muted loop playsinline preload="none" aria-label="Teaser video Solo"></video><button class="tvid-sound" type="button" aria-pressed="false" data-on="Sound on" data-off="Sound off">Sound on</button></div>
 </div></section>
-<script src="/assets/teaser.js" defer></script>
+<script src="/assets/teaser.js?v=2" defer></script>
 
 <section class="facts" aria-label="Key facts"><div class="wrap">
 <div><b>1 investigator</b><span>just you, on your own device</span></div>
