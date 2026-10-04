@@ -127,7 +127,7 @@ for (let n = 4; n <= 8; n++) for (const cAct of ["karten", "balkon"]) for (const
   if (!app.some((r) => r[1] === "Stairs" && hm(r[0]) >= T - 3 && hm(r[0]) <= T + 12)) err("Treppe Lockvogel", tag);
   const lt = by.luecken.html, both = [S.culprit, S.decoy].every((i) => lt.includes(G.players[i].name));
   if (plus ? G.players.some((p) => lt.includes(p.name)) : !both) err("Lücken-Notiz", tag);
-  const AREA = { "Shoe cupboard in the hallway": "Hallway", "Flower trough on the balcony": "Balcony", "Ski room in the cellar": "Cellar", "Upstairs bathroom": "Upstairs", "Cellar fridge": "Cellar", "Woodshed outside": "Outside" };
+  const AREA = { "Shoe cupboard in the hallway": "Hallway", "Flower trough on the balcony": "Balcony", "Ski room in the cellar": "Cellar", "Upstairs bathroom": "Upstairs", "Cellar fridge": "Cellar", "Woodshed outside": "Outside", "Log basket next to the tiled stove, living room": "checked", "Sugar pot on the kitchen shelf": "checked" };  // checked = ausdrücklich leer, kein Kandidat
   const area = cAct === "karten" ? ["Living room", "Hallway", "Kitchen"] : ["Living room", "Balcony"];
   const rg = rows(by.rundgang.html).slice(1);
   if (rg.some((r) => !AREA[r[0]])) err("Rundgang-Orte", tag);

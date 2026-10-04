@@ -7,7 +7,7 @@ const NAMES = ["Anna", "Bernd", "Clara", "David", "Eva", "Felix", "Gerda", "Hann
 let seed = 7; const rnd = (n) => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % n; };
 let bad = 0, runs = 0; const len = {};
 const err = (...a) => { bad++; if (bad < 25) console.log("FEHLER", ...a); };
-const AREA = { "Schuhschrank im Flur": "Flur", "Blumentrog auf dem Balkon": "Balkon", "Skiraum im Keller": "Keller", "Bad im Obergeschoss": "Obergeschoss", "Kellerkühlschrank": "Keller", "Holzschuppen draußen": "draußen" };
+const AREA = { "Schuhschrank im Flur": "Flur", "Blumentrog auf dem Balkon": "Balkon", "Skiraum im Keller": "Keller", "Bad im Obergeschoss": "Obergeschoss", "Kellerkühlschrank": "Keller", "Holzschuppen draußen": "draußen", "Holzkorb neben dem Kachelofen, Stube": "geprüft", "Zuckerdose im Küchenregal": "geprüft" };  // geprüft = ausdrücklich leer, kein Kandidat
 for (let n = 4; n <= 8; n++) for (const cAct of ["karten", "balkon"]) for (const dAct of ["karten", "balkon"]) for (let tv = 0; tv < F.TIME_SHIFTS.length; tv++) for (const plus of [false, true]) for (let trial = 0; trial < 4; trial++) {
   const S = F.setup(n, rnd);
   const pool = S.acts.map((a, i) => i).filter((i) => S.acts[i] === cAct);
@@ -40,7 +40,9 @@ for (let n = 4; n <= 8; n++) for (const cAct of ["karten", "balkon"]) for (const
   if (plus ? G.players.some((p) => lt.includes(p.name)) : !both) err("Lücken-Notiz", n, plus);
   // Frage 3: Rückweg nach der Kamera
   const area = cAct === "karten" ? ["Stube", "Flur", "Küche"] : ["Stube", "Balkon"];
-  const cand = rows(by.rundgang.html).slice(1).filter((r) => area.includes(AREA[r[0]])).map((r) => r[0]);
+  const rg = rows(by.rundgang.html).slice(1);
+  if (rg.some((r) => !AREA[r[0]])) err("Rundgang-Orte", n);
+  const cand = rg.filter((r) => area.includes(AREA[r[0]])).map((r) => r[0]);
   if (cand.length !== 1 || F.SPOTS[sol.versteck].name !== { "Schuhschrank im Flur": "Schuhschrank im Flur", "Blumentrog auf dem Balkon": "Blumentrog auf dem Balkon" }[cand[0]]) err("Frage 3", n, cAct, cand, sol.versteck);
   if (app.some((r) => r[1] === "Keller" && hm(r[0]) > hm("01:19") + (tv ? F.TIME_SHIFTS[tv] : 0))) err("Keller nach Kamera", n);
   // Frage 4 (Plus)
