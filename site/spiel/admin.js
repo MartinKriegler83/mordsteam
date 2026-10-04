@@ -222,7 +222,14 @@
       ${kunden.list.length ? `<div style="overflow-x:auto;margin-top:12px"><table class="grid small"><tr><th>Kunde</th><th>Käufe</th><th>Umsatz</th><th>Erster / letzter Kauf</th><th>Teams · Friends · Solo</th><th>Gutschein</th><th>Newsletter</th></tr>
         ${list.map((c) => `<tr><td><b>${e(c.name || "–")}</b><br><span class="mono">${e(c.email)}</span>${c.kunde === "b2b" ? ' <span class="chip">Firma</span>' : ""}</td><td>${c.orders}${c.orders > 1 ? " ★" : ""}</td><td class="mono">${eur(c.cents)}</td><td>${d(c.first)}<br>${d(c.last)}</td><td>${c.products.teams} · ${c.products.friends} · ${c.products.solo}</td><td>${c.voucher || "–"}</td><td>${NS[c.news] || e(c.news)}</td></tr>`).join("")}</table></div>
         ${kunden.list.length > 30 ? `<p class="small"><button class="btn btn-line" type="button" id="kall">${kundenAll ? "Nur die letzten 30 zeigen" : `Alle ${kunden.list.length} zeigen`}</button></p>` : ""}` : `<p class="small" style="margin-top:10px">Noch keine bezahlten Bestellungen.</p>`}
-      <p class="small" style="margin-top:8px">Gezählt werden bezahlte Bestellungen, zusammengefasst nach E-Mail-Adresse. ★ = mehr als ein Kauf.</p></div>`;
+      <p class="small" style="margin-top:8px">Gezählt werden bezahlte Bestellungen, zusammengefasst nach E-Mail-Adresse. ★ = mehr als ein Kauf.</p></div>
+    <div class="panel"><div class="eyebrow">Werbung · bringt sie Bestellungen?</div>
+      ${(kunden.sources || []).length ? `<div style="overflow-x:auto;margin-top:10px"><table class="grid small"><tr><th>Herkunft</th><th>Besuche<br>30 Tage / gesamt</th><th>Bestellungen<br>30 Tage / gesamt</th><th>Umsatz<br>30 Tage / gesamt</th><th>Werbekosten<br>letzte 30 Tage</th><th>Kosten je Bestellung</th><th>Umsatz je € Werbung</th></tr>
+        ${kunden.sources.map((s, i) => `<tr><td class="mono"><b>${e(s.src)}</b>${s.src === "gads" ? "<br>Google Ads" : s.src === "meta" ? "<br>Facebook/Instagram" : s.src === "linkedin" ? "<br>LinkedIn" : s.src === "bing" ? "<br>Microsoft Ads" : ""}</td><td>${n0(s.visits30)} / ${n0(s.visits)}</td><td>${n0(s.orders30)} / ${n0(s.orders)}${s.visits30 ? `<br><span class="small">${(s.orders30 / s.visits30 * 100).toFixed(1).replace(".", ",")} % kaufen</span>` : ""}</td><td class="mono">${eur(s.cents30)} / ${eur(s.cents)}</td>
+          <td><input class="srccost" data-i="${i}" inputmode="decimal" placeholder="z. B. 500" style="width:90px"> €</td><td class="mono" id="srccpo${i}">–</td><td class="mono" id="srcroas${i}">–</td></tr>`).join("")}</table></div>
+        <p class="small">Werbekosten der letzten 30 Tage aus dem Werbekonto abschreiben (Google Ads: Kampagnen → Kosten, Zeitraum „Letzte 30 Tage“); sie werden nicht gespeichert. Rechnet sich Werbung, ist der Umsatz je € Werbung über 1,20 (wegen 20 % Reverse Charge).</p>`
+        : `<p class="small" style="margin-top:10px">Noch keine Besuche über Werbung. Im Google-Ads-Konto unter <b>Verwaltung → Kontoeinstellungen → Tracking → Suffix der finalen URL</b> <span class="mono">src=gads</span> eintragen. Klicks mit Google-Kennung (gclid) werden auch ohne Suffix als <span class="mono">gads</span> gezählt.</p>`}
+    </div>`;
   }
 
   // ---------- Newsletter: Liste, ECG-Abgleich, Entwurf ----------
@@ -512,6 +519,11 @@
 
     // Kunden & Newsletter
     const kall = document.getElementById("kall"); if (kall) kall.onclick = () => { kundenAll = !kundenAll; render(...last); };
+    document.querySelectorAll(".srccost").forEach((inp) => (inp.oninput = () => {
+      const s = kunden.sources[+inp.dataset.i], cost = parseFloat(String(inp.value).replace(",", ".")) || 0;
+      document.getElementById("srccpo" + inp.dataset.i).textContent = cost && s.orders30 ? eur(cost * 100 / s.orders30) : "–";
+      document.getElementById("srcroas" + inp.dataset.i).textContent = cost ? (s.cents30 / 100 / cost).toFixed(2).replace(".", ",") : "–";
+    }));
     const nls = document.getElementById("nlsync");
     if (nls) nls.onclick = async () => {
       nls.disabled = true; nls.textContent = "Überträgt …";

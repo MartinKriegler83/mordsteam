@@ -18,7 +18,7 @@ import { handleContact } from "../../../lib/contact.js";
 import { handleWithdraw, orderNo } from "../../../lib/withdraw.js";
 import { sendMail as opsMail } from "../../../lib/ops.js";
 import { enrichPayment } from "../../../lib/accounting.js";
-import { nlSignup, nlConfirm, nlUnsubscribe, nlVisit, nlAfterOrder, nlTag, migrateNewsletter } from "../../../lib/newsletter.js";
+import { nlSignup, nlConfirm, nlUnsubscribe, nlVisit, srcVisit, nlAfterOrder, nlTag, migrateNewsletter } from "../../../lib/newsletter.js";
 import { createSoloTicket, migrateSolo } from "../../../lib/solo.js";
 import { createFriendsGroup, friendsGroupOfOrder, friendsPrice, FRIENDS_PRICE, FRIENDS_PRICE_PLUS, FRIENDS_CASES, friendsCase, friendsCron } from "../../../lib/friends.js";
 
@@ -66,6 +66,7 @@ export async function onRequest({ request, env, params }) {
     if (route === "newsletter/bestaetigen" && method === "GET") return await nlConfirm(request, env);
     if (route === "newsletter/abmelden" && method === "GET") return await nlUnsubscribe(request, env);
     if (route === "nl-besuch" && method === "GET") return await nlVisit(request, env);
+    if (route === "src-besuch" && method === "GET") return await srcVisit(request, env);
     // Feedback nach dem Spiel
     if (route === "feedback" && method === "GET") {
       const f = await feedbackInfo(env, new URL(request.url).searchParams.get("f"));
@@ -170,6 +171,7 @@ async function bestellung(request, env) {
   contact.kunde = k.kunde;
   if (b.consent && b.consent.no_news) contact.no_news = true; // Widerspruch gegen Neuigkeiten per E-Mail (§ 174 Abs. 4 TKG 2021)
   if (nlTag(b.nl)) contact.nl = nlTag(b.nl);                 // kam über einen Newsletter-Link
+  if (nlTag(b.src)) contact.src = nlTag(b.src);              // kam über Werbung (z. B. gads = Google Ads)
   if (contact.name.length < 2) throw new InputError(L(site, "Bitte deinen Namen angeben.", "Please enter your name."));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError(L(site, "Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."));
   const c = b.consent || {};
@@ -264,6 +266,7 @@ async function soloBestellung(request, env) {
   contact.kunde = k.kunde;
   if (b.consent && b.consent.no_news) contact.no_news = true; // Widerspruch gegen Neuigkeiten per E-Mail (§ 174 Abs. 4 TKG 2021)
   if (nlTag(b.nl)) contact.nl = nlTag(b.nl);                 // kam über einen Newsletter-Link
+  if (nlTag(b.src)) contact.src = nlTag(b.src);              // kam über Werbung (z. B. gads = Google Ads)
   if (contact.name.length < 2) throw new InputError(L(site, "Bitte deinen Namen angeben.", "Please enter your name."));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError(L(site, "Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."));
   const c = b.consent || {};
@@ -339,6 +342,7 @@ async function friendsBestellung(request, env) {
   contact.kunde = k.kunde;
   if (b.consent && b.consent.no_news) contact.no_news = true; // Widerspruch gegen Neuigkeiten per E-Mail (§ 174 Abs. 4 TKG 2021)
   if (nlTag(b.nl)) contact.nl = nlTag(b.nl);                 // kam über einen Newsletter-Link
+  if (nlTag(b.src)) contact.src = nlTag(b.src);              // kam über Werbung (z. B. gads = Google Ads)
   if (contact.name.length < 2) throw new InputError(L(site, "Bitte deinen Namen angeben.", "Please enter your name."));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError(L(site, "Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."));
   const c = b.consent || {};

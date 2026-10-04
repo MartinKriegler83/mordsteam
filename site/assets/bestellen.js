@@ -285,7 +285,7 @@
     const btn = $("#submit");
     btn.disabled = true; btn.textContent = T("Einen Moment …", "One moment …");
     try {
-      const r = await fetch("/api/shop/bestellung", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...body, nl: new URLSearchParams(location.search).get("nl") || "" }) });
+      const r = await fetch("/api/shop/bestellung", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...body, nl: new URLSearchParams(location.search).get("nl") || "", src: window.msSrc || "" }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.redirect) throw new Error(d.error || T("Die Bestellung konnte nicht angelegt werden.", "The order could not be created."));
       save();

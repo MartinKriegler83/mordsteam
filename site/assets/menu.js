@@ -14,6 +14,23 @@ document.querySelectorAll("details.menu").forEach((m) => m.addEventListener("cli
   });
 })();
 
+// Herkunft aus Werbung: ?src=<Kürzel> (z. B. im Google-Ads-Konto als „Suffix der finalen URL“: src=gads) oder automatisch
+// über die Klick-Kennungen der Werbenetze (gclid → gads, fbclid → meta, li_fat_id → linkedin, msclkid → bing).
+// Wie beim Newsletter: nur das Kürzel wird an interne Links gehängt und mit der Bestellung gespeichert, nichts im Browser.
+(function () {
+  const q = new URLSearchParams(location.search);
+  let src = (q.get("src") || "").toLowerCase();
+  if (!src) src = q.has("gclid") || q.has("gbraid") || q.has("wbraid") ? "gads" : q.has("fbclid") ? "meta" : q.has("li_fat_id") ? "linkedin" : q.has("msclkid") ? "bing" : "";
+  if (!/^[a-z0-9][a-z0-9-]{0,39}$/.test(src)) return;
+  window.msSrc = src;
+  if (!/[?&]src=/.test(document.referrer || "")) fetch("/api/shop/src-besuch?src=" + encodeURIComponent(src)).catch(() => {});
+  document.querySelectorAll("a[href]").forEach((a) => {
+    const h = a.getAttribute("href");
+    if (!h || /^(mailto:|tel:|#|https?:\/\/(?!mordsteam\.com|www\.mordsteam\.com))/i.test(h)) return;
+    try { const u = new URL(h, location.href); if (u.origin !== location.origin || u.searchParams.has("src")) return; u.searchParams.set("src", src); a.setAttribute("href", u.pathname + u.search + u.hash); } catch {}
+  });
+})();
+
 // Abschnitts-Hintergründe neu verteilen (gleiche Regel wie tools/zebra.py), z. B. nachdem die Bewertungen eingeblendet wurden
 window.msZebra = function () {
   let n = 0;
