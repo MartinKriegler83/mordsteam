@@ -187,6 +187,7 @@
     d._logo = logoData;
     try { localStorage.setItem(DRAFT, JSON.stringify(d)); } catch { try { delete d._logo; localStorage.setItem(DRAFT, JSON.stringify(d)); } catch {} }
   }
+  let urlApplied = false;
   function restore() {
     let d = null;
     try { d = JSON.parse(localStorage.getItem(DRAFT) || "null"); } catch {}
@@ -200,6 +201,9 @@
       }
       if (d._logo) setLogo(d._logo);
     }
+    // Paket und Fall aus dem Link nur beim ersten Aufbau vorwählen – danach entscheidet die Auswahl im Formular
+    if (urlApplied) return;
+    urlApplied = true;
     if (qp === "basis" || qp === "premium" || qp === "plus") form.querySelector(`input[name=paket][value=${qp}]`).checked = true;
     const qf = new URLSearchParams(location.search).get("fall");
     if (form.fall && (qf === "002" || qf === "001")) form.querySelector(`input[name=fall][value=fall-${qf}]`).checked = true;
