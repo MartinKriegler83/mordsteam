@@ -407,8 +407,24 @@
       ${msg ? `<p class="err">${esc(msg)}</p>` : ""}
     </section>`;
     $("share").onclick = async () => { try { if (navigator.share) await navigator.share({ title: "Mordsteam Friends", text: t("Einer von uns war's. Such dir deinen Namen aus:", "One of us did it. Pick your name:"), url: link }); else { await navigator.clipboard.writeText(link); $("share").textContent = t("Kopiert ✓", "Copied ✓"); } } catch {} };
-    if ($("start")) $("start").onclick = async () => { $("start").disabled = true; const r = await orgPost("org/start"); const d = await r.json().catch(() => ({})); orgView(r.ok ? "" : d.error); };
-    if ($("reveal")) $("reveal").onclick = async () => { $("reveal").disabled = true; const r = await orgPost("org/reveal"); const d = await r.json().catch(() => ({})); orgView(r.ok ? "" : d.error); };
+    // Zweistufig bestätigen: beim ersten Klick eine Warnung unter dem Knopf, erst der zweite Klick führt aus
+    const confirmFirst = (id, warnText, againLabel, run) => {
+      const btn = $(id); if (!btn) return;
+      btn.onclick = async () => {
+        if (warnText && !btn.dataset.armed) {
+          btn.dataset.armed = "1"; btn.textContent = againLabel;
+          btn.insertAdjacentHTML("beforebegin", `<p class="err" id="${id}-warn">${warnText}</p>`);
+          return;
+        }
+        btn.disabled = true; const r = await orgPost(run); const d = await r.json().catch(() => ({})); orgView(r.ok ? "" : d.error);
+      };
+    };
+    confirmFirst("start", g.mode === "live" && joined < n
+      ? t(`Achtung: Erst ${joined} von ${n} sind verbunden. Wenn du jetzt startest, läuft die Zeit für alle los und lässt sich nicht mehr anhalten.`, `Careful: only ${joined} of ${n} are connected. If you start now, the clock starts for everyone and can’t be stopped.`)
+      : "", t("Trotzdem jetzt starten", "Start anyway"), "org/start");
+    confirmFirst("reveal", done < n
+      ? t(`Achtung: Erst ${done} von ${n} sind fertig. Die Auflösung beendet den Fall für alle – wer noch spielt, kann nicht mehr weitermachen.`, `Careful: only ${done} of ${n} have finished. Showing the solution ends the case for everyone – anyone still playing can’t continue.`)
+      : "", t("Trotzdem auflösen", "Show the solution anyway"), "org/reveal");
     every(g.status === "revealed" ? 0 : 15000, () => orgView());
   }
 
