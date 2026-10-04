@@ -550,3 +550,6 @@ button.btn-big{margin-top:14px}
 .so-sub{display:block;font-weight:600;font-size:14px;margin:10px 0 4px}
 
 .warnbox{background:#FFF4CF;border-left:4px solid var(--red);padding:10px 12px;margin:10px 0;font-size:15px}
+/* Friends: Countdown bis zum gemeinsamen Start */
+.fr-cd{display:flex;align-items:baseline;justify-content:center;gap:12px;margin:8px 0 22px;padding:18px;border:2px solid var(--red,#B3261E);border-radius:10px;font-weight:600}
+.fr-cd strong{font-family:var(--serif,serif);font-size:56px;line-height:1;color:var(--red,#B3261E);min-width:1.4em;text-align:center}

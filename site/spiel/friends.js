@@ -72,7 +72,7 @@
     if (S.reveal || S.ended) $("fallname").textContent = "Mordsteam Friends · " + S.title;
     if (S.reveal) { every(0); plain(); return revealView(); }
     if (S.ended) { plain(); every(20000, () => refresh()); return waitRevealView(); }
-    if (!S.begun && !S.can_begin) { plain(); every(15000, () => refresh()); return waitStartView(); }
+    if (!S.begun && !S.can_begin) { plain(); every(3000, () => { if (!document.hidden) refresh(); }); return waitStartView(); }
     every(0);
     tabs.hidden = false;
     $("vtab").hidden = !S.plus;
@@ -124,15 +124,33 @@
   // ---------- Warten ----------
   const pstat = (p, showDone = true) => (showDone && p.done ? t("✓ fertig", "✓ finished") : p.playing ? t("ermittelt", "investigating") : p.joined ? t("verbunden", "connected") : t("noch nicht da", "not here yet"));
   const roster = (g, showDone = true) => `<ul class="fr-roster">${g.players.map((p) => `<li class="${p.idx === S.me ? "me" : ""}"><b>${p.name}${p.idx === S.me ? t(" (du)", " (you)") : ""}</b><span>${pstat(p, showDone)}</span></li>`).join("")}</ul>`;
+  // Countdown zwischen dem Klick des Organisators und dem gemeinsamen Start (gleichzeitig)
+  let cdTimer = null;
+  function countdown() {
+    clearInterval(cdTimer); cdTimer = null;
+    const g = S && S.group;
+    if (!g || g.mode !== "live" || g.status !== "running" || !g.started_at) return;
+    const left = () => Math.ceil((g.started_at - (Date.now() + off)) / 1000);
+    const show = () => {
+      const s = left(), el = $("cdnum");
+      if (s <= 0) { clearInterval(cdTimer); cdTimer = null; if (el) el.textContent = "0"; setTimeout(() => refresh(), 400); return; }
+      if (el) el.textContent = s;
+    };
+    cdTimer = setInterval(show, 250); show();
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && S && !S.begun && !S.ended && !S.reveal) refresh(); });
   function waitStartView() {
     const g = S.group;
+    const soon = g.mode === "live" && g.status === "running" && g.started_at;
     root.innerHTML = `<section class="brief"><div class="paper">
       <div class="brief-top"><span class="eyebrow">${esc(S.briefing.eyebrow)}</span><span class="conf">Friends · ${S.limit_min} ${MIN()}</span></div>
       <h1>${S.briefing.title}</h1>
       <p class="sub">${g.status === "revealed" ? t("Dieser Fall ist bereits aufgelöst.", "This case has already been solved.") : g.mode === "live" ? t("Gleich geht's los. Euer Organisator startet den Fall für alle gleichzeitig – die Seite springt dann von selbst um.", "Almost time. Your organiser starts the case for everyone at once – this page will switch over by itself.") : g.status === "ready" ? t("Der Fall ist noch nicht freigeschaltet. Sobald euer Organisator ihn freigibt, kannst du loslegen.", "The case hasn’t been unlocked yet. As soon as your organiser unlocks it, you can get started.") : t("Das Zeitfenster für diesen Fall ist vorbei.", "The time window for this case is over.")}</p>
+      ${soon ? `<div class="fr-cd" role="timer" aria-live="polite"><span>${t("Es geht los in", "Starting in")}</span><strong id="cdnum">10</strong><span>${t("Sekunden", "seconds")}</span></div>` : ""}
       <h2 class="qhead">${t("Wer schon da ist", "Who’s already here")}</h2>${roster(g)}
       <p class="small">${t("Du kannst auf jedem Gerät ermitteln – Handy, Tablet oder Laptop.", "You can investigate on any device – phone, tablet or laptop.")}</p>
     </div></section>`;
+    countdown();
   }
   function waitRevealView() {
     const g = S.group, o = S.own || {};
@@ -401,6 +419,7 @@
       <ul class="fr-roster">${g.players.map((p) => `<li><b>${p.name}</b><span>${pstat(p)}</span></li>`).join("")}</ul>
       ${g.status === "ready" ? `<p class="muted">${g.mode === "live" ? t(`Wenn alle da sind, startest du den Fall für alle gleichzeitig. Die Uhr läuft dann ${g.limit_min} Minuten.`, `When everyone’s here, you start the case for everyone at once. The clock then runs for ${g.limit_min} minutes.`) : t(`Mit dem Start beginnen die ${g.days} Tage. Jeder spielt, wann er will – die Auflösung kommt für alle gleichzeitig.`, `Starting begins the ${g.days} days. Everyone plays whenever they like – the solution is revealed to everyone at the same time.`)}</p>
         <button type="button" class="btn btn-red btn-big" id="start">${g.mode === "live" ? t("Fall für alle starten", "Start the case for everyone") : t(`${g.days} Tage starten`, `Start the ${g.days} days`)}</button>` : ""}
+      ${g.status === "running" && g.mode === "live" && g.started_at > g.now ? `<p class="muted"><b>${t("Der Countdown läuft – in wenigen Sekunden startet der Fall auf allen Geräten gleichzeitig.", "The countdown is running – in a few seconds the case starts on every device at the same time.")}</b></p>` : ""}
       ${g.status === "running" ? `<p class="muted">${t(`Auflösung sobald alle fertig sind, spätestens ${fmtDate(g.deadline)}.`, `Solution as soon as everyone has finished, at the latest on ${fmtDate(g.deadline)}.`)}${g.mode === "live" ? "" : t(" Du bekommst dann eine E-Mail mit dem Link für eure Gruppe.", " You’ll then get an email with the link for your group.")}</p>
         ${g.can_reveal ? `<button type="button" class="btn btn-red" id="reveal">${t("Auflösung jetzt zeigen", "Show the solution now")}${g.test && done < n ? " (Test)" : ""}</button>` : ""}` : ""}
       ${g.reveal ? `<h3 style="margin-top:22px">${t("Es war", "It was")} ${g.reveal.culprit}</h3><p>${g.reveal.text}</p>${rankTable(g.reveal, -1)}` : ""}
