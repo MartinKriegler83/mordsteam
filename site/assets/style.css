@@ -390,8 +390,12 @@ p.small{font-size:14px;color:#5A5D66}
 /* ================= Markenwelt: Startseite als Übersicht (Teams · Friends · Solo) ================= */
 .nav-desktop a[aria-current="page"]{color:var(--red);text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:2px}
 /* Marken-Hero */
-.bh{position:relative;overflow:hidden;background:var(--ink);color:var(--paper);padding:64px 0 128px}
-.bh::before{content:"";position:absolute;inset:0;background:radial-gradient(640px 460px at 50% 34%,rgba(255,236,190,.16),transparent 70%);pointer-events:none}
+/* Hintergrund des Marken-Heros – EIN Schalter zum Zurückstellen:
+   ganz schwarz (aktuell):        --bh-bg:#000;         --bh-glow:none;
+   vorher (Anthrazit mit Schein): --bh-bg:var(--ink);   --bh-glow:radial-gradient(640px 460px at 50% 34%,rgba(255,236,190,.16),transparent 70%); */
+:root{--bh-bg:#000;--bh-glow:none}
+.bh{position:relative;overflow:hidden;background:var(--bh-bg);color:var(--paper);padding:64px 0 128px}
+.bh::before{content:"";position:absolute;inset:0;background:var(--bh-glow);pointer-events:none}
 .bh .wrap{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px}
 .bh-lupe{width:clamp(80px,13vw,124px);height:auto}
 .bh-lupe .dot{transform-origin:14px 14px;animation:bhpuls 3.2s ease-in-out infinite}
@@ -559,3 +563,6 @@ main > section.bg-b{background:var(--paper-2)}
 /* Links im Fließtext von Listen (z. B. „Für wen“): dezent unterstrichen */
 a.inlink{color:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;text-decoration-color:var(--red)}
 a.inlink:hover{color:var(--red)}
+
+/* Safari: nach dem Zuklappen einer Frage blieb ein Streifen der Antwort stehen (Zeichenfehler). Eigene Ebene erzwingt sauberes Neuzeichnen. */
+.faq details{transform:translateZ(0)}

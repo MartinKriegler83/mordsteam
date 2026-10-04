@@ -40,3 +40,11 @@ window.msZebra = function () {
     s.classList.add(n++ % 2 ? "bg-b" : "bg-a");
   });
 };
+
+// Safari-Zeichenfehler beim Auf- und Zuklappen von Fragen (<details>): nach jedem Umschalten einmal neu zeichnen lassen
+document.addEventListener("toggle", (e) => {
+  const d = e.target;
+  if (!d || d.tagName !== "DETAILS" || d.classList.contains("menu")) return;
+  d.style.willChange = "transform"; void d.offsetHeight;
+  requestAnimationFrame(() => { d.style.willChange = ""; });
+}, true);
