@@ -70,7 +70,7 @@ for (const land of COUNTRY_ORDER) for (let tier = 0; tier <= 2; tier++) for (let
   let vars;
   try { vars = normalizeVars("fall-001", { ...cast, LAND: land }, tier >= 1, true, "en"); }
   catch (e) { err(`vars:${where0}`, `${where0}: Besetzung ungültig: ${e.message}`); continue; }
-  const secrets = C0.makeSecrets(rnd, { premium: tier >= 1, lang: "en", feier: vars.RAUM_FEIER, land: vars.LAND });
+  const secrets = C0.makeSecrets(rnd, { premium: tier >= 1, lang: "en", feier: [vars.RAUM_FEIER, vars.FIRMA, vars.STADT, vars.PARK].filter(Boolean).join(" "), land: vars.LAND });
   const session = { case_id: "fall-001", lang: "en", premium: tier, duration_min: RULES.durations[tier], vars: JSON.stringify(vars), secrets: JSON.stringify(secrets),
     started_at: Date.now(), status: "running" };
   const c = caseOf(session), v = buildVars(session);

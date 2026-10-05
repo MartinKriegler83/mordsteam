@@ -3,7 +3,7 @@
 import { accountingSummary, migrateAccounting, region, REGION_LABEL, costList, costSave, costDelete } from "../../../lib/accounting.js";
 import {
   CASES, caseOf, langOf, RULES, json, fail, randInt, randomToken, randomCode, esc, viennaDate,
-  buildVars, render, checkAnswers, norm, same, hintLabel, namesToLetters, hintTimes, hardEnd, refreshStatus, finishIfAllSolved, recordStats, expired, purgeSession, ranking, teamScore,
+  buildVars, render, checkAnswers, norm, same, hintLabel, namesToLetters, lettersToName, hintTimes, hardEnd, refreshStatus, finishIfAllSolved, recordStats, expired, purgeSession, ranking, teamScore,
   isPremium, isPlus, tierOf, TIER_NAMES, stageOf, stageQuestions,
 } from "../../../lib/game.js";
 
@@ -13,7 +13,9 @@ import { customers, nlAdmin, syncAll, ecgUpload, nlDraft } from "../../../lib/ne
 import { migrateFeedback, dueFeedback, runFeedbackMails } from "../../../lib/feedback.js";
 import { localize, countryOf, COUNTRIES, COUNTRY_ORDER, randomCast, castToEnglish, americanize, isUS } from "../../../lib/countries.js";
 // USA: amerikanisches Englisch auch für Texte, die nicht über render() laufen (ARIA, Sonderauftrag)
-const usText = (x, t, prompt = false) => (isUS(x) ? americanize(t, prompt) : t);
+// Schweiz/Liechtenstein (Deutsch): kein ß – auch in KI-Antworten, Prompts und Sonderauftrag (Go-live-Test 3, T1-7)
+const noSz = (x) => x && x.LANG !== "en" && COUNTRIES[countryOf(x.LAND || "AT")] && COUNTRIES[countryOf(x.LAND || "AT")].noEszett;
+const usText = (x, t, prompt = false) => (isUS(x) ? americanize(t, prompt) : noSz(x) ? String(t).replace(/ß/g, "ss") : t);
 
 // Sprache: bei Team-/Organisator-Aufrufen die Spielsprache der Runde, sonst der Header x-lang der Seite
 const L = (lang, de, en) => (lang === "en" ? en : de);
@@ -479,6 +481,7 @@ async function ariaChat({ request, env, team, session }) {
     await logAI(env, d.usage, r.ok);
     if (!r.ok) throw new Error(d.error?.message || String(r.status));
     reply = ps.show((d.content || []).filter((p) => p.type === "text").map((p) => p.text).join("").trim()).slice(0, 1200);
+    if (noSz(x)) reply = reply.replace(/ß/g, "ss");
     if (!reply) throw new Error("leer");
   } catch (e) {
     if (!logged && env.ANTHROPIC_API_KEY) await logAI(env, null, false);   // Zeitüberschreitung, Netzwerkfehler
@@ -867,7 +870,7 @@ async function bonusAnswer({ request, env, team, session }) {
     if (!val.trim()) return fail(L(lg, "Bitte eine Antwort eingeben.", "Please enter an answer."));
     const sol = c.bonusSolution(JSON.parse(session.secrets));
     const n = norm[q.pattern];
-    const given = q.pattern === "letter" || q.pattern === "letters" ? namesToLetters(session, val) : val;
+    const given = q.pattern === "letter" || q.pattern === "letters" ? namesToLetters(session, val) : q.pattern === "name" ? lettersToName(session, val) : val;
     ok = same(n(given), n(sol[key]));
     add = c.BONUS_MIN;
   }
@@ -944,6 +947,7 @@ async function sonderChat({ request, env, team, session }) {
     await logAI(env, d.usage, r.ok);
     if (!r.ok) throw new Error(d.error?.message || String(r.status));
     reply = ps.show((d.content || []).filter((p) => p.type === "text").map((p) => p.text).join("").trim()).slice(0, 800);
+    if (noSz(x)) reply = reply.replace(/ß/g, "ss");
     if (!reply) throw new Error("leer");
   } catch (e) {
     if (!logged && env.ANTHROPIC_API_KEY) await logAI(env, null, false);
