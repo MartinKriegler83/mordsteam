@@ -255,7 +255,10 @@
       <p class="small">Neue Kunden und bestätigte Anmeldungen werden automatisch übertragen. Der Knopf trägt ältere Bestellungen nach und wiederholt Fehlgeschlagenes. Wer sich bei Resend abgemeldet hat, wird nie wieder aufgenommen.</p>
 
       <div class="eyebrow" style="margin-top:18px">ECG-Liste der RTR</div>
-      ${n.ecg.api ? `<p class="small"><b style="color:#2E6B3A">Automatisch:</b> Jede Kundenadresse wird vor der Übertragung über die Schnittstelle der RTR geprüft (Secret ECG_API_KEY). Ein Datei-Upload ist nicht nötig.</p>` : ""}
+      ${n.ecg.api ? `<p class="small"><b style="color:#2E6B3A">Automatisch über die Schnittstelle der RTR:</b> Jede Kundenadresse wird vor der Übertragung geprüft, und vor jedem Newsletter-Entwurf werden alle aktiven Kunden-Kontakte neu abgeglichen. Ein Datei-Upload ist nicht nötig.</p>
+      <p class="small">Letzter Abgleich: ${n.ecg.check_at ? `${new Date(n.ecg.check_at).toLocaleString("de-AT", { dateStyle: "short", timeStyle: "short" })} · ${n0(n.ecg.check_n)} Kunden geprüft · ${n0(n.ecg.check_removed)} gesperrt` : "noch keiner"}</p>
+      <div class="actions-row"><button class="btn btn-line" type="button" id="ecgnow">ECG-Abgleich jetzt</button><input type="email" id="ecgtest" placeholder="Testadresse (optional)" style="max-width:240px"><button class="btn btn-line" type="button" id="ecgtestbtn">Adresse prüfen</button></div>
+      <p class="small" id="ecgnowout"></p>` : ""}
       <p class="small">${n.ecg.at ? `Stand: ${new Date(n.ecg.at).toLocaleDateString("de-AT")} · ${n0(n.ecg.count)} Einträge${ecgAge > 30 ? ` · <b style="color:var(--red)">älter als 30 Tage – vor dem nächsten Newsletter neu hochladen</b>` : ""}` : (n.ecg.api ? "Datei-Upload nur als Ersatz, falls die Schnittstelle ausfällt." : `<b style="color:var(--red)">Weder Schnittstelle (ECG_API_KEY) noch Liste vorhanden.</b> Ohne Prüfung werden Kunden ungeprüft übertragen.`)}</p>
       <p class="small">Die Datei <span class="mono">ecg-liste.hash</span> bekommst du bei der RTR. Hochladen ersetzt die alte Liste; Kunden, die jetzt auf der Liste stehen, werden automatisch aus Resend entfernt.</p>
       <div class="actions-row"><input type="file" id="ecgfile" accept=".hash,application/octet-stream"><button class="btn btn-line" type="button" id="ecgup">Liste hochladen</button></div>
@@ -542,10 +545,23 @@
       nlf.onsubmit = async (ev) => {
         ev.preventDefault(); grab();
         if (!confirm(`Entwurf „${nlForm.subject}“ (${nlForm.lang === "en" ? "Englisch" : "Deutsch"}) an Resend schicken? Verschickt wird erst, wenn du ihn in Resend absendest.`)) return;
-        try { const d = await MS.api("POST", "admin/newsletter/entwurf", nlForm, H()); nlPrev = d.html; nlMsg = "Entwurf liegt jetzt in Resend unter Broadcasts. Dort an dich selbst testen und dann senden."; } catch (e2) { nlMsg = e2.message; }
+        try { const d = await MS.api("POST", "admin/newsletter/entwurf", nlForm, H()); nlPrev = d.html; nlMsg = `Entwurf liegt jetzt in Resend unter Broadcasts. Dort an dich selbst testen und dann senden.${d.ecg_removed ? ` ECG-Abgleich davor: ${d.ecg_removed} Kunden gesperrt und aus Resend entfernt.` : ""}`; } catch (e2) { nlMsg = e2.message; }
         load();
       };
     }
+    const enow = document.getElementById("ecgnow");
+    if (enow) enow.onclick = async () => {
+      const out = document.getElementById("ecgnowout"); enow.disabled = true; out.textContent = "Gleicht ab …";
+      try { const d = await MS.api("POST", "admin/newsletter/ecg-check", {}, H()); alertBox(`ECG-Abgleich fertig: ${d.checked} Kunden geprüft, ${d.removed} gesperrt.`); load(); }
+      catch (e2) { out.textContent = e2.message; enow.disabled = false; }
+    };
+    const etb = document.getElementById("ecgtestbtn");
+    if (etb) etb.onclick = async () => {
+      const out = document.getElementById("ecgnowout"), t = document.getElementById("ecgtest").value.trim();
+      if (!t) { out.textContent = "Bitte eine Adresse eingeben."; return; }
+      try { const d = await MS.api("POST", "admin/newsletter/ecg-check", { test: t }, H()); out.textContent = `${d.test}: ${d.listed ? "steht auf der ECG-Liste" : "steht nicht auf der ECG-Liste"} (nur geprüft, nicht gespeichert).`; }
+      catch (e2) { out.textContent = e2.message; }
+    };
     const eup = document.getElementById("ecgup");
     if (eup) eup.onclick = async () => {
       const out = document.getElementById("ecgout"), file = document.getElementById("ecgfile").files[0];

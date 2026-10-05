@@ -9,7 +9,7 @@ import {
 
 import { migrate, createGameSession, InputError } from "../../../lib/create.js";
 import { logAI, opsSummary } from "../../../lib/ops.js";
-import { customers, nlAdmin, syncAll, ecgUpload, nlDraft } from "../../../lib/newsletter.js";
+import { customers, nlAdmin, syncAll, ecgUpload, nlDraft, ecgCheckNow } from "../../../lib/newsletter.js";
 import { migrateFeedback, dueFeedback, runFeedbackMails } from "../../../lib/feedback.js";
 import { localize, countryOf, COUNTRIES, COUNTRY_ORDER, randomCast, castToEnglish, americanize, isUS } from "../../../lib/countries.js";
 // USA: amerikanisches Englisch auch für Texte, die nicht über render() laufen (ARIA, Sonderauftrag)
@@ -75,6 +75,7 @@ export async function onRequest(ctx) {
       if (route === "admin/newsletter" && method === "GET") return json(await nlAdmin(env));
       if (route === "admin/newsletter/sync" && method === "POST") return json(await syncAll(env));
       if (route === "admin/newsletter/ecg" && method === "POST") { try { return json(await ecgUpload(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
+      if (route === "admin/newsletter/ecg-check" && method === "POST") { try { return json(await ecgCheckNow(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); return fail(e.message, 502); } }
       if (route === "admin/newsletter/entwurf" && method === "POST") { try { return json(await nlDraft(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); return fail(e.message, 502); } }
       if (route === "admin/feedback-run" && method === "POST") { const b = await body(request); return json({ sent: await runFeedbackMails(env, new URL(request.url).origin, { force: !!b.force }) }); }
       if (route === "admin/feedback-approve" && method === "POST") {
