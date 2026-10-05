@@ -642,7 +642,7 @@ function solutionInfo(session) {
     tier: tierOf(session),
     taeter: who.taeter,
     answers: qs.map((q) => ({ key: q.key, label: render(q.label, v), answer: sol[q.key],
-      detail: q.key === "wer" ? who.taeter : q.key === "pin" ? L(langOf(session), `Kennwort der Notiz bei ARIA: ${v.ROOM_NEU}`, `Password of the note in ARIA: ${v.ROOM_NEU}`)
+      detail: sol[q.key + "_alt"] ? L(langOf(session), `Auch ${sol[q.key + "_alt"]} gilt als richtig.`, `${sol[q.key + "_alt"]} also counts as correct.`) : q.key === "wer" ? who.taeter : q.key === "pin" ? L(langOf(session), `Kennwort der Notiz bei ARIA: ${v.ROOM_NEU}`, `Password of the note in ARIA: ${v.ROOM_NEU}`)
         : q.key === "anteil" ? L(langOf(session), `Scheinrechnungen ${v.SCHEIN_SUMME} minus Fachinhalt ${v.FACH_SUMME}`, `Fake invoices ${v.SCHEIN_SUMME} minus locker contents ${v.FACH_SUMME}`) : "" })),
     extra: extraSolutions(session, c, v, plus),
     story: render(c.META.story, v),
