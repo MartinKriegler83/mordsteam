@@ -36,7 +36,7 @@
     document.getElementById("ab18box").hidden = !isPlus();
     const gl = form.lang.value === "en", sl = T(`Spielsprache ${gl ? "Englisch" : "Deutsch"}`, `game language ${gl ? "English" : "German"}`);
     document.getElementById("sumtxt").textContent = isPlus()
-      ? T(`Mordsteam Friends 001 „Letzte Runde auf der Hütte“ · Krimiabend Plus mit KI-Verhörraum · ${n} Personen · Countdown 70 Min. · ${sl}`, `Mordsteam Friends 001 “Last Round at the Chalet” · Mystery Night Plus with AI interrogation room · ${n} people · 70-minute countdown · ${sl}`)
+      ? T(`Mordsteam Friends 001 „Letzte Runde auf der Hütte“ · Krimiabend Plus mit KI-Verhörraum · ${n} Personen · Countdown 75 Min. · ${sl}`, `Mordsteam Friends 001 “Last Round at the Chalet” · Mystery Night Plus with AI interrogation room · ${n} people · 75-minute countdown · ${sl}`)
       : T(`Mordsteam Friends 001 „Letzte Runde auf der Hütte“ · Krimiabend · ${n} Personen · Countdown 50 Min. · ${sl}`, `Mordsteam Friends 001 “Last Round at the Chalet” · Mystery Night · ${n} people · 50-minute countdown · ${sl}`);
     document.getElementById("sumprice").textContent = money(full);
     document.getElementById("ebrow").hidden = !eb;
