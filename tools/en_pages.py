@@ -1021,6 +1021,7 @@ P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mor
 <p><b>Withdrawal before the game ends:</b> If you withdraw before the right has expired, we refund all payments within 14 days using the original means of payment. If the game round has not been started, we refund the full price. If it has already been started, you pay a proportionate amount for the service provided up to the withdrawal (§ 16 FAGG), because you expressly requested the immediate start. It is based on the playing time elapsed up to the withdrawal in relation to the total playing time of the booked variant; setting up and personalising the game round has already been fully performed.</p>
 <p><b>How to withdraw:</b> Use the “Withdraw from contract” function on our website or send us a clear statement, e.g. by email to <a href="mailto:office@mordsteam.com">office@mordsteam.com</a>. To meet the deadline it is sufficient to send the statement before the period expires. You may use this model form, but you don't have to:</p>
 <blockquote class="small">To Mordsteam e.U., Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, Austria, office@mordsteam.com: I/we hereby withdraw from the contract concluded by me/us for the following service: … · Ordered on: … · Order number: … · Name: … · Address: … · Date: …</blockquote>
+<p id="paddle-refund"><b>Private customers in the United Kingdom (orders via Paddle):</b> Paddle.com is the Merchant of Record for these orders. You can request a full refund within 14 days of purchase as long as the game round has not been started or the code has not been redeemed – via paddle.net (link in Paddle's payment confirmation) or by email to <a href="mailto:office@mordsteam.com">office@mordsteam.com</a>. Refunds are made by Paddle to the original means of payment.</p>
 
 <h2>9. Warranty and faults</h2>
 <p>The statutory warranty applies, for consumers under the Austrian Consumer Warranty Act (VGG). If something doesn't work as described, please let us know as soon as possible at <a href="mailto:office@mordsteam.com">office@mordsteam.com</a>. We will fix the fault or provide a new game round; if that is not possible, we refund the price in full or in part.</p>
@@ -1140,4 +1141,66 @@ for name, p in P.items():
     out = finish(out, "en")
     with open(os.path.join(ROOT, "en", name + ".html"), "w") as f:
         f.write(out)
+# ---------- products.html: eine Seite mit Angebot, Preisen, Erstattung und allen Rechtstexten (für die Prüfung durch Paddle) ----------
+# Auch im Teaser-Modus erreichbar (build.sh), nicht verlinkt, noindex. Rechtstexte kommen aus P["terms"], P["privacy"], P["imprint"].
+import re as _re
+def _inner(name):
+    b = P[name]["body"]
+    b = _re.sub(r'^<main[^>]*><div class="wrap prose">', "", b.strip()); b = _re.sub(r"</div></main>$", "", b.strip())
+    b = _re.sub(r'href="(?:/en/)?(terms|privacy|imprint)\.html(#[^"]*)?"', lambda m: f'href="{m.group(2) or "#" + m.group(1)}"', b)
+    b = _re.sub(r'<a href="(?!https?:|mailto:|#)[^"]*"[^>]*>(.*?)</a>', r"\1", b)   # Links auf Seiten, die im Teaser fehlen
+    b = b.replace("<h1>", "<h2>").replace("</h1>", "</h2>")
+    return b
+PROD = f'''<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Products, prices and policies – Mordsteam</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<header class="header"><div class="wrap"><a class="logo" href="/" aria-label="Mordsteam">{LOGO}<span class="wm-box"><span class="wm"><span class="wm-r">MORDS</span>TEAM</span></span></a>
+<nav class="nav-desktop" aria-label="Contents"><a href="#products">Products</a><a href="#refunds">Refunds</a><a href="#terms">Terms</a><a href="#privacy">Privacy</a><a href="#imprint">Imprint</a></nav></div></header>
+<main class="page"><div class="wrap prose">
+<h1>Mordsteam – products, prices and policies</h1>
+<p><b>Mordsteam e.U.</b> (sole proprietor: Martin Kriegler) · Sportplatzgasse 16, 7152 Pamhagen, Austria · Company register FN 689638z · <a href="mailto:office@mordsteam.com">office@mordsteam.com</a></p>
+<p>Mordsteam sells <b>digital murder-mystery games that are played in the web browser</b> on a phone, tablet or laptop – no download, no physical goods. The players solve a case with evidence, interrogations and puzzles; in some games their own names appear in the case file, and the Plus versions include AI characters that players can question. Games are available in German and English.</p>
+<p><b>Delivery:</b> immediately after payment, by email and on the confirmation page (game code, links and instructions). Each purchase can be played once within 12 months.</p>
+
+<h2 id="products">Products and prices</h2>
+<p>Prices are final prices. Customers in the EU and the rest of the world pay in euros via Stripe (no VAT charged – Austrian small business scheme; reverse charge for EU businesses with a VAT ID). <b>Private customers in the United Kingdom pay in pounds via Paddle</b>, which is the Merchant of Record for these orders; UK prices include UK VAT.</p>
+<div style="overflow-x:auto"><table class="grid">
+<tr><th>Product</th><th>What you get</th><th>Price (EUR)</th><th>UK private customers (GBP, incl. VAT)</th></tr>
+<tr><td><b>Mordsteam Teams – Basic</b></td><td>Personalised case for one team of 3–6 players, 50-minute countdown</td><td>€89 per team</td><td>£89 per team</td></tr>
+<tr><td><b>Mordsteam Teams – Premium</b></td><td>As Basic plus act 2 with new evidence, 70 minutes, six suspects</td><td>€119 per team</td><td>£119 per team</td></tr>
+<tr><td><b>Mordsteam Teams – Premium Plus</b></td><td>As Premium plus an AI-powered finale, 90 minutes</td><td>€149 per team</td><td>£149 per team</td></tr>
+<tr><td><b>Mordsteam Friends – mystery night</b></td><td>Murder-mystery night for 4–8 friends, everyone plays on their own phone, 50-minute countdown</td><td>€29 for 4 people, +€5 per additional person</td><td>£29, +£5 per additional person</td></tr>
+<tr><td><b>Mordsteam Friends – mystery night Plus</b></td><td>As above with AI interrogation room and five instead of three questions, 75-minute countdown</td><td>€49 for 4 people, +€8 per additional person</td><td>£49, +£8 per additional person</td></tr>
+<tr><td><b>Mordsteam Solo 001 / 002</b></td><td>A case for one person, 35–40-minute countdown</td><td>€8.90</td><td>£8.99</td></tr>
+<tr><td><b>Mordsteam Solo Plus</b></td><td>A case for one person with AI interrogation room, 45-minute countdown</td><td>€15.90</td><td>£15.99</td></tr>
+</table></div>
+<p class="small">Introductory offer until 30 November 2026: 25% off the first Teams or Friends game in exchange for honest feedback.</p>
+
+<h2 id="refunds">Refund policy</h2>
+<p><b>Private customers in the United Kingdom (orders via Paddle):</b> you can request a full refund within <b>14 days of purchase</b> as long as the game round has not been started or the code has not been redeemed. Please request it via paddle.net (link in Paddle's payment confirmation) or by email to <a href="mailto:office@mordsteam.com">office@mordsteam.com</a>. Refunds are made by Paddle to the original means of payment.</p>
+<p><b>Consumers in the EU and elsewhere:</b> the statutory 14-day right of withdrawal applies as described in section 8 of the <a href="#terms">terms</a>. If the game round has not been started, we refund the full price.</p>
+<p><b>Technical problems:</b> if something does not work as described, contact us at <a href="mailto:office@mordsteam.com">office@mordsteam.com</a> – see section 9 of the terms.</p>
+
+<hr>
+<section id="terms">{_inner("terms")}</section>
+<hr>
+<section id="privacy">{_inner("privacy")}</section>
+<hr>
+<section id="imprint">{_inner("imprint")}</section>
+</div></main>
+<footer class="footer"><div class="wrap"><span class="brand"><span class="wm"><span class="wm-r">MORDS</span>TEAM</span></span><span>© 2026 Mordsteam e.U.</span></div></footer>
+</body>
+</html>
+'''
+with open(os.path.join(ROOT, "products.html"), "w") as f:
+    f.write(PROD)
 print("ok", len(P))

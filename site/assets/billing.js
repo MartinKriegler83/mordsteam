@@ -46,8 +46,8 @@
     else uidHint.textContent = T("Erscheint auf der Rechnung.", "Shown on the invoice.");
     if (l === "GB" && (!b2b || !/^GB/i.test(uid.value.trim().replace(/\s/g, "")))) {
       n = paddle && paddle.on
-        ? T("Für Privatkunden im Vereinigten Königreich läuft die Zahlung über unseren Partner Paddle (paddle.com). Paddle ist dort Verkäufer, berechnet die britische Umsatzsteuer und stellt die Rechnung aus. Der Preis bleibt gleich. Gutscheincodes können dabei leider nicht eingelöst werden.",
-            "For private customers in the United Kingdom, payment is handled by our partner Paddle (paddle.com). Paddle is the seller there, charges UK VAT and issues the invoice. The price stays the same. Unfortunately, promo codes cannot be redeemed this way.")
+        ? T("Für Privatkunden im Vereinigten Königreich zahlt ihr in Pfund über unseren Partner Paddle (paddle.com): gleiche Zahl wie in Euro, inkl. britischer Umsatzsteuer (z. B. 29 € → £29, 8,90 € → £8.99). Paddle ist dort Verkäufer und stellt die Rechnung aus. Gutscheincodes können dabei leider nicht eingelöst werden.",
+            "For private customers in the United Kingdom you pay in pounds via our partner Paddle (paddle.com): the same figure as in euros, including UK VAT (e.g. €29 → £29, €8.90 → £8.99). Paddle is the seller and issues the invoice. Unfortunately, promo codes cannot be redeemed this way.")
         : T("Bestellungen von Privatpersonen aus dem Vereinigten Königreich sind in Kürze möglich. Firmen mit britischer VAT-Nummer können schon jetzt bestellen.",
             "Orders from private customers in the United Kingdom will be possible very soon. Businesses with a UK VAT number can already order.");
     }

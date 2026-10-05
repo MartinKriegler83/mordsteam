@@ -22,7 +22,7 @@ import { handleWithdraw, orderNo } from "../../../lib/withdraw.js";
 import { sendMail as opsMail } from "../../../lib/ops.js";
 import { enrichPayment, migrateAccounting } from "../../../lib/accounting.js";
 import { taxContext, TaxInputError, invoiceFooter, invoiceFields } from "../../../lib/tax.js";
-import { paddleOn, paddleTransaction, paddleGet, paddleAmounts, paddlePaid, verifyPaddle } from "../../../lib/paddle.js";
+import { paddleOn, paddleTransaction, paddleGet, paddleAmounts, paddlePaid, verifyPaddle, ukPrice } from "../../../lib/paddle.js";
 import { nlSignup, nlConfirm, nlUnsubscribe, nlVisit, srcVisit, nlAfterOrder, nlTag, migrateNewsletter } from "../../../lib/newsletter.js";
 import { createSoloTicket, migrateSolo } from "../../../lib/solo.js";
 import { createFriendsGroup, friendsGroupOfOrder, friendsPrice, FRIENDS_PRICE, FRIENDS_PRICE_PLUS, FRIENDS_CASES, friendsCase, friendsCron } from "../../../lib/friends.js";
@@ -146,6 +146,8 @@ function meta(env, request) {
 
 
 // ---------- Umsatzsteuer und Bezahlweg (für Teams, Solo, Friends gleich) ----------
+// Preis in der Mail: Pfund bei Paddle-Bestellungen, sonst Euro
+const priceTxt = (o) => (o.currency === "GBP" && o.amount_orig_cents != null ? `£${(o.amount_orig_cents / 100).toFixed(2)}` : `${(o.amount_cents / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 })} €`);
 // Steuerhinweis in der Bestätigungsmail (passend zur Rechnung)
 function vatNote(c, T) {
   const r = c.tax_regime || "ku";
@@ -171,9 +173,9 @@ async function saveTax(env, id, contact) {
     .bind(contact.bill_land, contact.tax_regime, contact.uid || null, contact.tax_regime === "uk_paddle" ? "paddle" : "stripe", id).run();
 }
 // Paddle-Kasse (britische Privatkunden): Transaktion anlegen, Weiterleitung auf /zahlung.html
-async function paddleStep(env, origin, { id, token, site, amount, name, description, email }) {
-  const t = await paddleTransaction(env, { amount, name, description, orderId: id, email });
-  await env.DB.prepare("UPDATE orders SET paddle_txn=? WHERE id=?").bind(t.id, id).run();
+async function paddleStep(env, origin, { id, token, site, gbp, name, description, email }) {
+  const t = await paddleTransaction(env, { amount: gbp, currency: "GBP", name, description, orderId: id, email });
+  await env.DB.prepare("UPDATE orders SET paddle_txn=?, currency='GBP', amount_orig_cents=? WHERE id=?").bind(t.id, gbp, id).run();
   return json({ redirect: `${origin}/zahlung.html?_ptxn=${encodeURIComponent(t.id)}&o=${id}&k=${token}&l=${site}` });
 }
 
@@ -255,7 +257,8 @@ async function bestellung(request, env) {
   const done = `${origin}${pre}/${site === "en" ? "ordered" : "bestellt"}.html?o=${id}&k=${token}`;
   const title = lang === "en" ? C.EN.META.title : C.META.title;
   const langName = L(site, lang === "en" ? "Englisch" : "Deutsch", lang === "en" ? "English" : "German");
-  if (contact.tax_regime === "uk_paddle") return paddleStep(env, origin, { id, token, site, amount, email: contact.email,
+  if (contact.tax_regime === "uk_paddle") return paddleStep(env, origin, { id, token, site, email: contact.email,
+    gbp: eb ? Math.round(ukPrice(PRICES[paket]) * teams * (100 - eb.prozent) / 100) : ukPrice(PRICES[paket]) * teams,
     name: L(site, `Mordsteam Fall ${caseNr(caseId)} „${title}“ – ${NAMES[paket]} × ${teams}`, `Mordsteam Case ${caseNr(caseId)} “${title}” – ${NAMES_EN[paket]} × ${teams}`),
     description: L(site, `${teams} Team${teams === 1 ? "" : "s"} · gültig bis ${validUntil} · Spielsprache ${langName}`, `${teams} team${teams === 1 ? "" : "s"} · valid until ${validUntil} · game language ${langName}`) });
   if (env.STRIPE_SECRET_KEY) {
@@ -333,7 +336,7 @@ async function soloBestellung(request, env) {
   const origin = new URL(request.url).origin;
   const pre = site === "en" ? "/en" : "";
   const done = `${origin}${pre}/${site === "en" ? "ordered" : "bestellt"}.html?o=${id}&k=${token}`;
-  if (contact.tax_regime === "uk_paddle") return paddleStep(env, origin, { id, token, site, amount: F.price, email: contact.email,
+  if (contact.tax_regime === "uk_paddle") return paddleStep(env, origin, { id, token, site, gbp: ukPrice(F.price), email: contact.email,
     name: L(site, `Mordsteam ${F.no} „${F.de}“`, `Mordsteam ${F.no} “${F.en}”`),
     description: L(site, `Krimi für eine Person · Code gültig bis ${validUntil} · Spielsprache ${GL}`, `Murder mystery for one person · code valid until ${validUntil} · game language ${GL}`) });
   if (env.STRIPE_SECRET_KEY) {
@@ -417,7 +420,8 @@ async function friendsBestellung(request, env) {
   const lim = plus ? C.LIMIT_MIN_PLUS : C.LIMIT_MIN, vName = plus ? L(site, "Krimiabend Plus", "Mystery Night Plus") : L(site, "Krimiabend", "mystery night");
   const done = `${origin}${pre}/${site === "en" ? "ordered" : "bestellt"}.html?o=${id}&k=${token}`;
   const modeTxt = mode === "live" ? L(site, "gleichzeitig", "all at once") : L(site, `über ${days} Tage`, `over ${days} days`);
-  if (contact.tax_regime === "uk_paddle") return paddleStep(env, origin, { id, token, site, amount, email: contact.email,
+  if (contact.tax_regime === "uk_paddle") return paddleStep(env, origin, { id, token, site, email: contact.email,
+    gbp: eb ? Math.round(ukPrice(full) * (100 - eb.prozent) / 100) : ukPrice(full),
     name: L(site, `Mordsteam Friends 001 – ${vName} für ${n} Personen`, `Mordsteam Friends 001 – ${vName} for ${n} people`),
     description: L(site, `Countdown ${lim} Min., gespielt ${modeTxt} · spielbar bis ${validUntil} · Spielsprache ${GL}`, `${lim}-minute countdown, played ${modeTxt} · playable until ${validUntil} · game language ${GL}`) });
   if (env.STRIPE_SECRET_KEY) {
@@ -539,8 +543,8 @@ async function paddlePaidOrder(env, id, t, origin) {
     await migrateAccounting(env);
     const a = paddleAmounts(t);
     // amount_cents = Endpreis inkl. britischer Steuer; tax_cents = britische Steuer (führt Paddle ab); fee/net laut Paddle-Auszahlung
-    await env.DB.prepare("UPDATE orders SET amount_cents=COALESCE(?, amount_cents), tax_cents=?, fee_cents=?, net_cents=?, invoice_no=COALESCE(?, invoice_no) WHERE id=?")
-      .bind(a.gross, a.tax, a.fee, a.net, t.invoice_number || null, id).run();
+    await env.DB.prepare("UPDATE orders SET amount_cents=COALESCE(?, amount_cents), tax_cents=?, fee_cents=?, net_cents=?, invoice_no=COALESCE(?, invoice_no), amount_orig_cents=COALESCE(?, amount_orig_cents), currency=COALESCE(?, currency) WHERE id=?")
+      .bind(a.gross, a.tax, a.fee, a.net, t.invoice_number || null, a.paid, a.paid_currency, id).run();
   } catch { /* Buchhaltungsdaten blockieren nie */ }
   await fulfill(env, id, origin);
 }
@@ -648,7 +652,7 @@ ${c.earlybird ? `<p><b>Early Bird:</b> ${T("Danke, dass ihr uns helft! Nach dem 
 ${T("Bestellnummer", "Order number")}: ${orderNo(o.id)}<br>
 ${T("Anbieter", "Provider")}: Mordsteam e.U., ${T("Inhaber", "owner")} Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, ${T("Österreich", "Austria")}, office@mordsteam.com${COMPANY_FN ? `, FN ${COMPANY_FN}` : ""}, ${T("Firmenbuchgericht", "register court")} Landesgericht Eisenstadt<br>
 ${T("Leistung", "Service")}: ${T(`Personalisierter digitaler Krimi-Fall „${e(title)}“, Paket ${NAMES[o.paket] || o.paket}, ${o.teams} Team${o.teams === 1 ? "" : "s"}, Spielsprache ${lang === "en" ? "Englisch" : "Deutsch"}; spielbar 12 Monate ab Kauf, einmal startbar.`, `Personalised digital murder-mystery case “${e(title)}”, package ${NAMES_EN[o.paket] || o.paket}, ${o.teams} team${o.teams === 1 ? "" : "s"}, game language ${lang === "en" ? "English" : "German"}; playable for 12 months from purchase, can be started once.`)}<br>
-${T("Preis", "Price")}: ${(o.amount_cents / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 })} € ${vatNote(c, T)}<br>
+${T("Preis", "Price")}: ${priceTxt(o)} ${vatNote(c, T)}<br>
 ${T("Es gelten unsere AGB", "Our terms apply")}: <a href="${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}">${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}</a><br>
 ${c.kunde === "b2b" ? T("Für Bestellungen als Unternehmen, Verein oder Organisation besteht kein gesetzliches Rücktrittsrecht.", "Orders placed as a company, club or organisation have no statutory right of withdrawal.") : T("Ihr habt bei der Bestellung ausdrücklich verlangt, dass wir eure Spielrunde gleich nach dem Bezahlen anlegen und die Codes bereitstellen, und bestätigt, dass ihr als Privatperson dadurch euer Rücktrittsrecht verliert. Es erlischt mit dieser Bestätigung und der Bereitstellung der Codes (§ 18 Abs. 1 Z 11 FAGG), spätestens aber, sobald die Spielrunde gespielt und beendet ist (§ 18 Abs. 1 Z 1 FAGG).", "When ordering, you expressly requested that we set up your game round and provide the codes right after payment, and confirmed that as a private individual you thereby lose your right of withdrawal. It expires with this confirmation and the provision of the codes (§ 18 (1) no. 11 FAGG), but at the latest once the game round has been played and ended (§ 18 (1) no. 1 FAGG).")}${c.kunde !== "b2b" ? `<br>${T("Widerruf (nur Privatpersonen, solange das Rücktrittsrecht besteht)", "Withdrawal (private individuals only, while the right of withdrawal exists)")}: <a href="${origin}${site === "en" ? "/en/withdraw.html" : "/widerruf.html"}?nr=${orderNo(o.id)}">${T("Vertrag widerrufen", "Withdraw from contract")}</a>` : ""}
 </div></div>`;
@@ -679,7 +683,7 @@ async function soloMail(env, o, code, origin) {
 ${T("Bestellnummer", "Order number")}: ${orderNo(o.id)}<br>
 ${T("Anbieter", "Provider")}: Mordsteam e.U., ${T("Inhaber", "owner")} Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, ${T("Österreich", "Austria")}, office@mordsteam.com${COMPANY_FN ? `, FN ${COMPANY_FN}` : ""}, ${T("Firmenbuchgericht", "register court")} Landesgericht Eisenstadt<br>
 ${T("Leistung", "Service")}: ${T(`Digitaler Krimi für eine Person „${F.de}“ (Mordsteam ${F.no})${F.plus ? " mit KI-Verhörraum, ab 18 Jahren" : ""}, Spielsprache ${GL}; spielbar 12 Monate ab Kauf; innerhalb von 30 Tagen nach dem ersten Durchgang bis zu dreimal wiederholbar.`, `Digital murder mystery for one person “${F.en}” (Mordsteam ${F.no})${F.plus ? " with AI interrogation room, ages 18 and over" : ""}, game language ${GL}; playable for 12 months from purchase; can be replayed up to three times within 30 days of the first playthrough.`)}<br>
-${T("Preis", "Price")}: ${(o.amount_cents / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 })} € ${vatNote(c, T)}<br>
+${T("Preis", "Price")}: ${priceTxt(o)} ${vatNote(c, T)}<br>
 ${T("Es gelten unsere AGB", "Our terms apply")}: <a href="${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}">${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}</a><br>
 ${c.kunde === "b2b" ? T("Für Bestellungen als Unternehmen besteht kein gesetzliches Rücktrittsrecht.", "Orders placed as a company have no statutory right of withdrawal.") : T("Du hast ausdrücklich verlangt, dass wir deinen Code gleich nach dem Bezahlen bereitstellen, und bestätigt, dass du als Privatperson dadurch dein Rücktrittsrecht verlierst. Es erlischt mit dieser Bestätigung und der Bereitstellung des Codes (§ 18 Abs. 1 Z 11 FAGG), spätestens aber, sobald der Fall gespielt und beendet ist (§ 18 Abs. 1 Z 1 FAGG).", "You expressly requested that we provide your code right after payment and confirmed that as a private individual you thereby lose your right of withdrawal. It expires with this confirmation and the provision of the code (§ 18 (1) no. 11 FAGG), but at the latest once the case has been played and ended (§ 18 (1) no. 1 FAGG).")}${c.kunde !== "b2b" ? `<br>${T("Widerruf (nur Privatpersonen, solange das Rücktrittsrecht besteht)", "Withdrawal (private individuals only, while the right of withdrawal exists)")}: <a href="${origin}${site === "en" ? "/en/withdraw.html" : "/widerruf.html"}?nr=${orderNo(o.id)}">${T("Vertrag widerrufen", "Withdraw from contract")}</a>` : ""}
 </div></div>`;
@@ -715,7 +719,7 @@ ${c.earlybird ? `<p><b>Early Bird:</b> ${T("Danke, dass ihr uns helft! Nach der 
 ${T("Bestellnummer", "Order number")}: ${orderNo(o.id)}<br>
 ${T("Anbieter", "Provider")}: Mordsteam e.U., ${T("Inhaber", "owner")} Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, ${T("Österreich", "Austria")}, office@mordsteam.com${COMPANY_FN ? `, FN ${COMPANY_FN}` : ""}, ${T("Firmenbuchgericht", "register court")} Landesgericht Eisenstadt<br>
 ${T("Leistung", "Service")}: ${T(`Digitaler ${vName} „Letzte Runde auf der Hütte“ (Mordsteam Friends 001) für ${n} Personen, ${lim} Minuten, Spielsprache ${GL}; spielbar 12 Monate ab Kauf, einmal startbar.`, `Digital ${vName} “Last Round at the Chalet” (Mordsteam Friends 001) for ${n} people, ${lim} minutes, game language ${GL}; playable for 12 months from purchase, can be started once.`)}<br>
-${T("Preis", "Price")}: ${(o.amount_cents / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 })} € ${vatNote(c, T)}<br>
+${T("Preis", "Price")}: ${priceTxt(o)} ${vatNote(c, T)}<br>
 ${T("Es gelten unsere AGB", "Our terms apply")}: <a href="${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}">${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}</a><br>
 ${c.kunde === "b2b" ? T("Für Bestellungen als Unternehmen besteht kein gesetzliches Rücktrittsrecht.", "Orders placed as a company have no statutory right of withdrawal.") : T("Du hast ausdrücklich verlangt, dass wir eure Runde gleich nach dem Bezahlen anlegen und die Links bereitstellen, und bestätigt, dass du als Privatperson dadurch dein Rücktrittsrecht verlierst. Es erlischt mit dieser Bestätigung und der Bereitstellung der Links (§ 18 Abs. 1 Z 11 FAGG), spätestens aber mit der gemeinsamen Auflösung (§ 18 Abs. 1 Z 1 FAGG).", "You expressly requested that we set up your round and provide the links right after payment and confirmed that as a private individual you thereby lose your right of withdrawal. It expires with this confirmation and the provision of the links (§ 18 (1) no. 11 FAGG), but at the latest with the joint solution (§ 18 (1) no. 1 FAGG).")}${c.kunde !== "b2b" ? `<br>${T("Widerruf (nur Privatpersonen, solange das Rücktrittsrecht besteht)", "Withdrawal (private individuals only, while the right of withdrawal exists)")}: <a href="${origin}${site === "en" ? "/en/withdraw.html" : "/widerruf.html"}?nr=${orderNo(o.id)}">${T("Vertrag widerrufen", "Withdraw from contract")}</a>` : ""}
 </div></div>`;

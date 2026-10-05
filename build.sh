@@ -13,6 +13,10 @@ if [ "$CF_PAGES_BRANCH" = "main" ] && [ "$LAUNCH" != "true" ]; then
   cp -r site/assets site/spiel site/_headers site/robots.txt site/favicon.ico site/site.webmanifest dist/
   cp teaser/index.html dist/index.html
   cp teaser/impressum.html dist/impressum.html
+  # Für die Prüfung durch Paddle: Angebot, Preise, Erstattung und Rechtstexte (nicht verlinkt, noindex)
+  cp site/products.html dist/products.html
+  # Paddle-Kasse (Default payment link im Paddle-Konto) – erst nach dem Go-live genutzt, aber für die Prüfung erreichbar
+  cp site/zahlung.html dist/zahlung.html
 else
   echo "Modus: VOLLE SEITE"
   cp -r site/. dist/
