@@ -319,7 +319,7 @@ function partnerPassword(session) {
 async function firmaLogin({ request, env, team, session }) {
   const c = caseOf(session), lg = langOf(session);
   const b = await body(request);
-  const ok = String(b.user || "").trim().toLowerCase() === c.FIRMA_WEB.login.user &&
+  const ok = [c.FIRMA_WEB.login.user, ...(c.FIRMA_WEB.login.alt || [])].includes(String(b.user || "").trim().toLowerCase()) &&
     String(b.password || "").trim().toLowerCase().replace(/\s+/g, "") === partnerPassword(session);
   if (!ok) {
     // Wer oft scheitert, bekommt vom „Helpdesk“ schrittweise mehr Hilfe – starke Teams merken davon nichts.
