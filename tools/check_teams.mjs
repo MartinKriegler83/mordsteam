@@ -3,6 +3,7 @@
 // Aufruf: node tools/check_teams.mjs
 import { account, COUNTRY_ORDER } from "../lib/countries.js";
 import * as F from "../lib/cases/fall-001.js";
+import { regioGuard } from "./regio_guard.mjs";
 let err = 0;
 const fail = (m) => { err++; console.log("FEHLER", m); };
 for (const c of COUNTRY_ORDER) for (const k of ["9697", "0102", "4521"]) for (const bank of [false, true]) {
@@ -22,4 +23,6 @@ for (let i = 0; i < 500; i++) for (const premium of [false, true]) {
   if (premium && !F.ZIELE[F.zielOf(sec)]) fail("Sonderauftrag: Ziel ungültig");
   if (sec.ROOM_NEU && /panorama/i.test(sec.ROOM_NEU)) fail("Kennwort-Raum steckt im Feierraum-Namen");
 }
+// Go-live-Test 3 (5.10.2026): keine österreichischen Wörter in DE/CH/LI-Runden (Texte und KI-Figuren)
+{ const rg = regioGuard("fall-001", 60); for (const e of rg.errs) fail(e); }
 console.log(err ? `${err} Fehler` : `IBAN in ${COUNTRY_ORDER.length} Ländern, 1000 Runden Zusatzermittlung/Sonderauftrag: alles ok`);

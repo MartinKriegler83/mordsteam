@@ -4,6 +4,7 @@
 // Aufruf: node tools/check_teams002.mjs
 import { COUNTRY_ORDER } from "../lib/countries.js";
 import * as F from "../lib/cases/fall-002.js";
+import { regioGuard } from "./regio_guard.mjs";
 let err = 0;
 const fail = (m) => { if (err < 40) console.log("FEHLER", m); err++; };
 const rand = (n) => Math.floor(Math.random() * n);
@@ -103,5 +104,7 @@ for (let i = 0; i < 1200; i++) {
     if (!fb.includes(String(sec.ZELT))) fail("Notfall-Antwort nennt das Code-Jahr nicht");
   }
 }
+// Go-live-Test 3 (5.10.2026): keine österreichischen Wörter in DE/CH/LI-Runden (Texte und KI-Figuren)
+{ const rg = regioGuard("fall-002", 60); for (const e of rg.errs) fail(e); }
 console.log(err ? `${err} Fehler` : `${rounds} Runden (3 Pakete, ${ARTEN.length} Vereinsarten, Länder gemischt): alles ok`);
 process.exit(err ? 1 : 0);
