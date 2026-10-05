@@ -60,6 +60,7 @@ for (let n = 4; n <= 8; n++) for (const cAct of ["karten", "balkon"]) for (const
   S.culprit = pool[trial % pool.length];
   const dpool = S.acts.map((a, i) => i).filter((i) => S.acts[i] === dAct && i !== S.culprit);
   if (!dpool.length) continue;
+  if ((cAct === "karten") + (dAct === "karten") > DE.MIX[n][0] - 2) continue;   // am Würfeltisch bleiben immer mindestens zwei (F-8)
   S.decoy = dpool[trial % dpool.length]; S.tvar = tv;
   const beers = S.acts.map((a, i) => i).filter((i) => S.acts[i] === "karten" && i !== S.culprit && i !== S.decoy); S.beer = beers.length ? beers[0] : S.decoy;
   const G = { players: NAMES.slice(0, n).map((name, i) => ({ name, quirk: DE.QUIRK_KEYS[rnd(DE.QUIRK_KEYS.length)], act: S.acts[i], room: S.rooms[i] })), culprit: S.culprit, decoy: S.decoy, tvar: tv, beer: S.beer, excuse: trial % 4, plus };

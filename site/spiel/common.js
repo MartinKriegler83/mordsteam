@@ -56,8 +56,9 @@ const MS = {
     const p = (n) => String(n).padStart(2, "0");
     return (neg ? "−" : "") + (h ? `${h}:${p(m)}:${p(ss)}` : `${p(m)}:${p(ss)}`);
   },
+  // Maskiert für HTML – bereits maskierte Zeichen (&amp; &#39; …) bleiben unverändert, damit Namen wie „O'Brien“ nicht doppelt maskiert werden (Go-live-Test 3, F-9)
   esc(s) {
-    return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    return String(s ?? "").replace(/&(?!(?:[a-z]+|#\d+|#x[0-9a-f]+);)|[<>"']/gi, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   },
   // Stand eines Teams in der Rangliste
   stage(r, tier) {
