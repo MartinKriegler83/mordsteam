@@ -14,7 +14,7 @@
     HR: ["Kroatien", "Croatia"], HU: ["Ungarn", "Hungary"], IE: ["Irland", "Ireland"], IT: ["Italien", "Italy"], LT: ["Litauen", "Lithuania"],
     LU: ["Luxemburg", "Luxembourg"], LV: ["Lettland", "Latvia"], MT: ["Malta", "Malta"], NL: ["Niederlande", "Netherlands"], PL: ["Polen", "Poland"],
     PT: ["Portugal", "Portugal"], RO: ["Rumänien", "Romania"], SE: ["Schweden", "Sweden"], SI: ["Slowenien", "Slovenia"], SK: ["Slowakei", "Slovakia"],
-    GB: ["Vereinigtes Königreich", "United Kingdom"], NO: ["Norwegen", "Norway"], IS: ["Island", "Iceland"], US: ["USA", "United States"],
+    GB: ["Vereinigtes Königreich", "United Kingdom"], MX: ["Mexiko", "Mexico"], NO: ["Norwegen", "Norway"], IS: ["Island", "Iceland"], US: ["USA", "United States"],
     CA: ["Kanada", "Canada"], AU: ["Australien", "Australia"], NZ: ["Neuseeland", "New Zealand"],
   };
   const name = (k) => N[k][EN ? 1 : 0];
@@ -33,8 +33,13 @@
       <span class="hint" id="uidhint"></span></div>
     <p class="hint" id="billnote" hidden></p>`;
   const sel = box.querySelector("#bill_land"), uidF = box.querySelector("#uidfield"), uid = box.querySelector("#c_uid"), note = box.querySelector("#billnote"), uidHint = box.querySelector("#uidhint");
-  // Vorbelegung: Spielland (Teams) bzw. Seitensprache
+  // Vorbelegung: Land des Besuchers (Cloudflare), sonst Spielland (Teams) bzw. Österreich auf der deutschen Seite
+  let touched = false;
   try { const g = form && form.land && form.land.value; if (g && N[g]) sel.value = g; else if (!EN) sel.value = "AT"; } catch {}
+  if (window.MSCur) MSCur.onReady(() => { const c = MSCur.country(); if (!touched && c && N[c]) sel.value = c; sel.dispatchEvent(new Event("change", { bubbles: true })); });
+  sel.addEventListener("change", (e) => { if (e.isTrusted) touched = true; });
+  // Hinweis unter dem Bestellknopf („Bezahlt wird sicher über Stripe …“) passend zum Bezahlweg
+  const payhint = document.getElementById("payhint"), payhint0 = payhint ? payhint.innerHTML : "";
   const kunde = () => (form && form.kunde ? form.kunde.value : "");
 
   function paint() {
@@ -46,19 +51,26 @@
     else uidHint.textContent = T("Erscheint auf der Rechnung.", "Shown on the invoice.");
     if (l === "GB" && (!b2b || !/^GB/i.test(uid.value.trim().replace(/\s/g, "")))) {
       n = paddle && paddle.on
-        ? T("Für Privatkunden im Vereinigten Königreich zahlt ihr in Pfund über unseren Partner Paddle (paddle.com): gleiche Zahl wie in Euro, inkl. britischer Umsatzsteuer (z. B. 29 € → £29, 8,90 € → £8.99). Paddle ist dort Verkäufer und stellt die Rechnung aus. Gutscheincodes können dabei leider nicht eingelöst werden.",
-            "For private customers in the United Kingdom you pay in pounds via our partner Paddle (paddle.com): the same figure as in euros, including UK VAT (e.g. €29 → £29, €8.90 → £8.99). Paddle is the seller and issues the invoice. Unfortunately, promo codes cannot be redeemed this way.")
+        ? T("Für Privatkunden im Vereinigten Königreich zahlt ihr in Pfund (Preis inkl. britischer Umsatzsteuer) über unseren Partner Paddle (paddle.com). Paddle ist dort Verkäufer und stellt die Rechnung aus. Gutscheincodes können dabei leider nicht eingelöst werden.",
+            "For private customers in the United Kingdom you pay in pounds (price incl. UK VAT) via our partner Paddle (paddle.com). Paddle is the seller and issues the invoice. Unfortunately, promo codes cannot be redeemed this way.")
         : T("Bestellungen von Privatpersonen aus dem Vereinigten Königreich sind in Kürze möglich. Firmen mit britischer VAT-Nummer können schon jetzt bestellen.",
             "Orders from private customers in the United Kingdom will be possible very soon. Businesses with a UK VAT number can already order.");
     }
     note.textContent = n; note.hidden = !n;
+    if (payhint) payhint.innerHTML = l === "GB" && (!b2b || !/^GB/i.test(uid.value.trim().replace(/\s/g, ""))) && paddle && paddle.on
+      ? T("Bezahlt wird in Pfund über Paddle (paddle.com), inkl. britischer Umsatzsteuer – Paddle ist für Privatkunden im Vereinigten Königreich Verkäufer und stellt die Rechnung aus. Spielcode und Links seht ihr direkt danach.", "You pay in pounds via Paddle (paddle.com), including UK VAT – Paddle is the seller for private customers in the United Kingdom and issues the invoice. You'll see your code and links right afterwards.")
+      : MSCur_cur() !== "EUR" ? payhint0.replace(/Prices in euros\.|Preise in Euro\./, "") + " " + T(`Bezahlt wird in ${MSCur_cur() === "GBP" ? "Pfund" : "US-Dollar"}.`, `You pay in ${MSCur_cur() === "GBP" ? "pounds" : "US dollars"}.`) : payhint0;
   }
   sel.addEventListener("change", paint);
   uid.addEventListener("input", paint);
   if (form) form.addEventListener("change", (e) => { if (e.target && e.target.name === "kunde") paint(); });
   paint();
 
+  function MSCur_cur() { return window.MSCur ? MSCur.forLand(sel.value) : "EUR"; }
   window.MSBill = {
+    cur: MSCur_cur,
+    price: (eur) => (window.MSCur ? MSCur.conv(eur, MSCur_cur()) : eur),
+    fmt: (cents) => (window.MSCur ? MSCur.fmt(cents, MSCur_cur()) : (EN ? "€" + (cents / 100).toFixed(2) : (cents / 100).toFixed(2).replace(".", ",") + " €")),
     read: () => ({ bill_land: sel.value, uid: kunde() === "b2b" ? uid.value.trim() : "" }),
     check: () => (sel.value ? null : [T("Bitte das Rechnungsland auswählen.", "Please choose the billing country."), sel]),
   };

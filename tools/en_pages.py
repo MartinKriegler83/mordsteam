@@ -555,7 +555,7 @@ P["friends-buy"] = dict(title="Order Friends – Mordsteam", robots="noindex", d
 <label class="check"><input type="checkbox" name="agb"><span>I accept the <a href="terms.html" target="_blank">terms</a> and have read the <a href="privacy.html" target="_blank">privacy policy</a>. *</span></label>
 <p class="formerr" id="err" role="alert" hidden></p>
 <div><button class="btn btn-red" type="submit" id="submit">Order and pay – €39.00</button></div>
-<p class="hint small">Payment is handled securely by Stripe (card, Apple Pay, Google Pay and more). You'll see the links right afterwards.</p>
+<p class="hint small" id="payhint">Payment is handled securely by Stripe (card, Apple Pay, Google Pay and more). You'll see the links right afterwards.</p>
 </fieldset>
 </form>
 </div></main>''')
@@ -782,7 +782,7 @@ P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy
 <label class="check"><input type="checkbox" name="agb"><span>I accept the <a href="terms.html" target="_blank">terms</a> and have read the <a href="privacy.html" target="_blank">privacy policy</a>. *</span></label>
 <p class="formerr" id="err" role="alert" hidden></p>
 <div><button class="btn btn-red" type="submit" id="submit">Order and pay – €8.90</button></div>
-<p class="hint small">Payment is handled securely by Stripe (card, Apple Pay, Google Pay and more). You'll see your code right afterwards.</p>
+<p class="hint small" id="payhint">Payment is handled securely by Stripe (card, Apple Pay, Google Pay and more). You'll see your code right afterwards.</p>
 </fieldset>
 </form>
 </div></main>''')
@@ -886,7 +886,7 @@ P["order"] = dict(title="Order – Mordsteam", robots="noindex", desc="Order Mor
 <label class="check"><input type="checkbox" name="agb"><span>I accept the <a href="terms.html" target="_blank">terms</a> and have read the <a href="privacy.html" target="_blank">privacy policy</a>. *</span></label>
 <p class="formerr" id="err" role="alert" hidden></p>
 <div><button class="btn btn-red" type="submit" id="submit">Order and pay</button></div>
-<p class="hint small">Payment is handled securely by Stripe (card, Apple Pay, Google Pay and more). You see the game code, instructions and organiser code right afterwards. No VAT charged (Austrian small business scheme). Prices in euros. You enter a voucher code (e.g. from Mordsteam Solo) in the payment step – it cannot be combined with the early bird discount.</p>
+<p class="hint small" id="payhint">Payment is handled securely by Stripe (card, Apple Pay, Google Pay and more). You see the game code, instructions and organiser code right afterwards. No VAT charged (Austrian small business scheme). Prices in euros. You enter a voucher code (e.g. from Mordsteam Solo) in the payment step – it cannot be combined with the early bird discount.</p>
 </fieldset>
 </form>
 </div></main>''')

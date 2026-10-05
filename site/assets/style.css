@@ -568,3 +568,8 @@ a.inlink:hover{color:var(--red)}
 
 /* Safari: nach dem Zuklappen einer Frage blieb ein Streifen der Antwort stehen (Zeichenfehler). Eigene Ebene erzwingt sauberes Neuzeichnen. */
 .faq details{transform:translateZ(0)}
+
+/* Währungsauswahl (englische Seiten, currency.js) */
+.cursw{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px}
+.cursw button{font:inherit;font-size:13px;padding:3px 9px;border:1px solid currentColor;border-radius:999px;background:transparent;color:inherit;cursor:pointer;opacity:.7}
+.cursw button[aria-pressed="true"]{opacity:1;font-weight:700}

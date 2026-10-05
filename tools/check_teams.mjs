@@ -4,6 +4,8 @@
 import { account, COUNTRY_ORDER } from "../lib/countries.js";
 import * as F from "../lib/cases/fall-001.js";
 import { regioGuard } from "./regio_guard.mjs";
+import { readdirSync, readFileSync } from "fs";
+import { PRICE_TABLE, convPrice } from "../lib/prices.js";
 let err = 0;
 const fail = (m) => { err++; console.log("FEHLER", m); };
 for (const c of COUNTRY_ORDER) for (const k of ["9697", "0102", "4521"]) for (const bank of [false, true]) {
@@ -25,4 +27,11 @@ for (let i = 0; i < 500; i++) for (const premium of [false, true]) {
 }
 // Go-live-Test 3 (5.10.2026): keine österreichischen Wörter in DE/CH/LI-Runden (Texte und KI-Figuren)
 { const rg = regioGuard("fall-001", 60); for (const e of rg.errs) fail(e); }
+// Landeswährung (lib/prices.js): jeder markierte Preis der englischen Seiten braucht £ und $ in der Tabelle; Server-Preise ebenso
+{
+  const files = readdirSync(new URL("../site/en/", import.meta.url)).filter((f) => f.endsWith(".html"));
+  for (const f of files) for (const m of readFileSync(new URL("../site/en/" + f, import.meta.url), "utf8").matchAll(/data-eur="(\d+)"/g))
+    if (!PRICE_TABLE[m[1]]) fail(`Preis ${m[1]} Cent auf en/${f} fehlt in lib/prices.js`);
+  for (const c of [8900, 11900, 14900, 2900, 500, 4900, 800, 890, 1590]) for (const cur of ["GBP", "USD"]) { try { convPrice(c, cur); } catch (e) { fail(e.message); } }
+}
 console.log(err ? `${err} Fehler` : `IBAN in ${COUNTRY_ORDER.length} Ländern, 1000 Runden Zusatzermittlung/Sonderauftrag: alles ok`);

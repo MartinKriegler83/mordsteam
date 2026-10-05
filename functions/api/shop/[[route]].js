@@ -23,6 +23,7 @@ import { sendMail as opsMail } from "../../../lib/ops.js";
 import { enrichPayment, migrateAccounting } from "../../../lib/accounting.js";
 import { taxContext, TaxInputError, invoiceFooter, invoiceFields } from "../../../lib/tax.js";
 import { paddleOn, paddleTransaction, paddleGet, paddleAmounts, paddlePaid, verifyPaddle, ukPrice } from "../../../lib/paddle.js";
+import { PRICE_TABLE, curOfLand, convPrice } from "../../../lib/prices.js";
 import { nlSignup, nlConfirm, nlUnsubscribe, nlVisit, srcVisit, nlAfterOrder, nlTag, migrateNewsletter } from "../../../lib/newsletter.js";
 import { createSoloTicket, migrateSolo } from "../../../lib/solo.js";
 import { createFriendsGroup, friendsGroupOfOrder, friendsPrice, FRIENDS_PRICE, FRIENDS_PRICE_PLUS, FRIENDS_CASES, friendsCase, friendsCron } from "../../../lib/friends.js";
@@ -60,6 +61,7 @@ export async function onRequest({ request, env, params }) {
     if (route === "meta" && method === "GET") return await meta(env, request);
     if (route === "stripe-webhook" && method === "POST") return await webhook(request, env);
     if (route === "paddle-webhook" && method === "POST") return await paddleWebhook(request, env);
+    if (route === "geo" && method === "GET") { const h = request.headers.get("cf-ipcountry"), c = String((env.GEO_TEST && h) || (request.cf && request.cf.country) || h || "").toUpperCase(); /* GEO_TEST nur im lokalen Test */ return json({ country: /^[A-Z]{2}$/.test(c) ? c : "", currency: curOfLand(c), table: PRICE_TABLE }); }
     if (route === "paddle-config" && method === "GET") return json({ on: paddleOn(env), token: paddleOn(env) ? env.PADDLE_CLIENT_TOKEN : null, env: String(env.PADDLE_ENV || "sandbox").toLowerCase() === "live" ? "live" : "sandbox" });
     if (route === "status" && method === "GET") return await status(request, env);
     if (route === "bestellung" && method === "POST") return await bestellung(request, env);
@@ -147,7 +149,7 @@ function meta(env, request) {
 
 // ---------- Umsatzsteuer und Bezahlweg (für Teams, Solo, Friends gleich) ----------
 // Preis in der Mail: Pfund bei Paddle-Bestellungen, sonst Euro
-const priceTxt = (o) => (o.currency === "GBP" && o.amount_orig_cents != null ? `£${(o.amount_orig_cents / 100).toFixed(2)}` : `${(o.amount_cents / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 })} €`);
+const priceTxt = (o) => (o.currency && o.currency !== "EUR" && o.amount_orig_cents != null ? `${o.currency === "GBP" ? "£" : "$"}${(o.amount_orig_cents / 100).toFixed(2)}` : `${(o.amount_cents / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 })} €`);
 // Steuerhinweis in der Bestätigungsmail (passend zur Rechnung)
 function vatNote(c, T) {
   const r = c.tax_regime || "ku";
@@ -169,8 +171,10 @@ async function taxStep(env, k, site, contact) {
 // nach dem INSERT: Steuerdaten in eigene Spalten (Buchhaltung, Zusammenfassende Meldung)
 async function saveTax(env, id, contact) {
   await migrateAccounting(env);
-  await env.DB.prepare("UPDATE orders SET bill_country=?, tax_regime=?, cust_uid=?, pay_provider=? WHERE id=?")
-    .bind(contact.bill_land, contact.tax_regime, contact.uid || null, contact.tax_regime === "uk_paddle" ? "paddle" : "stripe", id).run();
+  // amount_cents steht bis zur Zahlung in der Bestellwährung; nach der Zahlung in Euro (Stripe-/Paddle-Auszahlung), Originalbetrag in amount_orig_cents
+  const cur = contact.currency || "EUR";
+  await env.DB.prepare("UPDATE orders SET bill_country=?, tax_regime=?, cust_uid=?, pay_provider=?, currency=?, amount_orig_cents=CASE WHEN ?<>'EUR' THEN amount_cents ELSE NULL END WHERE id=?")
+    .bind(contact.bill_land, contact.tax_regime, contact.uid || null, contact.tax_regime === "uk_paddle" ? "paddle" : "stripe", cur, cur, id).run();
 }
 // Paddle-Kasse (britische Privatkunden): Transaktion anlegen, Weiterleitung auf /zahlung.html
 async function paddleStep(env, origin, { id, token, site, gbp, name, description, email }) {
@@ -245,8 +249,10 @@ async function bestellung(request, env) {
   if (b.earlybird === true && !eb) throw new InputError(L(site, "Die Early-Bird-Aktion ist leider schon vorbei. Bitte das Häkchen entfernen.", "Sorry, the early bird offer has ended. Please untick the box."));
   if (eb) { contact.earlybird = eb.prozent; }
   else if (c.no_feedback) contact.no_feedback = true;     // keine Feedback-Mail nach dem Spiel (bei Early Bird Teil der Bedingungen)
-  const full = PRICES[paket] * teams;
+  const cur = curOfLand(contact.bill_land);   // Währung nach Rechnungsland (lib/prices.js)
+  const unit = convPrice(PRICES[paket], cur), full = unit * teams;
   const amount = eb ? Math.round(full * (100 - eb.prozent) / 100) : full;
+  contact.currency = cur;
   await env.DB.prepare(
     "INSERT INTO orders (id, token, created_at, status, paket, teams, amount_cents, event_date, vars, contact, logo) VALUES (?,?,?,'pending',?,?,?,?,?,?,?)"
   ).bind(id, token, Date.now(), paket, teams, amount, date, JSON.stringify(vars), JSON.stringify(contact), logo).run();
@@ -258,7 +264,7 @@ async function bestellung(request, env) {
   const title = lang === "en" ? C.EN.META.title : C.META.title;
   const langName = L(site, lang === "en" ? "Englisch" : "Deutsch", lang === "en" ? "English" : "German");
   if (contact.tax_regime === "uk_paddle") return paddleStep(env, origin, { id, token, site, email: contact.email,
-    gbp: eb ? Math.round(ukPrice(PRICES[paket]) * teams * (100 - eb.prozent) / 100) : ukPrice(PRICES[paket]) * teams,
+    gbp: amount,
     name: L(site, `Mordsteam Fall ${caseNr(caseId)} „${title}“ – ${NAMES[paket]} × ${teams}`, `Mordsteam Case ${caseNr(caseId)} “${title}” – ${NAMES_EN[paket]} × ${teams}`),
     description: L(site, `${teams} Team${teams === 1 ? "" : "s"} · gültig bis ${validUntil} · Spielsprache ${langName}`, `${teams} team${teams === 1 ? "" : "s"} · valid until ${validUntil} · game language ${langName}`) });
   if (env.STRIPE_SECRET_KEY) {
@@ -274,7 +280,7 @@ async function bestellung(request, env) {
       billing_address_collection: "required",
       line_items: [{
         quantity: teams,
-        price_data: { currency: "eur", unit_amount: PRICES[paket],
+        price_data: { currency: cur.toLowerCase(), unit_amount: unit,
           product_data: { name: L(site, `Mordsteam Fall ${caseNr(caseId)} „${title}“ – ${NAMES[paket]}`, `Mordsteam Case ${caseNr(caseId)} “${title}” – ${NAMES_EN[paket]}`),
             description: L(site, `Pro Team · sofort spielbar, gültig bis ${validUntil} · Spielsprache ${langName}`, `Per team · playable right away, valid until ${validUntil} · game language ${langName}`) } },
       }],
@@ -329,14 +335,16 @@ async function soloBestellung(request, env) {
   if (!c.agb) throw new InputError(L(site, "Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."));
   contact.no_feedback = true;
   const id = crypto.randomUUID(), token = randomToken(16), today = viennaDate(), validUntil = addDays(today, 365);
+  const cur = curOfLand(contact.bill_land), price = convPrice(F.price, cur);
+  contact.currency = cur;
   await env.DB.prepare(
     "INSERT INTO orders (id, token, created_at, status, paket, teams, amount_cents, event_date, vars, contact, logo) VALUES (?,?,?,'pending','solo',1,?,?,?,?,NULL)"
-  ).bind(id, token, Date.now(), F.price, today, JSON.stringify({ FIRMA: "Mordsteam Solo" }), JSON.stringify(contact)).run();
+  ).bind(id, token, Date.now(), price, today, JSON.stringify({ FIRMA: "Mordsteam Solo" }), JSON.stringify(contact)).run();
   await saveTax(env, id, contact);
   const origin = new URL(request.url).origin;
   const pre = site === "en" ? "/en" : "";
   const done = `${origin}${pre}/${site === "en" ? "ordered" : "bestellt"}.html?o=${id}&k=${token}`;
-  if (contact.tax_regime === "uk_paddle") return paddleStep(env, origin, { id, token, site, gbp: ukPrice(F.price), email: contact.email,
+  if (contact.tax_regime === "uk_paddle") return paddleStep(env, origin, { id, token, site, gbp: price, email: contact.email,
     name: L(site, `Mordsteam ${F.no} „${F.de}“`, `Mordsteam ${F.no} “${F.en}”`),
     description: L(site, `Krimi für eine Person · Code gültig bis ${validUntil} · Spielsprache ${GL}`, `Murder mystery for one person · code valid until ${validUntil} · game language ${GL}`) });
   if (env.STRIPE_SECRET_KEY) {
@@ -344,7 +352,7 @@ async function soloBestellung(request, env) {
       mode: "payment", locale: site, customer_email: contact.email, client_reference_id: id,
       success_url: done, cancel_url: `${origin}${pre}/${site === "en" ? "solo-buy" : "solo-kaufen"}.html?abgebrochen=1`,
       billing_address_collection: "auto",
-      line_items: [{ quantity: 1, price_data: { currency: "eur", unit_amount: F.price,
+      line_items: [{ quantity: 1, price_data: { currency: cur.toLowerCase(), unit_amount: price,
         product_data: { name: L(site, `Mordsteam ${F.no} „${F.de}“`, `Mordsteam ${F.no} “${F.en}”`),
           description: L(site, `Krimi für eine Person, Countdown ${F.min} Min.${F.plus ? " mit KI-Verhörraum" : ""} · Code gültig bis ${validUntil} · Spielsprache ${GL}`, `Murder mystery for one person, ${F.min}-minute countdown${F.plus ? " with AI interrogation room" : ""} · code valid until ${validUntil} · game language ${GL}`) } } }],
       metadata: { order_id: id }, payment_intent_data: { metadata: { order_id: id } },
@@ -408,7 +416,10 @@ async function friendsBestellung(request, env) {
   const eb = b.earlybird === true ? earlybird(env) : null;
   if (b.earlybird === true && !eb) throw new InputError(L(site, "Die Early-Bird-Aktion ist leider schon vorbei. Bitte das Häkchen entfernen.", "Sorry, the early bird offer has ended. Please untick the box."));
   if (eb) contact.earlybird = eb.prozent;
-  const full = friendsPrice(n, plus), amount = eb ? Math.round(full * (100 - eb.prozent) / 100) : full;
+  const cur = curOfLand(contact.bill_land);
+  const PP = plus ? FRIENDS_PRICE_PLUS : FRIENDS_PRICE;
+  const full = convPrice(PP.base, cur) + Math.max(0, n - PP.included) * convPrice(PP.extra, cur), amount = eb ? Math.round(full * (100 - eb.prozent) / 100) : full;
+  contact.currency = cur;
   const id = crypto.randomUUID(), token = randomToken(16), today = viennaDate(), validUntil = addDays(today, 365);
   // Die Namen stehen nur bis zum Anlegen der Runde in der Bestellung, danach nur noch in der Runde (die gelöscht wird)
   const vars = { FIRMA: "Mordsteam Friends", friends: { players, mode, days, plus } };
@@ -421,7 +432,7 @@ async function friendsBestellung(request, env) {
   const done = `${origin}${pre}/${site === "en" ? "ordered" : "bestellt"}.html?o=${id}&k=${token}`;
   const modeTxt = mode === "live" ? L(site, "gleichzeitig", "all at once") : L(site, `über ${days} Tage`, `over ${days} days`);
   if (contact.tax_regime === "uk_paddle") return paddleStep(env, origin, { id, token, site, email: contact.email,
-    gbp: eb ? Math.round(ukPrice(full) * (100 - eb.prozent) / 100) : ukPrice(full),
+    gbp: amount,
     name: L(site, `Mordsteam Friends 001 – ${vName} für ${n} Personen`, `Mordsteam Friends 001 – ${vName} for ${n} people`),
     description: L(site, `Countdown ${lim} Min., gespielt ${modeTxt} · spielbar bis ${validUntil} · Spielsprache ${GL}`, `${lim}-minute countdown, played ${modeTxt} · playable until ${validUntil} · game language ${GL}`) });
   if (env.STRIPE_SECRET_KEY) {
@@ -430,7 +441,7 @@ async function friendsBestellung(request, env) {
       ...(eb ? { discounts: [{ coupon: await ebCoupon(env, eb.prozent) }] } : { allow_promotion_codes: true }),
       success_url: done, cancel_url: `${origin}${pre}/${site === "en" ? "friends-buy" : "friends-kaufen"}.html?abgebrochen=1`,
       billing_address_collection: "auto",
-      line_items: [{ quantity: 1, price_data: { currency: "eur", unit_amount: full,
+      line_items: [{ quantity: 1, price_data: { currency: cur.toLowerCase(), unit_amount: full,
         product_data: { name: L(site, `Mordsteam Friends 001 „${C.TITLE}“ – ${vName} für ${n} Personen`, `Mordsteam Friends 001 “Last Round at the Chalet” – ${vName} for ${n} people`),
           description: L(site, `Countdown ${lim} Min.${plus ? " mit KI-Verhörraum" : ""}, gespielt ${modeTxt} · spielbar bis ${validUntil} · Spielsprache ${GL}`, `${lim}-minute countdown${plus ? " with AI interrogation room" : ""}, played ${modeTxt} · playable until ${validUntil} · game language ${GL}`) } } }],
       metadata: { order_id: id }, payment_intent_data: { metadata: { order_id: id } },
@@ -730,7 +741,12 @@ ${c.kunde === "b2b" ? T("Für Bestellungen als Unternehmen besteht kein gesetzli
 async function recordPayment(env, id, cs) {
   try {
     for (const q of ["ALTER TABLE orders ADD COLUMN invoice_no TEXT"]) { try { await env.DB.prepare(q).run(); } catch {} }
-    if (cs && Number.isFinite(cs.amount_total)) await env.DB.prepare("UPDATE orders SET amount_cents=? WHERE id=?").bind(cs.amount_total, id).run();
+    // Preis in unserer Währung (bei Adaptive Pricing steht er in currency_conversion); Euro direkt, sonst Euro-Betrag aus der Auszahlung (enrichPayment)
+    const src = cs && cs.currency_conversion ? { amount: cs.currency_conversion.amount_total, cur: cs.currency_conversion.source_currency } : { amount: cs && cs.amount_total, cur: cs && cs.currency };
+    if (Number.isFinite(src.amount)) {
+      if (String(src.cur || "eur").toLowerCase() === "eur") await env.DB.prepare("UPDATE orders SET amount_cents=?, currency='EUR' WHERE id=?").bind(src.amount, id).run();
+      else { await migrateAccounting(env); await env.DB.prepare("UPDATE orders SET amount_orig_cents=?, currency=? WHERE id=?").bind(src.amount, String(src.cur).toUpperCase(), id).run(); }
+    }
     const invId = cs && (typeof cs.invoice === "string" ? cs.invoice : cs.invoice?.id);
     if (invId) {
       const inv = await stripe(env, "GET", `invoices/${invId}`);

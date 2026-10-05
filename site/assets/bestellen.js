@@ -29,7 +29,7 @@
     RAUM_TATORT: [T("Büro der Chefin / des Chefs *", "The boss's office *"), T("der Tatort", "the crime scene")],
   };
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
-  const eur = (c) => { const o = { minimumFractionDigits: c % 100 ? 2 : 0, maximumFractionDigits: 2 }; return EN ? "€" + (c / 100).toLocaleString("en-GB", o) : (c / 100).toLocaleString("de-AT", o) + " €"; };
+  const eurF = (c) => { const o = { minimumFractionDigits: c % 100 ? 2 : 0, maximumFractionDigits: 2 }; return EN ? "€" + (c / 100).toLocaleString("en-GB", o) : (c / 100).toLocaleString("de-AT", o) + " €"; };
   const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const fmtDate = (d) => { if (!d) return "–"; const [y, m, t] = d.split("-"); return EN ? `${Number(t)} ${MONTHS[Number(m) - 1]} ${y}` : `${Number(t)}.${Number(m)}.${y}`; };
   const paket = () => form.paket.value;
@@ -124,7 +124,8 @@
     // Schritte fortlaufend nummerieren (fiktiv: Firma, Opfer, Verdächtige entfallen)
     [...form.querySelectorAll("fieldset.step")].filter((f) => !f.hidden).forEach((f, i) => (f.querySelector("legend span").textContent = i + 1));
     const n = Number($("#teams").value);
-    const full = META.prices[paket()] * n;
+    const B = window.MSBill, U = (c) => (B ? B.price(c) : c), eur = (c) => (B ? B.fmt(c) : eurF(c));   // Währung nach Rechnungsland
+    const full = U(META.prices[paket()]) * n;
     const eb = META.earlybird && form.earlybird.checked ? META.earlybird.prozent : 0;
     const sum = Math.round(full * (100 - eb) / 100);
     $("#pb-text").textContent = `${TN[paket()].split(",")[0]} · ${n} Team${n > 1 ? "s" : ""}`;
@@ -134,7 +135,7 @@
       <dt>${T("Paket", "Package")}</dt><dd>${T(`Fall ${META.nr || "001"} „${esc(META.fall)}“`, `Case ${META.nr || "001"} “${esc(META.fall)}”`)} – ${TN[paket()]}</dd>
       <dt>${T("Spielsprache", "Game language")}</dt><dd>${esc(form.lang.options[form.lang.selectedIndex].text)}</dd>
       <dt>${T("Land", "Country")}</dt><dd>${esc(form.land.options[form.land.selectedIndex]?.text || "")}</dd>
-      <dt>Teams</dt><dd>${n} × ${eur(META.prices[paket()])}</dd>
+      <dt>Teams</dt><dd>${n} × ${eur(U(META.prices[paket()]))}</dd>
       <dt>${T("Spielbar", "Playable")}</dt><dd>${T("sofort nach dem Bezahlen, 12 Monate lang, einmal startbar", "right after paying, for 12 months, can be started once")}</dd>
       ${fk ? `<dt>${T("Besetzung", "Cast")}</dt><dd>${isVerein() ? T("Fiktiver Verein mit erfundenen Figuren", "Fictional club with invented characters") : T("Fiktive Firma mit erfundenen Figuren", "Fictional company with invented characters")}</dd>` : `<dt>${isVerein() ? T("Verein", "Club") : T("Firma", "Company")}</dt><dd>${esc(v("FIRMA") || "–")}</dd>
       <dt>${T("Opfer", "Victim")}</dt><dd>${esc(v("OPFER") || "–")}</dd>
@@ -266,7 +267,7 @@
     }
 
 
-    const contact = { name: form.c_name.value.trim(), email: form.c_email.value.trim(), telefon: form.c_tel.value.trim(), rechnung_firma: form.c_firma.value.trim(), kunde: form.kunde.value };
+    const contact = { name: form.c_name.value.trim(), email: form.c_email.value.trim(), telefon: form.c_tel.value.trim(), rechnung_firma: form.c_firma.value.trim(), kunde: form.kunde.value, ...(window.MSBill ? MSBill.read() : {}) };
     if (contact.name.length < 2) throw [T("Bitte deinen Namen angeben.", "Please enter your name."), form.c_name];
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw [T("Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."), form.c_email];
     const consent = { no_news: !!(form.no_news && form.no_news.checked), sofort: form.sofort.checked, no_feedback: form.no_feedback.checked && !(META.earlybird && form.earlybird.checked), ab18: form.ab18.checked, zustimmung: form.zustimmung.checked, agb: form.agb.checked, logo_rechte: form.logo_rechte.checked };
@@ -275,6 +276,7 @@
     if (!fk && !consent.zustimmung) throw [T("Bitte bestätigen, dass alle genannten Personen einverstanden sind.", "Please confirm that everyone named has agreed."), form.zustimmung];
     if (paket() === "plus" && !form.ab18.checked) throw [T("Bitte bestätigen, dass alle Teilnehmenden mindestens 18 Jahre alt sind – oder Basic bzw. Premium wählen.", "Please confirm that all participants are at least 18 – or choose Basic or Premium."), form.ab18];
     if (!contact.kunde) throw [T("Bitte angeben, ob ihr als Unternehmen/Verein oder als Privatperson bestellt.", "Please tell us whether you are ordering as a company/club or as a private individual."), form.kunde[0]];
+    if (window.MSBill) { const bx = MSBill.check(); if (bx) throw bx; }
     if (contact.kunde === "b2c" && !consent.sofort) throw [T("Bitte bestätigen, dass wir eure Spielrunde gleich nach dem Bezahlen anlegen dürfen.", "Please confirm that we may set up your game round right after payment."), form.sofort];
     if (!consent.agb) throw [T("Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."), form.agb];
     return { fall: caseId(), paket: paket(), teams: Number(form.teams.value), vars: fk ? {} : vars, land: form.land.value, contact, consent, logo: fk ? null : logoData, besetzung: fk ? "fiktiv" : "echt", earlybird: !!(META.earlybird && form.earlybird.checked), lang: form.lang.value === "en" ? "en" : "de", site: EN ? "en" : "de" };

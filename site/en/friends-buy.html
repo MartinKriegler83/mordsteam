@@ -14,6 +14,7 @@
 <link rel="icon" href="/assets/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
+<script src="/assets/currency.js"></script>
 </head>
 <body>
 
@@ -49,8 +50,8 @@
 <div class="note" id="cancelled" hidden>The payment was cancelled. You can simply try again.</div>
 <form class="form" id="friends" novalidate>
 <fieldset class="step"><legend><span>1</span> Which version?</legend>
-<label class="check"><input type="radio" name="variant" value="basis" checked><span><b>Mystery Night</b> · 50-minute countdown · from €29 (up to 4 people, +€5 per extra person)</span></label>
-<label class="check"><input type="radio" name="variant" value="plus"><span><b>Mystery Night Plus</b> · 75-minute countdown · from €49 (up to 4 people, +€8 per extra person) – with AI interrogation room: you question the AI doubles of your friends. 18+.</span></label>
+<label class="check"><input type="radio" name="variant" value="basis" checked><span><b>Mystery Night</b> · 50-minute countdown · from <span data-eur="2900">€29</span> (up to 4 people, +<span data-eur="500">€5</span> per extra person)</span></label>
+<label class="check"><input type="radio" name="variant" value="plus"><span><b>Mystery Night Plus</b> · 75-minute countdown · from <span data-eur="4900">€49</span> (up to 4 people, +<span data-eur="800">€8</span> per extra person) – with AI interrogation room: you question the AI doubles of your friends. 18+.</span></label>
 <div class="field"><label for="lang">Game language *</label>
 <select id="lang" name="lang"><option value="en">English</option><option value="de">German</option></select>
 <span class="hint">Applies to the whole group: case file, questions, interrogation room and solution – independent of this website.</span></div>
@@ -79,7 +80,7 @@
 <div id="billbox"></div>
 </fieldset>
 <fieldset class="step"><legend><span>5</span> Review and pay</legend>
-<div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Friends 001 “Last Round at the Chalet” · 6 people · 50-minute countdown · game language German</span><b id="sumprice">€39.00</b></div>
+<div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Friends 001 “Last Round at the Chalet” · 6 people · 50-minute countdown · game language German</span><b id="sumprice"><span data-eur="3900">€39.00</span></b></div>
 <div class="sumrow" id="ebrow" hidden><span>Early bird −<span class="ebp">25</span>%</span><b id="ebprice"></b></div>
 <p class="small">Final price for the whole group. Playable for 12 months, can be started once. VAT exempt (small business scheme).</p></div>
 <label class="check" id="ab18box" hidden><input type="checkbox" name="ab18"><span>All players are at least 18 years old (required for the AI interrogation room) and agree that an AI plays their doubles in the game – only with placeholders instead of real names and the chosen quirk. *</span></label>
@@ -89,8 +90,8 @@
 <label class="check"><input type="checkbox" name="no_news"><span>No news by email, please. Otherwise we'll occasionally tell you about new Mordsteam cases – you can unsubscribe in every email with one click.</span></label>
 <label class="check"><input type="checkbox" name="agb"><span>I accept the <a href="terms.html" target="_blank">terms</a> and have read the <a href="privacy.html" target="_blank">privacy policy</a>. *</span></label>
 <p class="formerr" id="err" role="alert" hidden></p>
-<div><button class="btn btn-red" type="submit" id="submit">Order and pay – €39.00</button></div>
-<p class="hint small">Payment is handled securely by Stripe (card, Apple Pay, Google Pay and more). You'll see the links right afterwards.</p>
+<div><button class="btn btn-red" type="submit" id="submit">Order and pay – <span data-eur="3900">€39.00</span></button></div>
+<p class="hint small" id="payhint">Payment is handled securely by Stripe (card, Apple Pay, Google Pay and more). You'll see the links right afterwards.</p>
 </fieldset>
 </form>
 </div></main>

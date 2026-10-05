@@ -12,8 +12,9 @@
   if (q.get("v") === "plus") form.variant.value = "plus";
   const isPlus = () => form.variant.value === "plus";
   const eur = (c) => (c / 100).toLocaleString(EN ? "en-IE" : "de-AT", { minimumFractionDigits: 2 }) + (EN ? "" : " €");
-  const money = (c) => (EN ? "€" + eur(c) : eur(c));
-  const priceOf = (n) => { const P = isPlus() ? M.price_plus : M.price; return P.base + Math.max(0, n - P.included) * P.extra; };
+  const money = (c) => (window.MSBill ? MSBill.fmt(c) : EN ? "€" + eur(c) : eur(c));   // Währung nach Rechnungsland
+  const U = (c) => (window.MSBill ? MSBill.price(c) : c);
+  const priceOf = (n) => { const P = isPlus() ? M.price_plus : M.price; return U(P.base) + Math.max(0, n - P.included) * U(P.extra); };
   const draftKey = "ms_friends_draft";
   function rows() {
     const n = Number(form.n.value), keep = [...people.querySelectorAll(".fr-person")].map((r) => ({ name: r.querySelector("input").value, quirk: r.querySelector("select").value }));
@@ -80,12 +81,13 @@
     const low = list.map((p) => p.name.toLowerCase());
     if (new Set(low).size !== low.length) return fail(T("Zwei Personen haben denselben Namen. Bitte unterscheidbar machen, z. B. mit Initial.", "Two people have the same name. Please make them distinguishable, e.g. with an initial."));
     if (!form.zustimmung.checked) return fail(T("Bitte bestätigen, dass alle Genannten einverstanden sind.", "Please confirm that everyone named has agreed."), form.zustimmung);
-    const contact = { name: form.c_name.value.trim(), email: form.c_email.value.trim(), kunde: form.kunde.value };
+    const contact = { name: form.c_name.value.trim(), email: form.c_email.value.trim(), kunde: form.kunde.value, ...(window.MSBill ? MSBill.read() : {}) };
     const consent = { zustimmung: true, sofort: form.sofort.checked, agb: form.agb.checked, ab18: form.ab18.checked, no_news: !!(form.no_news && form.no_news.checked) };
     if (isPlus() && !consent.ab18) return fail(T("Bitte bestätigen, dass alle mindestens 18 Jahre alt und mit den KI-Doppelgängern einverstanden sind – oder den Krimiabend wählen.", "Please confirm that everyone is at least 18 and agrees to the AI doubles – or choose the Mystery Night."), form.ab18);
     if (contact.name.length < 2) return fail(T("Bitte deinen Namen angeben.", "Please enter your name."), form.c_name);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) return fail(T("Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."), form.c_email);
     if (!contact.kunde) return fail(T("Bitte angeben, ob du als Privatperson oder für ein Unternehmen bestellst.", "Please tell us whether you are ordering as a private individual or for a company."), form.kunde[0]);
+    if (window.MSBill) { const bx = MSBill.check(); if (bx) return fail(bx[0], bx[1]); }
     if (contact.kunde === "b2c" && !consent.sofort) return fail(T("Bitte bestätigen, dass wir eure Runde gleich nach dem Bezahlen anlegen dürfen.", "Please confirm that we may set up your round right after payment."), form.sofort);
     if (!consent.agb) return fail(T("Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."), form.agb);
     btn.disabled = true; const label = btn.innerHTML; btn.textContent = T("Weiter zur Zahlung …", "On to payment …");

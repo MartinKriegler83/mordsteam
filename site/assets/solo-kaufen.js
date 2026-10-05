@@ -20,10 +20,12 @@
     document.getElementById("ab18box").hidden = !C.plus;
     const en = form.lang.value === "en";
     document.getElementById("sumtxt").textContent = (EN ? C.en : C.de) + T(` · Spielsprache ${en ? "Englisch" : "Deutsch"}`, ` · game language ${en ? "English" : "German"}`);
-    document.getElementById("sumprice").textContent = eur(C.p);
-    btn.textContent = T("Zahlungspflichtig bestellen – ", "Order and pay – ") + eur(C.p);
+    const B = window.MSBill, p = B ? B.price(C.p) : C.p, f = B ? B.fmt : eur;   // Währung nach Rechnungsland
+    document.getElementById("sumprice").textContent = f(p);
+    btn.textContent = T("Zahlungspflichtig bestellen – ", "Order and pay – ") + f(p);
   };
-  form.querySelectorAll("input[name=kunde],input[name=fall],select[name=lang]").forEach((r) => r.addEventListener("change", paint));
+  form.querySelectorAll("input[name=kunde],input[name=fall],select[name=lang],select[name=bill_land]").forEach((r) => r.addEventListener("change", paint));
+  if (window.MSCur) MSCur.onReady(paint);
   paint();
   let open = true;
   fetch("/api/shop/meta" + (EN ? "?lang=en" : "")).then((r) => r.json()).then((m) => { open = !!m.open; document.getElementById("closed").hidden = open; if (!open) btn.disabled = true; }).catch(() => {});
@@ -47,12 +49,13 @@
   form.addEventListener("submit", async (ev) => {
     ev.preventDefault();
     err.hidden = true;
-    const contact = { name: form.c_name.value.trim(), email: form.c_email.value.trim(), kunde: form.kunde.value };
+    const contact = { name: form.c_name.value.trim(), email: form.c_email.value.trim(), kunde: form.kunde.value, ...(window.MSBill ? MSBill.read() : {}) };
     const consent = { sofort: form.sofort.checked, agb: form.agb.checked, ab18: form.ab18.checked, no_news: !!(form.no_news && form.no_news.checked) };
     const fall = form.fall.value;
     if (contact.name.length < 2) return fail(T("Bitte deinen Namen angeben.", "Please enter your name."), form.c_name);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) return fail(T("Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."), form.c_email);
     if (!contact.kunde) return fail(T("Bitte angeben, ob du als Privatperson oder für ein Unternehmen bestellst.", "Please tell us whether you are ordering as a private individual or for a company."), form.kunde[0]);
+    if (window.MSBill) { const bx = MSBill.check(); if (bx) return fail(bx[0], bx[1]); }
     if (contact.kunde === "b2c" && !consent.sofort) return fail(T("Bitte bestätigen, dass wir deinen Code gleich nach dem Bezahlen bereitstellen dürfen.", "Please confirm that we may provide your code right after payment."), form.sofort);
     if (CASES[fall] && CASES[fall].plus && !consent.ab18) return fail(T("Solo Plus ist ab 18 Jahren – bitte bestätigen.", "Solo Plus is for ages 18 and over – please confirm."), form.ab18);
     if (!consent.agb) return fail(T("Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."), form.agb);

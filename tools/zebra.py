@@ -32,7 +32,26 @@ def add_sig(html, lang):
     if 'class="cta"' not in html or 'class="sig"' in html: return html
     return html.replace('</main>', sig(lang) + '</main>', 1)
 
+def tag_prices(html):
+    """Englische Seiten: jeden €-Betrag im sichtbaren Text als <span data-eur="Cent"> markieren (currency.js rechnet um).
+    JSON-LD und andere Skripte bleiben unverändert (Suchmaschinen sehen Euro)."""
+    if "data-eur=" in html:
+        return html
+    parts = re.split(r"(<script\b.*?</script>)", html, flags=re.S)
+    def txt(m):
+        def one(a):
+            v = a.group(1); cents = int(round(float(v) * 100))
+            return f'<span data-eur="{cents}">€{v}</span>'
+        return ">" + re.sub(r"€(\d+(?:\.\d\d)?)", one, m.group(1)) + "<"
+    for i in range(0, len(parts), 2):
+        parts[i] = re.sub(r">([^<]*€[^<]*)<", txt, parts[i])
+    return "".join(parts)
+
 def finish(html, lang):
+    if lang == "en":
+        html = tag_prices(html)
+        if "/assets/currency.js" not in html:
+            html = html.replace("</head>", '<script src="/assets/currency.js"></script>\n</head>', 1)
     return zebra(add_sig(html, lang))
 
 if __name__ == "__main__":
