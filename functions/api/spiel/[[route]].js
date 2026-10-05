@@ -1,6 +1,6 @@
 // Cloudflare Pages Function: /api/spiel/*
 // Benötigt: D1-Binding "DB" und die geheime Umgebungsvariable "ADMIN_KEY".
-import { accountingSummary, migrateAccounting, region, REGION_LABEL, costList, costSave, costDelete } from "../../../lib/accounting.js";
+import { accountingSummary, migrateAccounting, region, REGION_LABEL, costList, costSave, costDelete, rcList, rcSave, rcDelete, rcMarkPaid } from "../../../lib/accounting.js";
 import {
   CASES, caseOf, langOf, RULES, json, fail, randInt, randomToken, randomCode, esc, viennaDate,
   buildVars, render, checkAnswers, norm, same, hintLabel, namesToLetters, lettersToName, hintTimes, hardEnd, refreshStatus, finishIfAllSolved, recordStats, expired, purgeSession, ranking, teamScore,
@@ -66,6 +66,10 @@ export async function onRequest(ctx) {
       if (route === "admin/feedback" && method === "GET") return adminFeedback(env);
       if (route === "admin/export" && method === "GET") return adminExport(request, env);
       if (route === "admin/kosten" && method === "GET") return json(await costList(env));
+      if (route === "admin/rc" && method === "GET") return json(await rcList(env));
+      if (route === "admin/rc" && method === "POST") { try { return json(await rcSave(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
+      if (route === "admin/rc/loeschen" && method === "POST") { const b = await request.json().catch(() => ({})); return json(await rcDelete(env, b.id)); }
+      if (route === "admin/rc/bezahlt" && method === "POST") { try { return json(await rcMarkPaid(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
       if (route === "admin/kosten" && method === "POST") { try { return json(await costSave(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
       if (route === "admin/kosten/loeschen" && method === "POST") { const b = await request.json().catch(() => ({})); return json(await costDelete(env, b.id)); }
       if (route === "admin/buchhaltung" && method === "GET") { const u = new URL(request.url); return json(await accountingSummary(env, Date.parse((u.searchParams.get("von") || "2000-01-01") + "T00:00:00+02:00"), Date.parse((u.searchParams.get("bis") || "2999-12-31") + "T23:59:59+02:00"))); }
@@ -766,14 +770,15 @@ async function adminExport(request, env) {
   const q = (x) => { const t = String(x ?? ""); return /[;"\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
   const d = (ms) => new Intl.DateTimeFormat("de-AT", { timeZone: "Europe/Vienna", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(ms));
   const e = (c) => (c == null ? "" : (c / 100).toFixed(2).replace(".", ","));
-  const lines = [["Datum (bezahlt)", "Rechnungsnr. (Stripe)", "Bestell-ID", "Kunde / Firma", "Produkt", "Anzahl", "Early Bird", "Kundenart", "Land", "Region", "Einnahme brutto (€)", "Stripe-Gebühr (€)", "Auszahlung netto (€)", "davon USt (€)", "Zahlungsweg"].join(";")];
+  const lines = [["Datum (bezahlt)", "Rechnungsnr. (Stripe)", "Bestell-ID", "Kunde / Firma", "Produkt", "Anzahl", "Early Bird", "Kundenart", "Land", "Region", "Einnahme brutto (€)", "Gebühr (€)", "Auszahlung netto (€)", "davon USt (€)", "Zahlungsweg", "Rechnungsart", "UID Kunde"].join(";")];
+  const RA = { ku: "Kleinunternehmer (steuerfrei)", rc_eu: "Reverse Charge EU (ZM)", dl_b2b: "Nicht-EU-Firma, nicht steuerbar", dl_b2c: "Nicht-EU-Privat, nicht steuerbar", uk_paddle: "UK-Privat über Paddle (britische USt führt Paddle ab)" };
   for (const o of results) {
     const c = JSON.parse(o.contact || "{}");
     const firma = c.rechnung_firma || (c.fiktiv ? "" : (JSON.parse(o.vars || "{}").FIRMA || ""));
-    const kind = c.kunde === "b2b" || o.tax_id ? "Unternehmen" : "Privat";
+    const kind = c.kunde === "b2b" || (!o.tax_regime && o.tax_id) ? "Unternehmen" : "Privat";
     const prod = o.paket === "solo" ? `Solo ${String(c.produkt || "solo-001").replace("solo-", "")}` : P[o.paket] || o.paket;
     lines.push([d(o.paid_at), o.invoice_no || "", o.id.slice(0, 8), [c.name, firma].filter(Boolean).join(" / "), prod, o.teams,
-      c.earlybird ? "Ja" : "Nein", kind, o.bill_country || "", REGION_LABEL[region(o.bill_country)], e(o.amount_cents), e(o.fee_cents), e(o.net_cents), "0,00", o.stripe_session ? "Stripe" : "Test (ohne Zahlung)"].map(q).join(";"));
+      c.earlybird ? "Ja" : "Nein", kind, o.bill_country || "", REGION_LABEL[region(o.bill_country)], e(o.amount_cents), e(o.fee_cents), e(o.net_cents), e(o.tax_cents || 0), o.paddle_txn ? "Paddle" : o.stripe_session ? "Stripe" : "Test (ohne Zahlung)", RA[o.tax_regime] || "", o.cust_uid || ""].map(q).join(";"));
   }
   return new Response("\ufeff" + lines.join("\r\n"), { headers: { "content-type": "text/csv; charset=utf-8",
     "content-disposition": `attachment; filename="mordsteam-einnahmen-${von}-bis-${bis}.csv"`, "cache-control": "no-store" } });

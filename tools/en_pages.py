@@ -505,7 +505,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 </main>''')
 
 P["friends-buy"] = dict(title="Order Friends – Mordsteam", robots="noindex", desc="Order Mordsteam Friends 001 “Last Round at the Chalet”: the mystery night for 4–8 friends from €29, invitation link right away.",
- scripts='<script src="/assets/friends-kaufen.js"></script>',
+ scripts='<script src="/assets/billing.js"></script>\n<script src="/assets/friends-kaufen.js"></script>',
  body='''<main class="page shop"><div class="wrap">
 <div class="eyebrow">Order · Mordsteam Friends 001</div>
 <h1>Last Round at the Chalet</h1>
@@ -541,6 +541,7 @@ P["friends-buy"] = dict(title="Order Friends – Mordsteam", robots="noindex", d
 <label class="check"><input type="radio" name="kunde" value="b2c"><span>Private individual</span></label>
 <label class="check"><input type="radio" name="kunde" value="b2b"><span>Company, club or organisation</span></label>
 <span class="hint">Private individuals have the statutory right of withdrawal (see <a href="terms.html#ruecktritt" target="_blank" rel="noopener">terms section 8</a>).</span></div>
+<div id="billbox"></div>
 </fieldset>
 <fieldset class="step"><legend><span>5</span> Review and pay</legend>
 <div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Friends 001 “Last Round at the Chalet” · 6 people · 50-minute countdown · game language German</span><b id="sumprice">€39.00</b></div>
@@ -745,7 +746,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 </main>''')
 
 P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy Mordsteam Solo: murder mysteries for one person from €8.90, code right away on screen and by email.",
- scripts='<script src="/assets/solo-kaufen.js"></script>',
+ scripts='<script src="/assets/billing.js"></script>\n<script src="/assets/solo-kaufen.js"></script>',
  body='''<main class="page shop"><div class="wrap">
 <div class="eyebrow">Order · Mordsteam Solo</div>
 <h1>A case just for you</h1>
@@ -771,6 +772,7 @@ P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy
 <label class="check"><input type="radio" name="kunde" value="b2c"><span>Private individual</span></label>
 <label class="check"><input type="radio" name="kunde" value="b2b"><span>Company, club or organisation</span></label>
 <span class="hint">Private individuals have the statutory right of withdrawal (see <a href="terms.html#ruecktritt" target="_blank" rel="noopener">terms section 8</a>).</span></div>
+<div id="billbox"></div>
 </fieldset>
 <fieldset class="step"><legend><span>3</span> Review and pay</legend>
 <div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Solo 001 “Night Train to Venice” · 40-minute countdown · game language German</span><b id="sumprice">€8.90</b></div><p class="small">Final price. Code valid for 12 months. After your first playthrough, replayable up to three times within 30 days with a different killer. Plus a €5 voucher for Mordsteam Friends or Teams. VAT exempt (small business scheme).</p></div>
@@ -786,7 +788,7 @@ P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy
 </div></main>''')
 
 P["order"] = dict(title="Order – Mordsteam", robots="noindex", desc="Order Mordsteam Teams: case 001 “The Red Folder” for companies or case 002 “Cold Cash” for clubs – enter your details, pay, get your game code immediately.",
- scripts='<div class="pricebar" id="pricebar"><div class="wrap"><span id="pb-text"></span><strong id="pb-sum"></strong></div></div>\n<script src="/assets/bestellen.js"></script>',
+ scripts='<div class="pricebar" id="pricebar"><div class="wrap"><span id="pb-text"></span><strong id="pb-sum"></strong></div></div>\n<script src="/assets/billing.js"></script>\n<script src="/assets/bestellen.js"></script>',
  body='''<main class="page shop"><div class="wrap">
 <div class="eyebrow">Order · Teams · Case <span class="casenr">001</span></div>
 <h1>Order your case</h1>
@@ -869,6 +871,7 @@ P["order"] = dict(title="Order – Mordsteam", robots="noindex", desc="Order Mor
 <label class="check"><input type="radio" name="kunde" value="b2b"><span>Company, club or organisation</span></label>
 <label class="check"><input type="radio" name="kunde" value="b2c"><span>Private individual</span></label>
 <span class="hint">Private individuals have a statutory right of withdrawal (see <a href="terms.html#ruecktritt" target="_blank" rel="noopener">terms section 8</a>).</span></div>
+<div id="billbox"></div>
 </fieldset>
 
 <fieldset class="step"><legend><span>6</span> Review and pay</legend>
@@ -914,7 +917,7 @@ P["privacy"] = dict(title="Privacy policy – Mordsteam", desc="How Mordsteam ha
 <p>For Mordsteam Solo, we ask for your feedback right in the browser at the end of the game (stars, difficulty, optionally a sentence and suggestions for improvement). This is voluntary. It is stored with your player name; your words are only published if you expressly agree – anonymously, with your first name or with your first name and the initial of your surname – and only after we approve them. After a replay we briefly ask once how it went; we never publish these answers.</p>
 <h2>4. Order and payment</h2>
 <p>For an order we process the chosen game with package or variant, the number of teams or players, the game language, your name, your email address, whether you order as a company or private individual, optionally phone and invoice company, and the details for personalising the case where the game provides for it (e.g. company or group name, place, rooms, names, title, role or quirks of the people who appear in the case, optionally your logo). The purpose is performance of the contract (Art. 6(1)(b) GDPR). If you choose a fictional cast, you don't provide any personal data for the personalisation.</p>
-<p>Payment and invoicing are handled by Stripe (Stripe Payments Europe, Ltd., Dublin, Ireland). Stripe receives your payment and billing data for this – for orders as a company, club or organisation also your VAT number – and processes it under its own responsibility; we never see card details. If you withdraw from a contract, we process the order number, name, email address, time and any note to handle and document the withdrawal (Art. 6(1)(b) and (c) GDPR). We send the order confirmation and the feedback email via the email service Resend (Resend, Inc., USA; sent via servers in the EU, safeguarded by EU standard contractual clauses). News by email to customers: see section 7. We keep invoice and payment data for as long as tax retention obligations require (in Austria usually seven years).</p>
+<p>Payment and invoicing are handled by Stripe (Stripe Payments Europe, Ltd., Dublin, Ireland). Stripe receives your payment and billing data for this – for orders as a company, club or organisation also your VAT number – and processes it under its own responsibility; we never see card details. If you provide a VAT ID as a business from an EU member state, we check it before payment via the European Commission's VAT Information Exchange System (VIES) (Art. 6(1)(c) GDPR). For private customers in the United Kingdom, Paddle.com Market Limited (London, United Kingdom) handles payment and invoicing as the seller and receives your payment and billing data as well as the order number and product; Paddle processes them under its own responsibility (Paddle privacy policy: paddle.com/legal/privacy; the European Commission has issued an adequacy decision for the United Kingdom). If you withdraw from a contract, we process the order number, name, email address, time and any note to handle and document the withdrawal (Art. 6(1)(b) and (c) GDPR). We send the order confirmation and the feedback email via the email service Resend (Resend, Inc., USA; sent via servers in the EU, safeguarded by EU standard contractual clauses). News by email to customers: see section 7. We keep invoice and payment data for as long as tax retention obligations require (in Austria usually seven years).</p>
 <h2>5. Game round</h2>
 <p>For the game round we store the personalisation details, the names of the teams or players, times, answer attempts and hints used in a database at Cloudflare. On the players' devices only a login key is stored in the browser's local storage (no cookie, no tracking). 30 days after the game ends we delete the game round including game progress, answer attempts, chat histories and, where applicable, logo – if a case is never played, 13 months after the order at the latest; the personal data of the personalisation is then removed from the order. To develop our cases further, we keep anonymous statistics (e.g. playing times, number of wrong attempts and hints) without names.</p>
 <p><b>Mordsteam Friends:</b> The person ordering enters the first names of the players and one quirk each from a fixed list, and confirms that everyone agrees. We only use this information to set up the fictional case for the group (Art. 6(1)(b) GDPR). Whoever picks their name via the invitation link gets their own game progress; the others in the group only see who has joined or finished, and only see the ranking and times at the joint reveal. The names are stored only in the game round, not in the order. 30 days after the reveal we delete the round including names and game progress, a round that is never revealed 13 months after the order at the latest.</p>
@@ -984,8 +987,9 @@ P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mor
 
 <h2>4. Prices, payment and discounts</h2>
 <ul>
-<li>All prices are final prices in euros. We are a small business; under § 6 (1) no. 27 of the Austrian VAT Act no VAT is charged.</li>
-<li>Payment is made in advance via our payment provider Stripe (e.g. card, Apple Pay, Google Pay). You receive the invoice by email. If you order as a company, club or organisation, the invoice includes your company address and VAT number.</li>
+<li>All prices are final prices in euros. We are a small business; under § 6 (1) no. 27 of the Austrian VAT Act no VAT is charged. If a business from another EU member state orders with a valid VAT ID, it accounts for VAT in its own country (reverse charge). For orders from countries outside the EU, the service is not subject to Austrian VAT.</li>
+<li>Payment is made in advance via our payment provider Stripe (e.g. card, Apple Pay, Google Pay). You receive the invoice by email. If you order as a company, club or organisation, the invoice includes your company address and – if provided – your VAT number; we check VAT numbers from EU member states via the EU VIES system before payment.</li>
+<li>For private customers in the United Kingdom, Paddle.com Market Limited (London) is the seller and contractual partner for payment (merchant of record). Paddle charges UK VAT, processes the payment and issues the invoice; Paddle's buyer terms apply in addition. Mordsteam provides the game round; these terms apply to the content and the game.</li>
 <li>Discounts and vouchers (e.g. early bird) apply under the conditions published for them, cannot be combined and cannot be exchanged for cash. The <a href="early-bird.html">early bird conditions</a> form part of this contract if you choose the early bird discount.</li>
 <li>Solo voucher: every Mordsteam Solo case you buy comes with a €5 voucher code after your first playthrough. It can be redeemed once, only on an order of Mordsteam Friends or Teams (not on Solo cases). One voucher per order; it cannot be combined with the early bird or other offers.</li>
 </ul>

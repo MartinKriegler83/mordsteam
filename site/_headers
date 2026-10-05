@@ -36,3 +36,20 @@
 
 /en/order.html
   X-Robots-Tag: noindex, nofollow
+
+# Paddle-Kasse (britische Privatkunden): eigene Sicherheitsregeln nur für diese Seite
+/zahlung.html
+  ! Content-Security-Policy
+  ! X-Frame-Options
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://*.paddle.com; frame-src https://*.paddle.com; connect-src 'self' https://*.paddle.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://cdn.paddle.com; font-src 'self' data: https:; form-action 'self' https://*.paddle.com; frame-ancestors 'none'; base-uri 'self'
+  X-Frame-Options: DENY
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
+
+/zahlung
+  ! Content-Security-Policy
+  ! X-Frame-Options
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://*.paddle.com; frame-src https://*.paddle.com; connect-src 'self' https://*.paddle.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://cdn.paddle.com; font-src 'self' data: https:; form-action 'self' https://*.paddle.com; frame-ancestors 'none'; base-uri 'self'
+  X-Frame-Options: DENY
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store

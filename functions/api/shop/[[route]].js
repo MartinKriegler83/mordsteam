@@ -10,6 +10,9 @@
 //   EARLYBIRD_COUPON             optional: eigener Stripe-Gutschein. Ohne Angabe legt der Shop den Gutschein
 //                                „MORDSTEAM40“ (bzw. MORDSTEAM<Prozent>) beim ersten Bedarf selbst in Stripe an.
 //   RESEND_API_KEY, MAIL_FROM   optional: Bestätigungsmail über Resend (z. B. MAIL_FROM="Mordsteam <office@mordsteam.com>")
+//   UID_NR                      eigene UID (z. B. ATU12345678) – erscheint auf allen Rechnungen, sobald gesetzt
+//   PADDLE_*                    Paddle für Privatkunden in Großbritannien, siehe lib/paddle.js
+// Umsatzsteuer je Bestellung (Rechnungsland, UID, Fußzeile): lib/tax.js
 import { CASES, json, fail, randomToken, viennaDate, randInt } from "../../../lib/game.js";
 import { migrate, createGameSession, normalizeVars, InputError } from "../../../lib/create.js";
 import { COUNTRIES, COUNTRY_ORDER, randomCast, castToEnglish } from "../../../lib/countries.js";
@@ -17,7 +20,9 @@ import { runFeedbackMails, feedbackInfo, saveFeedback, publicReviews } from "../
 import { handleContact } from "../../../lib/contact.js";
 import { handleWithdraw, orderNo } from "../../../lib/withdraw.js";
 import { sendMail as opsMail } from "../../../lib/ops.js";
-import { enrichPayment } from "../../../lib/accounting.js";
+import { enrichPayment, migrateAccounting } from "../../../lib/accounting.js";
+import { taxContext, TaxInputError, invoiceFooter, invoiceFields } from "../../../lib/tax.js";
+import { paddleOn, paddleTransaction, paddleGet, paddleAmounts, paddlePaid, verifyPaddle } from "../../../lib/paddle.js";
 import { nlSignup, nlConfirm, nlUnsubscribe, nlVisit, srcVisit, nlAfterOrder, nlTag, migrateNewsletter } from "../../../lib/newsletter.js";
 import { createSoloTicket, migrateSolo } from "../../../lib/solo.js";
 import { createFriendsGroup, friendsGroupOfOrder, friendsPrice, FRIENDS_PRICE, FRIENDS_PRICE_PLUS, FRIENDS_CASES, friendsCase, friendsCron } from "../../../lib/friends.js";
@@ -54,6 +59,8 @@ export async function onRequest({ request, env, params }) {
     await migrate(env);
     if (route === "meta" && method === "GET") return await meta(env, request);
     if (route === "stripe-webhook" && method === "POST") return await webhook(request, env);
+    if (route === "paddle-webhook" && method === "POST") return await paddleWebhook(request, env);
+    if (route === "paddle-config" && method === "GET") return json({ on: paddleOn(env), token: paddleOn(env) ? env.PADDLE_CLIENT_TOKEN : null, env: String(env.PADDLE_ENV || "sandbox").toLowerCase() === "live" ? "live" : "sandbox" });
     if (route === "status" && method === "GET") return await status(request, env);
     if (route === "bestellung" && method === "POST") return await bestellung(request, env);
     if (route === "solo" && method === "POST") return await soloBestellung(request, env);
@@ -137,6 +144,39 @@ function meta(env, request) {
   });
 }
 
+
+// ---------- Umsatzsteuer und Bezahlweg (für Teams, Solo, Friends gleich) ----------
+// Steuerhinweis in der Bestätigungsmail (passend zur Rechnung)
+function vatNote(c, T) {
+  const r = c.tax_regime || "ku";
+  if (r === "rc_eu") return T(`(Endpreis ohne USt – Reverse Charge, die Steuer schuldet ihr als Leistungsempfänger; eure UID ${c.uid || ""}). Bezahlt über Stripe.`, `(final price without VAT – reverse charge, VAT is accounted for by you as the recipient; your VAT ID ${c.uid || ""}). Paid via Stripe.`);
+  if (r === "dl_b2b" || r === "dl_b2c") return T("(Endpreis; in Österreich nicht steuerbar, keine österreichische USt). Bezahlt über Stripe.", "(final price; not subject to Austrian VAT). Paid via Stripe.");
+  if (r === "uk_paddle") return T("(Endpreis inkl. britischer Umsatzsteuer). Verkauf und Rechnung über Paddle.com (Merchant of Record).", "(final price incl. UK VAT). Sold and invoiced by Paddle.com (merchant of record).");
+  return T("(Endpreis; Kleinunternehmer, keine USt gemäß § 6 Abs. 1 Z 27 UStG). Bezahlt über Stripe.", "(final price; small business, no VAT under § 6 (1) no. 27 UStG). Paid via Stripe.");
+}
+async function taxStep(env, k, site, contact) {
+  let t;
+  try { t = await taxContext(env, k, site, contact.kunde); }
+  catch (e) { if (e instanceof TaxInputError) throw new InputError(e.message); throw e; }
+  if (t.regime === "uk_paddle" && !paddleOn(env)) throw new InputError(L(site,
+    "Bestellungen von Privatpersonen aus dem Vereinigten Königreich sind in Kürze möglich. Firmen mit britischer VAT-Nummer können schon jetzt bestellen.",
+    "Orders from private customers in the United Kingdom will be possible very soon. Businesses with a UK VAT number can already order."));
+  Object.assign(contact, { bill_land: t.bill_land, tax_regime: t.regime, ...(t.uid ? { uid: t.uid } : {}), ...(t.uid_name ? { uid_name: t.uid_name } : {}) });
+  return t;
+}
+// nach dem INSERT: Steuerdaten in eigene Spalten (Buchhaltung, Zusammenfassende Meldung)
+async function saveTax(env, id, contact) {
+  await migrateAccounting(env);
+  await env.DB.prepare("UPDATE orders SET bill_country=?, tax_regime=?, cust_uid=?, pay_provider=? WHERE id=?")
+    .bind(contact.bill_land, contact.tax_regime, contact.uid || null, contact.tax_regime === "uk_paddle" ? "paddle" : "stripe", id).run();
+}
+// Paddle-Kasse (britische Privatkunden): Transaktion anlegen, Weiterleitung auf /zahlung.html
+async function paddleStep(env, origin, { id, token, site, amount, name, description, email }) {
+  const t = await paddleTransaction(env, { amount, name, description, orderId: id, email });
+  await env.DB.prepare("UPDATE orders SET paddle_txn=? WHERE id=?").bind(t.id, id).run();
+  return json({ redirect: `${origin}/zahlung.html?_ptxn=${encodeURIComponent(t.id)}&o=${id}&k=${token}&l=${site}` });
+}
+
 // ---------- Bestellung anlegen ----------
 async function bestellung(request, env) {
   let b = {};
@@ -175,6 +215,7 @@ async function bestellung(request, env) {
   if (contact.name.length < 2) throw new InputError(L(site, "Bitte deinen Namen angeben.", "Please enter your name."));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError(L(site, "Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."));
   const c = b.consent || {};
+  await taxStep(env, k, site, contact);
   if (fiktiv) contact.fiktiv = true;
   contact.lang = lang;
   contact.site = site;
@@ -207,12 +248,16 @@ async function bestellung(request, env) {
   await env.DB.prepare(
     "INSERT INTO orders (id, token, created_at, status, paket, teams, amount_cents, event_date, vars, contact, logo) VALUES (?,?,?,'pending',?,?,?,?,?,?,?)"
   ).bind(id, token, Date.now(), paket, teams, amount, date, JSON.stringify(vars), JSON.stringify(contact), logo).run();
+  await saveTax(env, id, contact);
 
   const origin = new URL(request.url).origin;
   const pre = site === "en" ? "/en" : "";
   const done = `${origin}${pre}/${site === "en" ? "ordered" : "bestellt"}.html?o=${id}&k=${token}`;
   const title = lang === "en" ? C.EN.META.title : C.META.title;
   const langName = L(site, lang === "en" ? "Englisch" : "Deutsch", lang === "en" ? "English" : "German");
+  if (contact.tax_regime === "uk_paddle") return paddleStep(env, origin, { id, token, site, amount, email: contact.email,
+    name: L(site, `Mordsteam Fall ${caseNr(caseId)} „${title}“ – ${NAMES[paket]} × ${teams}`, `Mordsteam Case ${caseNr(caseId)} “${title}” – ${NAMES_EN[paket]} × ${teams}`),
+    description: L(site, `${teams} Team${teams === 1 ? "" : "s"} · gültig bis ${validUntil} · Spielsprache ${langName}`, `${teams} team${teams === 1 ? "" : "s"} · valid until ${validUntil} · game language ${langName}`) });
   if (env.STRIPE_SECRET_KEY) {
     const cs = await stripe(env, "POST", "checkout/sessions", {
       mode: "payment",
@@ -224,7 +269,6 @@ async function bestellung(request, env) {
       success_url: done,
       cancel_url: `${origin}${pre}/${site === "en" ? "order" : "bestellen"}.html?abgebrochen=1`,
       billing_address_collection: "required",
-      tax_id_collection: { enabled: true },
       line_items: [{
         quantity: teams,
         price_data: { currency: "eur", unit_amount: PRICES[paket],
@@ -235,9 +279,9 @@ async function bestellung(request, env) {
       payment_intent_data: { metadata: { order_id: id } },
       invoice_creation: { enabled: true, invoice_data: {
         description: L(site, `Personalisierter Krimi-Fall für ${teams} Team${teams === 1 ? "" : "s"}, einmal spielbar bis ${validUntil}.`, `Personalised murder-mystery case for ${teams} team${teams === 1 ? "" : "s"}, playable once until ${validUntil}.`),
-        footer: L(site, "Umsatzsteuerfrei aufgrund der Kleinunternehmerregelung gemäß § 6 Abs. 1 Z 27 UStG.", "VAT exempt under the Austrian small business scheme (§ 6 (1) no. 27 UStG)."),
+        footer: invoiceFooter(contact.tax_regime, site),
         metadata: { order_id: id },
-        ...(contact.rechnung_firma ? { custom_fields: [{ name: L(site, "Firma", "Company"), value: contact.rechnung_firma.slice(0, 30) }] } : {}),
+        ...invoiceFields(env, site, contact),
       } },
     });
     await env.DB.prepare("UPDATE orders SET stripe_session=? WHERE id=?").bind(cs.id, id).run();
@@ -270,6 +314,7 @@ async function soloBestellung(request, env) {
   if (contact.name.length < 2) throw new InputError(L(site, "Bitte deinen Namen angeben.", "Please enter your name."));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError(L(site, "Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."));
   const c = b.consent || {};
+  await taxStep(env, k, site, contact);
   if (contact.kunde === "b2c") {
     if (!c.sofort) throw new InputError(L(site, "Bitte bestätigen, dass wir deinen Code gleich nach dem Bezahlen bereitstellen dürfen.", "Please confirm that we may provide your code right after payment."));
     contact.sofort_zustimmung = new Date().toISOString();
@@ -284,23 +329,26 @@ async function soloBestellung(request, env) {
   await env.DB.prepare(
     "INSERT INTO orders (id, token, created_at, status, paket, teams, amount_cents, event_date, vars, contact, logo) VALUES (?,?,?,'pending','solo',1,?,?,?,?,NULL)"
   ).bind(id, token, Date.now(), F.price, today, JSON.stringify({ FIRMA: "Mordsteam Solo" }), JSON.stringify(contact)).run();
+  await saveTax(env, id, contact);
   const origin = new URL(request.url).origin;
   const pre = site === "en" ? "/en" : "";
   const done = `${origin}${pre}/${site === "en" ? "ordered" : "bestellt"}.html?o=${id}&k=${token}`;
+  if (contact.tax_regime === "uk_paddle") return paddleStep(env, origin, { id, token, site, amount: F.price, email: contact.email,
+    name: L(site, `Mordsteam ${F.no} „${F.de}“`, `Mordsteam ${F.no} “${F.en}”`),
+    description: L(site, `Krimi für eine Person · Code gültig bis ${validUntil} · Spielsprache ${GL}`, `Murder mystery for one person · code valid until ${validUntil} · game language ${GL}`) });
   if (env.STRIPE_SECRET_KEY) {
     const cs = await stripe(env, "POST", "checkout/sessions", {
       mode: "payment", locale: site, customer_email: contact.email, client_reference_id: id,
       success_url: done, cancel_url: `${origin}${pre}/${site === "en" ? "solo-buy" : "solo-kaufen"}.html?abgebrochen=1`,
       billing_address_collection: "auto",
-      ...(contact.kunde === "b2b" ? { tax_id_collection: { enabled: true } } : {}),
       line_items: [{ quantity: 1, price_data: { currency: "eur", unit_amount: F.price,
         product_data: { name: L(site, `Mordsteam ${F.no} „${F.de}“`, `Mordsteam ${F.no} “${F.en}”`),
           description: L(site, `Krimi für eine Person, Countdown ${F.min} Min.${F.plus ? " mit KI-Verhörraum" : ""} · Code gültig bis ${validUntil} · Spielsprache ${GL}`, `Murder mystery for one person, ${F.min}-minute countdown${F.plus ? " with AI interrogation room" : ""} · code valid until ${validUntil} · game language ${GL}`) } } }],
       metadata: { order_id: id }, payment_intent_data: { metadata: { order_id: id } },
       invoice_creation: { enabled: true, invoice_data: {
         description: L(site, `Mordsteam ${F.no} „${F.de}“, digitaler Krimi für eine Person, spielbar bis ${validUntil}.`, `Mordsteam ${F.no} “${F.en}”, digital murder mystery for one person, playable until ${validUntil}.`),
-        footer: L(site, "Umsatzsteuerfrei aufgrund der Kleinunternehmerregelung gemäß § 6 Abs. 1 Z 27 UStG.", "VAT exempt under the Austrian small business scheme (§ 6 (1) no. 27 UStG)."),
-        metadata: { order_id: id } } },
+        footer: invoiceFooter(contact.tax_regime, site),
+        metadata: { order_id: id }, ...invoiceFields(env, site, contact) } },
     });
     await env.DB.prepare("UPDATE orders SET stripe_session=? WHERE id=?").bind(cs.id, id).run();
     return json({ redirect: cs.url });
@@ -346,6 +394,7 @@ async function friendsBestellung(request, env) {
   if (contact.name.length < 2) throw new InputError(L(site, "Bitte deinen Namen angeben.", "Please enter your name."));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError(L(site, "Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."));
   const c = b.consent || {};
+  await taxStep(env, k, site, contact);
   if (!c.zustimmung) throw new InputError(L(site, "Bitte bestätigen, dass alle Genannten einverstanden sind.", "Please confirm that everyone named has agreed."));
   if (plus && !c.ab18) throw new InputError(L(site, "Der Krimiabend Plus mit KI-Verhörraum ist für Mitspielende ab 18 Jahren. Bitte bestätigen oder den Krimiabend wählen.", "Mystery Night Plus with the AI interrogation room is for players aged 18 and over. Please confirm or choose the Mystery Night."));
   if (contact.kunde === "b2c") {
@@ -363,25 +412,28 @@ async function friendsBestellung(request, env) {
   await env.DB.prepare(
     "INSERT INTO orders (id, token, created_at, status, paket, teams, amount_cents, event_date, vars, contact, logo) VALUES (?,?,?,'pending',?,?,?,?,?,?,NULL)"
   ).bind(id, token, Date.now(), plus ? "friends-plus" : "friends", n, amount, today, JSON.stringify(vars), JSON.stringify(contact)).run();
+  await saveTax(env, id, contact);
   const origin = new URL(request.url).origin, pre = site === "en" ? "/en" : "";
   const lim = plus ? C.LIMIT_MIN_PLUS : C.LIMIT_MIN, vName = plus ? L(site, "Krimiabend Plus", "Mystery Night Plus") : L(site, "Krimiabend", "mystery night");
   const done = `${origin}${pre}/${site === "en" ? "ordered" : "bestellt"}.html?o=${id}&k=${token}`;
   const modeTxt = mode === "live" ? L(site, "gleichzeitig", "all at once") : L(site, `über ${days} Tage`, `over ${days} days`);
+  if (contact.tax_regime === "uk_paddle") return paddleStep(env, origin, { id, token, site, amount, email: contact.email,
+    name: L(site, `Mordsteam Friends 001 – ${vName} für ${n} Personen`, `Mordsteam Friends 001 – ${vName} for ${n} people`),
+    description: L(site, `Countdown ${lim} Min., gespielt ${modeTxt} · spielbar bis ${validUntil} · Spielsprache ${GL}`, `${lim}-minute countdown, played ${modeTxt} · playable until ${validUntil} · game language ${GL}`) });
   if (env.STRIPE_SECRET_KEY) {
     const cs = await stripe(env, "POST", "checkout/sessions", {
       mode: "payment", locale: site, customer_email: contact.email, client_reference_id: id,
       ...(eb ? { discounts: [{ coupon: await ebCoupon(env, eb.prozent) }] } : { allow_promotion_codes: true }),
       success_url: done, cancel_url: `${origin}${pre}/${site === "en" ? "friends-buy" : "friends-kaufen"}.html?abgebrochen=1`,
       billing_address_collection: "auto",
-      ...(contact.kunde === "b2b" ? { tax_id_collection: { enabled: true } } : {}),
       line_items: [{ quantity: 1, price_data: { currency: "eur", unit_amount: full,
         product_data: { name: L(site, `Mordsteam Friends 001 „${C.TITLE}“ – ${vName} für ${n} Personen`, `Mordsteam Friends 001 “Last Round at the Chalet” – ${vName} for ${n} people`),
           description: L(site, `Countdown ${lim} Min.${plus ? " mit KI-Verhörraum" : ""}, gespielt ${modeTxt} · spielbar bis ${validUntil} · Spielsprache ${GL}`, `${lim}-minute countdown${plus ? " with AI interrogation room" : ""}, played ${modeTxt} · playable until ${validUntil} · game language ${GL}`) } } }],
       metadata: { order_id: id }, payment_intent_data: { metadata: { order_id: id } },
       invoice_creation: { enabled: true, invoice_data: {
         description: L(site, `Mordsteam Friends 001, digitaler ${plus ? "Krimiabend Plus mit KI-Verhörraum" : "Krimiabend"} für ${n} Personen, einmal spielbar bis ${validUntil}.`, `Mordsteam Friends 001, digital ${plus ? "Mystery Night Plus with AI interrogation room" : "mystery night"} for ${n} people, playable once until ${validUntil}.`),
-        footer: L(site, "Umsatzsteuerfrei aufgrund der Kleinunternehmerregelung gemäß § 6 Abs. 1 Z 27 UStG.", "VAT exempt under the Austrian small business scheme (§ 6 (1) no. 27 UStG)."),
-        metadata: { order_id: id } } },
+        footer: invoiceFooter(contact.tax_regime, site),
+        metadata: { order_id: id }, ...invoiceFields(env, site, contact) } },
     });
     await env.DB.prepare("UPDATE orders SET stripe_session=? WHERE id=?").bind(cs.id, id).run();
     return json({ redirect: cs.url });
@@ -408,6 +460,14 @@ async function status(request, env) {
       await recordPayment(env, order.id, cs);
       await fulfill(env, order.id, u.origin);
     }
+    order = await env.DB.prepare("SELECT * FROM orders WHERE id=?").bind(order.id).first();
+  }
+  // Paddle: falls die Benachrichtigung (noch) nicht da ist, direkt nachfragen
+  if (order.status === "pending" && order.paddle_txn && paddleOn(env)) {
+    try {
+      const t = await paddleGet(env, order.paddle_txn);
+      if (paddlePaid(t)) await paddlePaidOrder(env, order.id, t, u.origin);
+    } catch {}
     order = await env.DB.prepare("SELECT * FROM orders WHERE id=?").bind(order.id).first();
   }
   const ct = JSON.parse(order.contact || "{}");
@@ -456,6 +516,33 @@ async function webhook(request, env) {
     }
   }
   return json({ received: true });
+}
+
+// ---------- Paddle-Benachrichtigung (britische Privatkunden) ----------
+async function paddleWebhook(request, env) {
+  const raw = await request.text();
+  if (!env.PADDLE_WEBHOOK_SECRET) return fail("Webhook nicht eingerichtet.", 503);
+  if (!(await verifyPaddle(raw, request.headers.get("paddle-signature") || "", env.PADDLE_WEBHOOK_SECRET))) return fail("Signatur ungültig.", 400);
+  const ev = JSON.parse(raw);
+  const t = ev.data || {};
+  if ((ev.event_type === "transaction.completed" || ev.event_type === "transaction.paid") && paddlePaid(t)) {
+    const id = (t.custom_data && t.custom_data.order_id) || (await env.DB.prepare("SELECT id FROM orders WHERE paddle_txn=?").bind(t.id || "").first() || {}).id;
+    if (id) await paddlePaidOrder(env, id, t, new URL(request.url).origin);
+  }
+  return json({ received: true });
+}
+async function paddlePaidOrder(env, id, t, origin) {
+  const o = await env.DB.prepare("SELECT paddle_txn FROM orders WHERE id=?").bind(id).first();
+  if (!o || (o.paddle_txn && t.id && o.paddle_txn !== t.id)) return;   // fremde Transaktion
+  await env.DB.prepare("UPDATE orders SET status='paid', paid_at=? WHERE id=? AND status='pending'").bind(Date.now(), id).run();
+  try {
+    await migrateAccounting(env);
+    const a = paddleAmounts(t);
+    // amount_cents = Endpreis inkl. britischer Steuer; tax_cents = britische Steuer (führt Paddle ab); fee/net laut Paddle-Auszahlung
+    await env.DB.prepare("UPDATE orders SET amount_cents=COALESCE(?, amount_cents), tax_cents=?, fee_cents=?, net_cents=?, invoice_no=COALESCE(?, invoice_no) WHERE id=?")
+      .bind(a.gross, a.tax, a.fee, a.net, t.invoice_number || null, id).run();
+  } catch { /* Buchhaltungsdaten blockieren nie */ }
+  await fulfill(env, id, origin);
 }
 
 async function verifyStripe(payload, header, secret) {
@@ -561,7 +648,7 @@ ${c.earlybird ? `<p><b>Early Bird:</b> ${T("Danke, dass ihr uns helft! Nach dem 
 ${T("Bestellnummer", "Order number")}: ${orderNo(o.id)}<br>
 ${T("Anbieter", "Provider")}: Mordsteam e.U., ${T("Inhaber", "owner")} Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, ${T("Österreich", "Austria")}, office@mordsteam.com${COMPANY_FN ? `, FN ${COMPANY_FN}` : ""}, ${T("Firmenbuchgericht", "register court")} Landesgericht Eisenstadt<br>
 ${T("Leistung", "Service")}: ${T(`Personalisierter digitaler Krimi-Fall „${e(title)}“, Paket ${NAMES[o.paket] || o.paket}, ${o.teams} Team${o.teams === 1 ? "" : "s"}, Spielsprache ${lang === "en" ? "Englisch" : "Deutsch"}; spielbar 12 Monate ab Kauf, einmal startbar.`, `Personalised digital murder-mystery case “${e(title)}”, package ${NAMES_EN[o.paket] || o.paket}, ${o.teams} team${o.teams === 1 ? "" : "s"}, game language ${lang === "en" ? "English" : "German"}; playable for 12 months from purchase, can be started once.`)}<br>
-${T("Preis", "Price")}: ${(o.amount_cents / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 })} € ${T("(Endpreis; Kleinunternehmer, keine USt gemäß § 6 Abs. 1 Z 27 UStG). Bezahlt über Stripe.", "(final price; small business, no VAT under § 6 (1) no. 27 UStG). Paid via Stripe.")}<br>
+${T("Preis", "Price")}: ${(o.amount_cents / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 })} € ${vatNote(c, T)}<br>
 ${T("Es gelten unsere AGB", "Our terms apply")}: <a href="${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}">${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}</a><br>
 ${c.kunde === "b2b" ? T("Für Bestellungen als Unternehmen, Verein oder Organisation besteht kein gesetzliches Rücktrittsrecht.", "Orders placed as a company, club or organisation have no statutory right of withdrawal.") : T("Ihr habt bei der Bestellung ausdrücklich verlangt, dass wir eure Spielrunde gleich nach dem Bezahlen anlegen und die Codes bereitstellen, und bestätigt, dass ihr als Privatperson dadurch euer Rücktrittsrecht verliert. Es erlischt mit dieser Bestätigung und der Bereitstellung der Codes (§ 18 Abs. 1 Z 11 FAGG), spätestens aber, sobald die Spielrunde gespielt und beendet ist (§ 18 Abs. 1 Z 1 FAGG).", "When ordering, you expressly requested that we set up your game round and provide the codes right after payment, and confirmed that as a private individual you thereby lose your right of withdrawal. It expires with this confirmation and the provision of the codes (§ 18 (1) no. 11 FAGG), but at the latest once the game round has been played and ended (§ 18 (1) no. 1 FAGG).")}${c.kunde !== "b2b" ? `<br>${T("Widerruf (nur Privatpersonen, solange das Rücktrittsrecht besteht)", "Withdrawal (private individuals only, while the right of withdrawal exists)")}: <a href="${origin}${site === "en" ? "/en/withdraw.html" : "/widerruf.html"}?nr=${orderNo(o.id)}">${T("Vertrag widerrufen", "Withdraw from contract")}</a>` : ""}
 </div></div>`;
@@ -592,7 +679,7 @@ async function soloMail(env, o, code, origin) {
 ${T("Bestellnummer", "Order number")}: ${orderNo(o.id)}<br>
 ${T("Anbieter", "Provider")}: Mordsteam e.U., ${T("Inhaber", "owner")} Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, ${T("Österreich", "Austria")}, office@mordsteam.com${COMPANY_FN ? `, FN ${COMPANY_FN}` : ""}, ${T("Firmenbuchgericht", "register court")} Landesgericht Eisenstadt<br>
 ${T("Leistung", "Service")}: ${T(`Digitaler Krimi für eine Person „${F.de}“ (Mordsteam ${F.no})${F.plus ? " mit KI-Verhörraum, ab 18 Jahren" : ""}, Spielsprache ${GL}; spielbar 12 Monate ab Kauf; innerhalb von 30 Tagen nach dem ersten Durchgang bis zu dreimal wiederholbar.`, `Digital murder mystery for one person “${F.en}” (Mordsteam ${F.no})${F.plus ? " with AI interrogation room, ages 18 and over" : ""}, game language ${GL}; playable for 12 months from purchase; can be replayed up to three times within 30 days of the first playthrough.`)}<br>
-${T("Preis", "Price")}: ${(o.amount_cents / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 })} € ${T("(Endpreis; Kleinunternehmer, keine USt gemäß § 6 Abs. 1 Z 27 UStG). Bezahlt über Stripe.", "(final price; small business, no VAT under § 6 (1) no. 27 UStG). Paid via Stripe.")}<br>
+${T("Preis", "Price")}: ${(o.amount_cents / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 })} € ${vatNote(c, T)}<br>
 ${T("Es gelten unsere AGB", "Our terms apply")}: <a href="${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}">${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}</a><br>
 ${c.kunde === "b2b" ? T("Für Bestellungen als Unternehmen besteht kein gesetzliches Rücktrittsrecht.", "Orders placed as a company have no statutory right of withdrawal.") : T("Du hast ausdrücklich verlangt, dass wir deinen Code gleich nach dem Bezahlen bereitstellen, und bestätigt, dass du als Privatperson dadurch dein Rücktrittsrecht verlierst. Es erlischt mit dieser Bestätigung und der Bereitstellung des Codes (§ 18 Abs. 1 Z 11 FAGG), spätestens aber, sobald der Fall gespielt und beendet ist (§ 18 Abs. 1 Z 1 FAGG).", "You expressly requested that we provide your code right after payment and confirmed that as a private individual you thereby lose your right of withdrawal. It expires with this confirmation and the provision of the code (§ 18 (1) no. 11 FAGG), but at the latest once the case has been played and ended (§ 18 (1) no. 1 FAGG).")}${c.kunde !== "b2b" ? `<br>${T("Widerruf (nur Privatpersonen, solange das Rücktrittsrecht besteht)", "Withdrawal (private individuals only, while the right of withdrawal exists)")}: <a href="${origin}${site === "en" ? "/en/withdraw.html" : "/widerruf.html"}?nr=${orderNo(o.id)}">${T("Vertrag widerrufen", "Withdraw from contract")}</a>` : ""}
 </div></div>`;
@@ -628,7 +715,7 @@ ${c.earlybird ? `<p><b>Early Bird:</b> ${T("Danke, dass ihr uns helft! Nach der 
 ${T("Bestellnummer", "Order number")}: ${orderNo(o.id)}<br>
 ${T("Anbieter", "Provider")}: Mordsteam e.U., ${T("Inhaber", "owner")} Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, ${T("Österreich", "Austria")}, office@mordsteam.com${COMPANY_FN ? `, FN ${COMPANY_FN}` : ""}, ${T("Firmenbuchgericht", "register court")} Landesgericht Eisenstadt<br>
 ${T("Leistung", "Service")}: ${T(`Digitaler ${vName} „Letzte Runde auf der Hütte“ (Mordsteam Friends 001) für ${n} Personen, ${lim} Minuten, Spielsprache ${GL}; spielbar 12 Monate ab Kauf, einmal startbar.`, `Digital ${vName} “Last Round at the Chalet” (Mordsteam Friends 001) for ${n} people, ${lim} minutes, game language ${GL}; playable for 12 months from purchase, can be started once.`)}<br>
-${T("Preis", "Price")}: ${(o.amount_cents / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 })} € ${T("(Endpreis; Kleinunternehmer, keine USt gemäß § 6 Abs. 1 Z 27 UStG). Bezahlt über Stripe.", "(final price; small business, no VAT under § 6 (1) no. 27 UStG). Paid via Stripe.")}<br>
+${T("Preis", "Price")}: ${(o.amount_cents / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 })} € ${vatNote(c, T)}<br>
 ${T("Es gelten unsere AGB", "Our terms apply")}: <a href="${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}">${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}</a><br>
 ${c.kunde === "b2b" ? T("Für Bestellungen als Unternehmen besteht kein gesetzliches Rücktrittsrecht.", "Orders placed as a company have no statutory right of withdrawal.") : T("Du hast ausdrücklich verlangt, dass wir eure Runde gleich nach dem Bezahlen anlegen und die Links bereitstellen, und bestätigt, dass du als Privatperson dadurch dein Rücktrittsrecht verlierst. Es erlischt mit dieser Bestätigung und der Bereitstellung der Links (§ 18 Abs. 1 Z 11 FAGG), spätestens aber mit der gemeinsamen Auflösung (§ 18 Abs. 1 Z 1 FAGG).", "You expressly requested that we set up your round and provide the links right after payment and confirmed that as a private individual you thereby lose your right of withdrawal. It expires with this confirmation and the provision of the links (§ 18 (1) no. 11 FAGG), but at the latest with the joint solution (§ 18 (1) no. 1 FAGG).")}${c.kunde !== "b2b" ? `<br>${T("Widerruf (nur Privatpersonen, solange das Rücktrittsrecht besteht)", "Withdrawal (private individuals only, while the right of withdrawal exists)")}: <a href="${origin}${site === "en" ? "/en/withdraw.html" : "/widerruf.html"}?nr=${orderNo(o.id)}">${T("Vertrag widerrufen", "Withdraw from contract")}</a>` : ""}
 </div></div>`;
@@ -676,7 +763,7 @@ function formEncode(obj, prefix = "", out = []) {
   return out.join("&");
 }
 async function stripe(env, method, path, data) {
-  const r = await fetch(`https://api.stripe.com/v1/${path}`, {
+  const r = await fetch(`${env.STRIPE_API_BASE || "https://api.stripe.com/v1"}/${path}`, {
     method,
     headers: { authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "content-type": "application/x-www-form-urlencoded" },
     body: data ? formEncode(data) : undefined,

@@ -29,6 +29,7 @@
       friendsList = await fetch("/api/friends/admin/list", { headers: H() }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
       ops = await MS.api("GET", "admin/ops", null, H()).catch(() => null);
       kosten = await MS.api("GET", "admin/kosten", null, H()).catch(() => null);
+      rc = await MS.api("GET", "admin/rc", null, H()).catch(() => null);
       kunden = await MS.api("GET", "admin/kunden", null, H()).catch(() => null);
       nlData = await MS.api("GET", "admin/newsletter", null, H()).catch(() => null);
       render(list.sessions, ord.orders, st.stats);
@@ -86,6 +87,7 @@
   let friendsMsg = "", friendsList = null;
   let soloMsg = "", soloList = null, ops = null, last = [[], [], {}];
   let kosten = null, kostenEdit = null, kostenMsg = "";
+  let rc = null, rcMsg = "";
   let kunden = null, nlData = null, nlMsg = "", nlSyncMsg = "", nlPrev = "", nlForm = { lang: "de" }, kundenAll = false;
   let tab = "uebersicht";
   try { tab = sessionStorage.getItem("ms_admtab") || "uebersicht"; } catch {}
@@ -287,6 +289,31 @@
     </div>`;
   }
 
+  // ---------- Reverse Charge: Belege ausländischer Anbieter, Steuer je Quartal ----------
+  function rcPanel() {
+    if (!rc) return `<div class="panel"><div class="eyebrow">Reverse Charge</div><p class="small">Konnte nicht geladen werden.</p></div>`;
+    const e = MS.esc, m = (c) => (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 }) + " €";
+    const dd = (iso) => iso.split("-").reverse().join(".");
+    const today = new Date().toISOString().slice(0, 10);
+    const qrows = rc.quarters.map((q) => `<tr><td class="mono">${e(q.quartal)}</td><td>${q.count}</td><td class="mono">${m(q.netto)}</td><td class="mono"><b>${m(q.steuer)}</b></td>
+      <td>${dd(q.faellig)}${!q.bezahlt && q.faellig < today ? ` <b style="color:var(--red)">überfällig</b>` : ""}</td>
+      <td>${q.bezahlt ? `bezahlt am ${new Date(q.bezahlt).toLocaleDateString("de-AT")} <button class="btn btn-line" type="button" data-rcpaid="${e(q.quartal)}" data-undo="1">zurück</button>` : `<button class="btn btn-line" type="button" data-rcpaid="${e(q.quartal)}">als bezahlt markieren</button>`}</td></tr>`).join("");
+    const erows = rc.entries.slice(0, 40).map((x) => `<tr><td>${dd(x.datum)}</td><td>${e(x.anbieter)}</td><td class="mono">${m(x.netto_cents)}</td><td class="mono">${m(Math.round(x.netto_cents * rc.rate / 100))}</td><td class="small">${e(x.notiz || "")}</td><td><button class="btn btn-line" type="button" data-rcdel="${e(x.id)}">löschen</button></td></tr>`).join("");
+    return `<div class="panel"><div class="eyebrow">Reverse Charge · Umsatzsteuer auf ausländische Anbieter</div>
+      <p class="small" style="margin:6px 0 10px">Für Leistungen ausländischer Anbieter an Mordsteam (Google Ads, Anthropic, Resend, Cloudflare …) schuldest du ${rc.rate} % österreichische USt – ohne Vorsteuerabzug. Keine Voranmeldung nötig (außer das Finanzamt fordert sie an), aber die Steuer je Quartal bis zum 15. des zweitfolgenden Monats aufs Abgabenkonto überweisen (Verwendungszweck „U“ + Quartal). Sobald im Jahr Steuer anfällt: Umsatzsteuer-Jahreserklärung. Betrag in Euro laut Kontoauszug eintragen (bei Dollar-Rechnungen).</p>
+      ${rc.quarters.length ? `<div style="overflow-x:auto"><table class="grid small"><tr><th>Quartal</th><th>Belege</th><th>Netto</th><th>Steuer ${rc.rate} %</th><th>fällig am</th><th>Status</th></tr>${qrows}</table></div>` : `<p class="small">Noch keine Belege erfasst.</p>`}
+      <form id="rcform" class="form" style="margin-top:12px">
+        <div class="two"><div class="field"><label>Rechnungsdatum *</label><input type="date" name="datum" value="${today}"></div>
+        <div class="field"><label>Anbieter *</label><input name="anbieter" maxlength="80" list="rcanb" placeholder="z. B. Google Ads"><datalist id="rcanb"><option>Google Ads</option><option>Anthropic (Claude API)</option><option>Resend</option><option>Cloudflare</option><option>Stripe-Gebühren</option><option>Meta (Facebook/Instagram)</option></datalist></div></div>
+        <div class="two"><div class="field"><label>Netto in Euro *</label><input name="netto" inputmode="decimal" placeholder="z. B. 18,40"></div>
+        <div class="field"><label>Notiz</label><input name="notiz" maxlength="200" placeholder="Rechnungsnummer, Zeitraum …"></div></div>
+        <div class="actions-row"><button class="btn btn-red" type="submit">Beleg erfassen</button></div>
+        <p class="err">${e(rcMsg)}</p>
+      </form>
+      ${erows ? `<details style="margin-top:8px"><summary class="small">Erfasste Belege (${rc.entries.length})</summary><div style="overflow-x:auto"><table class="grid small"><tr><th>Datum</th><th>Anbieter</th><th>Netto</th><th>Steuer</th><th>Notiz</th><th></th></tr>${erows}</table></div></details>` : ""}
+    </div>`;
+  }
+
   // ---------- Ausgaben: Kostenliste (Checkliste für die E/A-Rechnung) ----------
   function costsPanel() {
     if (!kosten) return `<div class="panel"><div class="eyebrow">Ausgaben</div><p class="small">Kostenliste konnte nicht geladen werden.</p></div>`;
@@ -409,7 +436,7 @@
         <p class="err">${MS.esc(err)}</p>
       </form></div>` : ""}
       ${tab === "uebersicht" ? overviewPanel(orders) : ""}
-      ${tab === "finanzen" ? ordersPanel(orders) + costsPanel() : ""}
+      ${tab === "finanzen" ? ordersPanel(orders) + rcPanel() + costsPanel() : ""}
       ${tab === "statistik" ? statsPanel(stats) + soloStatsPanel() : ""}
       ${tab === "system" ? systemPanel() : ""}
       ${tab === "feedback" ? feedbackPanel() : ""}
@@ -499,6 +526,14 @@
         kosten = await MS.api("POST", "admin/kosten/loeschen", { id: kostenEdit.id }, H()); kostenEdit = null; render(...last);
       };
     }
+    const rcf = document.getElementById("rcform");
+    if (rcf) rcf.onsubmit = async (ev) => {
+      ev.preventDefault();
+      try { rc = await MS.api("POST", "admin/rc", Object.fromEntries(new FormData(rcf).entries()), H()); rcMsg = ""; } catch (e2) { rcMsg = e2.message; }
+      render(...last);
+    };
+    root.querySelectorAll("[data-rcdel]").forEach((b) => (b.onclick = async () => { rc = await MS.api("POST", "admin/rc/loeschen", { id: b.dataset.rcdel }, H()); render(...last); }));
+    root.querySelectorAll("[data-rcpaid]").forEach((b) => (b.onclick = async () => { rc = await MS.api("POST", "admin/rc/bezahlt", { quartal: b.dataset.rcpaid, paid: !b.dataset.undo }, H()); render(...last); }));
     const bhb = document.getElementById("bhbtn");
     if (bhb) bhb.onclick = async () => {
       const out = document.getElementById("bhout"); out.innerHTML = `<p class="small">Lade … (holt fehlende Gebühren und Länder bei Stripe)</p>`;
@@ -515,7 +550,12 @@
         const pct = Math.round((d.eu_b2c.cents / d.eu_b2c.limit) * 100);
         out.innerHTML = `<table class="grid small" style="margin-top:10px"><tr><th>Kundenart</th><th>Region</th><th>Anzahl</th><th>Einnahmen brutto</th><th>Stripe-Gebühren</th><th>Auszahlung netto</th></tr>${rows}
           <tr><th colspan="2">Summe</th><th>${sum.c}</th><th class="mono">${eu(sum.g)}</th><th class="mono">${eu(sum.f)}</th><th class="mono">${eu(sum.n)}</th></tr></table>
-          <p class="small" style="margin-top:8px"><b>EU-Privatkunden ${d.eu_b2c.year}:</b> ${eu(d.eu_b2c.cents)} von 10.000,00 € (${pct} %)${pct >= 80 ? ` <b style="color:var(--red)">– Schwelle fast erreicht: mit Steuerberater klären (OSS)!</b>` : ""}</p>
+          <p class="small" style="margin-top:8px"><b>EU-Privatkunden ${d.eu_b2c.year}:</b> ${eu(d.eu_b2c.cents)} von 10.000,00 € (${pct} %)${d.eu_b2c.cents >= d.eu_b2c.warn ? ` <b style="color:var(--red)">– Warnung: 8.000 € überschritten. Ab 10.000 € gilt die Umsatzsteuer des Kundenlandes (OSS) – jetzt mit Steuerberater/WKO klären!</b>` : ""}</p>
+          <p class="small"><b>Kleinunternehmergrenze ${d.ku.year}:</b> ${eu(d.ku.cents)} von 55.000,00 € brutto (${Math.round(d.ku.cents / d.ku.limit * 100)} %) – zählt nur Rechnungen mit Kleinunternehmer-Hinweis (Österreich und EU-Privatkunden).${d.ku.cents >= d.ku.limit * 0.8 ? ` <b style="color:var(--red)">Grenze nähert sich!</b>` : ""}</p>
+          ${d.regimes && d.regimes.length ? `<table class="grid small" style="margin-top:8px"><tr><th>Rechnungsart</th><th>Anzahl</th><th>Brutto</th><th>davon fremde USt (Paddle)</th></tr>${d.regimes.map((r) => `<tr><td>${MS.esc(r.label)}</td><td>${r.count}</td><td class="mono">${eu(r.gross)}</td><td class="mono">${r.tax ? eu(r.tax) : "–"}</td></tr>`).join("")}</table>` : ""}
+          <p class="small" style="margin-top:8px"><b>Zusammenfassende Meldung</b> (EU-Firmen mit UID, Reverse Charge) im Zeitraum: ${d.zm.length ? "" : "keine"}</p>
+          ${d.zm.length ? `<table class="grid small"><tr><th>Datum</th><th>UID Kunde</th><th>Land</th><th>Betrag</th><th>Rechnung</th></tr>${d.zm.map((z) => `<tr><td>${new Date(z.date).toLocaleDateString("de-AT")}</td><td class="mono">${MS.esc(z.uid || "")}</td><td>${MS.esc(z.land || "")}</td><td class="mono">${eu(z.cents)}</td><td class="mono">${MS.esc(z.invoice || "")}</td></tr>`).join("")}</table>
+            <p class="small">In FinanzOnline je UID die Summe melden – bis Ende des Folgemonats bzw. Folgequartals (Zeitraum wie die UVA; bei der WKO bestätigen lassen).</p>` : ""}
           <p class="small">Region nach dem Rechnungsland aus Stripe. Unternehmen = als Unternehmen bestellt oder UID angegeben. Stripe-Gebühren sind eigene Ausgaben (Rechnung bzw. Gebührenaufstellung von Stripe).</p>`;
       } catch (e2) { out.innerHTML = `<p class="err">${MS.esc(e2.message)}</p>`; }
     };

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Payment – Mordsteam</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<!-- Bezahlseite für Privatkunden in Großbritannien: öffnet die Paddle-Kasse (Merchant of Record). In Paddle als „Default payment link“ eintragen. -->
+<main class="section"><div class="wrap" style="max-width:640px">
+<a class="logo" href="/" aria-label="Mordsteam"><span class="wm-box"><span class="wm"><span class="wm-r">MORDS</span>TEAM</span></span></a>
+<h1 class="h2" id="zh" style="margin-top:24px">Payment</h1>
+<p id="zt">The secure checkout of our partner Paddle opens in a moment …</p>
+<p class="small" id="zi">For private customers in the United Kingdom, Paddle.com is the seller (merchant of record): Paddle charges UK VAT and issues your invoice. Your game is set up by Mordsteam as usual.</p>
+<p><a class="btn btn-red" id="zopen" href="#" hidden>Open checkout</a> <a class="btn btn-line" id="zback" href="/">Back</a></p>
+<p class="err" id="zerr" hidden></p>
+</div></main>
+<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+<script src="/assets/zahlung.js"></script>
+</body>
+</html>
