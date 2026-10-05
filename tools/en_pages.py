@@ -280,7 +280,7 @@ P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=Tru
 <h3 class="gname"><span class="wm-r">MORDS</span>TEAM<span class="gp">TEAMS</span></h3>
 <p class="purpose">Solve it together</p>
 <p class="for">The murder-mystery team event: you investigate as a team, together. Several teams can also compete against each other.</p>
-<p>Your boss has been poisoned, the evidence is gone – and one of you did it. With your names and your rooms, for companies, departments and clubs.</p>
+<p>Two cases: at work your boss is poisoned and the evidence is gone; at your club, your chair ends up in the fridge trailer and the cash box is missing. One of you did it – with your names and your places.</p>
 <p class="meta">3–6 PLAYERS PER TEAM · ANY NUMBER OF TEAMS · 50–90 MIN · FROM €89 PER TEAM</p>
 <a class="btn btn-red" href="teams.html">Go to Mordsteam Teams</a>
 </article>
