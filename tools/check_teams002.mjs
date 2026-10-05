@@ -28,6 +28,9 @@ for (let i = 0; i < 1200; i++) {
   if (left) fail(`Platzhalter offen (${land}, Paket ${tier}): ${[...new Set(left)].join(" ")}`);
   for (const k of ["intro", "story", ...(premium ? ["story2"] : []), ...(tier >= 2 ? ["story3"] : [])]) { const m = R(F.META[k]).match(/\{[A-Z0-9_]+\}/g); if (m) fail(`META.${k}: ${m}`); }
   rounds++;
+  // Go-live-Test 3 (T2-1): Einteilung/Abweichungen zeigen nur die Feste VOR heuer – sonst widerspricht der Chat „Heuer bin ich nicht eingeteilt“
+  if (premium && (String(v.KASSAPLAN_ROWS).includes(`>${v.HEUER}<`) || String(v.ABWEICH_ROWS).includes(`>${v.HEUER}<`))) fail(`Akt 2 zeigt heuer ${v.HEUER}`);
+  if (premium && sec.START > v.HEUER - 3) fail(`Startjahr ${sec.START} nach dem ersten Tauschjahr`);
 
   const sol = F.solution(sec, cast);
   const byRole = Object.fromEntries(sec.ROLES.map((r, k) => [r, { name: cast[`S${k + 1}`], letter: sec.LETTERS[k] }]));

@@ -17,7 +17,10 @@ for (let v = 0; v < C.VARIANTS; v++) for (const c of C.CULPRITS) {
   const P = C.prints(c, v)[sol.gift].sus;
   if (P.length !== 3 || !P.includes(c)) fail(`${tag} Abdrücke ${P}`);
   const [a, b] = C.ITEMS[sol.gift].win.map(hm), S = C.slots(c, v);
-  const noAlibi = C.CULPRITS.filter((k) => !S[k].some(([x, y]) => x <= a && y >= b));
+  // Brandt (unschuldig, Pokal/Wasser): die ersten 2 Minuten deckt das Inspizientenbuch („von mir gesehen … direkt zur Bühnenpforte“), S2-1
+  const insp = docs.find((d) => d.id === "inspizient").html;
+  const cover = (k) => k === "felix" && /direkt zur Bühnenpforte|straight to the stage door/.test(insp) ? 2 : 0;
+  const noAlibi = C.CULPRITS.filter((k) => !S[k].some(([x, y]) => x <= a + cover(k) && y >= b));
   if (noAlibi.length !== 1 || noAlibi[0] !== c) fail(`${tag} ohne Beleg: ${noAlibi}`);
   for (const k of C.CULPRITS) { const r = S[k]; for (let i = 1; i < r.length; i++) if (r[i][0] <= r[i - 1][1]) fail(`${tag} Überschneidung bei ${k}`); }
   // Täter-Eintrag darf das Fenster nicht einmal berühren
