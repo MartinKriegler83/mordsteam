@@ -3,6 +3,8 @@
   "use strict";
   var EN=document.documentElement.lang==="en";
   function T(de,en){return EN?en:de;}
+  // Rechnungshinweis passend zum Bezahlweg (Paddle für Privatkunden in Großbritannien)
+  function INV(d){return d&&d.provider==='paddle'?T('Die Rechnung kommt per E-Mail von Paddle.com (Verkäufer für Privatkunden im Vereinigten Königreich). Fragen? ','The invoice will be emailed by Paddle.com (the seller for private customers in the United Kingdom). Questions? '):T('Die Rechnung kommt per E-Mail von unserem Zahlungsanbieter Stripe. Fragen? ','The invoice will be emailed by our payment provider Stripe. Questions? ');}
   var out=document.getElementById("out");
   var q=new URLSearchParams(location.search), o=q.get("o"), k=q.get("k"), tries=0;
   var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -30,7 +32,7 @@
       '<li>'+T('Jedes Team öffnet auf <b>einem</b> Gerät <a href="'+esc(link)+'">'+esc(link.replace(/^https?:\/\//,""))+'</a> und gibt einen Teamnamen ein.','Each team opens <a href="'+esc(link)+'">'+esc(link.replace(/^https?:\/\//,""))+'</a> on <b>one</b> device and enters a team name.')+'</li>'+
       '<li>'+T('Sind alle Teams angemeldet, startet ihr den Fall auf der Organisator-Seite (Knopf „Fall starten“). Die Uhr läuft für alle gleichzeitig: '+(MIN[d.paket]||60)+' Minuten. Erst ab dem Start können sich weitere Geräte pro Team per QR-Code zum Mitlesen verbinden (im Tab „Einsatz“).','Once all teams have joined, start the case on the organiser page (“Start case” button). The clock runs for everyone at the same time: '+(MIN[d.paket]||60)+' minutes. Only once the case has started can more devices per team follow along via QR code (in the “Briefing” tab).')+'</li>'+
       '<li>'+T('Haben alle Teams gelöst, endet die Runde automatisch und alle sehen Rangliste und Auflösung. Schafft es ein Team nicht in der Zeit, beendet ihr die Runde auf der Organisator-Seite selbst.','Once all teams have solved it, the round ends automatically and everyone sees the ranking and the solution. If a team doesn\'t make it in time, end the round yourself on the organiser page.')+'</li>'+
-      '</ol><p><b>'+T("Tipp:","Tip:")+'</b> '+T('Öffnet ein paar Tage vorher '+esc(location.host)+'/spiel auf einem Firmengerät. Lädt die Seite, bremst euch kein Webfilter.','A few days before, open '+esc(location.host)+'/spiel on a company device. If the page loads, no web filter will get in your way.')+'</p><p>'+T('Die Rechnung kommt per E-Mail von unserem Zahlungsanbieter Stripe. Fragen? ','The invoice will be emailed by our payment provider Stripe. Questions? ')+MAIL+'</p>'+(d.nr?'<p class="small">'+T('Bestellnummer','Order number')+': <b>'+esc(d.nr)+'</b></p>':'')+'</div>'+
+      '</ol><p><b>'+T("Tipp:","Tip:")+'</b> '+T('Öffnet ein paar Tage vorher '+esc(location.host)+'/spiel auf einem Firmengerät. Lädt die Seite, bremst euch kein Webfilter.','A few days before, open '+esc(location.host)+'/spiel on a company device. If the page loads, no web filter will get in your way.')+'</p><p>'+INV(d)+MAIL+'</p>'+(d.nr?'<p class="small">'+T('Bestellnummer','Order number')+': <b>'+esc(d.nr)+'</b></p>':'')+'</div>'+
       '');
   }
   function soloDone(d){
@@ -41,7 +43,7 @@
       '<div class="codes"><div class="codecard dark"><small>'+T("DEIN SOLO-CODE","YOUR SOLO CODE")+'</small><div class="code">'+esc(d.solo_code)+'</div><p>'+T("Als Geschenk einfach Code oder Link weitergeben – den Namen gibt ein, wer spielt.","As a gift, just pass on the code or link – the name is entered by whoever plays.")+'</p></div></div>'+
       '<p style="margin:22px 0"><a class="btn btn-red" href="'+esc(link)+'">'+T("Fall öffnen","Open the case")+'</a></p>'+
       '<div class="prose"><p>'+T('Die Uhr startet erst, wenn du die Akte öffnest – dann hast du '+(d.solo_min||30)+' Minuten, '+((d.solo_goal||["bis Udine"])[0])+'. Link zum Spielen: ','The clock only starts when you open the case file – then you have '+(d.solo_min||30)+' minutes '+((d.solo_goal||["","until Udine"])[1])+'. Link to play: ')+'<a href="'+esc(link)+'">'+esc(link.replace(/^https?:\/\//,""))+'</a></p>'+
-      '<p>'+T('Die Rechnung kommt per E-Mail von unserem Zahlungsanbieter Stripe. Fragen? ','The invoice will be emailed by our payment provider Stripe. Questions? ')+MAIL+'</p>'+(d.nr?'<p class="small">'+T('Bestellnummer','Order number')+': <b>'+esc(d.nr)+'</b></p>':'')+'</div>');
+      '<p>'+INV(d)+MAIL+'</p>'+(d.nr?'<p class="small">'+T('Bestellnummer','Order number')+': <b>'+esc(d.nr)+'</b></p>':'')+'</div>');
   }
   function friendsDone(d){
     var inv=location.origin+"/spiel/friends.html?e="+d.invite, org=location.origin+"/spiel/friends.html?o="+d.org_token;
@@ -54,7 +56,7 @@
       '<div class="codecard dark"><small>'+T("2 · DEINE ORGANISATOR-SEITE · NICHT WEITERGEBEN","2 · YOUR ORGANISER PAGE · DON'T PASS ON")+'</small><p>'+T("Hier siehst du, wer schon da ist, und startest den Fall.","Here you can see who has joined and start the case.")+'</p><p><a class="btn btn-red" href="'+esc(org)+'">'+T("Organisator-Seite öffnen","Open organiser page")+'</a></p></div>'+
       '</div>'+
       (d.earlybird?'<p class="note">'+T('Early Bird: Danke, dass ihr uns helft! Nach der Auflösung fragt euch das Spiel direkt nach eurem Feedback.','Early bird: thanks for helping us! After the solution, the game will ask you for your feedback right away.')+'</p>':'')+
-      '<div class="prose"><p>'+T('Die Rechnung kommt per E-Mail von unserem Zahlungsanbieter Stripe. Fragen? ','The invoice will be emailed by our payment provider Stripe. Questions? ')+MAIL+'</p>'+(d.nr?'<p class="small">'+T('Bestellnummer','Order number')+': <b>'+esc(d.nr)+'</b></p>':'')+'</div>');
+      '<div class="prose"><p>'+INV(d)+MAIL+'</p>'+(d.nr?'<p class="small">'+T('Bestellnummer','Order number')+': <b>'+esc(d.nr)+'</b></p>':'')+'</div>');
     var b=document.getElementById("cpinv");
     if(b) b.onclick=function(){ if(navigator.share){navigator.share({title:"Mordsteam Friends",text:T("Einer von uns war's. Such dir deinen Namen aus:","One of us did it. Pick your name:"),url:inv}).catch(function(){});} else if(navigator.clipboard){navigator.clipboard.writeText(inv).then(function(){b.textContent=T("Kopiert ✓","Copied ✓");});} };
     if(b&&navigator.share) b.textContent=T("Link teilen","Share link");

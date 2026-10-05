@@ -487,7 +487,7 @@ async function status(request, env) {
   }
   const ct = JSON.parse(order.contact || "{}");
   const out = { status: order.status, paket: order.paket, teams: order.teams, event_date: order.event_date, amount_cents: order.amount_cents,
-    firma: JSON.parse(order.vars).FIRMA, lang: ct.lang || "de", land: JSON.parse(order.vars).LAND || "AT", earlybird: ct.earlybird || 0, nr: orderNo(order.id), kunde: ct.kunde || "", fall_nr: caseNr(caseIdOf(ct.fall)) };
+    firma: JSON.parse(order.vars).FIRMA, lang: ct.lang || "de", land: JSON.parse(order.vars).LAND || "AT", earlybird: ct.earlybird || 0, nr: orderNo(order.id), kunde: ct.kunde || "", fall_nr: caseNr(caseIdOf(ct.fall)), provider: order.paddle_txn ? "paddle" : "stripe" };
   if (order.paket === "solo") {
     out.produkt = "solo";
     const SF = soloOffer(ct.produkt);

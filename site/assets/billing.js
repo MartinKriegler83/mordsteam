@@ -47,7 +47,7 @@
     uidF.hidden = !b2b || !l;
     let n = "";
     if (b2b && EU.includes(l) && l !== "AT") uidHint.textContent = T("Mit gültiger UID (geprüft über das EU-System VIES) stellen wir ohne österreichische USt aus – Reverse Charge, die Steuer zahlt ihr in eurem Land.", "With a valid VAT ID (checked via the EU VIES system) we invoice without Austrian VAT – reverse charge, you account for VAT in your country.");
-    else if (b2b && l === "GB") uidHint.textContent = T("Mit britischer VAT-Nummer (GB…) bestellt ihr direkt bei uns, Reverse Charge.", "With a UK VAT number (GB…) you order directly from us, reverse charge.");
+    else if (b2b && l === "GB") uidHint.textContent = T("Mit britischer VAT-Nummer (GB…) bestellt ihr direkt bei uns (Reverse Charge, Zahlung über Stripe). Ohne VAT-Nummer läuft die Bestellung wie ein Privatkauf über Paddle, inkl. britischer Umsatzsteuer.", "With a UK VAT number (GB…) you order directly from us (reverse charge, payment via Stripe). Without a VAT number the order is handled like a private purchase via Paddle, including UK VAT.");
     else uidHint.textContent = T("Erscheint auf der Rechnung.", "Shown on the invoice.");
     if (l === "GB" && (!b2b || !/^GB/i.test(uid.value.trim().replace(/\s/g, "")))) {
       n = paddle && paddle.on
