@@ -141,7 +141,7 @@ Grundschema in `db/schema.sql`. Neue Spalten und Tabellen werden zusätzlich bei
 | `expense_files` | Belege zu Ausgaben: Name, Typ, Größe, Schlüssel im R2-Speicher (`belege/<Jahr>/<Ausgabe>/<Datei>`), `deleted` |
 | `rc_paid` | bezahlte Reverse-Charge-Quartale (Zahlungsdatum) |
 | `duties_done` | erledigte Meldungen (`zm:JJJJ-MM`, `u1:JJJJ`, `e1:JJJJ`) |
-| `cost_items` | Kostenvorlagen im Admin (Posten, Rhythmus, Betrag, betrieblicher Anteil, Beleg); Startliste wird einmal angelegt, Löschen setzt `deleted=1` |
+| `cost_items` | Kostenvorlagen im Admin (mit `tag` = Abbuchung am Monatstag: fehlende Buchung wird 3 Tage danach gemeldet, sonst nach Ende des Zeitraums) (Posten, Rhythmus, Betrag, betrieblicher Anteil, Beleg); Startliste wird einmal angelegt, Löschen setzt `deleted=1` |
 | `contact_log` | Hash der IP für das Limit von Kontaktformular und Newsletter-Anmeldung, nach 24 h gelöscht |
 | `nl_contacts` | Newsletter-Empfänger: Quelle (`kunde`/`anmeldung`), Status (`pending`/`active`/`unsub`/`ecg`), Sprache, Token für Bestätigen/Abmelden, Einwilligungstext mit Zeitpunkten, Übertragung zu Resend |
 | `nl_ecg` | ECG-Liste der RTR als SHA-1-Hex (nur die aktuelle Version) |

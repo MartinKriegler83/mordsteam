@@ -406,7 +406,7 @@
     const A = kosten.arten, e = MS.esc;
     const rows = kosten.items.map((x) => `<tr>
       <td><b>${e(x.name)}</b>${x.anbieter ? `<br><span class="small">${e(x.anbieter)}</span>` : ""}</td>
-      <td>${e(A[x.art] || x.art)}${x.seit ? `<br><span class="small">seit ${e(x.seit)}</span>` : ""}</td>
+      <td>${e(A[x.art] || x.art)}${x.tag ? ` · am ${x.tag}.` : ""}${x.seit ? `<br><span class="small">seit ${e(x.seit)}</span>` : ""}</td>
       <td class="mono">${x.art === "nutzung" && x.betrag_cents == null ? "<span class=\"small\">laut Rechnung</span>" : money(x.betrag_cents, x.waehrung)}</td>
       <td style="white-space:nowrap">${x.anteil == null ? "<i>offen</i>" : x.anteil + "&nbsp;%"}</td>
       <td class="small">${e(x.beleg || "")}${x.hinweis ? `<br><i>${e(x.hinweis)}</i>` : ""}</td>
@@ -428,6 +428,7 @@
         <div class="field"><label>Betrag (leer = offen)</label><div style="display:flex;gap:6px"><input name="betrag" inputmode="decimal" placeholder="z. B. 149,99" value="${k.betrag_cents == null ? "" : (k.betrag_cents / 100).toFixed(2).replace(".", ",")}"><select name="waehrung"><option ${k.waehrung !== "USD" ? "selected" : ""}>EUR</option><option ${k.waehrung === "USD" ? "selected" : ""}>USD</option></select></div></div></div>
         <div class="two"><div class="field"><label>Betrieblicher Anteil in % (leer = offen)</label><input name="anteil" inputmode="numeric" value="${val(k.anteil)}"></div>
         <div class="field"><label>Seit (JJJJ-MM oder JJJJ-MM-TT)</label><input name="seit" placeholder="2026-09" value="${val(k.seit)}"></div></div>
+        <div class="two"><div class="field"><label>Abbuchung am (Tag im Monat, optional)</label><input name="tag" inputmode="numeric" placeholder="z. B. 14" value="${val(k.tag)}"><span class="hint">Bei vierteljährlich/jährlich: Tag im Monat aus „Seit“. Fehlt die Buchung 3 Tage danach, meldet die Buchhaltung sie.</span></div><div class="field"></div></div>
         <div class="field"><label>Wo liegt der Beleg?</label><input name="beleg" maxlength="300" value="${val(k.beleg)}"></div>
         <div class="field"><label>Hinweis</label><input name="hinweis" maxlength="500" value="${val(k.hinweis)}"></div>
         <div class="actions-row"><button class="btn btn-red" type="submit">Speichern</button>${k.id ? `<button class="btn btn-line" type="button" id="kcancel">Abbrechen</button><button class="btn btn-line" type="button" id="kdel" style="color:var(--red)">Posten löschen</button>` : ""}</div>
