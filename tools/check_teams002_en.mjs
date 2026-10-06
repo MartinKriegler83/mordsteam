@@ -37,6 +37,7 @@ for (const land of COUNTRY_ORDER) for (let tier = 0; tier < 3; tier++) for (let 
     const txt = h.replace(/<[^>]*>/g, " ").replace(kill, " ");
     const m = txt.match(GERMAN);
     if (m) fail(`${land}/${tier} ${id}: deutsches Wort „${m[0]}“ in: …${txt.slice(Math.max(0, m.index - 50), m.index + 40)}…`);
+    if (/\b[Ii]n the (rehearsal stage|fire station yard|sports ground|village green)\b/.test(h)) fail(`${land}/${tier} ${id}: „in the …“ statt „at the …“`);
   }
   // gleiche Lösung wie die deutsche Logik, Ehrenobmann englisch
   const sol = F.solution(sec, cast);
@@ -47,6 +48,8 @@ for (const land of COUNTRY_ORDER) for (let tier = 0; tier < 3; tier++) for (let 
     if (!sys.includes(String(sec.ZELT)) || GERMAN.test(sys.replace(kill, " ").replace(/\[PERSON\d\]/g, ""))) fail(`${land}: Ehrenobmann-Prompt nicht sauber englisch`);
     const fb = E.ARIA.fallback(x, "What did they ask you about last week?");
     if (!fb.includes(String(sec.ZELT))) fail(`${land}: Notfall-Antwort ohne Code-Jahr`);
+    if (E.ARIA.fallback(x, "When was the first fête with a marquee?").includes(String(sec.ZELT))) fail(`${land}: Notfall-Antwort verrät das Code-Jahr bei reiner Zelt-Frage`);
+    if (/\bover eighty\b/.test(sys)) fail(`${land}: Alter im Faktenblatt`);
     if (!E.SONDER.options()[F.zielOf(sec)]) fail("Sonderauftrag ungültig");
   }
   rounds++;

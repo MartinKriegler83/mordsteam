@@ -347,15 +347,16 @@
           : q.status === "open" ? `<p class="bres">${t("nicht beantwortet", "not answered")}</p>` : `<p class="bans">${MS.esc(q.answer || "")}</p>${res(q)}`}
       </div></div>`).join("");
     const sd = B.sonder;
+    // Texte des Sonderauftrags und Funksprüche kommen vom Server bereits escaped (render) – nicht doppelt escapen (Go-live-Test 4)
     const sonderPart = sd ? `<section class="report paper sonder">
         <div class="eyebrow">${t("Überraschung · nur für schnelle Teams", "Surprise · fast teams only")}</div>
         <div class="verdict good">${sd.surprise}</div>
         <h2>${t("Sonderauftrag", "Special assignment")}</h2>
-        <p class="muted">${MS.esc(sd.task)} ${t(`Ihr habt ${sd.max} Fragen. Richtig gelöst gibt es die Auszeichnung „Sonderermittler“ in der Rangliste – an eurer Zeit ändert es nichts. Nur ein Versuch.`, `You have ${sd.max} questions. Solve it and you earn the “Special investigators” award in the ranking – it doesn’t change your time. One attempt only.`)}</p>
+        <p class="muted">${sd.task} ${t(`Ihr habt ${sd.max} Fragen. Richtig gelöst gibt es die Auszeichnung „Sonderermittler“ in der Rangliste – an eurer Zeit ändert es nichts. Nur ein Versuch.`, `You have ${sd.max} questions. Solve it and you earn the “Special investigators” award in the ranking – it doesn’t change your time. One attempt only.`)}</p>
         <div class="aria-log" id="slog">${sonderLog()}</div>
         ${sd.status === "open" && !B.done && !VIEWER ? `<form class="aria-form" id="sform"><textarea id="sin" rows="2" maxlength="300" placeholder="${t("Frage an die verhörte Person …", "Question for the person being interrogated …")}">${MS.esc(sDraft)}</textarea><button type="submit" class="v-btn" ${sBusy ? "disabled" : ""}>${t("Fragen", "Ask")}</button></form>
           <p class="aria-meta" id="smeta">${sonder ? `${sonder.used} / ${sonder.max} ${t("Fragen", "questions")} · ` : ""}${t("Die verhörte Person wird von einer KI gespielt.", "The person is played by an AI.")}</p>
-          <div class="qrow"><span class="qn">★</span><div class="qf"><label for="s_ziel">${MS.esc(sd.label)}</label>
+          <div class="qrow"><span class="qn">★</span><div class="qf"><label for="s_ziel">${sd.label}</label>
           <div class="brow"><select id="s_ziel"><option value="">${t("Ziel wählen …", "Choose a destination …")}</option>${sd.options.map((o) => `<option value="${o[0]}">${MS.esc(o[1])}</option>`).join("")}</select><button type="button" class="btn btn-line" id="ssend">${t("Antworten", "Answer")}</button></div></div></div>`
           : sd.status === "open" ? "" : `<p class="bans">${MS.esc(sd.answer || "")}</p>${sd.status === "ok" ? `<p class="bres y">✓ ${t("Richtig", "Correct")} – 🕵 ${t("Sonderermittler", "Special investigators")}</p>` : `<p class="bres n">✗ ${t("Leider falsch", "Sorry, wrong")} (${t("richtig", "correct")}: ${MS.esc(sd.solution || "")})</p>`}`}
       </section>` : "";
@@ -371,8 +372,8 @@
       </section>`;
   }
   function sonderLog() {
-    const m = (sonder ? sonder.msgs : []).map((x) => `<div class="aria-b ${x.role === "user" ? "me" : "bot"}">${nl2br(x.text)}</div>`).join("")
-      + (sonder && sonder.tip ? `<div class="aria-tip">${MS.esc(sonder.tip)}</div>` : "");
+    const m = (sonder ? sonder.msgs : []).map((x) => `<div class="aria-b ${x.role === "user" ? "me" : "bot"}">${nl2br(x.text)}${x.nc ? `<small class="nc"> · ${t("nicht gezählt", "not counted")}</small>` : ""}</div>`).join("")
+      + (sonder && sonder.tip ? `<div class="aria-tip">${sonder.tip}</div>` : "");
     return (m || `<p class="aria-empty">${t("Noch keine Fragen gestellt.", "No questions asked yet.")}</p>`) + (sBusy ? `<div class="aria-b bot typing"><span></span><span></span><span></span></div>` : "");
   }
   async function loadSonder() {
@@ -536,10 +537,10 @@
   function ariaLog() {
     if (!aria) return `<p class="aria-empty">${t("Verbinde …", "Connecting …")}</p>`;
     const m = aria.msgs.map((x) => x.role === "event" ? `<p class="aria-ev">${MS.esc(x.text)}</p>`
-      : `<div class="aria-b ${x.role === "user" ? "me" : "bot"}">${nl2br(x.text)}</div>`).join("");
+      : `<div class="aria-b ${x.role === "user" ? "me" : "bot"}">${nl2br(x.text)}${x.nc ? `<small class="nc"> · ${t("nicht gezählt", "not counted")}</small>` : ""}</div>`).join("");
     return (m || `<div class="aria-b bot">${S.ui ? MS.esc(S.ui.ariaGreeting) : t(`Hallo! Ich bin ARIA, die KI-Assistenz von ${MS.esc(firma.name)}. Ich kenne den Kalender und das Intranet. Was möchtet ihr wissen?`, `Hi! I'm ARIA, the AI assistant of ${MS.esc(firma.name)}. I know the calendar and the intranet. What would you like to know?`)}</div>`)
       + (ariaBusy ? `<div class="aria-b bot typing"><span></span><span></span><span></span></div>` : "")
-      + (aria.tip ? `<div class="aria-tip">${MS.esc(aria.tip)}</div>` : "");
+      + (aria.tip ? `<div class="aria-tip">${aria.tip}</div>` : "");
   }
   function ariaLock() {
     if (aria ? aria.lock === false : !!(S.ui && S.ui.ariaNoLock)) return "";

@@ -53,3 +53,7 @@
   X-Frame-Options: DENY
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store
+
+/geschenk.html
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store

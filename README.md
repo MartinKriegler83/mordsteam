@@ -201,13 +201,14 @@ Voraussetzung: Node.js. Wrangler wird per `npx` geladen.
 1. **Prüfskripte** (ohne Server), nach jeder Änderung an einem Fall:
    ```
    node tools/check_teams.mjs
+   node tools/check_teams002.mjs
    node tools/check_solo001.mjs
    node tools/check_solo002.mjs
    node tools/check_soloplus.mjs
    node tools/check_friends.mjs
    for f in tools/check_*_en.mjs; do node $f; done
    ```
-   Alle müssen ohne „FEHLER“ enden.
+   Alle müssen ohne „FEHLER“ enden. `check_teams.mjs` und `check_teams002.mjs` rufen zusätzlich zwei Wächter auf: `tools/regio_guard.mjs` (keine österreichischen Wörter in DE/CH/LI-Runden) und `tools/answer_guard.mjs` (die richtigen Antworten jeder Stufe zählen über `checkAnswers` als richtig, falsche und Vornamen anderer Personen als falsch – in allen Paketen, Sprachen und Ländern).
 2. **Englische Seiten neu erzeugen** nach Änderungen an deutschen Seiten mit englischem Gegenstück: `python3 tools/en_pages.py`
 3. **Lokaler Server mit Datenbank**: Im Projektordner eine `wrangler.toml` und eine `.dev.vars` anlegen (beide stehen in `.gitignore` und dürfen nie committet werden – eine `wrangler.toml` im Repo würde die Einstellungen des Cloudflare-Projekts überschreiben):
    ```toml

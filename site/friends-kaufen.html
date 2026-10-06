@@ -8,6 +8,7 @@
 <meta name="robots" content="noindex">
 <link rel="alternate" hreflang="de" href="https://mordsteam.com/friends-kaufen.html">
 <link rel="alternate" hreflang="en" href="https://mordsteam.com/en/friends-buy.html">
+<link rel="alternate" hreflang="x-default" href="https://mordsteam.com/friends-kaufen.html">
 <link rel="stylesheet" href="assets/style.css">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
@@ -52,8 +53,8 @@
 <div class="note" id="cancelled" hidden>Die Zahlung wurde abgebrochen. Du kannst es einfach nochmals versuchen.</div>
 <form class="form" id="friends" novalidate>
 <fieldset class="step"><legend><span>1</span> Welche Variante?</legend>
-<label class="check"><input type="radio" name="variant" value="basis" checked><span><b>Krimiabend</b> · Countdown 50 Min. · ab 29 € (bis 4 Personen, jede weitere +5 €)</span></label>
-<label class="check"><input type="radio" name="variant" value="plus"><span><b>Krimiabend Plus</b> · Countdown 75 Min. · ab 49 € (bis 4 Personen, jede weitere +8 €) – mit KI-Verhörraum: Ihr verhört die KI-Doppelgänger eurer Freunde. Ab 18 Jahren.</span></label>
+<label class="check"><input type="radio" name="variant" value="basis" checked><span><b>Krimiabend</b> · Countdown 50 Min. · ab <span data-eur="2900">29 €</span> (bis 4 Personen, jede weitere +<span data-eur="500">5 €</span>)</span></label>
+<label class="check"><input type="radio" name="variant" value="plus"><span><b>Krimiabend Plus</b> · Countdown 75 Min. · ab <span data-eur="4900">49 €</span> (bis 4 Personen, jede weitere +<span data-eur="800">8 €</span>) – mit KI-Verhörraum: Ihr verhört die KI-Doppelgänger eurer Freunde. Ab 18 Jahren.</span></label>
 <div class="field"><label for="lang">Spielsprache *</label>
 <select id="lang" name="lang"><option value="de">Deutsch</option><option value="en">Englisch</option></select>
 <span class="hint">Gilt für die ganze Gruppe: Akte, Fragen, Verhörraum und Auflösung – unabhängig von dieser Webseite.</span></div>
@@ -63,6 +64,7 @@
 <span class="hint">Trag dich selbst mit ein, wenn du mitspielst. Wer der Täter ist, lost das Spiel aus – auch du erfährst es erst bei der Auflösung.</span></div>
 <div id="people" class="fr-people"></div>
 <p class="hint">Vornamen reichen, bei gleichen Vornamen mit Initial (z. B. „Anna B.“). Die Eigenheit ist ein harmloser Running Gag im Fall – Freitexte gibt es bewusst nicht.</p>
+<p class="hint">🎁 Als Geschenk? Trag die Runde der beschenkten Person ein – die Namen lassen sich nach dem Kauf nicht mehr ändern. Nach dem Bezahlen bekommst du eine Geschenkkarte zum Ausdrucken oder als PDF.</p>
 <label class="check"><input type="checkbox" name="zustimmung"><span>Alle Genannten wissen Bescheid und sind einverstanden, mit ihrem Namen und der gewählten Eigenheit im fiktiven Fall mitzuspielen – auch als Verdächtige oder Täter. *</span></label>
 </fieldset>
 <fieldset class="step"><legend><span>3</span> Wie wollt ihr spielen?</legend>

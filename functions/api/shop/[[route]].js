@@ -30,6 +30,13 @@ import { createFriendsGroup, friendsGroupOfOrder, friendsPrice, FRIENDS_PRICE, F
 
 // Sprache der Webseite (Fehlermeldungen, Stripe, Mail) – getrennt von der Spielsprache
 const L = (lang, de, en) => (lang === "en" ? en : de);
+// Sprache einer Anfrage ohne Body: Parameter l/lang/site oder Aufruf von einer /en/-Seite (Referer)
+const reqSite = (request) => {
+  const q = new URL(request.url).searchParams;
+  if ([q.get("l"), q.get("lang"), q.get("site")].includes("en")) return "en";
+  return /\/en\//.test(request.headers.get("referer") || "") ? "en" : "de";
+};
+const SERVER_ERROR = { de: "Da ist etwas schiefgegangen – bitte versucht es gleich noch einmal oder schreibt an office@mordsteam.com.", en: "Something went wrong – please try again in a moment or write to office@mordsteam.com." };
 
 // Firmenbuchnummer (erscheint in der Vertragsbestätigung, § 14 UGB) – eingetragen am 2.10.2026
 const COMPANY_FN = "689638z";
@@ -64,9 +71,9 @@ export async function onRequest({ request, env, params }) {
     if (route === "geo" && method === "GET") { const h = request.headers.get("cf-ipcountry"), c = String((env.GEO_TEST && h) || (request.cf && request.cf.country) || h || "").toUpperCase(); /* GEO_TEST nur im lokalen Test */ return json({ country: /^[A-Z]{2}$/.test(c) ? c : "", currency: curOfLand(c), table: PRICE_TABLE }); }
     if (route === "paddle-config" && method === "GET") return json({ on: paddleOn(env), token: paddleOn(env) ? env.PADDLE_CLIENT_TOKEN : null, env: String(env.PADDLE_ENV || "sandbox").toLowerCase() === "live" ? "live" : "sandbox" });
     if (route === "status" && method === "GET") return await status(request, env);
-    if (route === "bestellung" && method === "POST") return await bestellung(request, env);
-    if (route === "solo" && method === "POST") return await soloBestellung(request, env);
-    if (route === "friends" && method === "POST") return await friendsBestellung(request, env);
+    if (route === "bestellung" && method === "POST") return (await orderLimit(request, env)) || await bestellung(request, env);
+    if (route === "solo" && method === "POST") return (await orderLimit(request, env)) || await soloBestellung(request, env);
+    if (route === "friends" && method === "POST") return (await orderLimit(request, env)) || await friendsBestellung(request, env);
     if (route === "friends-meta" && method === "GET") return friendsMeta(env, request);
     if (route === "kontakt" && method === "POST") return await handleContact(request, env);
     if (route === "widerruf" && method === "POST") return await handleWithdraw(request, env);
@@ -104,7 +111,9 @@ export async function onRequest({ request, env, params }) {
     return fail("Nicht gefunden.", 404);
   } catch (e) {
     if (e instanceof InputError) return fail(e.message);
-    return fail("Server error: " + e.message, 500);
+    // Details nur ins Log, Kunden sehen eine allgemeine Meldung
+    console.error("shop", route, method, e && e.stack ? e.stack : e);
+    return fail(SERVER_ERROR[reqSite(request)], 500);
   }
 }
 
@@ -158,13 +167,35 @@ function vatNote(c, T) {
   if (r === "uk_paddle") return T("(Endpreis inkl. britischer Umsatzsteuer). Verkauf und Rechnung über Paddle.com (Merchant of Record).", "(final price incl. UK VAT). Sold and invoiced by Paddle.com (merchant of record).");
   return T("(Endpreis; Kleinunternehmer, keine USt gemäß § 6 Abs. 1 Z 27 UStG). Bezahlt über Stripe.", "(final price; small business, no VAT under § 6 (1) no. 27 UStG). Paid via Stripe.");
 }
+// Begrenzung der Bestellversuche: höchstens 10 je Anschluss in 10 Minuten, über alle Produkte (Go-live-Test 4, M16).
+// Gespeichert wird nur ein Hash der IP-Adresse, Einträge älter als ein Tag werden gelöscht.
+async function orderLimit(request, env) {
+  try {
+    const ip = request.headers.get("cf-connecting-ip") || "unknown", now = Date.now();
+    const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("mordsteam-bestellung:" + ip));
+    const h = [...new Uint8Array(d)].slice(0, 16).map((x) => x.toString(16).padStart(2, "0")).join("");
+    await env.DB.prepare("CREATE TABLE IF NOT EXISTS order_log (ip TEXT NOT NULL, at INTEGER NOT NULL)").run();
+    await env.DB.prepare("DELETE FROM order_log WHERE at < ?").bind(now - 86400000).run();
+    const c = await env.DB.prepare("SELECT COUNT(*) AS n FROM order_log WHERE ip=? AND at > ?").bind(h, now - 600000).first();
+    if (c && c.n >= 10) {
+      const en = /\/en\//.test(request.headers.get("referer") || "");
+      return fail(en ? "Too many attempts – please try again in a few minutes." : "Zu viele Versuche – bitte in ein paar Minuten noch einmal.", 429);
+    }
+    await env.DB.prepare("INSERT INTO order_log (ip, at) VALUES (?, ?)").bind(h, now).run();
+  } catch { /* Begrenzung darf Bestellungen nie blockieren */ }
+  return null;
+}
 async function taxStep(env, k, site, contact) {
   let t;
+  // Firmen: Firmenname für die Rechnung ist Pflicht (alle Produkte; UK erfasst Paddle selbst) – Go-live-Test 4, M15
+  if (!contact.rechnung_firma && k.rechnung_firma) contact.rechnung_firma = String(k.rechnung_firma).trim().slice(0, 120);
+  if (contact.kunde === "b2b" && !contact.rechnung_firma && String(k.bill_land || "").toUpperCase() !== "GB")
+    throw new InputError(L(site, "Bitte den Namen von Firma, Verein oder Organisation für die Rechnung angeben.", "Please enter the name of the company, club or organisation for the invoice."));
   try { t = await taxContext(env, k, site, contact.kunde); }
   catch (e) { if (e instanceof TaxInputError) throw new InputError(e.message); throw e; }
   if (t.regime === "uk_paddle" && !paddleOn(env)) throw new InputError(L(site,
-    "Bestellungen von Privatpersonen aus dem Vereinigten Königreich sind in Kürze möglich. Firmen mit britischer VAT-Nummer können schon jetzt bestellen.",
-    "Orders from private customers in the United Kingdom will be possible very soon. Businesses with a UK VAT number can already order."));
+    "Bestellungen aus dem Vereinigten Königreich sind in Kürze möglich.",
+    "Orders from the United Kingdom will be possible very soon."));
   Object.assign(contact, { bill_land: t.bill_land, tax_regime: t.regime, ...(t.uid ? { uid: t.uid } : {}), ...(t.uid_name ? { uid_name: t.uid_name } : {}) });
   return t;
 }
@@ -221,6 +252,7 @@ async function bestellung(request, env) {
   if (contact.name.length < 2) throw new InputError(L(site, "Bitte deinen Namen angeben.", "Please enter your name."));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError(L(site, "Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."));
   const c = b.consent || {};
+  if (!(b.consent || {}).agb) throw new InputError(L(site, "Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."));   // vor der VIES-Abfrage (M16)
   await taxStep(env, k, site, contact);
   if (fiktiv) contact.fiktiv = true;
   contact.lang = lang;
@@ -323,6 +355,7 @@ async function soloBestellung(request, env) {
   if (contact.name.length < 2) throw new InputError(L(site, "Bitte deinen Namen angeben.", "Please enter your name."));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError(L(site, "Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."));
   const c = b.consent || {};
+  if (!(b.consent || {}).agb) throw new InputError(L(site, "Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."));   // vor der VIES-Abfrage (M16)
   await taxStep(env, k, site, contact);
   if (contact.kunde === "b2c") {
     if (!c.sofort) throw new InputError(L(site, "Bitte bestätigen, dass wir deinen Code gleich nach dem Bezahlen bereitstellen dürfen.", "Please confirm that we may provide your code right after payment."));
@@ -351,7 +384,7 @@ async function soloBestellung(request, env) {
     const cs = await stripe(env, "POST", "checkout/sessions", {
       mode: "payment", locale: site, customer_email: contact.email, client_reference_id: id,
       success_url: done, cancel_url: `${origin}${pre}/${site === "en" ? "solo-buy" : "solo-kaufen"}.html?abgebrochen=1`,
-      billing_address_collection: "auto",
+      billing_address_collection: contact.kunde === "b2b" ? "required" : "auto",   // Firmen: volle Anschrift auf der Rechnung (M15)
       line_items: [{ quantity: 1, price_data: { currency: cur.toLowerCase(), unit_amount: price,
         product_data: { name: L(site, `Mordsteam ${F.no} „${F.de}“`, `Mordsteam ${F.no} “${F.en}”`),
           description: L(site, `Krimi für eine Person, Countdown ${F.min} Min.${F.plus ? " mit KI-Verhörraum" : ""} · Code gültig bis ${validUntil} · Spielsprache ${GL}`, `Murder mystery for one person, ${F.min}-minute countdown${F.plus ? " with AI interrogation room" : ""} · code valid until ${validUntil} · game language ${GL}`) } } }],
@@ -405,6 +438,7 @@ async function friendsBestellung(request, env) {
   if (contact.name.length < 2) throw new InputError(L(site, "Bitte deinen Namen angeben.", "Please enter your name."));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) throw new InputError(L(site, "Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."));
   const c = b.consent || {};
+  if (!(b.consent || {}).agb) throw new InputError(L(site, "Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."));   // vor der VIES-Abfrage (M16)
   await taxStep(env, k, site, contact);
   if (!c.zustimmung) throw new InputError(L(site, "Bitte bestätigen, dass alle Genannten einverstanden sind.", "Please confirm that everyone named has agreed."));
   if (plus && !c.ab18) throw new InputError(L(site, "Der Krimiabend Plus mit KI-Verhörraum ist für Mitspielende ab 18 Jahren. Bitte bestätigen oder den Krimiabend wählen.", "Mystery Night Plus with the AI interrogation room is for players aged 18 and over. Please confirm or choose the Mystery Night."));
@@ -440,7 +474,7 @@ async function friendsBestellung(request, env) {
       mode: "payment", locale: site, customer_email: contact.email, client_reference_id: id,
       ...(eb ? { discounts: [{ coupon: await ebCoupon(env, eb.prozent) }] } : { allow_promotion_codes: true }),
       success_url: done, cancel_url: `${origin}${pre}/${site === "en" ? "friends-buy" : "friends-kaufen"}.html?abgebrochen=1`,
-      billing_address_collection: "auto",
+      billing_address_collection: contact.kunde === "b2b" ? "required" : "auto",   // Firmen: volle Anschrift auf der Rechnung (M15)
       line_items: [{ quantity: 1, price_data: { currency: cur.toLowerCase(), unit_amount: full,
         product_data: { name: L(site, `Mordsteam Friends 001 „${C.TITLE}“ – ${vName} für ${n} Personen`, `Mordsteam Friends 001 “Last Round at the Chalet” – ${vName} for ${n} people`),
           description: L(site, `Countdown ${lim} Min.${plus ? " mit KI-Verhörraum" : ""}, gespielt ${modeTxt} · spielbar bis ${validUntil} · Spielsprache ${GL}`, `${lim}-minute countdown${plus ? " with AI interrogation room" : ""}, played ${modeTxt} · playable until ${validUntil} · game language ${GL}`) } } }],
@@ -465,7 +499,7 @@ async function friendsBestellung(request, env) {
 async function status(request, env) {
   const u = new URL(request.url);
   const o = await env.DB.prepare("SELECT * FROM orders WHERE id=?").bind(u.searchParams.get("o") || "").first();
-  if (!o || o.token !== u.searchParams.get("k")) return fail("Bestellung nicht gefunden.", 404);
+  if (!o || o.token !== u.searchParams.get("k")) return fail(L(reqSite(request), "Bestellung nicht gefunden.", "Order not found."), 404);
   let order = o;
   // Falls der Webhook (noch) nicht angekommen ist: direkt bei Stripe nachfragen
   if (order.status === "pending" && order.stripe_session && env.STRIPE_SECRET_KEY) {
@@ -524,7 +558,9 @@ async function webhook(request, env) {
   if (ev.type === "checkout.session.completed" || ev.type === "checkout.session.async_payment_succeeded") {
     const cs = ev.data.object;
     const id = cs.metadata?.order_id || cs.client_reference_id;
-    if (id && (cs.payment_status === "paid" || cs.payment_status === "no_payment_required")) {
+    // nur die Checkout-Sitzung, die wir für diese Bestellung angelegt haben (Go-live-Test 4)
+    const own = id ? await env.DB.prepare("SELECT stripe_session FROM orders WHERE id=?").bind(id).first() : null;
+    if (id && own && own.stripe_session === cs.id && (cs.payment_status === "paid" || cs.payment_status === "no_payment_required")) {
       await env.DB.prepare("UPDATE orders SET status='paid', paid_at=? WHERE id=? AND status='pending'").bind(Date.now(), id).run();
       await recordPayment(env, id, cs);
       await fulfill(env, id, new URL(request.url).origin);
@@ -548,14 +584,15 @@ async function paddleWebhook(request, env) {
 }
 async function paddlePaidOrder(env, id, t, origin) {
   const o = await env.DB.prepare("SELECT paddle_txn FROM orders WHERE id=?").bind(id).first();
-  if (!o || (o.paddle_txn && t.id && o.paddle_txn !== t.id)) return;   // fremde Transaktion
+  if (!o || !o.paddle_txn || o.paddle_txn !== t.id) return;   // nur die Transaktion, die wir für diese Bestellung angelegt haben (Go-live-Test 4)
   await env.DB.prepare("UPDATE orders SET status='paid', paid_at=? WHERE id=? AND status='pending'").bind(Date.now(), id).run();
   try {
     await migrateAccounting(env);
     const a = paddleAmounts(t);
     // amount_cents = Endpreis inkl. britischer Steuer; tax_cents = britische Steuer (führt Paddle ab); fee/net laut Paddle-Auszahlung
-    await env.DB.prepare("UPDATE orders SET amount_cents=COALESCE(?, amount_cents), tax_cents=?, fee_cents=?, net_cents=?, invoice_no=COALESCE(?, invoice_no), amount_orig_cents=COALESCE(?, amount_orig_cents), currency=COALESCE(?, currency) WHERE id=?")
-      .bind(a.gross, a.tax, a.fee, a.net, t.invoice_number || null, a.paid, a.paid_currency, id).run();
+    // eur_ok nur, wenn Paddle in Euro auszahlt (Auszahlungswährung EUR) – sonst Warnung in der Buchhaltung (Go-live-Test 4, M12)
+    await env.DB.prepare("UPDATE orders SET amount_cents=COALESCE(?, amount_cents), tax_cents=COALESCE(?, tax_cents), fee_cents=COALESCE(?, fee_cents), net_cents=COALESCE(?, net_cents), invoice_no=COALESCE(?, invoice_no), amount_orig_cents=COALESCE(?, amount_orig_cents), currency=COALESCE(?, currency), eur_ok=CASE WHEN ? IS NOT NULL THEN 1 ELSE eur_ok END WHERE id=?")
+      .bind(a.gross, a.tax, a.fee, a.net, t.invoice_number || null, a.paid, a.paid_currency, a.gross, id).run();
   } catch { /* Buchhaltungsdaten blockieren nie */ }
   await fulfill(env, id, origin);
 }
@@ -688,6 +725,7 @@ async function soloMail(env, o, code, origin) {
 <p style="margin:18px 0"><span style="font-size:13px;color:#5A5D66">${T("Dein Solo-Code", "Your Solo code")}</span><br><b style="font-family:monospace;font-size:28px;letter-spacing:4px">${code}</b></p>
 <p style="margin:22px 0"><a href="${link}" style="background:#B3261E;color:#fff;text-decoration:none;padding:13px 22px;border-radius:6px;font-weight:bold;display:inline-block">${T("Fall öffnen", "Open the case")}</a></p>
 <p>${T(`Die Uhr startet erst, wenn du die Akte öffnest – dann hast du ${F.min} Minuten, ${F.goal[0]}. Pausieren geht nicht: Ab dann läuft die Uhr durch, auch wenn du das Fenster schließt. Nimm dir die Zeit also am Stück.${F.plus ? " Im Verhörraum befragst du die Verdächtigen selbst – sie werden von einer KI gespielt." : ""} Als Geschenk? Einfach Code oder Link weitergeben, den Namen gibt ein, wer spielt.`, `The clock only starts when you open the case file – then you have ${F.min} minutes ${F.goal[1]}. There is no pause: from then on the clock keeps running, even if you close the window. So take the time in one go.${F.plus ? " In the interrogation room you question the suspects yourself – they are played by an AI." : ""} A gift? Just pass on the code or link; the name is entered by whoever plays.`)}</p>
+<p>🎁 ${T("Als Geschenk?", "A gift?")} <a href="${origin}/geschenk.html?o=${o.id}&k=${o.token}&l=${site}">${T("Geschenkkarte drucken oder als PDF speichern", "Print the gift card or save it as a PDF")}</a></p>
 <p>${T("Die Rechnung kommt separat per Mail von unserem Zahlungsanbieter.", "The invoice will be sent separately by our payment provider.")}<br>${T("Viel Spaß beim Ermitteln!", "Happy investigating!")}<br>Mordsteam</p>
 <hr style="border:0;border-top:1px solid #DDD5C4;margin:24px 0 14px">
 <div style="font-size:12.5px;color:#5A5D66;line-height:1.5"><b>${T("Vertragsbestätigung", "Contract confirmation")}</b><br>
@@ -724,6 +762,7 @@ async function friendsMail(env, o, g, origin) {
 <p>${btn(orgLink, T("Organisator-Seite öffnen", "Open organiser page"), true)}</p>
 <p>${T(`Die Uhr läuft ${lim} Minuten ab dem Start, ohne Pause${g.mode === "live" ? "" : " – über die Woche startet jeder seine eigene Uhr mit dem Öffnen der Akte, also am besten, wenn man die Zeit am Stück hat"}. Die Auflösung mit Rangliste kommt für alle gleichzeitig – sobald alle fertig sind.`, `The clock runs for ${lim} minutes from the start, without a pause${g.mode === "live" ? "" : " – over the week, everyone starts their own clock by opening the case file, so best when you have the time in one go"}. The solution and ranking come for everyone at the same time – once everyone has finished.`)}${plus ? " " + T("Der KI-Verhörraum ist für Mitspielende ab 18 Jahren.", "The AI interrogation room is for players aged 18 and over.") : ""}</p>
 ${c.earlybird ? `<p><b>Early Bird:</b> ${T("Danke, dass ihr uns helft! Nach der Auflösung fragt euch das Spiel direkt nach eurem Feedback.", "Thanks for helping us! After the solution, the game will ask you for your feedback right away.")}</p>` : ""}
+<p>🎁 ${T("Als Geschenk?", "A gift?")} <a href="${origin}/geschenk.html?o=${o.id}&k=${o.token}&l=${site}">${T("Geschenkkarte drucken oder als PDF speichern", "Print the gift card or save it as a PDF")}</a></p>
 <p>${T("Die Rechnung kommt separat per Mail von unserem Zahlungsanbieter.", "The invoice will be sent separately by our payment provider.")}<br>${T("Viel Spaß beim Ermitteln!", "Happy investigating!")}<br>Mordsteam</p>
 <hr style="border:0;border-top:1px solid #DDD5C4;margin:24px 0 14px">
 <div style="font-size:12.5px;color:#5A5D66;line-height:1.5"><b>${T("Vertragsbestätigung", "Contract confirmation")}</b><br>
@@ -744,7 +783,7 @@ async function recordPayment(env, id, cs) {
     // Preis in unserer Währung (bei Adaptive Pricing steht er in currency_conversion); Euro direkt, sonst Euro-Betrag aus der Auszahlung (enrichPayment)
     const src = cs && cs.currency_conversion ? { amount: cs.currency_conversion.amount_total, cur: cs.currency_conversion.source_currency } : { amount: cs && cs.amount_total, cur: cs && cs.currency };
     if (Number.isFinite(src.amount)) {
-      if (String(src.cur || "eur").toLowerCase() === "eur") await env.DB.prepare("UPDATE orders SET amount_cents=?, currency='EUR' WHERE id=?").bind(src.amount, id).run();
+      if (String(src.cur || "eur").toLowerCase() === "eur") { await migrateAccounting(env); await env.DB.prepare("UPDATE orders SET amount_cents=?, currency='EUR', eur_ok=1 WHERE id=?").bind(src.amount, id).run(); }
       else { await migrateAccounting(env); await env.DB.prepare("UPDATE orders SET amount_orig_cents=?, currency=? WHERE id=?").bind(src.amount, String(src.cur).toUpperCase(), id).run(); }
     }
     const invId = cs && (typeof cs.invoice === "string" ? cs.invoice : cs.invoice?.id);

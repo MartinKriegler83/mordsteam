@@ -1,6 +1,6 @@
 // Cloudflare Pages Function: /api/spiel/*
 // Benötigt: D1-Binding "DB" und die geheime Umgebungsvariable "ADMIN_KEY".
-import { accountingSummary, migrateAccounting, region, REGION_LABEL, costList, costSave, costDelete, rcList, rcSave, rcDelete, rcMarkPaid } from "../../../lib/accounting.js";
+import { accountingSummary, viennaMidnight, viennaDayEnd, migrateAccounting, region, REGION_LABEL, costList, costSave, costDelete, rcList, rcSave, rcDelete, rcMarkPaid , setEuroAmount, recordRefund } from "../../../lib/accounting.js";
 import {
   CASES, caseOf, langOf, RULES, json, fail, randInt, randomToken, randomCode, esc, viennaDate,
   buildVars, render, checkAnswers, norm, same, hintLabel, namesToLetters, lettersToName, hintTimes, hardEnd, refreshStatus, finishIfAllSolved, recordStats, expired, purgeSession, ranking, teamScore,
@@ -11,7 +11,7 @@ import { migrate, createGameSession, InputError } from "../../../lib/create.js";
 import { logAI, opsSummary } from "../../../lib/ops.js";
 import { customers, nlAdmin, syncAll, ecgUpload, nlDraft, ecgCheckNow } from "../../../lib/newsletter.js";
 import { migrateFeedback, dueFeedback, runFeedbackMails } from "../../../lib/feedback.js";
-import { localize, countryOf, COUNTRIES, COUNTRY_ORDER, randomCast, castToEnglish, americanize, isUS } from "../../../lib/countries.js";
+import { localize, countryOf, COUNTRIES, COUNTRY_ORDER, randomCast, castToEnglish, americanize, isUS, cityName } from "../../../lib/countries.js";
 // USA: amerikanisches Englisch auch für Texte, die nicht über render() laufen (ARIA, Sonderauftrag)
 // Schweiz/Liechtenstein (Deutsch): kein ß – auch in KI-Antworten, Prompts und Sonderauftrag (Go-live-Test 3, T1-7)
 const noSz = (x) => x && x.LANG !== "en" && COUNTRIES[countryOf(x.LAND || "AT")] && COUNTRIES[countryOf(x.LAND || "AT")].noEszett;
@@ -72,7 +72,9 @@ export async function onRequest(ctx) {
       if (route === "admin/rc/bezahlt" && method === "POST") { try { return json(await rcMarkPaid(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
       if (route === "admin/kosten" && method === "POST") { try { return json(await costSave(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
       if (route === "admin/kosten/loeschen" && method === "POST") { const b = await request.json().catch(() => ({})); return json(await costDelete(env, b.id)); }
-      if (route === "admin/buchhaltung" && method === "GET") { const u = new URL(request.url); return json(await accountingSummary(env, Date.parse((u.searchParams.get("von") || "2000-01-01") + "T00:00:00+02:00"), Date.parse((u.searchParams.get("bis") || "2999-12-31") + "T23:59:59+02:00"))); }
+      if (route === "admin/bestellung/erstattet" && method === "POST") { try { return json(await recordRefund(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
+      if (route === "admin/buchhaltung/euro" && method === "POST") { try { return json(await setEuroAmount(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
+      if (route === "admin/buchhaltung" && method === "GET") { const u = new URL(request.url); return json(await accountingSummary(env, viennaMidnight(u.searchParams.get("von") || "2000-01-01"), viennaDayEnd(u.searchParams.get("bis") || "2999-12-31"))); }
       if (route === "admin/ops" && method === "GET") return json(await opsSummary(env));
       // Kunden & Newsletter
       if (route === "admin/kunden" && method === "GET") return json(await customers(env));
@@ -387,6 +389,7 @@ const ARIA_LIMITS = { maxMsgs: 100, maxChars: 300, gapMs: 3000, history: 16 };
 const ariaX = (session) => {
   const x = { ...JSON.parse(session.vars), ...JSON.parse(session.secrets), LANG: langOf(session) };
   x.LAND = COUNTRY_ORDER.includes(x.LAND) ? x.LAND : "AT";
+  if (x.LANG === "en" && x.STADT) x.STADT = cityName(x.LAND, x.STADT, "en");   // „Vienna Central Station“ wie in der Akte, nicht „Wien …“
   x.HBF = localize(countryOf(x.LAND), x.LANG, x.STADT).hbf;
   return x;
 };
@@ -417,7 +420,8 @@ function ariaPseudo(x) {
 
 async function ariaMsgs(env, team) {
   const { results } = await env.DB.prepare("SELECT role, text, at FROM aria_msgs WHERE team_id=? AND role NOT LIKE 'v-%' ORDER BY id LIMIT 300").bind(team.id).all();
-  return results;
+  // „user-x“ = Frage, auf die nur die Ersatzantwort kam (KI nicht erreichbar) – zählt nicht (Go-live-Test 4, M8)
+  return results.map((m) => (m.role === "user-x" ? { ...m, role: "user", nc: true } : m));
 }
 async function ariaGet({ env, team, session }) {
   const c = caseOf(session);
@@ -426,7 +430,7 @@ async function ariaGet({ env, team, session }) {
   const msgs = live ? await ariaMsgs(env, team) : [];
   return json({
     live, msgs,
-    used: msgs.filter((m) => m.role === "user").length, max: ARIA_LIMITS.maxMsgs, max_chars: ARIA_LIMITS.maxChars,
+    used: msgs.filter((m) => m.role === "user" && !m.nc).length, max: ARIA_LIMITS.maxMsgs, max_chars: ARIA_LIMITS.maxChars,
     lock: !!c.ARIA.checkPassword,
     unlocked: !!team.aria_unlocked_at, note: team.aria_unlocked_at && c.ARIA.note ? usText(ariaX(session), c.ARIA.note(ariaX(session))) : null,
     tip: ariaTip(c.ARIA, msgs.filter((m) => m.role === "user"), session),
@@ -457,7 +461,7 @@ async function ariaChat({ request, env, team, session }) {
   if (used >= ARIA_LIMITS.maxMsgs) return fail(L(lg, `${ariaName(c, session)} braucht eine Pause: Euer Team hat alle Nachrichten verbraucht. Die Hinweise der Zentrale kommen trotzdem.`, `${ariaName(c, session)} needs a break: your team has used up all its messages. Headquarters will still send hints.`), 429);
   if (!(await ariaGate(env, team))) return fail(L(lg, `${ariaName(c, session)} tippt noch … einen Moment.`, `${ariaName(c, session)} is still typing … one moment.`), 429);
   const now = Date.now();
-  await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, now, "user", text).run();
+  const ins = await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, now, "user", text).run();
   const x = ariaX(session);
   const ps = ariaPseudo(x);
   let reply, logged = false;
@@ -491,6 +495,7 @@ async function ariaChat({ request, env, team, session }) {
   } catch (e) {
     if (!logged && env.ANTHROPIC_API_KEY) await logAI(env, null, false);   // Zeitüberschreitung, Netzwerkfehler
     reply = usText(x, c.ARIA.fallback(x, text));
+    if (ins.meta?.last_row_id) await env.DB.prepare("UPDATE aria_msgs SET role='user-x' WHERE id=?").bind(ins.meta.last_row_id).run();   // nicht zählen
   }
   await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, Date.now(), "assistant", reply).run();
   return json({ ok: true });
@@ -719,7 +724,8 @@ async function adminCreate(request, env) {
   }
 }
 async function adminOrders(env) {
-  const base = "SELECT o.id, o.created_at, o.status, o.paket, o.teams, o.amount_cents, o.event_date, o.contact, o.paid_at, o.shipped_at, json_extract(o.vars,'$.FIRMA') AS firma, s.join_code, s.org_code";
+  await migrateAccounting(env);
+  const base = "SELECT o.id, o.created_at, o.status, o.paket, o.teams, o.amount_cents, o.refunded_cents, o.refunded_at, o.event_date, o.contact, o.paid_at, o.shipped_at, json_extract(o.vars,'$.FIRMA') AS firma, s.join_code, s.org_code";
   const tail = " FROM orders o LEFT JOIN sessions s ON s.id=o.session_id ORDER BY o.created_at DESC LIMIT 200";
   const solo = ", (SELECT t.code FROM solo_tickets t WHERE t.order_id=o.id) AS solo_code";
   const friends = ", (SELECT g.org_token FROM friends_groups g WHERE g.order_id=o.id) AS friends_org";
@@ -762,23 +768,24 @@ async function adminExport(request, env) {
   await migrateAccounting(env);
   const u = new URL(request.url);
   const von = u.searchParams.get("von") || "2000-01-01", bis = u.searchParams.get("bis") || "2999-12-31";
-  const from = Date.parse(von + "T00:00:00+02:00"), to = Date.parse(bis + "T23:59:59+02:00");
+  const from = viennaMidnight(von), to = viennaDayEnd(bis);   // Europe/Vienna, Winter-/Sommerzeit korrekt
   await accountingSummary(env, from, to);   // holt fehlende Stripe-Gebühren und Rechnungsländer nach
   const { results } = await env.DB.prepare(
-    "SELECT * FROM orders WHERE status IN ('paid','fulfilling','fulfilled') AND paid_at BETWEEN ? AND ? ORDER BY paid_at").bind(from, to).all();
+    "SELECT * FROM orders WHERE status IN ('paid','fulfilling','fulfilled','refunded','withdrawn') AND paid_at BETWEEN ? AND ? ORDER BY paid_at").bind(from, to).all();
   const P = { basis: "Teams Basic", premium: "Teams Premium", plus: "Teams Premium Plus", solo: "Mordsteam Solo", friends: "Friends Krimiabend", "friends-plus": "Friends Plus" };
   const q = (x) => { const t = String(x ?? ""); return /[;"\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
   const d = (ms) => new Intl.DateTimeFormat("de-AT", { timeZone: "Europe/Vienna", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(ms));
   const e = (c) => (c == null ? "" : (c / 100).toFixed(2).replace(".", ","));
-  const lines = [["Datum (bezahlt)", "Rechnungsnr. (Stripe)", "Bestell-ID", "Kunde / Firma", "Produkt", "Anzahl", "Early Bird", "Kundenart", "Land", "Region", "Einnahme brutto (€)", "Gebühr (€)", "Auszahlung netto (€)", "davon USt (€)", "Zahlungsweg", "Rechnungsart", "UID Kunde", "bezahlt in Fremdwährung"].join(";")];
-  const RA = { ku: "Kleinunternehmer (steuerfrei)", rc_eu: "Reverse Charge EU (ZM)", dl_b2b: "Nicht-EU-Firma, nicht steuerbar", dl_b2c: "Nicht-EU-Privat, nicht steuerbar", uk_paddle: "UK-Privat über Paddle (britische USt führt Paddle ab)" };
+  const lines = [["Datum (bezahlt)", "Rechnungsnr. (Stripe)", "Bestell-ID", "Kunde / Firma", "Produkt", "Anzahl", "Early Bird", "Kundenart", "Land", "Region", "Einnahme brutto (€)", "Gebühr (€)", "Auszahlung netto (€)", "davon USt (€)", "Zahlungsweg", "Rechnungsart", "UID Kunde", "bezahlt in Fremdwährung", "erstattet (€)", "Status", "Kartenland (Stripe)", "Adressland (Stripe)"].join(";")];
+  const RA = { ku: "Kleinunternehmer (steuerfrei)", rc_eu: "Reverse Charge EU (ZM)", dl_b2b: "Nicht-EU-Firma, nicht steuerbar", dl_b2c: "Nicht-EU-Privat, nicht steuerbar", uk_paddle: "UK über Paddle (britische USt führt Paddle ab)" };
   for (const o of results) {
     const c = JSON.parse(o.contact || "{}");
     const firma = c.rechnung_firma || (c.fiktiv ? "" : (JSON.parse(o.vars || "{}").FIRMA || ""));
     const kind = c.kunde === "b2b" || (!o.tax_regime && o.tax_id) ? "Unternehmen" : "Privat";
     const prod = o.paket === "solo" ? `Solo ${String(c.produkt || "solo-001").replace("solo-", "")}` : P[o.paket] || o.paket;
     lines.push([d(o.paid_at), o.invoice_no || "", o.id.slice(0, 8), [c.name, firma].filter(Boolean).join(" / "), prod, o.teams,
-      c.earlybird ? "Ja" : "Nein", kind, o.bill_country || "", REGION_LABEL[region(o.bill_country)], e(o.amount_cents), e(o.fee_cents), e(o.net_cents), e(o.tax_cents || 0), o.paddle_txn ? "Paddle" : o.stripe_session ? "Stripe" : "Test (ohne Zahlung)", RA[o.tax_regime] || "", o.cust_uid || "", o.currency && o.currency !== "EUR" && o.amount_orig_cents != null ? `${o.currency} ${(o.amount_orig_cents / 100).toFixed(2)}` : ""].map(q).join(";"));
+      c.earlybird ? "Ja" : "Nein", kind, o.bill_country || "", REGION_LABEL[region(o.bill_country)], e(o.amount_cents), e(o.fee_cents), e(o.net_cents), e(o.tax_cents || 0), o.paddle_txn ? "Paddle" : o.stripe_session ? "Stripe" : "Test (ohne Zahlung)", RA[o.tax_regime] || "", o.cust_uid || "", o.currency && o.currency !== "EUR" && o.amount_orig_cents != null ? `${o.currency} ${(o.amount_orig_cents / 100).toFixed(2)}` : "",
+      o.refunded_cents != null ? e(o.refunded_cents) : o.status === "withdrawn" ? e(o.amount_cents) : "", ({ refunded: "erstattet", withdrawn: "widerrufen" })[o.status] || (o.currency && o.currency !== "EUR" && !o.eur_ok ? "Euro-Betrag fehlt" : ""), o.card_country || "", o.addr_country || ""].map(q).join(";"));
   }
   return new Response("\ufeff" + lines.join("\r\n"), { headers: { "content-type": "text/csv; charset=utf-8",
     "content-disposition": `attachment; filename="mordsteam-einnahmen-${von}-bis-${bis}.csv"`, "cache-control": "no-store" } });
@@ -905,8 +912,8 @@ const sonderX = (session) => {
   return { ...x, M_IDX: sec.M_IDX, T_IDX: sec.T_IDX, SCHEINFIRMA_TXT: String(v.SCHEINFIRMA || "").replace(/&amp;/g, "&"), T_NAME: String(inp[`S${sec.T_IDX + 1}`] || ""), T_ER: v.T_ER || "", T_HE: v.T_HE || "" };
 };
 async function sonderMsgs(env, team) {
-  return (await env.DB.prepare("SELECT role, text FROM aria_msgs WHERE team_id=? AND role IN ('v-user','v-ai') ORDER BY id LIMIT 100").bind(team.id).all()).results
-    .map((m) => ({ role: m.role === "v-user" ? "user" : "assistant", text: m.text }));
+  return (await env.DB.prepare("SELECT role, text FROM aria_msgs WHERE team_id=? AND role IN ('v-user','v-user-x','v-ai') ORDER BY id LIMIT 100").bind(team.id).all()).results
+    .map((m) => (m.role === "v-ai" ? { role: "assistant", text: m.text } : { role: "user", text: m.text, ...(m.role === "v-user-x" ? { nc: true } : {}) }));
 }
 async function sonderGet({ env, team, session }) {
   const c = caseOf(session);
@@ -916,7 +923,7 @@ async function sonderGet({ env, team, session }) {
   // Funkspruch: nach tipAfter Fragen ohne vorgehaltenen Beweis ein Hinweis, wie man {M} zum Reden bringt
   const S = c.SONDER, n = S.tipAfter || 0;
   const tip = n && asked.length >= n && S.evidence && !asked.slice(0, n).some((m) => S.evidence.test(m.text)) ? usText(sonderX(session), render(S.tip, buildVars(session))) : null;
-  return json({ open: true, msgs, used: asked.length, max: c.SONDER_MAX, max_chars: ARIA_LIMITS.maxChars, tip });
+  return json({ open: true, msgs, used: asked.filter((m) => !m.nc).length, max: c.SONDER_MAX, max_chars: ARIA_LIMITS.maxChars, tip });
 }
 async function sonderChat({ request, env, team, session }) {
   const c = caseOf(session), lg = langOf(session);
@@ -928,9 +935,9 @@ async function sonderChat({ request, env, team, session }) {
   const text = String(b.text || "").replace(/\s+/g, " ").trim().slice(0, ARIA_LIMITS.maxChars);
   if (!text) return fail(L(lg, "Bitte eine Frage eingeben.", "Please enter a question."));
   const prev = await sonderMsgs(env, team);
-  if (prev.filter((m) => m.role === "user").length >= c.SONDER_MAX) return fail(L(lg, "Alle Fragen sind verbraucht. Entscheidet euch jetzt.", "All questions are used up. Make your decision now."), 429);
+  if (prev.filter((m) => m.role === "user" && !m.nc).length >= c.SONDER_MAX) return fail(L(lg, "Alle Fragen sind verbraucht. Entscheidet euch jetzt.", "All questions are used up. Make your decision now."), 429);
   if (!(await ariaGate(env, team))) return fail(L(lg, "Einen Moment …", "One moment …"), 429);
-  await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, Date.now(), "v-user", text).run();
+  const ins = await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, Date.now(), "v-user", text).run();
   const x = sonderX(session), ps = ariaPseudo(x);
   let reply, logged = false;
   try {
@@ -958,6 +965,7 @@ async function sonderChat({ request, env, team, session }) {
   } catch (e) {
     if (!logged && env.ANTHROPIC_API_KEY) await logAI(env, null, false);
     reply = usText(x, c.SONDER.fallback(x, text));
+    if (ins.meta?.last_row_id) await env.DB.prepare("UPDATE aria_msgs SET role='v-user-x' WHERE id=?").bind(ins.meta.last_row_id).run();   // nicht zählen
   }
   await env.DB.prepare("INSERT INTO aria_msgs (team_id, at, role, text) VALUES (?,?,?,?)").bind(team.id, Date.now(), "v-ai", reply).run();
   return json({ ok: true });

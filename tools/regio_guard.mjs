@@ -7,7 +7,9 @@ import { normalizeVars } from "../lib/create.js";
 import { randomCast } from "../lib/countries.js";
 
 // Wörter, die in DE/CH/LI nicht vorkommen dürfen. „Heuer“ groß nur am Satzanfang (Nachname Heuer ist erlaubt).
-const BAD = /Kassa|kassa|Würstel|Ehrenob|\bobmann\b|\bheuer\b|(?:^|[>„“".!?:]\s?)Heuer |Grüß Gott|Landesklinikum|Kampfmannschaft|Jänner|Feber|Paradeiser|Erdäpfel|Sackerl|Semmel|Jause|Kuvert|Mistkübel|Spital|Archivkasten/;
+const BAD = /Kassa|kassa|Würstel|Ehrenob|\bobmann\b|\bheuer\b|(?:^|[>„“".!?:]\s?)Heuer |Grüß Gott|Landesklinikum|Kampfmannschaft|Jänner|Feber|Paradeiser|Erdäpfel|Sackerl|Semmel|Jause|Kuvert|Mistkübel|Spital|Archivkasten|vor dieses Jahr|[Kk]asse-|\bheuern\b|Einschulung|abgedreht|\bSchank\b|Rechnungsprüfer|\bOb(?:mann|frau)\b|Beirat|Beirätin/;   // Fall 002, Punkt 7/8
+// Liechtenstein hat keine Kantone (Fall 002, Punkt 7)
+const BAD_LI = /Kantonsspital/;
 const SWISS_OK = /Spital|Archivkasten/g;   // in der Schweiz üblich
 const txt = (h) => String(h ?? "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ");
 
@@ -19,7 +21,7 @@ export function regioGuard(caseId, rounds = 60) {
   for (let i = 0; i < rounds; i++) {
     const land = ["DE", "CH", "LI"][i % 3];
     const F = (C0.FICTIONS || {})[land] || [];
-    const cast = F.length && i % 2 === 0 ? F[rnd(F.length)] : randomCast(land, "de", rnd);
+    const cast = F.length && i % 2 === 0 ? F[rnd(F.length)] : (C0.randomCast || randomCast)(land, "de", rnd);   // wie die Spiel-API: eigener Würfel des Falls
     let vars;
     try { vars = normalizeVars(caseId, { ...cast, LAND: land }, true, true, "de"); } catch (e) { continue; }
     const secrets = C0.makeSecrets(rnd, { premium: true, lang: "de", land, feier: [vars.RAUM_FEIER, vars.FIRMA, vars.STADT, vars.PARK].filter(Boolean).join(" ") });
@@ -51,6 +53,8 @@ export function regioGuard(caseId, rounds = 60) {
     for (const [where, t] of parts) {
       blocks++;
       let plain = txt(t).replace(/\(also Kasse statt Kassa[^)]*\)/g, "");   // die Sprachregel selbst nennt die Wörter
+      const li = land === "LI" ? plain.match(BAD_LI) : null;   // vor dem Entfernen von „Spital“ prüfen
+      if (li && errs.length < 20) errs.push(`${caseId} LI ${where}: „Kantonsspital“ – Liechtenstein hat keine Kantone`);
       if (land !== "DE") plain = plain.replace(SWISS_OK, "");
       const m = plain.match(BAD);
       if (m && errs.length < 20) errs.push(`${caseId} ${land} ${where}: österreichisch „${m[0].trim()}“ in „${plain.slice(Math.max(0, m.index - 50), m.index + 50).replace(/\s+/g, " ").trim()}“`);

@@ -201,6 +201,9 @@
         else el.value = d[el.name];
       }
       if (d._logo) setLogo(d._logo);
+      // Rechnungsland aus dem Entwurf: gilt als bewusste Wahl (kein Überschreiben per Standort), Hinweise und Währung neu zeichnen (Go-live-Test 4)
+      const bl = form.elements.bill_land;
+      if (bl && d.bill_land) { bl.dataset.restored = "1"; bl.dispatchEvent(new Event("change", { bubbles: true })); }
     }
     // Paket und Fall aus dem Link nur beim ersten Aufbau vorwählen – danach entscheidet die Auswahl im Formular
     if (urlApplied) return;

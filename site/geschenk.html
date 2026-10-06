@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Geschenkkarte – Mordsteam</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<style>
+/* Geschenkkarte zum Ausdrucken oder als PDF (Go-live-Test 4, 6.10.2026). Druck: A4 quer, eine Seite. */
+.gk-bar{max-width:1060px;margin:24px auto 0;padding:0 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.gk-bar p{margin:0;color:var(--ink-2);font-size:15px;max-width:620px}
+.gk-wrap{max-width:1060px;margin:18px auto 40px;padding:0 16px}
+.gk{position:relative;background:var(--card);border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.08);aspect-ratio:297/210;display:grid;grid-template-columns:1.25fr 1fr;overflow:hidden}
+.gk-l{padding:6% 5% 5% 6%;display:flex;flex-direction:column;gap:2.2%;border-right:2px dashed var(--line)}
+.gk-r{padding:6% 6% 5% 5%;display:flex;flex-direction:column;align-items:flex-start;gap:3%;background:var(--paper)}
+.gk-wm{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(20px,3vw,34px);letter-spacing:.5px;display:flex;align-items:center;gap:10px}
+.gk-wm .r{color:var(--red)}
+.gk-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:clamp(10px,1.2vw,13px);letter-spacing:2px;color:var(--red);text-transform:uppercase;margin-top:4%}
+.gk-title{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(26px,4.4vw,52px);line-height:1.02;margin:0}
+.gk-sub{font-size:clamp(13px,1.5vw,17px);color:var(--ink-2);margin:0}
+.gk-ded{margin-top:auto;display:grid;gap:8px}
+.gk-ded label{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:end;font-family:'IBM Plex Mono',monospace;font-size:clamp(11px,1.2vw,13px);letter-spacing:1px;text-transform:uppercase;color:var(--ink-2)}
+.gk-ded input,.gk-ded textarea{font:inherit;font-family:'Fraunces',serif;font-size:clamp(15px,1.8vw,21px);text-transform:none;letter-spacing:0;color:var(--ink);background:transparent;border:0;border-bottom:1.5px solid var(--ink-2);padding:2px 2px 3px;width:100%;resize:none}
+.gk-ded textarea{border:1.5px dashed var(--muted);border-radius:4px;min-height:3.2em;padding:6px 8px;font-family:'IBM Plex Sans',sans-serif;font-size:clamp(13px,1.5vw,16px)}
+.gk-codebox small{display:block;font-family:'IBM Plex Mono',monospace;font-size:clamp(10px,1.2vw,13px);letter-spacing:2px;text-transform:uppercase;color:var(--ink-2)}
+.gk-code{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:clamp(24px,3.6vw,42px);letter-spacing:5px;color:var(--ink)}
+.gk-qr{width:34%;min-width:110px;background:#fff;padding:6px;border:1px solid var(--line)}
+.gk-qr svg{display:block;width:100%;height:auto}
+.gk-steps{margin:0;padding-left:1.2em;font-size:clamp(12px,1.35vw,15px);line-height:1.45;color:var(--ink)}
+.gk-steps li{margin:0 0 4px}
+.gk-steps .mono{font-family:'IBM Plex Mono',monospace;font-size:.92em;word-break:break-all}
+.gk-foot{margin-top:auto;font-size:clamp(10px,1.15vw,13px);color:var(--ink-2)}
+.gk-stamp{position:absolute;right:3.5%;top:4.5%;transform:rotate(-8deg);border:3px double var(--red);color:var(--red);font-family:'IBM Plex Mono',monospace;font-weight:500;letter-spacing:3px;font-size:clamp(11px,1.4vw,16px);padding:4px 10px;opacity:.85}
+.gk-msg{max-width:720px;margin:60px auto;padding:0 16px;text-align:center}
+@media (max-width:720px){.gk{aspect-ratio:auto;grid-template-columns:1fr}.gk-l{border-right:0;border-bottom:2px dashed var(--line);min-height:auto}.gk-l,.gk-r{padding:22px}.gk-ded{margin-top:18px}.gk-qr{width:150px}.gk-stamp{top:14px}}
+@media print{
+  @page{size:A4 landscape;margin:0}
+  html,body{background:#fff}
+  .header,.footer,.gk-bar,.noprint{display:none!important}
+  .gk-wrap{max-width:none;margin:0;padding:0}
+  .gk{width:297mm;height:210mm;aspect-ratio:auto;border:0;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .gk-ded textarea{border-color:transparent}
+  .gk-ded input::placeholder,.gk-ded textarea::placeholder{color:transparent}
+}
+</style>
+</head>
+<body>
+<div class="gk-bar noprint">
+<p id="gk-hint">Trag oben eine Widmung ein und drück auf „Drucken / als PDF“. Im Druckdialog kannst du „Als PDF sichern“ wählen und die Karte per E-Mail verschicken.</p>
+<button class="btn btn-red" type="button" id="gk-print" hidden>Drucken / als PDF</button>
+</div>
+<div class="gk-wrap" id="gk-root"><p class="gk-msg">Geschenkkarte wird geladen …</p></div>
+<script src="/spiel/qrcode.js"></script>
+<script src="/assets/geschenk.js"></script>
+</body>
+</html>

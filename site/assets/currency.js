@@ -1,6 +1,6 @@
 // Preise in Landeswährung (lib/prices.js): Großbritannien £, USA/Kanada/Mexiko $, sonst €.
 // – Englische Seiten: alle markierten Preise (<span data-eur="2900">) nach dem Land des Besuchers (Cloudflare) oder der Auswahl unten.
-// – Bestellformulare (DE und EN): Währung nach dem Rechnungsland (billing.js), siehe MSCur.forLand.
+// – Bestellformulare (DE und EN): Währung und alle markierten Preise nach dem Rechnungsland (billing.js), siehe MSCur.forLand.
 // Deutsche Seiten und Suchmaschinen bleiben in Euro.
 (function () {
   const EN = document.documentElement.lang === "en";
@@ -24,9 +24,12 @@
   let saved = null; try { saved = localStorage.getItem(KEY); } catch {}
   const pageCur = () => (["EUR", "GBP", "USD"].includes(saved) ? saved : forLand(country));
 
+  // Bestellformulare (DE und EN): alle Preise folgen dem Rechnungsland, nicht dem Land des Besuchers (Go-live-Test 4)
+  const billSel = () => document.getElementById("bill_land");
   function apply() {
-    if (!EN || BOT || !table) return;
-    const cur = pageCur();
+    const sel = billSel();
+    if ((!EN && !sel) || BOT || !table) return;
+    const cur = sel ? forLand(sel.value) : pageCur();
     document.querySelectorAll("[data-eur]").forEach((el) => {
       const eur = Number(el.dataset.eur), c = conv(eur, cur);
       el.textContent = c == null ? fmt(eur, "EUR") : fmt(c, cur);
@@ -35,7 +38,7 @@
     if (sw) sw.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.c === cur)));
   }
   function switcher() {
-    if (!EN || BOT || document.getElementById("cursw") || !document.querySelector("[data-eur]")) return;
+    if (!EN || BOT || billSel() || document.getElementById("cursw") || !document.querySelector("[data-eur]")) return;
     const f = document.querySelector(".footer .wrap");
     if (!f) return;
     const d = document.createElement("div");
@@ -44,6 +47,7 @@
     d.addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; saved = b.dataset.c; try { localStorage.setItem(KEY, saved); } catch {} apply(); });
     f.appendChild(d);
   }
+  document.addEventListener("change", (e) => { if (e.target && e.target.id === "bill_land") apply(); });
   let cache = null; try { cache = JSON.parse(sessionStorage.getItem("ms_geo") || "null"); } catch {}
   const whenDom = (fn) => (document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", fn) : fn());
   const ready = (d) => { table = d.table; country = d.country || ""; whenDom(() => { switcher(); apply(); listeners.splice(0).forEach((fn) => fn()); }); };

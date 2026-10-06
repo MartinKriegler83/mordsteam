@@ -352,8 +352,8 @@
 
   function ordersPanel(orders) {
     const eur = (c) => (c / 100).toLocaleString("de-AT", { maximumFractionDigits: 2 }) + " €";
-    const lbl = { pending: "offen", paid: "bezahlt", fulfilling: "in Arbeit", fulfilled: "bezahlt · Runde angelegt", withdrawn: "WIDERRUFEN – erstatten!" };
-    const paid = orders.filter((o) => o.status !== "pending" && o.status !== "withdrawn");
+    const lbl = { pending: "offen", paid: "bezahlt", fulfilling: "in Arbeit", fulfilled: "bezahlt · Runde angelegt", withdrawn: "WIDERRUFEN – erstatten!", refunded: "erstattet" };
+    const paid = orders.filter((o) => o.status !== "pending" && o.status !== "withdrawn" && o.status !== "refunded");
     const toShip = [];
     const y = new Date().getFullYear();
     return `<div class="panel"><div class="eyebrow">Bestellungen</div>
@@ -363,13 +363,19 @@
         <button class="btn btn-line" id="exbtn" type="button">Einnahmen exportieren (CSV)</button>
         <button class="btn btn-line" id="bhbtn" type="button">Buchhaltung: Übersicht</button></div>
       <div id="bhout"></div>
-      <p style="margin:8px 0">${paid.length} bezahlt · Umsatz ${eur(paid.reduce((a, o) => a + o.amount_cents, 0))}</p>
+      <p style="margin:8px 0">${paid.length} bezahlt · Umsatz ${eur(paid.reduce((a, o) => a + o.amount_cents - (o.refunded_cents || 0), 0))}</p>
       <div class="list-sessions">${orders.length ? orders.map((o) => {
         const c = o.contact || {}, l = c.liefer;
         return `<div class="sess">
           <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${o.paket === "solo" ? "Mordsteam Solo" : o.paket === "friends" ? "Mordsteam Friends" : o.paket === "friends-plus" ? "Mordsteam Friends Plus" : MS.esc(o.firma || "–")}</b><span class="chip ${o.status === "fulfilled" ? "open" : ""}">${(o.paket === "solo" || o.paket === "friends" || o.paket === "friends-plus") && o.status === "fulfilled" ? "bezahlt · Runde angelegt" : lbl[o.status] || o.status}</span></div>
           <div class="mono">${new Date(o.created_at).toLocaleString("de-AT")} · ${o.paket === "solo" ? `SOLO · ${eur(o.amount_cents)}${o.solo_code ? ` · Solo-Code ${o.solo_code}` : ""}` : o.paket === "friends" || o.paket === "friends-plus" ? `FRIENDS${o.paket === "friends-plus" ? " PLUS" : ""} · ${o.teams} Personen · ${eur(o.amount_cents)}${o.friends_org ? ` · <a href="/spiel/friends.html?o=${o.friends_org}" target="_blank" rel="noopener">Organisator-Seite</a>` : ""}` : `${({ basis: "Basic", premium: "PREMIUM", plus: "PREMIUM PLUS" })[o.paket] || o.paket} · ${o.teams} Teams · ${eur(o.amount_cents)} · gekauft ${o.event_date}${o.join_code ? ` · Spielcode ${o.join_code} · Organisator ${o.org_code}` : ""}`}</div>
           <div class="small">${MS.esc(c.name || "")} · <a href="mailto:${MS.esc(c.email || "")}">${MS.esc(c.email || "")}</a>${c.telefon ? " · " + MS.esc(c.telefon) : ""}${c.rechnung_firma ? " · Rechnung: " + MS.esc(c.rechnung_firma) : ""}${c.lang ? " · Spielsprache " + c.lang.toUpperCase() : ""}${c.site ? " · Seite " + c.site.toUpperCase() : ""}${c.kunde ? " · " + (c.kunde === "b2c" ? "Privat" : "Firma/Verein") : ""}${c.fiktiv ? " · fiktiv" : ""}${c.earlybird ? ` · <b style="color:var(--red)">EARLY BIRD −${c.earlybird} % (Feedback einholen!)</b>` : ""}</div>
+          ${o.refunded_cents != null ? `<div class="small"><b>Erstattet: ${eur(o.refunded_cents)}</b> am ${new Date(o.refunded_at).toLocaleDateString("de-AT")}</div>` : ["paid", "fulfilling", "fulfilled", "withdrawn"].includes(o.status) ? `<details class="small refund"><summary>Erstattet / Rückbuchung erfassen</summary>
+            <p class="small">Erst in Stripe bzw. Paddle erstatten, dann hier eintragen. Leer = voller Betrag (${eur(o.amount_cents)}). Bei Pfund/Dollar den Euro-Betrag laut Abrechnung.</p>
+            <div class="actions-row" style="gap:8px;align-items:center;flex-wrap:wrap"><input class="rfamt" data-id="${MS.esc(o.id)}" inputmode="decimal" placeholder="Betrag in €" style="width:8em">
+            <input class="rfnote" data-id="${MS.esc(o.id)}" placeholder="Notiz (z. B. Chargeback)" style="width:14em">
+            <label class="small"><input type="checkbox" class="rflock" data-id="${MS.esc(o.id)}" checked> Spielcodes sperren (bei voller Erstattung)</label>
+            <button type="button" class="btn btn-line small" data-refund="${MS.esc(o.id)}">Speichern</button></div></details>` : ""}
         </div>`;
       }).join("") : `<p class="muted">Noch keine Bestellungen.</p>`}</div></div>`;
   }
@@ -534,6 +540,14 @@
     };
     root.querySelectorAll("[data-rcdel]").forEach((b) => (b.onclick = async () => { rc = await MS.api("POST", "admin/rc/loeschen", { id: b.dataset.rcdel }, H()); render(...last); }));
     root.querySelectorAll("[data-rcpaid]").forEach((b) => (b.onclick = async () => { rc = await MS.api("POST", "admin/rc/bezahlt", { quartal: b.dataset.rcpaid, paid: !b.dataset.undo }, H()); render(...last); }));
+    // Erstattung / Rückbuchung erfassen (Go-live-Test 4, M13)
+    root.querySelectorAll("[data-refund]").forEach((b) => (b.onclick = async () => {
+      const id = b.dataset.refund, v = (c) => root.querySelector(`.${c}[data-id="${id}"]`);
+      const amt = v("rfamt").value.trim();
+      if (!confirm(`Erstattung ${amt ? amt + " €" : "voller Betrag"} speichern?${v("rflock").checked && !amt ? " Die Spielcodes werden gesperrt." : ""}`)) return;
+      try { await MS.api("POST", "admin/bestellung/erstattet", { id, euro: amt, notiz: v("rfnote").value, sperren: v("rflock").checked }, H()); load(); }
+      catch (e) { alert(e.message); }
+    }));
     const bhb = document.getElementById("bhbtn");
     if (bhb) bhb.onclick = async () => {
       const out = document.getElementById("bhout"); out.innerHTML = `<p class="small">Lade … (holt fehlende Gebühren und Länder bei Stripe)</p>`;
@@ -548,7 +562,14 @@
           return `<tr><td>${kd === "unternehmen" ? "Unternehmen" : "Privat"}</td><td>${RL[rg]}</td><td>${g.count}</td><td class="mono">${eu(g.gross)}</td><td class="mono">${eu(g.fee)}</td><td class="mono">${eu(g.net)}</td></tr>`; }).join("");
         const sum = d.groups.reduce((a, g) => ({ c: a.c + g.count, g: a.g + g.gross, f: a.f + g.fee, n: a.n + g.net }), { c: 0, g: 0, f: 0, n: 0 });
         const pct = Math.round((d.eu_b2c.cents / d.eu_b2c.limit) * 100);
-        out.innerHTML = `<table class="grid small" style="margin-top:10px"><tr><th>Kundenart</th><th>Region</th><th>Anzahl</th><th>Einnahmen brutto</th><th>Stripe-Gebühren</th><th>Auszahlung netto</th></tr>${rows}
+        // Zahlungen in Pfund/Dollar ohne Euro-Betrag (z. B. Paddle-Auszahlung nicht in EUR): zählen nirgends mit, bis nachgetragen (Go-live-Test 4, M12)
+        const miss = d.eur_missing && d.eur_missing.length ? `<div class="warnbox" style="margin-top:10px"><b>Euro-Betrag fehlt bei ${d.eur_missing.length} Zahlung(en)</b> – sie zählen in keiner Summe mit. Den Euro-Betrag aus der Abrechnung von ${d.eur_missing.some((m) => m.provider === "paddle") ? "Paddle (Auszahlungswährung auf EUR stellen!)" : "Stripe"} eintragen:
+          <table class="grid small" style="margin-top:6px"><tr><th>Datum</th><th>Bestellung</th><th>Bezahlt</th><th>Euro-Betrag</th><th></th></tr>${d.eur_missing.map((m) => `<tr><td>${new Date(m.date).toLocaleDateString("de-AT")}</td><td class="mono">${MS.esc(String(m.id).replace(/-/g, "").slice(0, 8).toUpperCase())}</td><td class="mono">${MS.esc(m.currency)} ${m.orig != null ? (m.orig / 100).toFixed(2) : "?"}</td><td><input class="eurin" data-id="${MS.esc(m.id)}" inputmode="decimal" placeholder="z. B. 103,45" style="width:7em"></td><td><button type="button" class="btn btn-line small" data-eursave="${MS.esc(m.id)}">Speichern</button></td></tr>`).join("")}</table></div>` : "";
+        // Rechnungsland ≠ Kartenland/Adressland laut Stripe (Go-live-Test 4, M14)
+        const RX = { ku: "Kleinunternehmer", rc_eu: "Reverse Charge", dl_b2b: "Nicht-EU-Firma", dl_b2c: "Nicht-EU-Privat" };
+        const land = d.land_check && d.land_check.length ? `<div class="warnbox" style="margin-top:10px"><b>Land prüfen (${d.land_check.length})</b> – Rechnungsland aus dem Formular weicht vom Land der Karte oder der Adresse bei Stripe ab. Ist das plausibel (z. B. Firmenkarte aus dem Ausland), passt alles; sonst Steuerfall mit Steuerberatung klären.
+          <table class="grid small" style="margin-top:6px"><tr><th>Datum</th><th>Bestellung</th><th>Rechnungsland</th><th>Karte</th><th>Adresse</th><th>Rechnungsart</th></tr>${d.land_check.map((m) => `<tr><td>${new Date(m.date).toLocaleDateString("de-AT")}</td><td class="mono">${MS.esc(String(m.id).replace(/-/g, "").slice(0, 8).toUpperCase())}</td><td>${MS.esc(m.bill)}</td><td>${MS.esc(m.card || "–")}</td><td>${MS.esc(m.addr || "–")}</td><td>${MS.esc(RX[m.regime] || m.regime)}</td></tr>`).join("")}</table></div>` : "";
+        out.innerHTML = miss + land + `<table class="grid small" style="margin-top:10px"><tr><th>Kundenart</th><th>Region</th><th>Anzahl</th><th>Einnahmen brutto</th><th>Stripe-Gebühren</th><th>Auszahlung netto</th></tr>${rows}
           <tr><th colspan="2">Summe</th><th>${sum.c}</th><th class="mono">${eu(sum.g)}</th><th class="mono">${eu(sum.f)}</th><th class="mono">${eu(sum.n)}</th></tr></table>
           <p class="small" style="margin-top:8px"><b>EU-Privatkunden ${d.eu_b2c.year}:</b> ${eu(d.eu_b2c.cents)} von 10.000,00 € (${pct} %)${d.eu_b2c.cents >= d.eu_b2c.warn ? ` <b style="color:var(--red)">– Warnung: 8.000 € überschritten. Ab 10.000 € gilt die Umsatzsteuer des Kundenlandes (OSS) – jetzt mit Steuerberater/WKO klären!</b>` : ""}</p>
           <p class="small"><b>Kleinunternehmergrenze ${d.ku.year}:</b> ${eu(d.ku.cents)} von 55.000,00 € brutto (${Math.round(d.ku.cents / d.ku.limit * 100)} %) – zählt nur Rechnungen mit Kleinunternehmer-Hinweis (Österreich und EU-Privatkunden).${d.ku.cents >= d.ku.limit * 0.8 ? ` <b style="color:var(--red)">Grenze nähert sich!</b>` : ""}</p>
@@ -557,6 +578,10 @@
           ${d.zm.length ? `<table class="grid small"><tr><th>Datum</th><th>UID Kunde</th><th>Land</th><th>Betrag</th><th>Rechnung</th></tr>${d.zm.map((z) => `<tr><td>${new Date(z.date).toLocaleDateString("de-AT")}</td><td class="mono">${MS.esc(z.uid || "")}</td><td>${MS.esc(z.land || "")}</td><td class="mono">${eu(z.cents)}</td><td class="mono">${MS.esc(z.invoice || "")}</td></tr>`).join("")}</table>
             <p class="small">In FinanzOnline je UID die Summe melden – bis Ende des Folgemonats bzw. Folgequartals (Zeitraum wie die UVA; bei der WKO bestätigen lassen).</p>` : ""}
           <p class="small">Region nach dem Rechnungsland aus Stripe. Unternehmen = als Unternehmen bestellt oder UID angegeben. Stripe-Gebühren sind eigene Ausgaben (Rechnung bzw. Gebührenaufstellung von Stripe).</p>`;
+        out.querySelectorAll("[data-eursave]").forEach((btn) => (btn.onclick = async () => {
+          const inp = out.querySelector(`.eurin[data-id="${btn.dataset.eursave}"]`);
+          try { await MS.api("POST", "admin/buchhaltung/euro", { id: btn.dataset.eursave, euro: inp.value }, H()); bhb.onclick(); } catch (e3) { alert(e3.message); }
+        }));
       } catch (e2) { out.innerHTML = `<p class="err">${MS.esc(e2.message)}</p>`; }
     };
 

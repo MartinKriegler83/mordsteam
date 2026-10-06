@@ -8,6 +8,7 @@
 <meta name="robots" content="noindex">
 <link rel="alternate" hreflang="de" href="https://mordsteam.com/bestellen.html">
 <link rel="alternate" hreflang="en" href="https://mordsteam.com/en/order.html">
+<link rel="alternate" hreflang="x-default" href="https://mordsteam.com/bestellen.html">
 <link rel="stylesheet" href="/assets/style.css">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
@@ -68,7 +69,7 @@
 <div class="field"><label for="teams">Number of teams *</label>
 <select id="teams" name="teams"></select>
 <div class="teamcalc"><label for="personen">How many of you are there in total?</label><input id="personen" type="number" min="1" max="200" inputmode="numeric" placeholder="e.g. 12"></div>
-<span class="hint" id="teamtip">4 to 6 people per team is ideal, each team needs one device. Enter your head count – we'll suggest the right number of teams.</span></div>
+<span class="hint" id="teamtip">4 to 6 people per team is ideal (3 to 6 possible), each team needs one device. Enter your head count – we'll suggest the right number of teams.</span></div>
 <div class="field"><span class="label">When do you play?</span><p class="whenbox">Whenever you like: right after paying or any time in the next 12 months. Each case can be started once.</p></div>
 </div>
 </fieldset>
@@ -118,7 +119,7 @@
 </div>
 <div class="two">
 <div class="field"><label for="c_tel">Phone <span class="opt">optional</span></label><input id="c_tel" name="c_tel" type="tel" maxlength="40" autocomplete="tel"></div>
-<div class="field"><label for="c_firma"><span data-c1>Company</span><span data-c2 hidden>Club</span> on the invoice <span class="opt">optional</span></label><input id="c_firma" name="c_firma" maxlength="120" autocomplete="organization"><span class="hint">You enter the billing address and VAT number when paying.</span></div>
+<div class="field"><label for="c_firma"><span data-c1>Company</span><span data-c2 hidden>Club</span> on the invoice <span class="opt">required when ordering as a company or club</span></label><input id="c_firma" name="c_firma" maxlength="120" autocomplete="organization"><span class="hint">You enter the billing address when paying; billing country and VAT ID further down.</span></div>
 </div>
 <div class="field"><span class="label">You are ordering as *</span>
 <label class="check"><input type="radio" name="kunde" value="b2b"><span>Company, club or organisation</span></label>

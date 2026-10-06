@@ -12,7 +12,8 @@ BASE = "https://mordsteam.com/"
 def templates(lang):
     src = open(os.path.join(ROOT, "teams.html" if lang == "de" else "en/teams.html"), encoding="utf-8").read()
     head = src[: src.index("</header>") + len("</header>")].replace(' aria-current="page"', "")
-    head = re.sub(r'<link rel="alternate" hreflang="de"[^>]*>\n<link rel="alternate" hreflang="en"[^>]*>\n', "", head)
+    head = re.sub(r'(?:<link rel="canonical"[^>]*>\n)?<link rel="alternate" hreflang="de"[^>]*>\n<link rel="alternate" hreflang="en"[^>]*>\n(?:<link rel="alternate" hreflang="x-default"[^>]*>\n)?', "", head)
+    assert "hreflang=" not in head.split("</head>")[0].replace('hreflang="de" lang', "").replace('hreflang="en" lang', "") and 'rel="canonical"' not in head
     return head, src[src.index("</main>"):]
 
 L = {
@@ -32,7 +33,7 @@ def page(p, lang):
     other = f"/en/{p['pair']}.html" if lang == "de" else f"/{p['pair']}.html"
     h = head_tpl
     h = re.sub(r"<title>.*?</title>", f"<title>{html.escape(p['title'])}</title>", h, flags=re.S)
-    h = re.sub(r'<meta name="description" content="[^"]*">', f'<meta name="description" content="{html.escape(p["desc"])}">\n<link rel="canonical" href="{de_url if lang == "de" else en_url}">\n<link rel="alternate" hreflang="de" href="{de_url}">\n<link rel="alternate" hreflang="en" href="{en_url}">\n<script type="application/ld+json">{faq_ld(p["faq"])}</script>', h)
+    h = re.sub(r'<meta name="description" content="[^"]*">', f'<meta name="description" content="{html.escape(p["desc"])}">\n<link rel="canonical" href="{de_url if lang == "de" else en_url}">\n<link rel="alternate" hreflang="de" href="{de_url}">\n<link rel="alternate" hreflang="en" href="{en_url}">\n<link rel="alternate" hreflang="x-default" href="{de_url}">\n<script type="application/ld+json">{faq_ld(p["faq"])}</script>', h)
     # Sprachumschalter auf die Partnerseite
     h = re.sub(r'(<a class="langlink" href=")[^"]*(")', lambda m: m.group(1) + other + m.group(2), h)
     h = re.sub(r'(<a href=")/(?:en/)?teams\.html(" hreflang="(?:de|en)" lang="(?:de|en)">)', lambda m: m.group(1) + other + m.group(2), h)
@@ -86,7 +87,7 @@ def page(p, lang):
 FIRMEN_OFFER = ("TEAMS · FÜR FIRMEN", "Krimi-Teamevent für Firmen", "Ein Kriminalfall in eurer Firma, mit euren Namen. Basic 89 €, Premium 119 €, Premium Plus mit KI-Finale 149 € – pro Team, beliebig viele Teams.", "teams.html", "Teams ansehen")
 VEREINE_OFFER = ("TEAMS · FÜR VEREINE", "Krimi-Teamevent für Vereine", "Nach dem Vereinsfest ist die Festkassa weg – und jemand aus dem Verein war's. Gleiche Pakete und Preise wie für Firmen.", "teams.html#fall002", "Vereinsfall ansehen")
 FRIENDS_OFFER = ("FRIENDS · 4–8 PERSONEN", "Krimiabend für Freunde", "Ihr seid die Verdächtigen – jeder ermittelt am eigenen Handy. Ab 29 € für bis zu 4 Personen.", "friends.html", "Friends ansehen")
-SOLO_OFFER = ("SOLO · 1 PERSON", "Krimi für dich allein", "Drei Fälle zum Allein-Lösen am Handy, 30–45 Minuten, ab 8,90 € – mit 5-€-Gutschein für Friends oder Teams.", "solo.html", "Solo ansehen")
+SOLO_OFFER = ("SOLO · 1 PERSON", "Krimi für dich allein", "Drei Fälle zum Allein-Lösen am Handy, 35–45 Minuten, ab 8,90 € – mit 5-€-Gutschein für Friends oder Teams.", "solo.html", "Solo ansehen")
 
 PAGES = [
   dict(slug="teamevent-online", pair="virtual-team-building", title="Teamevent online: Krimi-Teamevent für Remote-Teams | Mordsteam",
@@ -168,14 +169,14 @@ PAGES = [
     cta="Krimiabend bestellen – ab 29 €", cta_href="friends-kaufen.html",
     why_h2="Was diesen Krimiabend anders macht",
     why="Bei klassischen Krimispielen liest jeder eine Rolle vor. Bei Mordsteam Friends ermittelt jeder für sich, mit eigenen Beweisstücken – und am Ende zeigt die Rangliste, wer den Fall am schnellsten gelöst hat.",
-    points=["Für 4 bis 8 Personen, jeder am eigenen Handy", "Gleichzeitig am Abend oder zeitversetzt über 3, 5 oder 7 Tage", "Ihr seid die Verdächtigen – der Täter wird per Zufall gezogen", "Premium mit KI-Verhörraum: befragt eure Mitspieler als Doppelgänger (ab 18)", "Allein spielen? Mordsteam Solo ab 8,90 €"],
+    points=["Für 4 bis 8 Personen, jeder am eigenen Handy", "Gleichzeitig am Abend oder zeitversetzt über 3, 5 oder 7 Tage", "Ihr seid die Verdächtigen – der Täter wird per Zufall gezogen", "Krimiabend Plus mit KI-Verhörraum: befragt eure Mitspieler als Doppelgänger (ab 18)", "Allein spielen? Mordsteam Solo ab 8,90 €"],
     steps=[("Namen eintragen", "Beim Bestellen die Vornamen der Gruppe eintragen und Spielart wählen."), ("Link teilen", "Ihr bekommt einen Einladungslink für die Gruppe. Jeder tippt auf seinen Namen."), ("Ermitteln", "Hinweise kosten Zeit, falsche Antworten auch. Am Ende kommt die Auflösung für alle gleichzeitig.")],
     offers_h2="Krimispiel für Gruppen oder allein", offers=[FRIENDS_OFFER, SOLO_OFFER],
     offers_note="Jeder Solo-Fall enthält einen 5-€-Gutschein für Friends oder Teams.",
     faq=[("Wie viele Personen braucht man für das Krimispiel?", "Mordsteam Friends ist für 4 bis 8 Personen. Allein spielt ihr Mordsteam Solo."),
          ("Müssen alle am selben Ort sein?", "Nein. Jeder spielt am eigenen Handy – zusammen im Wohnzimmer oder verteilt, gleichzeitig oder über eine Woche."),
-         ("Wie lange dauert das Krimispiel?", "Friends hat 50 Minuten Countdown, Friends Plus 75 Minuten. Solo-Fälle dauern rund 30 bis 45 Minuten."),
-         ("Was kostet das Krimispiel?", "Friends ab 29 € bis 4 Personen (jede weitere +5 €), Premium mit KI ab 49 € (jede weitere +8 €). Solo ab 8,90 €."),
+         ("Wie lange dauert das Krimispiel?", "Friends hat 50 Minuten Countdown, Friends Plus 75 Minuten. Solo-Fälle dauern rund 35 bis 45 Minuten."),
+         ("Was kostet das Krimispiel?", "Friends ab 29 € bis 4 Personen (jede weitere +5 €), Krimiabend Plus ab 49 € (jede weitere +8 €). Solo ab 8,90 €."),
          ("Braucht man eine App?", "Nein. Alles läuft im Browser am Handy, Tablet oder Laptop.")],
     cta_h2="Einer von euch war's.", cta_p="Findet heraus, wer – beim nächsten Spieleabend."),
 ]
@@ -184,7 +185,7 @@ PAGES = [
 COMPANY_EN = ("TEAMS · FOR COMPANIES", "Murder mystery team event for companies", "A crime case set in your own company, starring your names. Basic €89, Premium €119, Premium Plus with AI finale €149 – per team, as many teams as you like.", "teams.html", "See Teams")
 CLUB_EN = ("TEAMS · FOR CLUBS", "Murder mystery team event for clubs", "After the club fête the cash box is gone – and someone from the club did it. Same packages and prices as for companies.", "teams.html#case002", "See the club case")
 FRIENDS_EN = ("FRIENDS · 4–8 PEOPLE", "Murder mystery night for friends", "You are the suspects – everyone investigates on their own phone. From €29 for up to 4 people.", "friends.html", "See Friends")
-SOLO_EN = ("SOLO · 1 PERSON", "A murder mystery just for you", "Three cases to solve on your own phone, 30–45 minutes, from €8.90 – with a €5 voucher for Friends or Teams.", "solo.html", "See Solo")
+SOLO_EN = ("SOLO · 1 PERSON", "A murder mystery just for you", "Three cases to solve on your own phone, 35–45 minutes, from €8.90 – with a €5 voucher for Friends or Teams.", "solo.html", "See Solo")
 
 PAGES_EN = [
   dict(slug="virtual-team-building", pair="teamevent-online", title="Virtual team building: a murder mystery for remote teams | Mordsteam",
@@ -212,13 +213,13 @@ PAGES_EN = [
     cta="Set up a case for our team", cta_href="order.html",
     why_h2="Team building everyone joins in",
     why="Many team-building formats are either a talk or a chore. In a murder mystery people really work together: who holds which clue, who keeps the overview, who asks the right question – it all shows during the game. And because colleagues are the suspects, new team members get to know everyone fast.",
-    points=["For offsites, strategy days and workshops as a programme item", "Onboarding: new colleagues play along and learn names and departments", "A fun activity in between – 50, 70 or 90 minute countdown", "In person, hybrid or remote: each team needs just one device", "Several teams competing, with leaderboard and certificate – no host needed"],
+    points=["For offsites, strategy days and workshops as a programme item", "Onboarding: new colleagues play along and learn names and departments", "A fun activity in between – 50-, 70- or 90-minute countdown", "In person, hybrid or remote: each team needs just one device", "Several teams competing, with leaderboard and certificate – no host needed"],
     steps=[("Choose case and package", "Basic (50 min), Premium with a second act (70 min) or Premium Plus with AI finale (90 min)."), ("Personalise", "Enter names, departments and rooms – or pick a fictional cast."), ("Play", "One person starts the clock and can still play along. The case desk handles the rest.")],
     offers_h2="For companies and clubs", offers=[COMPANY_EN, CLUB_EN],
     offers_note="A case can be started once within 12 months – so you can already order for your next offsite.",
     faq=[("How many people can take part?", "As many as you like: form teams of 3 to 6 and order the matching number of teams. All teams play the same case against each other at the same time."),
          ("Is it suitable for onboarding new employees?", "Yes. New colleagues appear in the case with their name and department and work with people they would otherwise only meet weeks later."),
-         ("Does it fit into an offsite programme?", "Yes. With a 50 to 90 minute countdown it fits between two workshop sessions. All you need is internet and one laptop, tablet or phone per team."),
+         ("Does it fit into an offsite programme?", "Yes. With a 50- to 90-minute countdown it fits between two workshop sessions. All you need is internet and one laptop, tablet or phone per team."),
          ("Does it work for remote teams?", "Yes. Each team plays in its own video-call room or together on one call – the case file is fully digital."),
          ("Is it suitable for everyone?", "A tongue-in-cheek murder mystery, no gore, no shock effects – nobody is embarrassed. The package with the AI finale is for participants aged 18 and over.")],
     cta_h2="One of you has something to hide.", cta_p="Find out who – at your next team building."),
@@ -266,14 +267,14 @@ PAGES_EN = [
     cta="Order a mystery night – from €29", cta_href="friends-buy.html",
     why_h2="What makes this game night different",
     why="In classic murder mystery games everyone reads out a role. In Mordsteam Friends everyone investigates for themselves, with their own evidence – and at the end the leaderboard shows who solved the case fastest.",
-    points=["For 4 to 8 people, each on their own phone", "At the same time in one evening or spread over 3, 5 or 7 days", "You are the suspects – the culprit is drawn at random", "Premium with AI interrogation room: question your fellow players' doubles (18+)", "Playing alone? Mordsteam Solo from €8.90"],
+    points=["For 4 to 8 people, each on their own phone", "At the same time in one evening or spread over 3, 5 or 7 days", "You are the suspects – the culprit is drawn at random", "Mystery Night Plus with AI interrogation room: question your fellow players' doubles (18+)", "Playing alone? Mordsteam Solo from €8.90"],
     steps=[("Enter names", "When ordering, enter your group's first names and choose how you want to play."), ("Share the link", "You get one invitation link for the group. Everyone taps their own name."), ("Investigate", "Hints cost time, wrong answers too. At the end the solution is revealed to everyone at once.")],
     offers_h2="Murder mystery for groups or on your own", offers=[FRIENDS_EN, SOLO_EN],
     offers_note="Every Solo case includes a €5 voucher for Friends or Teams.",
     faq=[("How many people do you need?", "Mordsteam Friends is for 4 to 8 people. On your own, play Mordsteam Solo."),
          ("Do we have to be in the same place?", "No. Everyone plays on their own phone – together in the living room or apart, at the same time or over a week."),
-         ("How long does it take?", "Friends has a 50-minute countdown, Friends Plus 75 minutes. Solo cases take around 30 to 45 minutes."),
-         ("What does it cost?", "Friends from €29 for up to 4 people (+€5 per extra person), Premium with AI from €49 (+€8 per extra person). Solo from €8.90."),
+         ("How long does it take?", "Friends has a 50-minute countdown, Friends Plus 75 minutes. Solo cases take around 35 to 45 minutes."),
+         ("What does it cost?", "Friends from €29 for up to 4 people (+€5 per extra person), Mystery Night Plus from €49 (+€8 per extra person). Solo from €8.90."),
          ("Do we need an app?", "No. Everything runs in the browser on phone, tablet or laptop.")],
     cta_h2="One of you did it.", cta_p="Find out who – at your next game night."),
 ]

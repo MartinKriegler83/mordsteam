@@ -4,6 +4,7 @@
 import { account, COUNTRY_ORDER } from "../lib/countries.js";
 import * as F from "../lib/cases/fall-001.js";
 import { regioGuard } from "./regio_guard.mjs";
+import { answerGuard } from "./answer_guard.mjs";
 import { readdirSync, readFileSync } from "fs";
 import { PRICE_TABLE, convPrice } from "../lib/prices.js";
 let err = 0;
@@ -27,6 +28,8 @@ for (let i = 0; i < 500; i++) for (const premium of [false, true]) {
 }
 // Go-live-Test 3 (5.10.2026): keine österreichischen Wörter in DE/CH/LI-Runden (Texte und KI-Figuren)
 { const rg = regioGuard("fall-001", 60); for (const e of rg.errs) fail(e); }
+// Go-live-Test 4 (6.10.2026): richtige Antworten aller Stufen zählen als richtig
+{ const ag = answerGuard("fall-001", 120); for (const e of ag.errs) fail(e); }
 // Landeswährung (lib/prices.js): jeder markierte Preis der englischen Seiten braucht £ und $ in der Tabelle; Server-Preise ebenso
 {
   const files = readdirSync(new URL("../site/en/", import.meta.url)).filter((f) => f.endsWith(".html"));

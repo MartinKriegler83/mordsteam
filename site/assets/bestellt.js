@@ -4,7 +4,7 @@
   var EN=document.documentElement.lang==="en";
   function T(de,en){return EN?en:de;}
   // Rechnungshinweis passend zum Bezahlweg (Paddle für Privatkunden in Großbritannien)
-  function INV(d){return d&&d.provider==='paddle'?T('Die Rechnung kommt per E-Mail von Paddle.com (Verkäufer für Privatkunden im Vereinigten Königreich). Fragen? ','The invoice will be emailed by Paddle.com (the seller for private customers in the United Kingdom). Questions? '):T('Die Rechnung kommt per E-Mail von unserem Zahlungsanbieter Stripe. Fragen? ','The invoice will be emailed by our payment provider Stripe. Questions? ');}
+  function INV(d){return d&&d.provider==='paddle'?T('Die Rechnung kommt per E-Mail von Paddle.com (Verkäufer für Kunden im Vereinigten Königreich). Fragen? ','The invoice will be emailed by Paddle.com (the seller for customers in the United Kingdom). Questions? '):T('Die Rechnung kommt per E-Mail von unserem Zahlungsanbieter Stripe. Fragen? ','The invoice will be emailed by our payment provider Stripe. Questions? ');}
   var out=document.getElementById("out");
   var q=new URLSearchParams(location.search), o=q.get("o"), k=q.get("k"), tries=0;
   var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -35,13 +35,16 @@
       '</ol><p><b>'+T("Tipp:","Tip:")+'</b> '+T('Öffnet ein paar Tage vorher '+esc(location.host)+'/spiel auf einem Firmengerät. Lädt die Seite, bremst euch kein Webfilter.','A few days before, open '+esc(location.host)+'/spiel on a company device. If the page loads, no web filter will get in your way.')+'</p><p>'+INV(d)+MAIL+'</p>'+(d.nr?'<p class="small">'+T('Bestellnummer','Order number')+': <b>'+esc(d.nr)+'</b></p>':'')+'</div>'+
       '');
   }
+  // Geschenkkarte zum Ausdrucken oder als PDF (Go-live-Test 4)
+  function GIFT(){return '<p style="margin:6px 0 22px"><a class="btn btn-line" href="/geschenk.html?o='+encodeURIComponent(o)+'&k='+encodeURIComponent(k)+'&l='+(EN?"en":"de")+'" target="_blank" rel="noopener">🎁 '+T("Geschenkkarte drucken / als PDF","Print gift card / save as PDF")+'</a></p>';}
   function soloDone(d){
     var link=location.origin+"/spiel/solo.html?c="+d.solo_code;
     show('<div class="eyebrow">'+T("Bezahlt · Mordsteam Solo","Paid · Mordsteam Solo")+'</div>'+
       '<h1>'+T((d.solo_head||["Der Nachtzug wartet."])[0],(d.solo_head||["","The night train is waiting."])[1])+'</h1>'+
-      '<p class="lead">'+T('Dein Code für „'+esc(d.solo_title||"Nachtzug nach Venedig")+'“ ist 12 Monate gültig. Wir haben ihn dir auch per E-Mail geschickt.','Your code for “'+esc(d.solo_title_en||"Night Train to Venice")+'” (game language German) is valid for 12 months. We have also emailed it to you.')+'</p>'+
+      '<p class="lead">'+T('Dein Code für „'+esc(d.solo_title||"Nachtzug nach Venedig")+'“ ist 12 Monate gültig. Wir haben ihn dir auch per E-Mail geschickt.','Your code for “'+esc(d.solo_title_en||"Night Train to Venice")+'” (game language '+(d.lang==="en"?"English":"German")+') is valid for 12 months. We have also emailed it to you.')+'</p>'+
       '<div class="codes"><div class="codecard dark"><small>'+T("DEIN SOLO-CODE","YOUR SOLO CODE")+'</small><div class="code">'+esc(d.solo_code)+'</div><p>'+T("Als Geschenk einfach Code oder Link weitergeben – den Namen gibt ein, wer spielt.","As a gift, just pass on the code or link – the name is entered by whoever plays.")+'</p></div></div>'+
       '<p style="margin:22px 0"><a class="btn btn-red" href="'+esc(link)+'">'+T("Fall öffnen","Open the case")+'</a></p>'+
+      GIFT()+
       '<div class="prose"><p>'+T('Die Uhr startet erst, wenn du die Akte öffnest – dann hast du '+(d.solo_min||30)+' Minuten, '+((d.solo_goal||["bis Udine"])[0])+'. Link zum Spielen: ','The clock only starts when you open the case file – then you have '+(d.solo_min||30)+' minutes '+((d.solo_goal||["","until Udine"])[1])+'. Link to play: ')+'<a href="'+esc(link)+'">'+esc(link.replace(/^https?:\/\//,""))+'</a></p>'+
       '<p>'+INV(d)+MAIL+'</p>'+(d.nr?'<p class="small">'+T('Bestellnummer','Order number')+': <b>'+esc(d.nr)+'</b></p>':'')+'</div>');
   }
@@ -50,11 +53,11 @@
     var mode=d.mode==="week"?T("über "+d.days+" Tage – jeder spielt, wann er Zeit hat","over "+d.days+" days – everyone plays when they have time"):T("gleichzeitig – du startest den Fall für alle","all at once – you start the case for everyone");
     show('<div class="eyebrow">'+T("Bezahlt · Mordsteam Friends","Paid · Mordsteam Friends")+'</div>'+
       '<h1>'+T("Die Hütte wartet.","The hut is waiting.")+'</h1>'+
-      '<p class="lead">'+T('„Letzte Runde auf der Hütte“'+(d.plus?' – Krimiabend Plus mit KI-Verhörraum –':'')+' für '+d.teams+' Personen, gespielt '+mode+'. 12 Monate spielbar, einmal startbar. Wir haben dir beide Links auch per E-Mail geschickt.','“Last Round at the Chalet”'+(d.plus?' – Mystery Night Plus with AI interrogation room –':'')+' (game language German) for '+d.teams+' people, played '+mode+'. Playable for 12 months, can be started once. We have also emailed you both links.')+'</p>'+
+      '<p class="lead">'+T('„Letzte Runde auf der Hütte“'+(d.plus?' – Krimiabend Plus mit KI-Verhörraum –':'')+' für '+d.teams+' Personen, gespielt '+mode+'. 12 Monate spielbar, einmal startbar. Wir haben dir beide Links auch per E-Mail geschickt.','“Last Round at the Chalet”'+(d.plus?' – Mystery Night Plus with AI interrogation room –':'')+' (game language '+(d.lang==="en"?"English":"German")+') for '+d.teams+' people, played '+mode+'. Playable for 12 months, can be started once. We have also emailed you both links.')+'</p>'+
       '<div class="codes">'+
       '<div class="codecard"><small>'+T("1 · EINLADUNGSLINK FÜR ALLE","1 · INVITATION LINK FOR EVERYONE")+'</small><p style="word-break:break-all"><a href="'+esc(inv)+'">'+esc(inv.replace(/^https?:\/\//,""))+'</a></p><p>'+T("Schick ihn in eure Gruppe. Jeder tippt auf seinen Namen – auch du, wenn du mitspielst.","Send it to your group. Everyone taps their name – you too, if you're playing.")+'</p><p><button type="button" class="btn btn-ink" id="cpinv">'+T("Link kopieren","Copy link")+'</button></p></div>'+
       '<div class="codecard dark"><small>'+T("2 · DEINE ORGANISATOR-SEITE · NICHT WEITERGEBEN","2 · YOUR ORGANISER PAGE · DON'T PASS ON")+'</small><p>'+T("Hier siehst du, wer schon da ist, und startest den Fall.","Here you can see who has joined and start the case.")+'</p><p><a class="btn btn-red" href="'+esc(org)+'">'+T("Organisator-Seite öffnen","Open organiser page")+'</a></p></div>'+
-      '</div>'+
+      '</div>'+GIFT()+
       (d.earlybird?'<p class="note">'+T('Early Bird: Danke, dass ihr uns helft! Nach der Auflösung fragt euch das Spiel direkt nach eurem Feedback.','Early bird: thanks for helping us! After the solution, the game will ask you for your feedback right away.')+'</p>':'')+
       '<div class="prose"><p>'+INV(d)+MAIL+'</p>'+(d.nr?'<p class="small">'+T('Bestellnummer','Order number')+': <b>'+esc(d.nr)+'</b></p>':'')+'</div>');
     var b=document.getElementById("cpinv");
