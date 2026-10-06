@@ -45,7 +45,7 @@ for (let n = 4; n <= 8; n++) for (const cAct of ["karten", "balkon"]) for (const
   if (rg.some((r) => !AREA[r[0]])) err("Rundgang-Orte", n);
   const cand = rg.filter((r) => area.includes(AREA[r[0]])).map((r) => r[0]);
   if (cand.length !== 1 || F.SPOTS[sol.versteck].name !== { "Schuhschrank im Flur": "Schuhschrank im Flur", "Blumentrog auf dem Balkon": "Blumentrog auf dem Balkon" }[cand[0]]) err("Frage 3", n, cAct, cand, sol.versteck);
-  if (app.some((r) => r[1] === "Keller" && hm(r[0]) > hm("01:19") + (tv ? F.TIME_SHIFTS[tv] : 0))) err("Keller nach Kamera", n);
+  if (app.some((r) => r[1] === "Keller" && hm(r[0]) > hm("01:19") + (tv ? F.TIME_SHIFTS[tv] : 0) && hm(r[0]) < hm("07:35")))  // 07:36 = Loisl am Morgen err("Keller nach Kamera", n);
   // Frage 4 (Plus)
   if (plus) { const h = F.pwHolders(G); if (h.length !== 3 || h.includes(S.culprit) || new Set(h).size !== 3 || !by.backup) err("Frage 4", n); if (!/Almweg 17/.test(by.plan.html)) err("Hausnummer", n); }
   if (/\{|undefined|NaN/.test(D.map((d) => d.html).join("") + Object.values(F.hints(G)).flat().join(" ") + F.resolution(G).text)) err("Platzhalter", n);

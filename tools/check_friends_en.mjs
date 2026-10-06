@@ -134,7 +134,7 @@ for (let n = 4; n <= 8; n++) for (const cAct of ["karten", "balkon"]) for (const
   if (rg.some((r) => !AREA[r[0]])) err("Rundgang-Orte", tag);
   const cand = rg.filter((r) => area.includes(AREA[r[0]])).map((r) => r[0]);
   if (cand.length !== 1 || EN.SPOTS[sol.versteck].name !== cand[0]) err("Frage 3", tag, cand, sol.versteck);
-  if (app.some((r) => r[1] === "Cellar" && hm(r[0]) > hm("01:19") + (tv ? DE.TIME_SHIFTS[tv] : 0))) err("Keller nach Kamera", tag);
+  if (app.some((r) => r[1] === "Cellar" && hm(r[0]) > hm("01:19") + (tv ? DE.TIME_SHIFTS[tv] : 0) && hm(r[0]) < hm("07:35")))  // 07:36 = Loisl in the morning err("Keller nach Kamera", tag);
   if (plus) { if (!by.backup || !/Almweg 17/.test(by.plan.html)) err("Frage 4", tag); }
 
   // ----- Verhörraum (Plus) -----
