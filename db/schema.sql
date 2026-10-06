@@ -18,3 +18,4 @@ CREATE INDEX IF NOT EXISTS nl_contacts_token ON nl_contacts (token);
 CREATE TABLE IF NOT EXISTS expenses (id TEXT PRIMARY KEY, datum TEXT NOT NULL, bezahlt_am TEXT, anbieter TEXT NOT NULL, beschreibung TEXT, kategorie TEXT, steuerart TEXT NOT NULL, betrag_cents INTEGER NOT NULL, ust_cents INTEGER, orig TEXT, anteil INTEGER NOT NULL DEFAULT 100, bezahlt_von TEXT NOT NULL DEFAULT 'konto', beleg TEXT, notiz TEXT, cost_id TEXT, dup_ok INTEGER NOT NULL DEFAULT 0, bank_ref TEXT, created_at INTEGER NOT NULL, updated_at INTEGER, deleted INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE IF NOT EXISTS rc_paid (quartal TEXT PRIMARY KEY, paid_at INTEGER);
 CREATE TABLE IF NOT EXISTS duties_done (key TEXT PRIMARY KEY, done_at INTEGER);
+CREATE TABLE IF NOT EXISTS expense_files (id TEXT PRIMARY KEY, expense_id TEXT NOT NULL, name TEXT NOT NULL, mime TEXT NOT NULL, size INTEGER NOT NULL, r2_key TEXT NOT NULL, created_at INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0);

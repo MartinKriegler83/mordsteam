@@ -289,6 +289,26 @@
     </div>`;
   }
 
+  // ZIP ohne Kompression (Belege sind schon komprimiert) – ohne Bibliothek, für den Beleg-Export
+  const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  const crc32 = (d) => { let c = 0xffffffff; for (let i = 0; i < d.length; i++) c = CRC[(c ^ d[i]) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+  function zipStore(files) {
+    const enc = new TextEncoder(), parts = [], central = []; let off = 0;
+    const now = new Date(), dt = ((now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1)) & 0xffff, dd = (((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate()) & 0xffff;
+    for (const f of files) {
+      const nm = enc.encode(f.name), crc = crc32(f.data), h = new DataView(new ArrayBuffer(30));
+      [[0, 0x04034b50, 4], [4, 20, 2], [6, 0x0800, 2], [8, 0, 2], [10, dt, 2], [12, dd, 2], [14, crc, 4], [18, f.data.length, 4], [22, f.data.length, 4], [26, nm.length, 2], [28, 0, 2]].forEach(([o, v, s]) => (s === 4 ? h.setUint32(o, v, true) : h.setUint16(o, v, true)));
+      parts.push(new Uint8Array(h.buffer), nm, f.data);
+      const c = new DataView(new ArrayBuffer(46));
+      [[0, 0x02014b50, 4], [4, 20, 2], [6, 20, 2], [8, 0x0800, 2], [10, 0, 2], [12, dt, 2], [14, dd, 2], [16, crc, 4], [20, f.data.length, 4], [24, f.data.length, 4], [28, nm.length, 2], [30, 0, 2], [32, 0, 2], [34, 0, 2], [36, 0, 2], [38, 0, 4], [42, off, 4]].forEach(([o, v, s]) => (s === 4 ? c.setUint32(o, v, true) : c.setUint16(o, v, true)));
+      central.push(new Uint8Array(c.buffer), nm);
+      off += 30 + nm.length + f.data.length;
+    }
+    const csize = central.reduce((a, p) => a + p.length, 0), e = new DataView(new ArrayBuffer(22));
+    [[0, 0x06054b50, 4], [4, 0, 2], [6, 0, 2], [8, files.length, 2], [10, files.length, 2], [12, csize, 4], [16, off, 4], [20, 0, 2]].forEach(([o, v, s]) => (s === 4 ? e.setUint32(o, v, true) : e.setUint16(o, v, true)));
+    return new Blob([...parts, ...central, new Uint8Array(e.buffer)], { type: "application/zip" });
+  }
+
   // ---------- Buchhaltung: Ausgabenbuch, E/A-Rechnung, Fristen (lib/ledger.js, 6.10.2026) ----------
   function ledgerPanel() {
     if (!led) return `<div class="panel"><div class="eyebrow">Buchhaltung · Ausgaben</div><p class="small">Konnte nicht geladen werden.</p></div>`;
@@ -321,7 +341,7 @@
       <td><b>${e(x.anbieter)}</b>${x.beschreibung ? `<br><span class="small">${e(x.beschreibung)}</span>` : ""}${x.dup ? `<br><b class="small" style="color:var(--red)">möglicherweise doppelt</b>` : ""}</td>
       <td class="small">${e(x.kategorie || "")}<br>${e(SA[x.steuerart] || x.steuerart)}${x.bezahlt_von === "privat" ? " · privat bezahlt" : ""}</td>
       <td class="mono">${m(x.betrag_cents)}${x.anteil !== 100 ? `<br><span class="small">${x.anteil} % = ${m(x.betrieblich_cents)}</span>` : ""}${x.rc_cents ? `<br><span class="small">RC-USt ${m(x.rc_cents)}</span>` : ""}</td>
-      <td class="small">${e(x.beleg || "")}${x.notiz ? `<br><i>${e(x.notiz)}</i>` : ""}</td>
+      <td class="small">${(x.files || []).map((b) => `📎 <a href="#" data-beleg="${e(b.id)}">${e(b.name.length > 28 ? b.name.slice(0, 26) + "…" : b.name)}</a>`).join("<br>")}${x.files && x.files.length && x.beleg ? "<br>" : ""}${e(x.beleg || "")}${!(x.files || []).length && !x.beleg ? `<span style="color:var(--red)">kein Beleg</span>` : ""}${x.notiz ? `<br><i>${e(x.notiz)}</i>` : ""}</td>
       <td style="white-space:nowrap"><button class="btn btn-line" type="button" data-ledit="${e(x.id)}">Ändern</button>${x.dup ? ` <button class="btn btn-line" type="button" data-ledok="${e(x.id)}">kein Duplikat</button>` : ""}</td></tr>`).join("");
     const f = ledEdit || {};
     const v = (x) => (x == null ? "" : e(String(x)));
@@ -332,7 +352,7 @@
         <label class="small">Jahr <select id="ledyear">${years}</select></label>
         <button class="btn btn-line" type="button" id="exea">E/A-Rechnung ${Y} (CSV)</button>
         <button class="btn btn-line" type="button" id="exaus">Ausgaben ${Y} (CSV)</button>
-        <button class="btn btn-line" type="button" id="exein">Einnahmen ${Y} (CSV)</button></div>
+        <button class="btn btn-line" type="button" id="exein">Einnahmen ${Y} (CSV)</button>${led.belege ? `<button class="btn btn-line" type="button" id="exzip">Belege ${Y} (ZIP)</button>` : ""}</div>
       ${warn.join("")}
       <div class="two" style="gap:18px;align-items:start">
         <div style="overflow-x:auto"><table class="grid small"><tr><th>${Y}</th><th>Einnahmen</th><th>Ausgaben</th><th>Gewinn</th></tr>${mrows}
@@ -350,7 +370,7 @@
         <input type="hidden" name="id" value="${v(f.id)}"><input type="hidden" name="cost_id" value="${v(f.cost_id)}">
         <div class="two"><div class="field"><label>Rechnungsdatum *</label><input type="date" name="datum" value="${v(f.datum || led.today)}"></div>
         <div class="field"><label>Bezahlt am (leer = Rechnungsdatum)</label><input type="date" name="bezahlt_am" value="${v(f.bezahlt_am && f.bezahlt_am !== f.datum ? f.bezahlt_am : "")}"></div></div>
-        <div class="two"><div class="field"><label>Anbieter *</label><input name="anbieter" maxlength="80" list="ledanb" value="${v(f.anbieter)}" placeholder="z. B. Google Ads"><datalist id="ledanb">${["Anthropic", "Cloudflare", "Resend", "Google Ads", "Meta (Facebook/Instagram)", "Apple (iCloud+)", "Erste Bank / Sparkasse", "SVS", "Wirtschaftskammer", "Finanzamt"].map((x) => `<option>${x}</option>`).join("")}</datalist></div>
+        <div class="two"><div class="field"><label>Bezahlt an * <span class="small">(Firma oder Stelle laut Rechnung)</span></label><input name="anbieter" maxlength="80" list="ledanb" value="${v(f.anbieter)}" placeholder="z. B. Österreichische Post"><datalist id="ledanb">${[...new Set([...(led.anbieter_liste || []), "Österreichische Post", "Anthropic", "Microsoft", "Apple (iCloud+)", "Cloudflare", "Resend", "Google Ads", "Meta (Facebook/Instagram)", "Erste Bank / Sparkasse", "SVS", "Wirtschaftskammer", "Finanzamt", "Bezirkshauptmannschaft"])].map((x) => `<option>${e(x)}</option>`).join("")}</datalist></div>
         <div class="field"><label>Beschreibung</label><input name="beschreibung" maxlength="160" value="${v(f.beschreibung)}" placeholder="z. B. Kontoführung Oktober"></div></div>
         <div class="two"><div class="field"><label>Kategorie</label><select name="kategorie">${led.kategorien.map((k) => `<option ${k === (f.kategorie || "Sonstiges") ? "selected" : ""}>${e(k)}</option>`).join("")}</select></div>
         <div class="field"><label>Steuerart *</label><select name="steuerart"><option value="">– bitte wählen –</option>${sel(led.steuerarten, f.steuerart)}</select></div></div>
@@ -359,14 +379,16 @@
         <div class="two"><div class="field"><label>Bezahlt von</label><select name="bezahlt_von">${sel(led.bezahlt, f.bezahlt_von || "konto")}</select></div>
         <div class="field"><label>davon USt laut Rechnung (optional)</label><input name="ust" inputmode="decimal" value="${cents(f.ust_cents)}"></div></div>
         <div class="two"><div class="field"><label>Originalbetrag (bei Dollar-Rechnung)</label><input name="orig" maxlength="40" value="${v(f.orig)}" placeholder="z. B. USD 20,00"></div>
-        <div class="field"><label>Beleg (Dateiname oder Ablageort)</label><input name="beleg" maxlength="300" value="${v(f.beleg)}" placeholder="z. B. 2026-10_Erste_Kontofuehrung.pdf"></div></div>
+        <div class="field"><label>Beleg-Hinweis (optional)</label><input name="beleg" maxlength="300" value="${v(f.beleg)}" placeholder="z. B. Rechnung per Mail, Ordner Belege 2026"></div></div>
+        <div class="field"><label>Beleg hochladen (PDF oder Foto, bis 20 MB, mehrere möglich)</label>${led.belege ? `<input type="file" id="ledfiles" multiple accept="application/pdf,image/*">` : `<p class="small"><b>Belegspeicher noch nicht eingerichtet</b> (Cloudflare R2, Binding BELEGE).</p>`}
+          ${(f.files || []).length ? `<ul class="small" style="margin:6px 0 0;padding-left:18px">${f.files.map((x) => `<li>📎 <a href="#" data-beleg="${e(x.id)}">${e(x.name)}</a> <span style="color:var(--muted)">(${Math.max(1, Math.round(x.size / 1024))} KB)</span> · <a href="#" data-belegdel="${e(x.id)}">entfernen</a></li>`).join("")}</ul>` : ""}</div>
         <div class="field"><label>Notiz</label><input name="notiz" maxlength="300" value="${v(f.notiz)}" placeholder="Rechnungsnummer, Zeitraum, Begründung des Anteils …"></div>
         <p class="small">Als Kleinunternehmer gibt es keinen Vorsteuerabzug: Betriebsausgabe ist der bezahlte Betrag inklusive USt (mal Anteil). Privat bezahlte Rechnungen (z. B. Claude-Abo mit 40 %) zählen genauso – „privat bezahlt“ heißt nur, dass keine Zeile am Geschäftskonto dazu gehört. Geräte über 1.000 € netto werden abgeschrieben – dann bitte mit der Steuerberatung klären.</p>
-        <div class="actions-row"><button class="btn btn-red" type="submit">${f.id ? "Speichern" : "Ausgabe erfassen"}</button>${f.id || f.cost_id ? `<button class="btn btn-line" type="button" id="ledcancel">Abbrechen</button>` : ""}${f.id ? `<button class="btn btn-ghost" type="button" id="leddel">Ausgabe löschen</button>` : ""}</div>
+        <div class="actions-row"><button class="btn btn-red" type="submit">${f.id ? "Speichern" : "Ausgabe erfassen"}</button>${f.id || f.cost_id ? `<button class="btn btn-line" type="button" id="ledcancel">Abbrechen</button>` : ""}${f.id ? `<button class="btn btn-line" type="button" id="leddel" style="color:var(--red)">Ausgabe löschen</button>` : ""}</div>
         <p class="err">${e(ledMsg)}</p>
       </form>
-      <div class="eyebrow" style="margin-top:16px">Ausgaben ${Y} (${led.expenses.length})</div>
-      ${xrows ? `<div style="overflow-x:auto"><table class="grid small"><tr><th>Datum</th><th>Anbieter</th><th>Art</th><th>Betrag</th><th>Beleg · Notiz</th><th></th></tr>${xrows}</table></div>${led.expenses.length > 25 && !ledAll ? `<button class="btn btn-line" type="button" id="ledall">alle ${led.expenses.length} zeigen</button>` : ""}` : `<p class="small">Noch keine Ausgaben für ${Y} erfasst.</p>`}
+      <div class="eyebrow" style="margin-top:16px">Ausgaben ${Y} (${led.expenses.length})${led.ohne_beleg ? ` · <span style="color:var(--red)">${led.ohne_beleg} ohne Beleg</span>` : ""}</div>
+      ${xrows ? `<div style="overflow-x:auto"><table class="grid small"><tr><th>Datum</th><th>Bezahlt an</th><th>Art</th><th>Betrag</th><th>Beleg · Notiz</th><th></th></tr>${xrows}</table></div>${led.expenses.length > 25 && !ledAll ? `<button class="btn btn-line" type="button" id="ledall">alle ${led.expenses.length} zeigen</button>` : ""}` : `<p class="small">Noch keine Ausgaben für ${Y} erfasst.</p>`}
       ${led.stripe_fees.length ? `<p class="small" style="margin-top:6px">Automatisch aus Stripe: ${led.stripe_fees.map((x) => `${e(x.beschreibung.replace("Stripe-Gebühren ", "").replace(" aus den Zahlungen", ""))} ${m(x.betrag_cents)}`).join(" · ")} (Reverse Charge, Kategorie Zahlungsgebühren).</p>` : ""}
     </div>`;
   }
@@ -402,7 +424,7 @@
         <div class="field"><label>Seit (JJJJ-MM oder JJJJ-MM-TT)</label><input name="seit" placeholder="2026-09" value="${val(k.seit)}"></div></div>
         <div class="field"><label>Wo liegt der Beleg?</label><input name="beleg" maxlength="300" value="${val(k.beleg)}"></div>
         <div class="field"><label>Hinweis</label><input name="hinweis" maxlength="500" value="${val(k.hinweis)}"></div>
-        <div class="actions-row"><button class="btn btn-red" type="submit">Speichern</button>${k.id ? `<button class="btn btn-line" type="button" id="kcancel">Abbrechen</button><button class="btn btn-ghost" type="button" id="kdel">Posten löschen</button>` : ""}</div>
+        <div class="actions-row"><button class="btn btn-red" type="submit">Speichern</button>${k.id ? `<button class="btn btn-line" type="button" id="kcancel">Abbrechen</button><button class="btn btn-line" type="button" id="kdel" style="color:var(--red)">Posten löschen</button>` : ""}</div>
         <p class="err">${e(kostenMsg)}</p>
       </form></div>`;
   }
@@ -603,12 +625,62 @@
     if (lf) {
       lf.onsubmit = async (ev) => {
         ev.preventDefault();
-        try { await MS.api("POST", "admin/ausgaben", Object.fromEntries(new FormData(lf).entries()), H()); ledEdit = null; ledMsg = ""; await ledReload(); }
-        catch (e2) { ledMsg = e2.message; render(...last); toLedForm(); }
+        const errEl = lf.querySelector(".err"), sub = lf.querySelector("button[type=submit]");
+        const fi = document.getElementById("ledfiles"), files = fi ? [...fi.files] : [];
+        const big = files.find((x) => x.size > 20 * 1024 * 1024);
+        if (big) { errEl.textContent = `„${big.name}“ ist größer als 20 MB.`; return; }
+        sub.disabled = true; errEl.textContent = "";
+        try {
+          const r = await MS.api("POST", "admin/ausgaben", Object.fromEntries(new FormData(lf).entries()), H());
+          for (let i = 0; i < files.length; i++) {
+            errEl.textContent = `Lade Beleg ${i + 1} von ${files.length} hoch …`;
+            const up = await fetch(`/api/spiel/admin/ausgaben/beleg?id=${encodeURIComponent(r.id)}`, { method: "POST", headers: { ...H(), "content-type": files[i].type || "application/octet-stream", "x-filename": encodeURIComponent(files[i].name) }, body: files[i] });
+            if (!up.ok) { const d = await up.json().catch(() => ({})); throw new Error(`Ausgabe gespeichert, aber „${files[i].name}“ nicht hochgeladen: ${d.error || up.status}`); }
+          }
+          ledEdit = null; ledMsg = ""; await ledReload();
+        } catch (e2) { errEl.textContent = e2.message; sub.disabled = false; }   // Eingaben bleiben stehen
       };
       const lc = document.getElementById("ledcancel"); if (lc) lc.onclick = () => { ledEdit = null; ledMsg = ""; render(...last); };
       const ld = document.getElementById("leddel"); if (ld) ld.onclick = async () => { if (!confirm("Diese Ausgabe löschen?")) return; await MS.api("POST", "admin/ausgaben/loeschen", { id: ledEdit.id }, H()); ledEdit = null; ledReload(); };
     }
+    root.querySelectorAll("[data-beleg]").forEach((a) => (a.onclick = async (ev) => {
+      ev.preventDefault();
+      const w = window.open("", "_blank");   // sofort öffnen, sonst blockiert der Browser das Fenster
+      const r = await fetch(`/api/spiel/admin/ausgaben/beleg?file=${encodeURIComponent(a.dataset.beleg)}`, { headers: H() });
+      if (!r.ok) { if (w) w.close(); const d = await r.json().catch(() => ({})); alert(d.error || "Beleg konnte nicht geladen werden."); return; }
+      const url = URL.createObjectURL(await r.blob());
+      if (w) w.location = url; else location.href = url;
+    }));
+    root.querySelectorAll("[data-belegdel]").forEach((a) => (a.onclick = async (ev) => {
+      ev.preventDefault();
+      if (!confirm("Diesen Beleg von der Ausgabe entfernen?")) return;
+      await MS.api("POST", "admin/ausgaben/beleg/loeschen", { id: a.dataset.belegdel }, H());
+      await ledReload(); if (ledEdit) { ledEdit = led.expenses.find((x) => x.id === ledEdit.id) || null; render(...last); toLedForm(); }
+    }));
+    const exzip = document.getElementById("exzip");
+    if (exzip) exzip.onclick = async () => {
+      const list = led.expenses.filter((x) => x.files && x.files.length);
+      if (!list.length) { alert("Für dieses Jahr sind noch keine Belege hochgeladen."); return; }
+      exzip.disabled = true; const label = exzip.textContent;
+      try {
+        const entries = [], used = new Set();
+        const slug = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ß/g, "ss").replace(/[^A-Za-z0-9.-]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 40);
+        let n = 0; const total = list.reduce((a, x) => a + x.files.length, 0);
+        for (const x of list) for (const f of x.files) {
+          exzip.textContent = `Lade ${++n} von ${total} …`;
+          const r = await fetch(`/api/spiel/admin/ausgaben/beleg?file=${encodeURIComponent(f.id)}`, { headers: H() });
+          if (!r.ok) continue;
+          let name = `${x.datum}_${slug(x.anbieter)}_${slug(f.name)}`, k = 2;
+          while (used.has(name)) name = name.replace(/(\.[^.]+)?$/, `_${k++}$1`);
+          used.add(name); entries.push({ name, data: new Uint8Array(await r.arrayBuffer()) });
+        }
+        const csvr = await fetch(`/api/spiel/admin/export/ausgaben?von=${ledYear}-01-01&bis=${ledYear}-12-31`, { headers: H() });
+        if (csvr.ok) entries.push({ name: `mordsteam-ausgaben-${ledYear}.csv`, data: new Uint8Array(await csvr.arrayBuffer()) });
+        const a2 = document.createElement("a"); a2.href = URL.createObjectURL(zipStore(entries)); a2.download = `mordsteam-belege-${ledYear}.zip`;
+        document.body.append(a2); a2.click(); a2.remove();
+      } catch (e2) { alert("ZIP fehlgeschlagen: " + e2.message); }
+      exzip.disabled = false; exzip.textContent = label;
+    };
     root.querySelectorAll("[data-ledit]").forEach((b) => (b.onclick = () => { ledEdit = led.expenses.find((x) => x.id === b.dataset.ledit) || null; ledMsg = ""; render(...last); toLedForm(); }));
     root.querySelectorAll("[data-ledok]").forEach((b) => (b.onclick = async () => { await MS.api("POST", "admin/ausgaben/doppelt-ok", { id: b.dataset.ledok }, H()); ledReload(); }));
     root.querySelectorAll("[data-ledmiss]").forEach((b) => (b.onclick = () => {
