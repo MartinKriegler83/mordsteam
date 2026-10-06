@@ -29,7 +29,7 @@
       friendsList = await fetch("/api/friends/admin/list", { headers: H() }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
       ops = await MS.api("GET", "admin/ops", null, H()).catch(() => null);
       kosten = await MS.api("GET", "admin/kosten", null, H()).catch(() => null);
-      rc = await MS.api("GET", "admin/rc", null, H()).catch(() => null);
+      led = await MS.api("GET", "admin/ausgaben?jahr=" + ledYear, null, H()).catch(() => null);
       kunden = await MS.api("GET", "admin/kunden", null, H()).catch(() => null);
       nlData = await MS.api("GET", "admin/newsletter", null, H()).catch(() => null);
       render(list.sessions, ord.orders, st.stats);
@@ -87,7 +87,7 @@
   let friendsMsg = "", friendsList = null;
   let soloMsg = "", soloList = null, ops = null, last = [[], [], {}];
   let kosten = null, kostenEdit = null, kostenMsg = "";
-  let rc = null, rcMsg = "";
+  let led = null, ledYear = new Date().getFullYear(), ledEdit = null, ledMsg = "", ledAll = false;
   let kunden = null, nlData = null, nlMsg = "", nlSyncMsg = "", nlPrev = "", nlForm = { lang: "de" }, kundenAll = false;
   let tab = "uebersicht";
   try { tab = sessionStorage.getItem("ms_admtab") || "uebersicht"; } catch {}
@@ -289,28 +289,85 @@
     </div>`;
   }
 
-  // ---------- Reverse Charge: Belege ausländischer Anbieter, Steuer je Quartal ----------
-  function rcPanel() {
-    if (!rc) return `<div class="panel"><div class="eyebrow">Reverse Charge</div><p class="small">Konnte nicht geladen werden.</p></div>`;
-    const e = MS.esc, m = (c) => (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 }) + " €";
-    const dd = (iso) => iso.split("-").reverse().join(".");
-    const today = new Date().toISOString().slice(0, 10);
-    const qrows = rc.quarters.map((q) => `<tr><td class="mono">${e(q.quartal)}</td><td>${q.count}</td><td class="mono">${m(q.netto)}</td><td class="mono"><b>${m(q.steuer)}</b></td>
-      <td>${dd(q.faellig)}${!q.bezahlt && q.faellig < today ? ` <b style="color:var(--red)">überfällig</b>` : ""}</td>
-      <td>${q.bezahlt ? `bezahlt am ${new Date(q.bezahlt).toLocaleDateString("de-AT")} <button class="btn btn-line" type="button" data-rcpaid="${e(q.quartal)}" data-undo="1">zurück</button>` : `<button class="btn btn-line" type="button" data-rcpaid="${e(q.quartal)}">als bezahlt markieren</button>`}</td></tr>`).join("");
-    const erows = rc.entries.slice(0, 40).map((x) => `<tr><td>${dd(x.datum)}</td><td>${e(x.anbieter)}</td><td class="mono">${m(x.netto_cents)}</td><td class="mono">${m(Math.round(x.netto_cents * rc.rate / 100))}</td><td class="small">${e(x.notiz || "")}</td><td><button class="btn btn-line" type="button" data-rcdel="${e(x.id)}">löschen</button></td></tr>`).join("");
-    return `<div class="panel"><div class="eyebrow">Reverse Charge · Umsatzsteuer auf ausländische Anbieter</div>
-      <p class="small" style="margin:6px 0 10px">Für Leistungen ausländischer Anbieter an Mordsteam (Google Ads, Anthropic, Resend, Cloudflare …) schuldest du ${rc.rate} % österreichische USt – ohne Vorsteuerabzug. Keine Voranmeldung nötig (außer das Finanzamt fordert sie an), aber die Steuer je Quartal bis zum 15. des zweitfolgenden Monats aufs Abgabenkonto überweisen (Verwendungszweck „U“ + Quartal). Sobald im Jahr Steuer anfällt: Umsatzsteuer-Jahreserklärung. Betrag in Euro laut Kontoauszug eintragen (bei Dollar-Rechnungen).</p>
-      ${rc.quarters.length ? `<div style="overflow-x:auto"><table class="grid small"><tr><th>Quartal</th><th>Belege</th><th>Netto</th><th>Steuer ${rc.rate} %</th><th>fällig am</th><th>Status</th></tr>${qrows}</table></div>` : `<p class="small">Noch keine Belege erfasst.</p>`}
-      <form id="rcform" class="form" style="margin-top:12px">
-        <div class="two"><div class="field"><label>Rechnungsdatum *</label><input type="date" name="datum" value="${today}"></div>
-        <div class="field"><label>Anbieter *</label><input name="anbieter" maxlength="80" list="rcanb" placeholder="z. B. Google Ads"><datalist id="rcanb"><option>Google Ads</option><option>Anthropic (Claude API)</option><option>Resend</option><option>Cloudflare</option><option>Stripe-Gebühren</option><option>Meta (Facebook/Instagram)</option></datalist></div></div>
-        <div class="two"><div class="field"><label>Netto in Euro *</label><input name="netto" inputmode="decimal" placeholder="z. B. 18,40"></div>
-        <div class="field"><label>Notiz</label><input name="notiz" maxlength="200" placeholder="Rechnungsnummer, Zeitraum …"></div></div>
-        <div class="actions-row"><button class="btn btn-red" type="submit">Beleg erfassen</button></div>
-        <p class="err">${e(rcMsg)}</p>
+  // ---------- Buchhaltung: Ausgabenbuch, E/A-Rechnung, Fristen (lib/ledger.js, 6.10.2026) ----------
+  function ledgerPanel() {
+    if (!led) return `<div class="panel"><div class="eyebrow">Buchhaltung · Ausgaben</div><p class="small">Konnte nicht geladen werden.</p></div>`;
+    const e = MS.esc, m = (c) => (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+    const dd = (iso) => (iso ? iso.split("-").reverse().join(".") : "");
+    const MON = ["Jän.", "Feb.", "März", "Apr.", "Mai", "Juni", "Juli", "Aug.", "Sep.", "Okt.", "Nov.", "Dez."];
+    const T = led.totals, Y = led.year, now = new Date().getFullYear();
+    const years = [now + 1, now, now - 1, now - 2].filter((y) => y >= 2026 && y <= now).map((y) => `<option ${y === Y ? "selected" : ""}>${y}</option>`).join("");
+    // Warnungen
+    const warn = [];
+    if (led.missing.length) warn.push(`<div class="warnbox"><b>Laufende Kosten ohne Buchung (${led.missing.length})</b> – laut Kostenliste fällig, aber noch nicht erfasst:
+      <div style="overflow-x:auto"><table class="grid small" style="margin-top:6px">${led.missing.map((x, i) => `<tr><td>${e(x.name)}</td><td>${e(x.period)}</td><td class="mono">${x.waehrung === "USD" ? (x.betrag_cents / 100).toFixed(2) + " $" : m(x.betrag_cents)}</td><td><button class="btn btn-line" type="button" data-ledmiss="${i}">jetzt erfassen</button></td></tr>`).join("")}</table></div></div>`);
+    if (led.dup_count) warn.push(`<div class="warnbox"><b>Möglicherweise doppelt erfasst (${led.dup_count})</b> – gleicher Anbieter, gleicher Betrag, höchstens 5 Tage auseinander. In der Liste unten markiert: löschen oder „ist kein Duplikat“.</div>`);
+    if (led.stripe_manual) warn.push(`<div class="warnbox"><b>Stripe-Gebühren von Hand erfasst</b> – die Gebühren kommen automatisch aus den Zahlungen. Bitte die händische Buchung löschen, sonst zählen sie doppelt.</div>`);
+    if (led.eur_missing) warn.push(`<div class="warnbox"><b>${led.eur_missing} Einnahme(n) in Pfund/Dollar ohne Euro-Betrag</b> – zählen noch nicht mit (Bestellungen → „Buchhaltung: Übersicht“).</div>`);
+    // E/A je Monat
+    const mrows = led.months.map((x, i) => `<tr><td>${MON[i]}</td><td class="mono">${m(x.einnahmen)}</td><td class="mono">${m(x.ausgaben + x.gebuehren + x.rc_bezahlt)}</td><td class="mono"><b>${m(x.gewinn)}</b></td></tr>`).join("");
+    const krows = led.by_kategorie.map((k) => `<tr><td>${e(k.kategorie)}</td><td class="mono">${m(k.cents)}</td></tr>`).join("");
+    // Fristen
+    const st = (d) => d.status === "erledigt" ? `<span style="color:var(--green,#2d7a3e)">✓ erledigt ${d.done ? new Date(d.done).toLocaleDateString("de-AT") : ""}</span>` : d.status === "überfällig" ? `<b style="color:var(--red)">überfällig</b>` : "offen";
+    const btn = (d) => d.kind === "rc"
+      ? (d.done ? `<button class="btn btn-line" type="button" data-rcpaid="${e(d.key.slice(3))}" data-undo="1">zurück</button>` : `<input type="date" class="rcdate" data-q="${e(d.key.slice(3))}" value="${led.today}" style="width:9.5em"> <button class="btn btn-line" type="button" data-rcpaid="${e(d.key.slice(3))}">bezahlt</button>`)
+      : `<button class="btn btn-line" type="button" data-duty="${e(d.key)}" ${d.done ? 'data-undo="1">zurück' : ">erledigt"}</button>`;
+    const drows = led.duties.map((d) => `<tr><td><b>${e(d.title)}</b><br><span class="small">${e(d.detail)}</span></td><td class="mono" style="white-space:nowrap">${d.kind === "e1" ? "" : m(d.cents)}</td><td>${dd(d.due)}</td><td>${st(d)}</td><td style="white-space:nowrap">${btn(d)}</td></tr>`).join("");
+    const th = led.thresholds;
+    // Ausgabenliste
+    const list = (ledAll ? led.expenses : led.expenses.slice(0, 25));
+    const SA = { rc: "Reverse Charge", at_ust: "mit USt", ausl_ust: "Ausland mit USt", ohne: "ohne USt" };
+    const xrows = list.map((x) => `<tr${x.dup || x.stripe_manual ? ' style="background:#FFF4CF"' : ""}><td>${dd(x.datum)}${x.bezahlt_am && x.bezahlt_am !== x.datum ? `<br><span class="small">bez. ${dd(x.bezahlt_am)}</span>` : ""}</td>
+      <td><b>${e(x.anbieter)}</b>${x.beschreibung ? `<br><span class="small">${e(x.beschreibung)}</span>` : ""}${x.dup ? `<br><b class="small" style="color:var(--red)">möglicherweise doppelt</b>` : ""}</td>
+      <td class="small">${e(x.kategorie || "")}<br>${e(SA[x.steuerart] || x.steuerart)}${x.bezahlt_von === "privat" ? " · privat bezahlt" : ""}</td>
+      <td class="mono">${m(x.betrag_cents)}${x.anteil !== 100 ? `<br><span class="small">${x.anteil} % = ${m(x.betrieblich_cents)}</span>` : ""}${x.rc_cents ? `<br><span class="small">RC-USt ${m(x.rc_cents)}</span>` : ""}</td>
+      <td class="small">${e(x.beleg || "")}${x.notiz ? `<br><i>${e(x.notiz)}</i>` : ""}</td>
+      <td style="white-space:nowrap"><button class="btn btn-line" type="button" data-ledit="${e(x.id)}">Ändern</button>${x.dup ? ` <button class="btn btn-line" type="button" data-ledok="${e(x.id)}">kein Duplikat</button>` : ""}</td></tr>`).join("");
+    const f = ledEdit || {};
+    const v = (x) => (x == null ? "" : e(String(x)));
+    const cents = (c) => (c == null || c === "" ? "" : (Number(c) / 100).toFixed(2).replace(".", ","));
+    const sel = (obj, cur) => Object.entries(obj).map(([k, l]) => `<option value="${e(k)}" ${k === cur ? "selected" : ""}>${e(l)}</option>`).join("");
+    return `<div class="panel" id="ledger"><div class="eyebrow">Buchhaltung · Einnahmen-Ausgaben-Rechnung</div>
+      <div class="actions-row" style="margin:8px 0;align-items:end;flex-wrap:wrap;gap:8px">
+        <label class="small">Jahr <select id="ledyear">${years}</select></label>
+        <button class="btn btn-line" type="button" id="exea">E/A-Rechnung ${Y} (CSV)</button>
+        <button class="btn btn-line" type="button" id="exaus">Ausgaben ${Y} (CSV)</button>
+        <button class="btn btn-line" type="button" id="exein">Einnahmen ${Y} (CSV)</button></div>
+      ${warn.join("")}
+      <div class="two" style="gap:18px;align-items:start">
+        <div style="overflow-x:auto"><table class="grid small"><tr><th>${Y}</th><th>Einnahmen</th><th>Ausgaben</th><th>Gewinn</th></tr>${mrows}
+          <tr><th>Summe</th><th class="mono">${m(T.einnahmen)}</th><th class="mono">${m(T.ausgaben + T.gebuehren + T.rc_bezahlt)}</th><th class="mono">${m(T.gewinn)}</th></tr></table>
+          <p class="small" style="margin-top:6px">Einnahmen nach Zahlungstag (nach Erstattungen; Paddle mit der Auszahlung, ohne britische USt und Paddle-Gebühr), Ausgaben nach „bezahlt am“ und nur mit dem betrieblichen Anteil. Darin enthalten: Stripe-Gebühren ${m(T.gebuehren)} (automatisch), bezahlte Reverse-Charge-USt ${m(T.rc_bezahlt)}${T.privat_bezahlt ? `, privat bezahlt ${m(T.privat_bezahlt)}` : ""}.</p></div>
+        <div style="overflow-x:auto"><table class="grid small"><tr><th>Ausgaben nach Kategorie</th><th>${Y}</th></tr>${krows || `<tr><td colspan="2">noch keine</td></tr>`}</table>
+          <p class="small" style="margin-top:8px"><b>Kleinunternehmergrenze:</b> ${m(th.ku.cents)} von ${m(th.ku.limit)} (${Math.round(th.ku.cents / th.ku.limit * 100)} %)<br><b>EU-Privatkunden:</b> ${m(th.eu_b2c.cents)} von ${m(th.eu_b2c.limit)} (${Math.round(th.eu_b2c.cents / th.eu_b2c.limit * 100)} %)</p></div>
+      </div>
+      <div class="eyebrow" style="margin-top:18px">Fristen und Meldungen ${Y}</div>
+      ${led.duties.length ? `<div style="overflow-x:auto"><table class="grid small"><tr><th>Was</th><th>Betrag</th><th>fällig</th><th>Status</th><th></th></tr>${drows}</table></div>` : `<p class="small">Für ${Y} ist noch nichts zu melden oder zu zahlen.</p>`}
+      <p class="small">Reverse Charge: Für Leistungen ausländischer Anbieter (Anthropic, Cloudflare, Resend, Google, Meta, Stripe …) schuldest du ${led.rate} % österreichische USt, ohne Vorsteuerabzug. Je Quartal bis zum 15. des zweitfolgenden Monats aufs Abgabenkonto überweisen (Verwendungszweck „U“ + Quartal); eine Voranmeldung nur, wenn das Finanzamt sie verlangt. Die bezahlte Steuer zählt selbst als Betriebsausgabe.</p>
+
+      <form id="ledform" class="form" style="margin-top:16px;border-top:1px solid var(--line,#ddd);padding-top:12px">
+        <div class="eyebrow">${f.id ? "Ausgabe ändern" : "Ausgabe erfassen"}</div>
+        <input type="hidden" name="id" value="${v(f.id)}"><input type="hidden" name="cost_id" value="${v(f.cost_id)}">
+        <div class="two"><div class="field"><label>Rechnungsdatum *</label><input type="date" name="datum" value="${v(f.datum || led.today)}"></div>
+        <div class="field"><label>Bezahlt am (leer = Rechnungsdatum)</label><input type="date" name="bezahlt_am" value="${v(f.bezahlt_am && f.bezahlt_am !== f.datum ? f.bezahlt_am : "")}"></div></div>
+        <div class="two"><div class="field"><label>Anbieter *</label><input name="anbieter" maxlength="80" list="ledanb" value="${v(f.anbieter)}" placeholder="z. B. Google Ads"><datalist id="ledanb">${["Anthropic", "Cloudflare", "Resend", "Google Ads", "Meta (Facebook/Instagram)", "Apple (iCloud+)", "Erste Bank / Sparkasse", "SVS", "Wirtschaftskammer", "Finanzamt"].map((x) => `<option>${x}</option>`).join("")}</datalist></div>
+        <div class="field"><label>Beschreibung</label><input name="beschreibung" maxlength="160" value="${v(f.beschreibung)}" placeholder="z. B. Kontoführung Oktober"></div></div>
+        <div class="two"><div class="field"><label>Kategorie</label><select name="kategorie">${led.kategorien.map((k) => `<option ${k === (f.kategorie || "Sonstiges") ? "selected" : ""}>${e(k)}</option>`).join("")}</select></div>
+        <div class="field"><label>Steuerart *</label><select name="steuerart"><option value="">– bitte wählen –</option>${sel(led.steuerarten, f.steuerart)}</select></div></div>
+        <div class="two"><div class="field"><label>Betrag in Euro * <span class="small">(bei Reverse Charge: netto, laut Kontoauszug)</span></label><input name="betrag" inputmode="decimal" value="${cents(f.betrag_cents)}" placeholder="z. B. 21,25"></div>
+        <div class="field"><label>Betrieblicher Anteil in %</label><input name="anteil" inputmode="numeric" value="${v(f.anteil ?? 100)}"></div></div>
+        <div class="two"><div class="field"><label>Bezahlt von</label><select name="bezahlt_von">${sel(led.bezahlt, f.bezahlt_von || "konto")}</select></div>
+        <div class="field"><label>davon USt laut Rechnung (optional)</label><input name="ust" inputmode="decimal" value="${cents(f.ust_cents)}"></div></div>
+        <div class="two"><div class="field"><label>Originalbetrag (bei Dollar-Rechnung)</label><input name="orig" maxlength="40" value="${v(f.orig)}" placeholder="z. B. USD 20,00"></div>
+        <div class="field"><label>Beleg (Dateiname oder Ablageort)</label><input name="beleg" maxlength="300" value="${v(f.beleg)}" placeholder="z. B. 2026-10_Erste_Kontofuehrung.pdf"></div></div>
+        <div class="field"><label>Notiz</label><input name="notiz" maxlength="300" value="${v(f.notiz)}" placeholder="Rechnungsnummer, Zeitraum, Begründung des Anteils …"></div>
+        <p class="small">Als Kleinunternehmer gibt es keinen Vorsteuerabzug: Betriebsausgabe ist der bezahlte Betrag inklusive USt (mal Anteil). Privat bezahlte Rechnungen (z. B. Claude-Abo mit 40 %) zählen genauso – „privat bezahlt“ heißt nur, dass keine Zeile am Geschäftskonto dazu gehört. Geräte über 1.000 € netto werden abgeschrieben – dann bitte mit der Steuerberatung klären.</p>
+        <div class="actions-row"><button class="btn btn-red" type="submit">${f.id ? "Speichern" : "Ausgabe erfassen"}</button>${f.id || f.cost_id ? `<button class="btn btn-line" type="button" id="ledcancel">Abbrechen</button>` : ""}${f.id ? `<button class="btn btn-ghost" type="button" id="leddel">Ausgabe löschen</button>` : ""}</div>
+        <p class="err">${e(ledMsg)}</p>
       </form>
-      ${erows ? `<details style="margin-top:8px"><summary class="small">Erfasste Belege (${rc.entries.length})</summary><div style="overflow-x:auto"><table class="grid small"><tr><th>Datum</th><th>Anbieter</th><th>Netto</th><th>Steuer</th><th>Notiz</th><th></th></tr>${erows}</table></div></details>` : ""}
+      <div class="eyebrow" style="margin-top:16px">Ausgaben ${Y} (${led.expenses.length})</div>
+      ${xrows ? `<div style="overflow-x:auto"><table class="grid small"><tr><th>Datum</th><th>Anbieter</th><th>Art</th><th>Betrag</th><th>Beleg · Notiz</th><th></th></tr>${xrows}</table></div>${led.expenses.length > 25 && !ledAll ? `<button class="btn btn-line" type="button" id="ledall">alle ${led.expenses.length} zeigen</button>` : ""}` : `<p class="small">Noch keine Ausgaben für ${Y} erfasst.</p>`}
+      ${led.stripe_fees.length ? `<p class="small" style="margin-top:6px">Automatisch aus Stripe: ${led.stripe_fees.map((x) => `${e(x.beschreibung.replace("Stripe-Gebühren ", "").replace(" aus den Zahlungen", ""))} ${m(x.betrag_cents)}`).join(" · ")} (Reverse Charge, Kategorie Zahlungsgebühren).</p>` : ""}
     </div>`;
   }
 
@@ -325,13 +382,13 @@
       <td class="mono">${x.art === "nutzung" && x.betrag_cents == null ? "<span class=\"small\">laut Rechnung</span>" : money(x.betrag_cents, x.waehrung)}</td>
       <td style="white-space:nowrap">${x.anteil == null ? "<i>offen</i>" : x.anteil + "&nbsp;%"}</td>
       <td class="small">${e(x.beleg || "")}${x.hinweis ? `<br><i>${e(x.hinweis)}</i>` : ""}</td>
-      <td><button class="btn btn-line" type="button" data-kedit="${e(x.id)}">Ändern</button></td></tr>`).join("");
+      <td style="white-space:nowrap"><button class="btn btn-line" type="button" data-kbook="${e(x.id)}">buchen</button> <button class="btn btn-line" type="button" data-kedit="${e(x.id)}">Ändern</button></td></tr>`).join("");
     const sums = Object.entries(kosten.sums).map(([w, s]) => `${money(Math.round(s.year_full / 12), w)} pro Monat · ${money(s.year_full, w)} pro Jahr (betrieblich: ${money(s.year_business, w)} pro Jahr)`).join("<br>");
     const k = kostenEdit || {};
     const opt = (v, cur) => Object.entries(A).map(([key, l]) => `<option value="${key}" ${key === cur ? "selected" : ""}>${l}</option>`).join("");
     const val = (v) => (v == null ? "" : e(String(v)));
-    return `<div class="panel"><div class="eyebrow">Ausgaben · was wir absetzen können</div>
-      <p class="small" style="margin:6px 0 10px">Checkliste aller Kosten, damit nichts vergessen wird. Die einzelnen Zahlungen mit Datum kommen später in die E/A-Rechnung. „Anteil“ = betrieblich genutzter Teil; bei gemischter Nutzung (privat und Mordsteam) nur dieser Teil absetzbar.${kosten.open ? ` <b>${kosten.open} Posten mit offenem Betrag oder Anteil.</b>` : ""}</p>
+    return `<div class="panel"><div class="eyebrow">Laufende Kosten · Vorlagen</div>
+      <p class="small" style="margin:6px 0 10px">Vorlagen für laufende Kosten, damit nichts vergessen wird. Gebucht wird im Ausgabenbuch oben – „buchen“ füllt das Formular vor. Mit „Seit“ meldet die Buchhaltung Monate ohne Buchung. „Anteil“ = betrieblich genutzter Teil; bei gemischter Nutzung (privat und Mordsteam) nur dieser Teil absetzbar.${kosten.open ? ` <b>${kosten.open} Posten mit offenem Betrag oder Anteil.</b>` : ""}</p>
       <div style="overflow-x:auto"><table class="grid small"><tr><th>Posten</th><th>Rhythmus</th><th>Betrag</th><th>Anteil</th><th>Beleg · Hinweis</th><th></th></tr>${rows}</table></div>
       <p class="small" style="margin-top:8px"><b>Fixkosten mit bekanntem Betrag:</b><br>${sums || "–"}</p>
       <form id="kform" class="form" style="margin-top:14px;border-top:1px solid var(--line, #ddd);padding-top:12px">
@@ -442,7 +499,7 @@
         <p class="err">${MS.esc(err)}</p>
       </form></div>` : ""}
       ${tab === "uebersicht" ? overviewPanel(orders) : ""}
-      ${tab === "finanzen" ? ordersPanel(orders) + rcPanel() + costsPanel() : ""}
+      ${tab === "finanzen" ? ordersPanel(orders) + ledgerPanel() + costsPanel() : ""}
       ${tab === "statistik" ? statsPanel(stats) + soloStatsPanel() : ""}
       ${tab === "system" ? systemPanel() : ""}
       ${tab === "feedback" ? feedbackPanel() : ""}
@@ -517,6 +574,12 @@
       const a2 = document.createElement("a"); a2.href = URL.createObjectURL(await r.blob()); a2.download = `mordsteam-einnahmen-${v}-bis-${b2}.csv`;
       document.body.append(a2); a2.click(); a2.remove();
     };
+    root.querySelectorAll("[data-kbook]").forEach((b) => (b.onclick = () => {
+      const x = kosten.items.find((k) => k.id === b.dataset.kbook); if (!x) return;
+      ledEdit = { cost_id: x.id, anbieter: x.anbieter || x.name, beschreibung: x.name, betrag_cents: x.waehrung === "EUR" ? x.betrag_cents : null, anteil: x.anteil ?? 100,
+        orig: x.waehrung === "USD" && x.betrag_cents ? "USD " + (x.betrag_cents / 100).toFixed(2).replace(".", ",") : "" };
+      ledMsg = ""; render(...last); const f = document.getElementById("ledform"); if (f) f.scrollIntoView({ behavior: "smooth", block: "start" });
+    }));
     root.querySelectorAll("[data-kedit]").forEach((b) => (b.onclick = () => { kostenEdit = kosten.items.find((x) => x.id === b.dataset.kedit) || null; kostenMsg = ""; render(...last); const f = document.getElementById("kform"); if (f) f.scrollIntoView({ behavior: "smooth" }); }));
     const kf = document.getElementById("kform");
     if (kf) {
@@ -532,14 +595,44 @@
         kosten = await MS.api("POST", "admin/kosten/loeschen", { id: kostenEdit.id }, H()); kostenEdit = null; render(...last);
       };
     }
-    const rcf = document.getElementById("rcform");
-    if (rcf) rcf.onsubmit = async (ev) => {
-      ev.preventDefault();
-      try { rc = await MS.api("POST", "admin/rc", Object.fromEntries(new FormData(rcf).entries()), H()); rcMsg = ""; } catch (e2) { rcMsg = e2.message; }
-      render(...last);
+    // Buchhaltung: Ausgabenbuch
+    const ledReload = async () => { led = await MS.api("GET", "admin/ausgaben?jahr=" + ledYear, null, H()).catch(() => led); render(...last); };
+    const toLedForm = () => { const f = document.getElementById("ledform"); if (f) f.scrollIntoView({ behavior: "smooth", block: "start" }); };
+    const ly = document.getElementById("ledyear"); if (ly) ly.onchange = () => { ledYear = Number(ly.value); ledEdit = null; ledAll = false; ledReload(); };
+    const lf = document.getElementById("ledform");
+    if (lf) {
+      lf.onsubmit = async (ev) => {
+        ev.preventDefault();
+        try { await MS.api("POST", "admin/ausgaben", Object.fromEntries(new FormData(lf).entries()), H()); ledEdit = null; ledMsg = ""; await ledReload(); }
+        catch (e2) { ledMsg = e2.message; render(...last); toLedForm(); }
+      };
+      const lc = document.getElementById("ledcancel"); if (lc) lc.onclick = () => { ledEdit = null; ledMsg = ""; render(...last); };
+      const ld = document.getElementById("leddel"); if (ld) ld.onclick = async () => { if (!confirm("Diese Ausgabe löschen?")) return; await MS.api("POST", "admin/ausgaben/loeschen", { id: ledEdit.id }, H()); ledEdit = null; ledReload(); };
+    }
+    root.querySelectorAll("[data-ledit]").forEach((b) => (b.onclick = () => { ledEdit = led.expenses.find((x) => x.id === b.dataset.ledit) || null; ledMsg = ""; render(...last); toLedForm(); }));
+    root.querySelectorAll("[data-ledok]").forEach((b) => (b.onclick = async () => { await MS.api("POST", "admin/ausgaben/doppelt-ok", { id: b.dataset.ledok }, H()); ledReload(); }));
+    root.querySelectorAll("[data-ledmiss]").forEach((b) => (b.onclick = () => {
+      const x = led.missing[+b.dataset.ledmiss];
+      const sa = /bank|sparkasse|erste|konto|svs|kammer|wko|finanzamt|bezirks|justiz|gewerbe|firmenbuch/i.test(x.anbieter + " " + x.name) ? "ohne" : /anthropic|cloudflare|resend|google|meta|github|stripe/i.test(x.anbieter) ? "rc" : "";
+      ledEdit = { cost_id: x.cost_id, datum: x.datum, anbieter: x.anbieter || x.name, beschreibung: `${x.name} – ${x.period}`, betrag_cents: x.waehrung === "EUR" ? x.betrag_cents : null, anteil: x.anteil, steuerart: sa,
+        kategorie: /konto|bank/i.test(x.name) ? "Bankspesen" : /svs/i.test(x.name) ? "Sozialversicherung (SVS)" : /wko|kammer/i.test(x.name) ? "Gebühren / Behörden" : /cloudflare|domain/i.test(x.name) ? "Hosting / Domain" : /resend/i.test(x.name) ? "E-Mail-Versand" : /claude|anthropic/i.test(x.name) ? "KI / API (Anthropic)" : "Software / Abos" };
+      ledMsg = ""; render(...last); toLedForm();
+    }));
+    const la = document.getElementById("ledall"); if (la) la.onclick = () => { ledAll = true; render(...last); };
+    root.querySelectorAll("[data-rcpaid]").forEach((b) => (b.onclick = async () => {
+      const dt = root.querySelector(`.rcdate[data-q="${b.dataset.rcpaid}"]`);
+      try { await MS.api("POST", "admin/rc/bezahlt", { quartal: b.dataset.rcpaid, paid: !b.dataset.undo, datum: dt ? dt.value : "" }, H()); } catch (e2) { alert(e2.message); }
+      ledReload();
+    }));
+    root.querySelectorAll("[data-duty]").forEach((b) => (b.onclick = async () => { await MS.api("POST", "admin/pflicht", { key: b.dataset.duty, done: !b.dataset.undo }, H()); ledReload(); }));
+    const dl = async (url, name) => {
+      const r = await fetch(url, { headers: H() });
+      if (!r.ok) { alert("Export fehlgeschlagen."); return; }
+      const a2 = document.createElement("a"); a2.href = URL.createObjectURL(await r.blob()); a2.download = name; document.body.append(a2); a2.click(); a2.remove();
     };
-    root.querySelectorAll("[data-rcdel]").forEach((b) => (b.onclick = async () => { rc = await MS.api("POST", "admin/rc/loeschen", { id: b.dataset.rcdel }, H()); render(...last); }));
-    root.querySelectorAll("[data-rcpaid]").forEach((b) => (b.onclick = async () => { rc = await MS.api("POST", "admin/rc/bezahlt", { quartal: b.dataset.rcpaid, paid: !b.dataset.undo }, H()); render(...last); }));
+    const exea = document.getElementById("exea"); if (exea) exea.onclick = () => dl(`/api/spiel/admin/export/ea?jahr=${ledYear}`, `mordsteam-ea-rechnung-${ledYear}.csv`);
+    const exaus = document.getElementById("exaus"); if (exaus) exaus.onclick = () => dl(`/api/spiel/admin/export/ausgaben?von=${ledYear}-01-01&bis=${ledYear}-12-31`, `mordsteam-ausgaben-${ledYear}.csv`);
+    const exein = document.getElementById("exein"); if (exein) exein.onclick = () => dl(`/api/spiel/admin/export?von=${ledYear}-01-01&bis=${ledYear}-12-31`, `mordsteam-einnahmen-${ledYear}.csv`);
     // Erstattung / Rückbuchung erfassen (Go-live-Test 4, M13)
     root.querySelectorAll("[data-refund]").forEach((b) => (b.onclick = async () => {
       const id = b.dataset.refund, v = (c) => root.querySelector(`.${c}[data-id="${id}"]`);

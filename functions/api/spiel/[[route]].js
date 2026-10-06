@@ -1,6 +1,7 @@
 // Cloudflare Pages Function: /api/spiel/*
 // Benötigt: D1-Binding "DB" und die geheime Umgebungsvariable "ADMIN_KEY".
-import { accountingSummary, viennaMidnight, viennaDayEnd, migrateAccounting, region, REGION_LABEL, costList, costSave, costDelete, rcList, rcSave, rcDelete, rcMarkPaid , setEuroAmount, recordRefund } from "../../../lib/accounting.js";
+import { ledgerYear, expenseSave, expenseDelete, expenseDupOk, rcMarkPaid, dutyDone, expensesCsv, earCsv, viennaYmd } from "../../../lib/ledger.js";
+import { accountingSummary, viennaMidnight, viennaDayEnd, migrateAccounting, region, REGION_LABEL, costList, costSave, costDelete, setEuroAmount, recordRefund } from "../../../lib/accounting.js";
 import {
   CASES, caseOf, langOf, RULES, json, fail, randInt, randomToken, randomCode, esc, viennaDate,
   buildVars, render, checkAnswers, norm, same, hintLabel, namesToLetters, lettersToName, hintTimes, hardEnd, refreshStatus, finishIfAllSolved, recordStats, expired, purgeSession, ranking, teamScore,
@@ -66,10 +67,21 @@ export async function onRequest(ctx) {
       if (route === "admin/feedback" && method === "GET") return adminFeedback(env);
       if (route === "admin/export" && method === "GET") return adminExport(request, env);
       if (route === "admin/kosten" && method === "GET") return json(await costList(env));
-      if (route === "admin/rc" && method === "GET") return json(await rcList(env));
-      if (route === "admin/rc" && method === "POST") { try { return json(await rcSave(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
-      if (route === "admin/rc/loeschen" && method === "POST") { const b = await request.json().catch(() => ({})); return json(await rcDelete(env, b.id)); }
-      if (route === "admin/rc/bezahlt" && method === "POST") { try { return json(await rcMarkPaid(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
+      // Ausgabenbuch und E/A-Rechnung (lib/ledger.js, 6.10.2026)
+      const wrap = async (fn) => { try { return json(await fn()); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } };
+      const body = () => request.json().catch(() => ({}));
+      if (route === "admin/ausgaben" && method === "GET") return wrap(() => ledgerYear(env, new URL(request.url).searchParams.get("jahr")));
+      if (route === "admin/ausgaben" && method === "POST") return wrap(async () => expenseSave(env, await body()));
+      if (route === "admin/ausgaben/loeschen" && method === "POST") return wrap(async () => expenseDelete(env, (await body()).id));
+      if (route === "admin/ausgaben/doppelt-ok" && method === "POST") return wrap(async () => expenseDupOk(env, (await body()).id));
+      if (route === "admin/rc/bezahlt" && method === "POST") return wrap(async () => rcMarkPaid(env, await body()));
+      if (route === "admin/pflicht" && method === "POST") return wrap(async () => dutyDone(env, await body()));
+      if ((route === "admin/export/ausgaben" || route === "admin/export/ea") && method === "GET") {
+        const u = new URL(request.url), von = u.searchParams.get("von") || "2000-01-01", bis = u.searchParams.get("bis") || "2999-12-31", jahr = Number(u.searchParams.get("jahr")) || Number(viennaYmd(Date.now()).slice(0, 4));
+        const ea = route === "admin/export/ea", text = ea ? await earCsv(env, jahr) : await expensesCsv(env, von, bis);
+        return new Response(text, { headers: { "content-type": "text/csv; charset=utf-8", "cache-control": "no-store",
+          "content-disposition": `attachment; filename="${ea ? `mordsteam-ea-rechnung-${jahr}` : `mordsteam-ausgaben-${von}-bis-${bis}`}.csv"` } });
+      }
       if (route === "admin/kosten" && method === "POST") { try { return json(await costSave(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
       if (route === "admin/kosten/loeschen" && method === "POST") { const b = await request.json().catch(() => ({})); return json(await costDelete(env, b.id)); }
       if (route === "admin/bestellung/erstattet" && method === "POST") { try { return json(await recordRefund(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
