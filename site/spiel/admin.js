@@ -321,7 +321,7 @@
     const warn = [];
     if (led.missing.length) warn.push(`<div class="warnbox"><b>Laufende Kosten ohne Buchung (${led.missing.length})</b> – laut Kostenliste fällig, aber noch nicht erfasst:
       <div style="overflow-x:auto"><table class="grid small" style="margin-top:6px">${led.missing.map((x, i) => `<tr><td>${e(x.name)}</td><td>${e(x.period)}</td><td class="mono">${x.waehrung === "USD" ? (x.betrag_cents / 100).toFixed(2) + " $" : m(x.betrag_cents)}</td><td><button class="btn btn-line" type="button" data-ledmiss="${i}">jetzt erfassen</button></td></tr>`).join("")}</table></div></div>`);
-    if (led.dup_count) warn.push(`<div class="warnbox"><b>Möglicherweise doppelt erfasst (${led.dup_count})</b> – gleicher Verkäufer, gleicher Betrag, höchstens 5 Tage auseinander. In der Liste unten markiert: löschen oder „ist kein Duplikat“.</div>`);
+    if (led.dup_count) warn.push(`<div class="warnbox"><b>Möglicherweise doppelt erfasst (${led.dup_count})</b> – gleicher Verkäufer mit gleicher Rechnungsnummer, oder gleicher Betrag höchstens 5 Tage auseinander. In der Liste unten markiert: löschen oder „ist kein Duplikat“.</div>`);
     if (led.stripe_manual) warn.push(`<div class="warnbox"><b>Stripe-Gebühren von Hand erfasst</b> – die Gebühren kommen automatisch aus den Zahlungen. Bitte die händische Buchung löschen, sonst zählen sie doppelt.</div>`);
     if (led.eur_missing) warn.push(`<div class="warnbox"><b>${led.eur_missing} Einnahme(n) in Pfund/Dollar ohne Euro-Betrag</b> – zählen noch nicht mit (Bestellungen → „Buchhaltung: Übersicht“).</div>`);
     // E/A je Monat
@@ -338,7 +338,7 @@
     const list = (ledAll ? led.expenses : led.expenses.slice(0, 25));
     const SA = { rc: "Reverse Charge", at_ust: "mit USt", ausl_ust: "Ausland mit USt", ohne: "ohne USt" };
     const xrows = list.map((x) => `<tr${x.dup || x.stripe_manual ? ' style="background:#FFF4CF"' : ""}><td>${dd(x.datum)}${x.bezahlt_am && x.bezahlt_am !== x.datum ? `<br><span class="small">bez. ${dd(x.bezahlt_am)}</span>` : ""}</td>
-      <td><b>${e(x.anbieter)}</b>${x.beschreibung ? `<br><span class="small">${e(x.beschreibung)}</span>` : ""}${x.dup ? `<br><b class="small" style="color:var(--red)">möglicherweise doppelt</b>` : ""}</td>
+      <td><b>${e(x.anbieter)}</b>${x.beschreibung ? `<br><span class="small">${e(x.beschreibung)}</span>` : ""}${x.rechnungsnr ? `<br><span class="small mono">Nr. ${e(x.rechnungsnr)}</span>` : ""}${x.dup ? `<br><b class="small" style="color:var(--red)">möglicherweise doppelt</b>` : ""}</td>
       <td class="small">${e(x.kategorie || "")}<br>${e(SA[x.steuerart] || x.steuerart)}${x.bezahlt_von === "privat" ? " · privat bezahlt" : ""}</td>
       <td class="mono">${m(x.betrag_cents)}${x.anteil !== 100 ? `<br><span class="small">${x.anteil} % = ${m(x.betrieblich_cents)}</span>` : ""}${x.rc_cents ? `<br><span class="small">RC-USt ${m(x.rc_cents)}</span>` : ""}</td>
       <td class="small">${(x.files || []).map((b) => `📎 <a href="#" data-beleg="${e(b.id)}">${e(b.name.length > 28 ? b.name.slice(0, 26) + "…" : b.name)}</a>`).join("<br>")}${x.files && x.files.length && x.beleg ? "<br>" : ""}${e(x.beleg || "")}${!(x.files || []).length && !x.beleg ? `<span style="color:var(--red)">kein Beleg</span>` : ""}${x.notiz ? `<br><i>${e(x.notiz)}</i>` : ""}</td>
@@ -382,7 +382,8 @@
         <div class="field"><label>Beleg-Hinweis (optional)</label><input name="beleg" maxlength="300" value="${v(f.beleg)}" placeholder="z. B. Rechnung per Mail, Ordner Belege 2026"></div></div>
         <div class="field"><label>Beleg hochladen (PDF oder Foto, bis 20 MB, mehrere möglich)</label>${led.belege ? `<input type="file" id="ledfiles" multiple accept="application/pdf,image/*">` : `<p class="small"><b>Belegspeicher noch nicht eingerichtet</b> (Cloudflare R2, Binding BELEGE).</p>`}
           ${(f.files || []).length ? `<ul class="small" style="margin:6px 0 0;padding-left:18px">${f.files.map((x) => `<li>📎 <a href="#" data-beleg="${e(x.id)}">${e(x.name)}</a> <span style="color:var(--muted)">(${Math.max(1, Math.round(x.size / 1024))} KB)</span> · <a href="#" data-belegdel="${e(x.id)}">entfernen</a></li>`).join("")}</ul>` : ""}</div>
-        <div class="field"><label>Notiz</label><input name="notiz" maxlength="300" value="${v(f.notiz)}" placeholder="Rechnungsnummer, Zeitraum, Begründung des Anteils …"></div>
+        <div class="two"><div class="field"><label>Rechnungsnummer (optional)</label><input name="rechnungsnr" maxlength="60" value="${v(f.rechnungsnr)}" placeholder="z. B. MSUQ8K2L7P"></div>
+        <div class="field"><label>Notiz</label><input name="notiz" maxlength="300" value="${v(f.notiz)}" placeholder="Zeitraum, Begründung des Anteils …"></div></div>
         <p class="small">Als Kleinunternehmer gibt es keinen Vorsteuerabzug: Betriebsausgabe ist der bezahlte Betrag inklusive USt (mal Anteil). Privat bezahlte Rechnungen (z. B. Claude-Abo mit 40 %) zählen genauso – „privat bezahlt“ heißt nur, dass keine Zeile am Geschäftskonto dazu gehört. Geräte über 1.000 € netto werden abgeschrieben – dann bitte mit der Steuerberatung klären.</p>
         <div class="actions-row"><button class="btn btn-red" type="submit">${f.id ? "Speichern" : "Ausgabe erfassen"}</button>${f.id || f.cost_id ? `<button class="btn btn-line" type="button" id="ledcancel">Abbrechen</button>` : ""}${f.id ? `<button class="btn btn-line" type="button" id="leddel" style="color:var(--red)">Ausgabe löschen</button>` : ""}</div>
         <p class="err">${e(ledMsg)}</p>
