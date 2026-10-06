@@ -321,7 +321,7 @@
     const warn = [];
     if (led.missing.length) warn.push(`<div class="warnbox"><b>Laufende Kosten ohne Buchung (${led.missing.length})</b> – laut Kostenliste fällig, aber noch nicht erfasst:
       <div style="overflow-x:auto"><table class="grid small" style="margin-top:6px">${led.missing.map((x, i) => `<tr><td>${e(x.name)}</td><td>${e(x.period)}</td><td class="mono">${x.waehrung === "USD" ? (x.betrag_cents / 100).toFixed(2) + " $" : m(x.betrag_cents)}</td><td><button class="btn btn-line" type="button" data-ledmiss="${i}">jetzt erfassen</button></td></tr>`).join("")}</table></div></div>`);
-    if (led.dup_count) warn.push(`<div class="warnbox"><b>Möglicherweise doppelt erfasst (${led.dup_count})</b> – gleicher Anbieter, gleicher Betrag, höchstens 5 Tage auseinander. In der Liste unten markiert: löschen oder „ist kein Duplikat“.</div>`);
+    if (led.dup_count) warn.push(`<div class="warnbox"><b>Möglicherweise doppelt erfasst (${led.dup_count})</b> – gleicher Verkäufer, gleicher Betrag, höchstens 5 Tage auseinander. In der Liste unten markiert: löschen oder „ist kein Duplikat“.</div>`);
     if (led.stripe_manual) warn.push(`<div class="warnbox"><b>Stripe-Gebühren von Hand erfasst</b> – die Gebühren kommen automatisch aus den Zahlungen. Bitte die händische Buchung löschen, sonst zählen sie doppelt.</div>`);
     if (led.eur_missing) warn.push(`<div class="warnbox"><b>${led.eur_missing} Einnahme(n) in Pfund/Dollar ohne Euro-Betrag</b> – zählen noch nicht mit (Bestellungen → „Buchhaltung: Übersicht“).</div>`);
     // E/A je Monat
@@ -370,8 +370,8 @@
         <input type="hidden" name="id" value="${v(f.id)}"><input type="hidden" name="cost_id" value="${v(f.cost_id)}">
         <div class="two"><div class="field"><label>Rechnungsdatum *</label><input type="date" name="datum" value="${v(f.datum || led.today)}"></div>
         <div class="field"><label>Bezahlt am (leer = Rechnungsdatum)</label><input type="date" name="bezahlt_am" value="${v(f.bezahlt_am && f.bezahlt_am !== f.datum ? f.bezahlt_am : "")}"></div></div>
-        <div class="two"><div class="field"><label>Bezahlt an * <span class="small">(Firma oder Stelle laut Rechnung)</span></label><input name="anbieter" maxlength="80" list="ledanb" value="${v(f.anbieter)}" placeholder="z. B. Österreichische Post"><datalist id="ledanb">${[...new Set([...(led.anbieter_liste || []), "Österreichische Post", "Anthropic", "Microsoft", "Apple (iCloud+)", "Cloudflare", "Resend", "Google Ads", "Meta (Facebook/Instagram)", "Erste Bank / Sparkasse", "SVS", "Wirtschaftskammer", "Finanzamt", "Bezirkshauptmannschaft"])].map((x) => `<option>${e(x)}</option>`).join("")}</datalist></div>
-        <div class="field"><label>Beschreibung</label><input name="beschreibung" maxlength="160" value="${v(f.beschreibung)}" placeholder="z. B. Kontoführung Oktober"></div></div>
+        <div class="two"><div class="field"><label>Verkäufer * <span class="small">(Firma oder Stelle laut Rechnung – das Produkt kommt in die Beschreibung)</span></label><input name="anbieter" maxlength="80" list="ledanb" value="${v(f.anbieter)}" placeholder="z. B. Österreichische Post"><datalist id="ledanb">${[...new Set([...(led.anbieter_liste || []), "Österreichische Post", "Apple", "Anthropic", "Microsoft", "Cloudflare", "Resend", "Google", "Meta", "Erste Bank und Sparkassen", "SVS", "Wirtschaftskammer", "Finanzamt", "Bezirkshauptmannschaft"])].map((x) => `<option>${e(x)}</option>`).join("")}</datalist></div>
+        <div class="field"><label>Beschreibung</label><input name="beschreibung" maxlength="160" value="${v(f.beschreibung)}" placeholder="Produkt, z. B. iCloud+ 2 TB, Oktober"></div></div>
         <div class="two"><div class="field"><label>Kategorie</label><select name="kategorie">${led.kategorien.map((k) => `<option ${k === (f.kategorie || "Sonstiges") ? "selected" : ""}>${e(k)}</option>`).join("")}</select></div>
         <div class="field"><label>Steuerart *</label><select name="steuerart"><option value="">– bitte wählen –</option>${sel(led.steuerarten, f.steuerart)}</select></div></div>
         <div class="two"><div class="field"><label>Betrag in Euro * <span class="small">(bei Reverse Charge: netto, laut Kontoauszug)</span></label><input name="betrag" inputmode="decimal" value="${cents(f.betrag_cents)}" placeholder="z. B. 21,25"></div>
@@ -388,7 +388,7 @@
         <p class="err">${e(ledMsg)}</p>
       </form>
       <div class="eyebrow" style="margin-top:16px">Ausgaben ${Y} (${led.expenses.length})${led.ohne_beleg ? ` · <span style="color:var(--red)">${led.ohne_beleg} ohne Beleg</span>` : ""}</div>
-      ${xrows ? `<div style="overflow-x:auto"><table class="grid small"><tr><th>Datum</th><th>Bezahlt an</th><th>Art</th><th>Betrag</th><th>Beleg · Notiz</th><th></th></tr>${xrows}</table></div>${led.expenses.length > 25 && !ledAll ? `<button class="btn btn-line" type="button" id="ledall">alle ${led.expenses.length} zeigen</button>` : ""}` : `<p class="small">Noch keine Ausgaben für ${Y} erfasst.</p>`}
+      ${xrows ? `<div style="overflow-x:auto"><table class="grid small"><tr><th>Datum</th><th>Verkäufer</th><th>Art</th><th>Betrag</th><th>Beleg · Notiz</th><th></th></tr>${xrows}</table></div>${led.expenses.length > 25 && !ledAll ? `<button class="btn btn-line" type="button" id="ledall">alle ${led.expenses.length} zeigen</button>` : ""}` : `<p class="small">Noch keine Ausgaben für ${Y} erfasst.</p>`}
       ${led.stripe_fees.length ? `<p class="small" style="margin-top:6px">Automatisch aus Stripe: ${led.stripe_fees.map((x) => `${e(x.beschreibung.replace("Stripe-Gebühren ", "").replace(" aus den Zahlungen", ""))} ${m(x.betrag_cents)}`).join(" · ")} (Reverse Charge, Kategorie Zahlungsgebühren).</p>` : ""}
     </div>`;
   }
@@ -417,7 +417,7 @@
         <div class="eyebrow">${k.id ? "Posten ändern" : "Neuer Posten"}</div>
         <input type="hidden" name="id" value="${val(k.id)}">
         <div class="two"><div class="field"><label>Name *</label><input name="name" maxlength="120" value="${val(k.name)}"></div>
-        <div class="field"><label>Anbieter</label><input name="anbieter" maxlength="80" value="${val(k.anbieter)}"></div></div>
+        <div class="field"><label>Verkäufer (Firma laut Rechnung)</label><input name="anbieter" maxlength="80" value="${val(k.anbieter)}" placeholder="z. B. Apple"></div></div>
         <div class="two"><div class="field"><label>Rhythmus</label><select name="art">${opt(0, k.art || "monatlich")}</select></div>
         <div class="field"><label>Betrag (leer = offen)</label><div style="display:flex;gap:6px"><input name="betrag" inputmode="decimal" placeholder="z. B. 149,99" value="${k.betrag_cents == null ? "" : (k.betrag_cents / 100).toFixed(2).replace(".", ",")}"><select name="waehrung"><option ${k.waehrung !== "USD" ? "selected" : ""}>EUR</option><option ${k.waehrung === "USD" ? "selected" : ""}>USD</option></select></div></div></div>
         <div class="two"><div class="field"><label>Betrieblicher Anteil in % (leer = offen)</label><input name="anteil" inputmode="numeric" value="${val(k.anteil)}"></div>
@@ -598,7 +598,7 @@
     };
     root.querySelectorAll("[data-kbook]").forEach((b) => (b.onclick = () => {
       const x = kosten.items.find((k) => k.id === b.dataset.kbook); if (!x) return;
-      ledEdit = { cost_id: x.id, anbieter: x.anbieter || x.name, beschreibung: x.name, betrag_cents: x.waehrung === "EUR" ? x.betrag_cents : null, anteil: x.anteil ?? 100,
+      ledEdit = { cost_id: x.id, anbieter: x.anbieter || "", beschreibung: x.name, betrag_cents: x.waehrung === "EUR" ? x.betrag_cents : null, anteil: x.anteil ?? 100,
         orig: x.waehrung === "USD" && x.betrag_cents ? "USD " + (x.betrag_cents / 100).toFixed(2).replace(".", ",") : "" };
       ledMsg = ""; render(...last); const f = document.getElementById("ledform"); if (f) f.scrollIntoView({ behavior: "smooth", block: "start" });
     }));
@@ -686,7 +686,7 @@
     root.querySelectorAll("[data-ledmiss]").forEach((b) => (b.onclick = () => {
       const x = led.missing[+b.dataset.ledmiss];
       const sa = /bank|sparkasse|erste|konto|svs|kammer|wko|finanzamt|bezirks|justiz|gewerbe|firmenbuch/i.test(x.anbieter + " " + x.name) ? "ohne" : /anthropic|cloudflare|resend|google|meta|github|stripe/i.test(x.anbieter) ? "rc" : "";
-      ledEdit = { cost_id: x.cost_id, datum: x.datum, anbieter: x.anbieter || x.name, beschreibung: `${x.name} – ${x.period}`, betrag_cents: x.waehrung === "EUR" ? x.betrag_cents : null, anteil: x.anteil, steuerart: sa,
+      ledEdit = { cost_id: x.cost_id, datum: x.datum, anbieter: x.anbieter || "", beschreibung: `${x.name} – ${x.period}`, betrag_cents: x.waehrung === "EUR" ? x.betrag_cents : null, anteil: x.anteil, steuerart: sa,
         kategorie: /konto|bank/i.test(x.name) ? "Bankspesen" : /svs/i.test(x.name) ? "Sozialversicherung (SVS)" : /wko|kammer/i.test(x.name) ? "Gebühren / Behörden" : /cloudflare|domain/i.test(x.name) ? "Hosting / Domain" : /resend/i.test(x.name) ? "E-Mail-Versand" : /claude|anthropic/i.test(x.name) ? "KI / API (Anthropic)" : "Software / Abos" };
       ledMsg = ""; render(...last); toLedForm();
     }));
