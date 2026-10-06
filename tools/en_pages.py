@@ -1227,4 +1227,15 @@ LAND = LAND.replace('<span>© 2026 Mordsteam e.U.</span></div></footer>', '<span
 assert "Coming soon" not in LAND and "ms-cards" in LAND and 'ms-lang' in LAND and 'ms-foot' in LAND
 with open(os.path.join(ROOT, "..", "teaser", "en", "index.html"), "w") as f:
     f.write(LAND)
+# Vorübergehend für die Paddle-Prüfung (Okt. 2026): dieselbe Angebotsseite auch unter "/", ohne Sprachumschalter
+# (der DE-Link würde auf sich selbst zeigen). build.sh nimmt sie nur, solange PADDLE_PRUEFUNG=1 gesetzt ist.
+ROOTP = LAND
+for _a, _b in [('<span class="ms-lang"><a href="/?lang=de" hreflang="de" lang="de">DE</a> · <b>EN</b></span></nav><span class="ms-lang ms-lang-m"><a href="/?lang=de" hreflang="de" lang="de">DE</a> · <b>EN</b></span>', '</nav>'),
+               ('<a href="/?lang=de" lang="de">Deutsch</a></span>', '</span>'),
+               ('<link rel="alternate" hreflang="de" href="https://mordsteam.com/">', '<link rel="canonical" href="https://mordsteam.com/">')]:
+    assert ROOTP.count(_a) == 1, _a
+    ROOTP = ROOTP.replace(_a, _b, 1)
+assert "?lang=de" not in ROOTP
+with open(os.path.join(ROOT, "..", "teaser", "paddle-root.html"), "w") as f:
+    f.write(ROOTP)
 print("ok", len(P))

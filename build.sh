@@ -11,7 +11,14 @@ if [ "$CF_PAGES_BRANCH" = "main" ] && [ "$LAUNCH" != "true" ]; then
   # Öffentlich nur eine neutrale Seite "im Aufbau" – kein Angebot, keine Werbung.
   # Die Spielplattform (/spiel/, nicht verlinkt, noindex) bleibt für Testrunden erreichbar.
   cp -r site/assets site/spiel site/_headers site/robots.txt site/favicon.ico site/site.webmanifest dist/
-  cp teaser/index.html dist/index.html
+  # VORÜBERGEHEND (Paddle-Prüfung, Okt. 2026): Startseite zeigt die englische Angebotsseite statt "Coming soon".
+  # Nach der Freigabe durch Paddle PADDLE_PRUEFUNG=0 setzen → wieder "Coming soon" bis zum Go-live.
+  PADDLE_PRUEFUNG=1
+  if [ "$PADDLE_PRUEFUNG" = "1" ]; then
+    cp teaser/paddle-root.html dist/index.html
+  else
+    cp teaser/index.html dist/index.html
+  fi
   cp teaser/impressum.html dist/impressum.html
   # Englische Teaserseite: Besucher außerhalb von DACH landen über functions/_middleware.js automatisch hier
   mkdir -p dist/en && cp teaser/en/index.html dist/en/index.html && cp teaser/en/imprint.html dist/en/imprint.html
