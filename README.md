@@ -137,7 +137,7 @@ Grundschema in `db/schema.sql`. Neue Spalten und Tabellen werden zusätzlich bei
 | `solo_tickets`, `solo_runs`, `solo_chat`, `solo_scores` | Solo |
 | `friends_groups`, `friends_players`, `friends_chat` | Friends |
 | `ops_mail`, `ops_ai`, `ops_hits`, `ops_err`, `ops_alerts` | Betriebszähler (keine Inhalte, keine Empfänger) |
-| `expenses` | Ausgabenbuch: Rechnungsdatum, bezahlt am, Anbieter, Kategorie, Steuerart (`rc`, `at_ust`, `ausl_ust`, `ohne`), Betrag in Euro (bei Reverse Charge netto), Anteil, bezahlt von (`konto`/`privat`), Beleg, `cost_id` (Vorlage), `dup_ok`, `bank_ref` (für den späteren Kontoauszug-Import); Löschen setzt `deleted=1`. Belege der früheren Tabelle `rc_entries` werden einmalig übernommen |
+| `expenses` | Ausgabenbuch: Rechnungsdatum, bezahlt am, Verkäufer (`anbieter`), Rechnungsnummer, Rechnungswährung (`waehrung` EUR/USD/GBP), Rechnungsbetrag und USt laut Rechnung (`rechnung_cents`, `rechnung_ust_cents`), Euro-Betrag laut Konto (`betrag_cents`) und USt in Euro (`ust_cents`, bei Fremdwährung im Verhältnis der Rechnung gerechnet), Kategorie, Steuerart (`rc`, `at_ust`, `ausl_ust`, `ohne`), Betrag in Euro (bei Reverse Charge netto), Anteil, bezahlt von (`konto`/`privat`), Beleg, `cost_id` (Vorlage), `dup_ok`, `bank_ref` (für den späteren Kontoauszug-Import); Löschen setzt `deleted=1`. Belege der früheren Tabelle `rc_entries` werden einmalig übernommen |
 | `expense_files` | Belege zu Ausgaben: Name, Typ, Größe, Schlüssel im R2-Speicher (`belege/<Jahr>/<Ausgabe>/<Datei>`), `deleted` |
 | `rc_paid` | bezahlte Reverse-Charge-Quartale (Zahlungsdatum) |
 | `duties_done` | erledigte Meldungen (`zm:JJJJ-MM`, `u1:JJJJ`, `e1:JJJJ`) |

@@ -340,10 +340,12 @@
     const xrows = list.map((x) => `<tr${x.dup || x.stripe_manual ? ' style="background:#FFF4CF"' : ""}><td>${dd(x.datum)}${x.bezahlt_am && x.bezahlt_am !== x.datum ? `<br><span class="small">bez. ${dd(x.bezahlt_am)}</span>` : ""}</td>
       <td><b>${e(x.anbieter)}</b>${x.beschreibung ? `<br><span class="small">${e(x.beschreibung)}</span>` : ""}${x.rechnungsnr ? `<br><span class="small mono">Nr. ${e(x.rechnungsnr)}</span>` : ""}${x.dup ? `<br><b class="small" style="color:var(--red)">möglicherweise doppelt</b>` : ""}</td>
       <td class="small">${e(x.kategorie || "")}<br>${e(SA[x.steuerart] || x.steuerart)}${x.bezahlt_von === "privat" ? " · privat bezahlt" : ""}</td>
-      <td class="mono">${m(x.betrag_cents)}${x.anteil !== 100 ? `<br><span class="small">${x.anteil} % = ${m(x.betrieblich_cents)}</span>` : ""}${x.rc_cents ? `<br><span class="small">RC-USt ${m(x.rc_cents)}</span>` : ""}</td>
+      <td class="mono">${m(x.betrag_cents)}${x.waehrung && x.waehrung !== "EUR" && x.rechnung_cents ? `<br><span class="small">${e(x.waehrung)} ${(x.rechnung_cents / 100).toFixed(2).replace(".", ",")}</span>` : ""}${x.anteil !== 100 ? `<br><span class="small">${x.anteil} % = ${m(x.betrieblich_cents)}</span>` : ""}${x.rc_cents ? `<br><span class="small">RC-USt ${m(x.rc_cents)}</span>` : ""}</td>
       <td class="small">${(x.files || []).map((b) => `📎 <a href="#" data-beleg="${e(b.id)}">${e(b.name.length > 28 ? b.name.slice(0, 26) + "…" : b.name)}</a>`).join("<br>")}${x.files && x.files.length && x.beleg ? "<br>" : ""}${e(x.beleg || "")}${!(x.files || []).length && !x.beleg ? `<span style="color:var(--red)">kein Beleg</span>` : ""}${x.notiz ? `<br><i>${e(x.notiz)}</i>` : ""}</td>
       <td style="white-space:nowrap"><button class="btn btn-line" type="button" data-ledit="${e(x.id)}">Ändern</button>${x.dup ? ` <button class="btn btn-line" type="button" data-ledok="${e(x.id)}">kein Duplikat</button>` : ""}</td></tr>`).join("");
     const f = ledEdit || {};
+    const fw = f.waehrung || (/^(USD|GBP)\b/.test(f.orig || "") ? f.orig.slice(0, 3) : "EUR");
+    const frech = f.rechnung_cents ?? (fw === "EUR" ? f.betrag_cents : null), frust = f.rechnung_ust_cents ?? (fw === "EUR" ? f.ust_cents : null);
     const v = (x) => (x == null ? "" : e(String(x)));
     const cents = (c) => (c == null || c === "" ? "" : (Number(c) / 100).toFixed(2).replace(".", ","));
     const sel = (obj, cur) => Object.entries(obj).map(([k, l]) => `<option value="${e(k)}" ${k === cur ? "selected" : ""}>${e(l)}</option>`).join("");
@@ -374,12 +376,13 @@
         <div class="field"><label>Beschreibung</label><input name="beschreibung" maxlength="160" value="${v(f.beschreibung)}" placeholder="Produkt, z. B. iCloud+ 2 TB, Oktober"></div></div>
         <div class="two"><div class="field"><label>Kategorie</label><select name="kategorie">${led.kategorien.map((k) => `<option ${k === (f.kategorie || "Sonstiges") ? "selected" : ""}>${e(k)}</option>`).join("")}</select></div>
         <div class="field"><label>Steuerart *</label><select name="steuerart"><option value="">– bitte wählen –</option>${sel(led.steuerarten, f.steuerart)}</select></div></div>
-        <div class="two"><div class="field"><label>Betrag in Euro * <span class="small">(bei Reverse Charge: netto, laut Kontoauszug)</span></label><input name="betrag" inputmode="decimal" value="${cents(f.betrag_cents)}" placeholder="z. B. 21,25"></div>
-        <div class="field"><label>Betrieblicher Anteil in %</label><input name="anteil" inputmode="numeric" value="${v(f.anteil ?? 100)}"></div></div>
-        <div class="two"><div class="field"><label>Bezahlt von</label><select name="bezahlt_von">${sel(led.bezahlt, f.bezahlt_von || "konto")}</select></div>
-        <div class="field"><label>davon USt laut Rechnung (optional)</label><input name="ust" inputmode="decimal" value="${cents(f.ust_cents)}"></div></div>
-        <div class="two"><div class="field"><label>Originalbetrag (bei Dollar-Rechnung)</label><input name="orig" maxlength="40" value="${v(f.orig)}" placeholder="z. B. USD 20,00"></div>
-        <div class="field"><label>Beleg-Hinweis (optional)</label><input name="beleg" maxlength="300" value="${v(f.beleg)}" placeholder="z. B. Rechnung per Mail, Ordner Belege 2026"></div></div>
+        <div class="two"><div class="field"><label>Rechnungswährung</label><select name="waehrung">${(led.waehrungen || ["EUR", "USD", "GBP"]).map((w) => `<option ${w === fw ? "selected" : ""}>${w}</option>`).join("")}</select></div>
+        <div class="field"><label>Rechnungsbetrag * <span class="small">(laut Rechnung, inkl. USt; bei Reverse Charge netto)</span></label><input name="rechnung" inputmode="decimal" value="${cents(frech)}" placeholder="z. B. 12,00"></div></div>
+        <div class="two"><div class="field"><label>davon USt laut Rechnung (optional)</label><input name="rechnung_ust" inputmode="decimal" value="${cents(frust)}" placeholder="leer = keine USt auf der Rechnung"></div>
+        <div class="field"><label>Betrag in Euro * <span class="small">(tatsächlich abgebucht, laut Konto)</span></label><input name="betrag" inputmode="decimal" value="${cents(f.betrag_cents)}" placeholder="z. B. 10,73"><span class="small" id="ledusteur" style="display:block;margin-top:4px"></span></div></div>
+        <div class="two"><div class="field"><label>Betrieblicher Anteil in %</label><input name="anteil" inputmode="numeric" value="${v(f.anteil ?? 100)}"></div>
+        <div class="field"><label>Bezahlt von</label><select name="bezahlt_von">${sel(led.bezahlt, f.bezahlt_von || "konto")}</select></div></div>
+        <div class="field"><label>Beleg-Hinweis (optional)</label><input name="beleg" maxlength="300" value="${v(f.beleg)}" placeholder="z. B. Rechnung per Mail, Ordner Belege 2026"></div>
         <div class="field"><label>Beleg hochladen (PDF oder Foto, bis 20 MB, mehrere möglich)</label>${led.belege ? `<input type="file" id="ledfiles" multiple accept="application/pdf,image/*">` : `<p class="small"><b>Belegspeicher noch nicht eingerichtet</b> (Cloudflare R2, Binding BELEGE).</p>`}
           ${(f.files || []).length ? `<ul class="small" style="margin:6px 0 0;padding-left:18px">${f.files.map((x) => `<li>📎 <a href="#" data-beleg="${e(x.id)}">${e(x.name)}</a> <span style="color:var(--muted)">(${Math.max(1, Math.round(x.size / 1024))} KB)</span> · <a href="#" data-belegdel="${e(x.id)}">entfernen</a></li>`).join("")}</ul>` : ""}</div>
         <div class="two"><div class="field"><label>Rechnungsnummer (optional)</label><input name="rechnungsnr" maxlength="60" value="${v(f.rechnungsnr)}" placeholder="z. B. MSUQ8K2L7P"></div>
@@ -599,8 +602,7 @@
     };
     root.querySelectorAll("[data-kbook]").forEach((b) => (b.onclick = () => {
       const x = kosten.items.find((k) => k.id === b.dataset.kbook); if (!x) return;
-      ledEdit = { cost_id: x.id, anbieter: x.anbieter || "", beschreibung: x.name, betrag_cents: x.waehrung === "EUR" ? x.betrag_cents : null, anteil: x.anteil ?? 100,
-        orig: x.waehrung === "USD" && x.betrag_cents ? "USD " + (x.betrag_cents / 100).toFixed(2).replace(".", ",") : "" };
+      ledEdit = { cost_id: x.id, anbieter: x.anbieter || "", beschreibung: x.name, waehrung: x.waehrung, rechnung_cents: x.betrag_cents, betrag_cents: x.waehrung === "EUR" ? x.betrag_cents : null, anteil: x.anteil ?? 100 };
       ledMsg = ""; render(...last); const f = document.getElementById("ledform"); if (f) f.scrollIntoView({ behavior: "smooth", block: "start" });
     }));
     root.querySelectorAll("[data-kedit]").forEach((b) => (b.onclick = () => { kostenEdit = kosten.items.find((x) => x.id === b.dataset.kedit) || null; kostenMsg = ""; render(...last); const f = document.getElementById("kform"); if (f) f.scrollIntoView({ behavior: "smooth" }); }));
@@ -624,6 +626,19 @@
     const ly = document.getElementById("ledyear"); if (ly) ly.onchange = () => { ledYear = Number(ly.value); ledEdit = null; ledAll = false; ledReload(); };
     const lf = document.getElementById("ledform");
     if (lf) {
+      // Euro-Betrag und USt in Euro: EUR-Rechnung 1:1, sonst USt im Verhältnis der Rechnung
+      const fld = (n) => lf.querySelector(`[name=${n}]`), num = (x) => { let t = String(x || "").replace(/\s|€/g, ""); if (/,\d{1,2}$/.test(t)) t = t.replace(/\./g, "").replace(",", "."); else t = t.replace(/,/g, ""); const v = Number(t); return t && Number.isFinite(v) ? v : null; };
+      const fmt = (v) => v.toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const calc = () => {
+        const w = fld("waehrung").value, r = num(fld("rechnung").value), ru = num(fld("rechnung_ust").value), eur = fld("betrag");
+        eur.readOnly = w === "EUR";
+        if (w === "EUR") eur.value = fld("rechnung").value;
+        const b = num(eur.value), out = document.getElementById("ledusteur");
+        out.textContent = ru == null ? "keine USt auf der Rechnung" : w === "EUR" ? `USt in Euro: ${fmt(ru)} €` : r && b ? `USt in Euro: ${fmt(Math.round(b * ru / r * 100) / 100)} € (im Verhältnis der Rechnung)` : "USt in Euro wird berechnet, sobald beide Beträge da sind";
+      };
+      ["waehrung", "rechnung", "rechnung_ust", "betrag"].forEach((n) => fld(n).addEventListener("input", calc));
+      fld("waehrung").addEventListener("change", () => { if (fld("waehrung").value !== "EUR" && fld("betrag").value === fld("rechnung").value) fld("betrag").value = ""; calc(); });
+      calc();
       lf.onsubmit = async (ev) => {
         ev.preventDefault();
         const errEl = lf.querySelector(".err"), sub = lf.querySelector("button[type=submit]");
@@ -687,7 +702,7 @@
     root.querySelectorAll("[data-ledmiss]").forEach((b) => (b.onclick = () => {
       const x = led.missing[+b.dataset.ledmiss];
       const sa = /bank|sparkasse|erste|konto|svs|kammer|wko|finanzamt|bezirks|justiz|gewerbe|firmenbuch/i.test(x.anbieter + " " + x.name) ? "ohne" : /anthropic|cloudflare|resend|google|meta|github|stripe/i.test(x.anbieter) ? "rc" : "";
-      ledEdit = { cost_id: x.cost_id, datum: x.datum, anbieter: x.anbieter || "", beschreibung: `${x.name} – ${x.period}`, betrag_cents: x.waehrung === "EUR" ? x.betrag_cents : null, anteil: x.anteil, steuerart: sa,
+      ledEdit = { cost_id: x.cost_id, datum: x.datum, anbieter: x.anbieter || "", beschreibung: `${x.name} – ${x.period}`, waehrung: x.waehrung, rechnung_cents: x.betrag_cents, betrag_cents: x.waehrung === "EUR" ? x.betrag_cents : null, anteil: x.anteil, steuerart: sa,
         kategorie: /konto|bank/i.test(x.name) ? "Bankspesen" : /svs/i.test(x.name) ? "Sozialversicherung (SVS)" : /wko|kammer/i.test(x.name) ? "Gebühren / Behörden" : /cloudflare|domain/i.test(x.name) ? "Hosting / Domain" : /resend/i.test(x.name) ? "E-Mail-Versand" : /claude|anthropic/i.test(x.name) ? "KI / API (Anthropic)" : "Software / Abos" };
       ledMsg = ""; render(...last); toLedForm();
     }));
