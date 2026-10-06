@@ -320,7 +320,9 @@
     // Warnungen
     const warn = [];
     if (led.missing.length) warn.push(`<div class="warnbox"><b>Laufende Kosten ohne Buchung (${led.missing.length})</b> – laut Kostenliste fällig, aber noch nicht erfasst:
-      <div style="overflow-x:auto"><table class="grid small" style="margin-top:6px">${led.missing.map((x, i) => `<tr><td>${e(x.name)}</td><td>${e(x.period)}</td><td class="mono">${x.waehrung === "USD" ? (x.betrag_cents / 100).toFixed(2) + " $" : m(x.betrag_cents)}</td><td><button class="btn btn-line" type="button" data-ledmiss="${i}">jetzt erfassen</button></td></tr>`).join("")}</table></div></div>`);
+      <div style="overflow-x:auto"><table class="grid small" style="margin-top:6px">${led.missing.map((x, i) => `<tr><td>${e(x.name)}</td><td>${e(x.period)}</td><td class="mono">${x.waehrung === "USD" ? (x.betrag_cents / 100).toFixed(2) + " $" : m(x.betrag_cents)}</td><td style="white-space:nowrap"><button class="btn btn-line" type="button" data-ledmiss="${i}">jetzt erfassen</button> <button class="btn btn-line" type="button" data-ledskip="${i}" title="Für diesen Zeitraum nicht mehr melden">überspringen</button>
+        ${x.candidates && x.candidates.length ? `<div class="small" style="margin-top:6px">schon erfasst? <select class="ledcand" data-i="${i}" style="max-width:260px">${x.candidates.map((c) => `<option value="${e(c.id)}">${dd(c.datum)} · ${e(c.anbieter)}${c.beschreibung ? " – " + e(c.beschreibung.slice(0, 30)) : ""} · ${m(c.betrag_cents)}</option>`).join("")}</select> <button class="btn btn-line" type="button" data-ledlink="${i}">zuordnen</button></div>` : ""}</td></tr>`).join("")}</table></div>
+      <p class="small" style="margin:6px 0 0">„zuordnen“ verbindet eine schon erfasste Ausgabe mit der Vorlage (dann kommt die Meldung nicht mehr). „überspringen“ blendet nur diesen Zeitraum aus, z. B. wenn diesmal nichts abgebucht wurde.</p></div>`);
     if (led.dup_count) warn.push(`<div class="warnbox"><b>Möglicherweise doppelt erfasst (${led.dup_count})</b> – gleicher Verkäufer mit gleicher Rechnungsnummer, oder gleicher Betrag höchstens 5 Tage auseinander. In der Liste unten markiert: löschen oder „ist kein Duplikat“.</div>`);
     if (led.stripe_manual) warn.push(`<div class="warnbox"><b>Stripe-Gebühren von Hand erfasst</b> – die Gebühren kommen automatisch aus den Zahlungen. Bitte die händische Buchung löschen, sonst zählen sie doppelt.</div>`);
     if (led.eur_missing) warn.push(`<div class="warnbox"><b>${led.eur_missing} Einnahme(n) in Pfund/Dollar ohne Euro-Betrag</b> – zählen noch nicht mit (Bestellungen → „Buchhaltung: Übersicht“).</div>`);
@@ -710,6 +712,17 @@
     };
     root.querySelectorAll("[data-ledit]").forEach((b) => (b.onclick = () => { ledEdit = led.expenses.find((x) => x.id === b.dataset.ledit) || null; ledMsg = ""; render(...last); toLedForm(); }));
     root.querySelectorAll("[data-ledok]").forEach((b) => (b.onclick = async () => { await MS.api("POST", "admin/ausgaben/doppelt-ok", { id: b.dataset.ledok }, H()); ledReload(); }));
+    root.querySelectorAll("[data-ledskip]").forEach((b) => (b.onclick = async () => {
+      const x = led.missing[+b.dataset.ledskip];
+      if (!confirm(`„${x.name}“ für ${x.period} nicht mehr melden?`)) return;
+      try { await MS.api("POST", "admin/kosten/ueberspringen", { cost_id: x.cost_id, period: x.period_key }, H()); } catch (e2) { alert(e2.message); }
+      ledReload();
+    }));
+    root.querySelectorAll("[data-ledlink]").forEach((b) => (b.onclick = async () => {
+      const x = led.missing[+b.dataset.ledlink], sel = root.querySelector(`.ledcand[data-i="${b.dataset.ledlink}"]`);
+      try { await MS.api("POST", "admin/ausgaben/zuordnen", { id: sel.value, cost_id: x.cost_id }, H()); } catch (e2) { alert(e2.message); }
+      ledReload();
+    }));
     root.querySelectorAll("[data-ledmiss]").forEach((b) => (b.onclick = () => {
       const x = led.missing[+b.dataset.ledmiss];
       const sa = /bank|sparkasse|erste|konto|svs|kammer|wko|finanzamt|bezirks|justiz|gewerbe|firmenbuch/i.test(x.anbieter + " " + x.name) ? "ohne" : /anthropic|cloudflare|resend|google|meta|github|stripe/i.test(x.anbieter) ? "rc" : "";
