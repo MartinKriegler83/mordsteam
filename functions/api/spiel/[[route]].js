@@ -1,6 +1,6 @@
 // Cloudflare Pages Function: /api/spiel/*
 // Benötigt: D1-Binding "DB" und die geheime Umgebungsvariable "ADMIN_KEY".
-import { ledgerYear, expenseSave, expenseDelete, expenseDupOk, rcMarkPaid, dutyDone, expensesCsv, earCsv, viennaYmd, belegUpload, belegGet, belegDelete, costSkip, expenseLink } from "../../../lib/ledger.js";
+import { ledgerYear, expenseSave, expenseDelete, expenseDupOk, rcMarkPaid, dutyDone, expensesCsv, earCsv, viennaYmd, belegUpload, belegGet, belegDelete, costSkip, expenseLink, setEstVz } from "../../../lib/ledger.js";
 import { accountingSummary, viennaMidnight, viennaDayEnd, migrateAccounting, region, REGION_LABEL, costList, costSave, costDelete, setEuroAmount, recordRefund } from "../../../lib/accounting.js";
 import {
   CASES, caseOf, langOf, RULES, json, fail, randInt, randomToken, randomCode, esc, viennaDate,
@@ -82,6 +82,7 @@ export async function onRequest(ctx) {
       if (route === "admin/rc/bezahlt" && method === "POST") return wrap(async () => rcMarkPaid(env, await body()));
       if (route === "admin/kosten/ueberspringen" && method === "POST") return wrap(async () => costSkip(env, await body()));
       if (route === "admin/ausgaben/zuordnen" && method === "POST") return wrap(async () => expenseLink(env, await body()));
+      if (route === "admin/est-vz" && method === "POST") return wrap(async () => setEstVz(env, await body()));
       if (route === "admin/pflicht" && method === "POST") return wrap(async () => dutyDone(env, await body()));
       if ((route === "admin/export/ausgaben" || route === "admin/export/ea") && method === "GET") {
         const u = new URL(request.url), von = u.searchParams.get("von") || "2000-01-01", bis = u.searchParams.get("bis") || "2999-12-31", jahr = Number(u.searchParams.get("jahr")) || Number(viennaYmd(Date.now()).slice(0, 4));

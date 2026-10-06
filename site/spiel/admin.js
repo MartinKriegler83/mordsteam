@@ -330,11 +330,15 @@
     const mrows = led.months.map((x, i) => `<tr><td>${MON[i]}</td><td class="mono">${m(x.einnahmen)}</td><td class="mono">${m(x.ausgaben + x.gebuehren + x.rc_bezahlt)}</td><td class="mono"><b>${m(x.gewinn)}</b></td></tr>`).join("");
     const krows = led.by_kategorie.map((k) => `<tr><td>${e(k.kategorie)}</td><td class="mono">${m(k.cents)}</td></tr>`).join("");
     // Fristen
-    const st = (d) => d.status === "erledigt" ? `<span style="color:var(--green,#2d7a3e)">✓ erledigt ${d.done ? new Date(d.done).toLocaleDateString("de-AT") : ""}</span>` : d.status === "überfällig" ? `<b style="color:var(--red)">überfällig</b>` : "offen";
-    const btn = (d) => d.kind === "rc"
-      ? (d.done ? `<button class="btn btn-line" type="button" data-rcpaid="${e(d.key.slice(3))}" data-undo="1">zurück</button>` : `<input type="date" class="rcdate" data-q="${e(d.key.slice(3))}" value="${led.today}" style="width:9.5em"> <button class="btn btn-line" type="button" data-rcpaid="${e(d.key.slice(3))}">bezahlt</button>`)
+    const st = (d) => d.status === "erledigt" ? `<span style="color:var(--green,#2d7a3e)">✓ ${d.skipped ? "übersprungen" : d.kind === "cost" ? "gebucht" : "erledigt"} ${d.done ? new Date(d.done).toLocaleDateString("de-AT") : ""}</span>` : d.status === "überfällig" ? `<b style="color:var(--red)">überfällig</b>` : d.kind === "rc" && d.paid_cents ? `<b style="color:var(--red)">Nachzahlung offen</b>` : "offen";
+    const btn = (d, i) => d.kind === "rc"
+      ? (d.done ? `<button class="btn btn-line" type="button" data-rcpaid="${e(d.key.slice(3))}" data-undo="1" title="letzte Zahlung zurücknehmen">zurück</button>`
+        : `<input type="date" class="rcdate" data-q="${e(d.key.slice(3))}" value="${led.today}" style="width:9.5em"> <button class="btn btn-line" type="button" data-rcpaid="${e(d.key.slice(3))}">${d.paid_cents ? "Nachzahlung bezahlt" : "bezahlt"}</button>${d.paid_cents ? ` <button class="btn btn-line" type="button" data-rcpaid="${e(d.key.slice(3))}" data-undo="1" title="letzte Zahlung zurücknehmen">zurück</button>` : ""}`)
+      : d.kind === "cost"
+      ? (d.done ? (d.skipped ? `<button class="btn btn-line" type="button" data-dutyskip="${i}" data-undo="1">zurück</button>` : "")
+        : `<button class="btn btn-line" type="button" data-dutybook="${i}">buchen</button> <button class="btn btn-line" type="button" data-dutyskip="${i}">überspringen</button>`)
       : `<button class="btn btn-line" type="button" data-duty="${e(d.key)}" ${d.done ? 'data-undo="1">zurück' : ">erledigt"}</button>`;
-    const drows = led.duties.map((d) => `<tr><td><b>${e(d.title)}</b><br><span class="small">${e(d.detail)}</span></td><td class="mono" style="white-space:nowrap">${d.kind === "e1" ? "" : m(d.cents)}</td><td>${dd(d.due)}</td><td>${st(d)}</td><td style="white-space:nowrap">${btn(d)}</td></tr>`).join("");
+    const drows = led.duties.map((d, i) => `<tr><td><b>${e(d.title)}</b><br><span class="small">${e(d.detail)}</span></td><td class="mono" style="white-space:nowrap">${d.kind === "e1" ? "" : m(d.cents)}</td><td>${dd(d.due)}</td><td>${st(d)}</td><td style="white-space:nowrap">${btn(d, i)}</td></tr>`).join("");
     const th = led.thresholds;
     // Ausgabenliste
     const list = (ledAll ? led.expenses : led.expenses.slice(0, 25));
@@ -367,6 +371,8 @@
       </div>
       <div class="eyebrow" style="margin-top:18px">Fristen und Meldungen ${Y}</div>
       ${led.duties.length ? `<div style="overflow-x:auto"><table class="grid small"><tr><th>Was</th><th>Betrag</th><th>fällig</th><th>Status</th><th></th></tr>${drows}</table></div>` : `<p class="small">Für ${Y} ist noch nichts zu melden oder zu zahlen.</p>`}
+      <div class="actions-row small" style="margin:8px 0;align-items:end;flex-wrap:wrap;gap:8px"><label class="small">Einkommensteuer-Vorauszahlung ${Y} laut Bescheid, je Quartal (€) <input id="estvz" inputmode="decimal" value="${led.est_vz ? (led.est_vz / 100).toFixed(2).replace(".", ",") : ""}" placeholder="leer = kein Bescheid" style="width:9em"></label><button class="btn btn-line" type="button" id="estvzsave">speichern</button></div>
+      <p class="small">SVS, WKO und andere Zahlungen laut Vorschreibung erscheinen hier, wenn die Vorlage unter „Laufende Kosten“ einen Betrag, „Seit“ und das Häkchen „in Fristen anzeigen“ hat (Fälligkeit = „Abbuchung am“). Die Einkommensteuer-Vorauszahlung ist privat und keine Betriebsausgabe – sie steht nur als Frist hier.</p>
       <p class="small">Reverse Charge: Für Leistungen ausländischer Anbieter (Anthropic, Cloudflare, Resend, Google, Meta, Stripe …) schuldest du ${led.rate} % österreichische USt, ohne Vorsteuerabzug. Je Quartal bis zum 15. des zweitfolgenden Monats aufs Abgabenkonto überweisen (Verwendungszweck „U“ + Quartal); eine Voranmeldung nur, wenn das Finanzamt sie verlangt. Die bezahlte Steuer zählt selbst als Betriebsausgabe.</p>
 
       <form id="ledform" class="form" style="margin-top:16px;border-top:1px solid var(--line,#ddd);padding-top:12px">
@@ -408,7 +414,7 @@
     const A = kosten.arten, e = MS.esc;
     const rows = kosten.items.map((x) => `<tr>
       <td><b>${e(x.name)}</b>${x.anbieter ? `<br><span class="small">${e(x.anbieter)}</span>` : ""}</td>
-      <td>${e(A[x.art] || x.art)}${x.tag ? ` · am ${x.tag}.` : ""}${x.seit ? `<br><span class="small">seit ${e(x.seit)}</span>` : ""}</td>
+      <td>${e(A[x.art] || x.art)}${x.tag ? ` · am ${x.tag}.` : ""}${x.frist ? " · 📅 Frist" : ""}${x.seit ? `<br><span class="small">seit ${e(x.seit)}</span>` : ""}</td>
       <td class="mono">${x.art === "nutzung" && x.betrag_cents == null ? "<span class=\"small\">laut Rechnung</span>" : money(x.betrag_cents, x.waehrung)}</td>
       <td style="white-space:nowrap">${x.anteil == null ? "<i>offen</i>" : x.anteil + "&nbsp;%"}</td>
       <td class="small">${e(x.beleg || "")}${x.hinweis ? `<br><i>${e(x.hinweis)}</i>` : ""}</td>
@@ -430,7 +436,7 @@
         <div class="field"><label>Betrag (leer = offen)</label><div style="display:flex;gap:6px"><input name="betrag" inputmode="decimal" placeholder="z. B. 149,99" value="${k.betrag_cents == null ? "" : (k.betrag_cents / 100).toFixed(2).replace(".", ",")}"><select name="waehrung"><option ${k.waehrung !== "USD" ? "selected" : ""}>EUR</option><option ${k.waehrung === "USD" ? "selected" : ""}>USD</option></select></div></div></div>
         <div class="two"><div class="field"><label>Betrieblicher Anteil in % (leer = offen)</label><input name="anteil" inputmode="numeric" value="${val(k.anteil)}"></div>
         <div class="field"><label>Seit (JJJJ-MM oder JJJJ-MM-TT)</label><input name="seit" placeholder="2026-09" value="${val(k.seit)}"></div></div>
-        <div class="two"><div class="field"><label>Abbuchung am (Tag im Monat, optional)</label><input name="tag" inputmode="numeric" placeholder="z. B. 14" value="${val(k.tag)}"><span class="hint">Bei vierteljährlich/jährlich: Tag im Monat aus „Seit“. Fehlt die Buchung 3 Tage danach, meldet die Buchhaltung sie.</span></div><div class="field"></div></div>
+        <div class="two"><div class="field"><label>Abbuchung am (Tag im Monat, optional)</label><input name="tag" inputmode="numeric" placeholder="z. B. 14" value="${val(k.tag)}"><span class="hint">Bei vierteljährlich/jährlich: Tag im Monat aus „Seit“. Fehlt die Buchung 3 Tage danach, meldet die Buchhaltung sie.</span></div><div class="field"><label class="check" style="margin-top:28px"><input type="checkbox" name="frist" value="1" ${k.frist ? "checked" : ""}><span>in „Fristen und Meldungen“ anzeigen (Zahlung laut Vorschreibung, z. B. SVS, WKO)</span></label></div></div>
         <div class="field"><label>Wo liegt der Beleg?</label><input name="beleg" maxlength="300" value="${val(k.beleg)}"></div>
         <div class="field"><label>Hinweis</label><input name="hinweis" maxlength="500" value="${val(k.hinweis)}"></div>
         <div class="actions-row"><button class="btn btn-red" type="submit">Speichern</button>${k.id ? `<button class="btn btn-line" type="button" id="kcancel">Abbrechen</button><button class="btn btn-line" type="button" id="kdel" style="color:var(--red)">Posten löschen</button>` : ""}</div>
@@ -736,6 +742,21 @@
       try { await MS.api("POST", "admin/rc/bezahlt", { quartal: b.dataset.rcpaid, paid: !b.dataset.undo, datum: dt ? dt.value : "" }, H()); } catch (e2) { alert(e2.message); }
       ledReload();
     }));
+    root.querySelectorAll("[data-dutybook]").forEach((b) => (b.onclick = () => {
+      const d = led.duties[+b.dataset.dutybook], x = d.prefill;
+      const sa = /svs|kammer|wko|finanzamt|bank|post/i.test(x.anbieter + " " + x.name) ? "ohne" : "";
+      ledEdit = { cost_id: d.cost_id, datum: x.datum, anbieter: x.anbieter, beschreibung: `${x.name} – ${x.period}`, waehrung: x.waehrung, rechnung_cents: x.betrag_cents, betrag_cents: x.waehrung === "EUR" ? x.betrag_cents : null, anteil: x.anteil, steuerart: sa,
+        kategorie: /svs/i.test(x.name) ? "Sozialversicherung (SVS)" : /wko|kammer/i.test(x.name) ? "Gebühren / Behörden" : "Sonstiges" };
+      ledMsg = ""; render(...last); toLedForm();
+    }));
+    root.querySelectorAll("[data-dutyskip]").forEach((b) => (b.onclick = async () => {
+      const d = led.duties[+b.dataset.dutyskip];
+      if (!b.dataset.undo && !confirm(`„${d.title}“ überspringen?`)) return;
+      try { await MS.api("POST", "admin/kosten/ueberspringen", { cost_id: d.cost_id, period: d.period_key, undo: !!b.dataset.undo }, H()); } catch (e2) { alert(e2.message); }
+      ledReload();
+    }));
+    const evs = document.getElementById("estvzsave");
+    if (evs) evs.onclick = async () => { try { await MS.api("POST", "admin/est-vz", { jahr: ledYear, euro: document.getElementById("estvz").value }, H()); ledReload(); } catch (e2) { alert(e2.message); } };
     root.querySelectorAll("[data-duty]").forEach((b) => (b.onclick = async () => { await MS.api("POST", "admin/pflicht", { key: b.dataset.duty, done: !b.dataset.undo }, H()); ledReload(); }));
     const dl = async (url, name) => {
       const r = await fetch(url, { headers: H() });

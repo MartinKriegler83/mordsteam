@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY, token TEXT NOT NULL, cre
 CREATE TABLE IF NOT EXISTS stats_teams (session_id TEXT NOT NULL, team_no INTEGER NOT NULL, recorded_at INTEGER NOT NULL, case_id TEXT, premium INTEGER, test_mode INTEGER, duration_min INTEGER, teams_in_round INTEGER, stage_reached INTEGER, core_min REAL, act2_min REAL, solved_min REAL, attempts INTEGER, wrong INTEGER, penalty_min INTEGER, wrong_by_q TEXT, hints_akt1 INTEGER, hints_akt2 INTEGER, viewers INTEGER, PRIMARY KEY (session_id, team_no));
 CREATE TABLE IF NOT EXISTS aria_msgs (id INTEGER PRIMARY KEY AUTOINCREMENT, team_id TEXT NOT NULL, at INTEGER NOT NULL, role TEXT NOT NULL, text TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS feedback (id TEXT PRIMARY KEY, order_id TEXT NOT NULL UNIQUE, created_at INTEGER NOT NULL, variant TEXT NOT NULL, lang TEXT, paket TEXT, rating INTEGER, nps INTEGER, answers TEXT, review TEXT, publish TEXT NOT NULL DEFAULT 'no', publish_name TEXT, approved INTEGER NOT NULL DEFAULT 0);
-CREATE TABLE IF NOT EXISTS cost_items (id TEXT PRIMARY KEY, name TEXT NOT NULL, anbieter TEXT, art TEXT NOT NULL, betrag_cents INTEGER, waehrung TEXT NOT NULL DEFAULT 'EUR', anteil INTEGER, seit TEXT, beleg TEXT, hinweis TEXT, sort INTEGER NOT NULL DEFAULT 0, deleted INTEGER NOT NULL DEFAULT 0, updated_at INTEGER, tag INTEGER);
+CREATE TABLE IF NOT EXISTS cost_items (id TEXT PRIMARY KEY, name TEXT NOT NULL, anbieter TEXT, art TEXT NOT NULL, betrag_cents INTEGER, waehrung TEXT NOT NULL DEFAULT 'EUR', anteil INTEGER, seit TEXT, beleg TEXT, hinweis TEXT, sort INTEGER NOT NULL DEFAULT 0, deleted INTEGER NOT NULL DEFAULT 0, updated_at INTEGER, tag INTEGER, frist INTEGER);
 CREATE TABLE IF NOT EXISTS nl_contacts (email TEXT PRIMARY KEY, lang TEXT NOT NULL DEFAULT 'de', name TEXT, source TEXT NOT NULL, status TEXT NOT NULL, token TEXT NOT NULL, created_at INTEGER NOT NULL, confirmed_at INTEGER, consent TEXT, unsub_at INTEGER, synced_at INTEGER, sync_error TEXT);
 CREATE TABLE IF NOT EXISTS nl_ecg (h TEXT PRIMARY KEY, v INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS nl_settings (k TEXT PRIMARY KEY, v TEXT);
@@ -20,3 +20,5 @@ CREATE TABLE IF NOT EXISTS rc_paid (quartal TEXT PRIMARY KEY, paid_at INTEGER);
 CREATE TABLE IF NOT EXISTS duties_done (key TEXT PRIMARY KEY, done_at INTEGER);
 CREATE TABLE IF NOT EXISTS expense_files (id TEXT PRIMARY KEY, expense_id TEXT NOT NULL, name TEXT NOT NULL, mime TEXT NOT NULL, size INTEGER NOT NULL, r2_key TEXT NOT NULL, created_at INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE IF NOT EXISTS cost_skips (cost_id TEXT NOT NULL, period TEXT NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (cost_id, period));
+CREATE TABLE IF NOT EXISTS rc_payments (id TEXT PRIMARY KEY, quartal TEXT NOT NULL, paid_at INTEGER NOT NULL, cents INTEGER NOT NULL, created_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS ledger_settings (k TEXT PRIMARY KEY, v TEXT);

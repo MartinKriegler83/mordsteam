@@ -1205,4 +1205,26 @@ PROD = f'''<!doctype html>
 '''
 with open(os.path.join(ROOT, "products.html"), "w") as f:
     f.write(PROD)
+# Englische Startseite im Teaser-Modus (teaser/en/index.html, 6.10.2026): Angebotsseite statt „Coming soon“,
+# damit Paddle Produkt, Preise und Rechtstexte prüfen kann. Kein Bestellen – der Shop öffnet erst mit dem Go-live.
+_LAND_HERO = """<h1>Murder-mystery games you play in the browser</h1>
+<p class="lead">Solve a case together – with your team at work, with friends at home, or on your own. Evidence, interrogations and puzzles on your phone, tablet or laptop. No app, no download, no acting.</p>
+<div class="ms-cards">
+<div class="ms-card"><div class="ms-k">Teams</div><h3>Team building</h3><p>Several teams compete to solve the same case – personalised with your company, rooms and colleagues. 50, 70 or 90-minute countdown.</p><p class="ms-p">from €89 per team</p></div>
+<div class="ms-card"><div class="ms-k">Friends</div><h3>Mystery night</h3><p>4–8 friends, everyone investigates on their own phone – together on one evening or whenever it suits over a few days. One of you is the culprit.</p><p class="ms-p">from €29</p></div>
+<div class="ms-card"><div class="ms-k">Solo</div><h3>A case for one</h3><p>Short, self-contained cases for one person, 35–45 minutes, with an AI interrogation room in the Plus version.</p><p class="ms-p">from €8.90</p></div>
+</div>
+<h2>How it works</h2>
+<ol><li>Choose a game and package, enter your details (names, company or friends) and pay securely.</li><li>You receive the links and codes immediately by email and on the confirmation page.</li><li>Open the case file whenever you're ready – the countdown starts when you start the case.</li></ol>
+<p class="small">Payment is processed by Stripe; customers in the United Kingdom pay via Paddle (Paddle.com acts as merchant of record). Questions: <a href="mailto:office@mordsteam.com">office@mordsteam.com</a></p>
+<hr>"""
+LAND = PROD.replace("<title>Products, prices and policies – Mordsteam</title>", "<title>Mordsteam – murder-mystery games for teams, friends and solo</title>\n<meta name=\"description\" content=\"Digital murder-mystery games played in the browser: team building for companies, mystery nights for friends and solo cases.\">\n<link rel=\"alternate\" hreflang=\"de\" href=\"https://mordsteam.com/\">\n<link rel=\"alternate\" hreflang=\"en\" href=\"https://mordsteam.com/en/\">\n<style>.ms-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:18px 0 26px}.ms-card{background:#fff;border:1px solid var(--line,#ddd);padding:16px 18px}.ms-card h3{margin:4px 0 6px}.ms-card p{margin:0 0 8px}.ms-k{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--red,#B3261E)}.ms-p{font-weight:600}.ms-lang{margin-left:14px;font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.1em}.ms-lang a{color:inherit}.ms-foot a{color:inherit;margin-right:12px}.ms-lang-m{margin-left:auto}@media (min-width:1080px){.ms-lang-m{display:none}}</style>", 1)
+LAND = LAND.replace('<a href="#imprint">Imprint</a></nav>', '<a href="#imprint">Imprint</a><span class="ms-lang"><a href="/?lang=de" hreflang="de" lang="de">DE</a> · <b>EN</b></span></nav><span class="ms-lang ms-lang-m"><a href="/?lang=de" hreflang="de" lang="de">DE</a> · <b>EN</b></span>', 1)
+_h1 = '<h1>Mordsteam – products, prices and policies</h1>'
+assert LAND.count(_h1) == 1
+LAND = LAND.replace(_h1, _LAND_HERO + '\n<h2>About us</h2>', 1)
+LAND = LAND.replace('<span>© 2026 Mordsteam e.U.</span></div></footer>', '<span class="ms-foot"><a href="#products">Prices</a><a href="#refunds">Refunds</a><a href="#terms">Terms</a><a href="#privacy">Privacy</a><a href="/en/imprint.html">Imprint</a><a href="/?lang=de" lang="de">Deutsch</a></span><span>© 2026 Mordsteam e.U.</span></div></footer>', 1)
+assert "Coming soon" not in LAND and "ms-cards" in LAND and 'ms-lang' in LAND and 'ms-foot' in LAND
+with open(os.path.join(ROOT, "..", "teaser", "en", "index.html"), "w") as f:
+    f.write(LAND)
 print("ok", len(P))
