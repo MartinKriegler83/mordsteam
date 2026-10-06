@@ -48,7 +48,7 @@ site/                    Öffentliche Website (deutsch) + site/en/ (englisch, ge
   spiel/                   Spielplattform „Fallzentrale“: Oberflächen für Teams, Leitung, Solo, Friends, Admin, Urkunde
   assets/                  CSS, Seiten-Skripte, Schriften
   _headers                 Sicherheits-Header, noindex für /spiel/ und Bestellseiten
-teaser/                  Platzhalter-Startseite und Impressum für den Teaser-Modus
+teaser/                  Platzhalter-Startseite und Impressum für den Teaser-Modus, englisch unter teaser/en/ (index, imprint)
 tools/                   Prüf- und Hilfsskripte (siehe „Lokal testen“)
   en_pages.py              erzeugt site/en/*.html (englische Seiten nie direkt bearbeiten)
   check_*.mjs              Prüfskripte je Fall (Eindeutigkeit der Lösung über alle Varianten); check_*_en.mjs prüft die englische Fassung gegen die deutsche
@@ -180,7 +180,7 @@ GitHub-Repository-Secret: `CRON_KEY`.
 ## Build
 
 Cloudflare Pages führt `build.sh` aus und veröffentlicht `dist/`:
-- Branch `main` und `LAUNCH` ≠ `true` → **Teaser-Modus**: nur `teaser/index.html` und `teaser/impressum.html` als öffentliche Seite, dazu `site/spiel/` (nicht verlinkt, `noindex`) und die Assets.
+- Branch `main` und `LAUNCH` ≠ `true` → **Teaser-Modus**: nur `teaser/index.html` und `teaser/impressum.html` als öffentliche Seite, englisch `teaser/en/` → `/en/` und `/en/imprint.html` (Besucher außerhalb von DACH werden über `functions/_middleware.js` dorthin geleitet, Umschalter DE · EN oben rechts), dazu `site/spiel/` (nicht verlinkt, `noindex`) und die Assets.
 - Alle anderen Fälle (Branch `vorschau`, oder `LAUNCH=true`) → **volle Seite**: ganz `site/`.
 
 Die Functions (`functions/`) laufen in beiden Modi.

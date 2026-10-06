@@ -4,7 +4,7 @@
 //   - Browsersprache Deutsch (z. B. Österreicher im Urlaub)
 //   - Klicks innerhalb der eigenen Seite (Sprachumschalter „DE“) und ?lang=de
 //   - Suchmaschinen-Crawler (sie sollen beide Sprachversionen sehen; hreflang regelt den Rest)
-//   - Teaser-Modus: gibt es /en/ nicht, wird nicht umgeleitet
+//   - fehlt /en/ (z. B. älteres Deployment), wird nicht umgeleitet; im Teaser-Modus gibt es seit 6.10.2026 eine englische Teaserseite
 // Keine Cookies, kein Tracking: Es wird nur das Land aus der Anfrage (Cloudflare) gelesen.
 const DACH = ["AT", "DE", "CH", "LI"];
 

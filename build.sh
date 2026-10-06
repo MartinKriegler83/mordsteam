@@ -13,6 +13,8 @@ if [ "$CF_PAGES_BRANCH" = "main" ] && [ "$LAUNCH" != "true" ]; then
   cp -r site/assets site/spiel site/_headers site/robots.txt site/favicon.ico site/site.webmanifest dist/
   cp teaser/index.html dist/index.html
   cp teaser/impressum.html dist/impressum.html
+  # Englische Teaserseite: Besucher außerhalb von DACH landen über functions/_middleware.js automatisch hier
+  mkdir -p dist/en && cp teaser/en/index.html dist/en/index.html && cp teaser/en/imprint.html dist/en/imprint.html
   # Für die Prüfung durch Paddle: Angebot, Preise, Erstattung und Rechtstexte (nicht verlinkt, noindex)
   cp site/products.html dist/products.html
   # Paddle-Kasse (Default payment link im Paddle-Konto) – erst nach dem Go-live genutzt, aber für die Prüfung erreichbar
