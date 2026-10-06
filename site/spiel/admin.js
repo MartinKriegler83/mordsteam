@@ -340,7 +340,7 @@
     const xrows = list.map((x) => `<tr${x.dup || x.stripe_manual ? ' style="background:#FFF4CF"' : ""}><td>${dd(x.datum)}${x.bezahlt_am && x.bezahlt_am !== x.datum ? `<br><span class="small">bez. ${dd(x.bezahlt_am)}</span>` : ""}</td>
       <td><b>${e(x.anbieter)}</b>${x.beschreibung ? `<br><span class="small">${e(x.beschreibung)}</span>` : ""}${x.rechnungsnr ? `<br><span class="small mono">Nr. ${e(x.rechnungsnr)}</span>` : ""}${x.dup ? `<br><b class="small" style="color:var(--red)">möglicherweise doppelt</b>` : ""}</td>
       <td class="small">${e(x.kategorie || "")}<br>${e(SA[x.steuerart] || x.steuerart)}${x.bezahlt_von === "privat" ? " · privat bezahlt" : ""}</td>
-      <td class="mono">${m(x.betrag_cents)}${x.waehrung && x.waehrung !== "EUR" && x.rechnung_cents ? `<br><span class="small">${e(x.waehrung)} ${(x.rechnung_cents / 100).toFixed(2).replace(".", ",")}</span>` : ""}${x.anteil !== 100 ? `<br><span class="small">${x.anteil} % = ${m(x.betrieblich_cents)}</span>` : ""}${x.rc_cents ? `<br><span class="small">RC-USt ${m(x.rc_cents)}</span>` : ""}</td>
+      <td class="mono">${m(x.betrag_cents)}${x.waehrung && x.waehrung !== "EUR" && x.rechnung_cents ? `<br><span class="small">${e(x.waehrung)} ${(x.rechnung_cents / 100).toFixed(2).replace(".", ",")}</span>` : ""}${x.fx_fee_cents ? `<br><span class="small">inkl. ${m(x.fx_fee_cents)} Bankspesen</span>` : ""}${x.anteil !== 100 ? `<br><span class="small">${x.anteil} % = ${m(x.betrieblich_cents)}</span>` : ""}${x.rc_cents ? `<br><span class="small">RC-USt ${m(x.rc_cents)}</span>` : ""}</td>
       <td class="small">${(x.files || []).map((b) => `📎 <a href="#" data-beleg="${e(b.id)}">${e(b.name.length > 28 ? b.name.slice(0, 26) + "…" : b.name)}</a>`).join("<br>")}${x.files && x.files.length && x.beleg ? "<br>" : ""}${e(x.beleg || "")}${!(x.files || []).length && !x.beleg ? `<span style="color:var(--red)">kein Beleg</span>` : ""}${x.notiz ? `<br><i>${e(x.notiz)}</i>` : ""}</td>
       <td style="white-space:nowrap"><button class="btn btn-line" type="button" data-ledit="${e(x.id)}">Ändern</button>${x.dup ? ` <button class="btn btn-line" type="button" data-ledok="${e(x.id)}">kein Duplikat</button>` : ""}</td></tr>`).join("");
     const f = ledEdit || {};
@@ -379,7 +379,9 @@
         <div class="two"><div class="field"><label>Rechnungswährung</label><select name="waehrung">${(led.waehrungen || ["EUR", "USD", "GBP"]).map((w) => `<option ${w === fw ? "selected" : ""}>${w}</option>`).join("")}</select></div>
         <div class="field"><label>Rechnungsbetrag * <span class="small">(laut Rechnung, inkl. USt; bei Reverse Charge netto)</span></label><input name="rechnung" inputmode="decimal" value="${cents(frech)}" placeholder="z. B. 12,00"></div></div>
         <div class="two"><div class="field"><label>davon USt laut Rechnung (optional)</label><input name="rechnung_ust" inputmode="decimal" value="${cents(frust)}" placeholder="leer = keine USt auf der Rechnung"></div>
-        <div class="field"><label>Betrag in Euro * <span class="small">(tatsächlich abgebucht, laut Konto)</span></label><input name="betrag" inputmode="decimal" value="${cents(f.betrag_cents)}" placeholder="z. B. 10,73"><span class="small" id="ledusteur" style="display:block;margin-top:4px"></span></div></div>
+        <div class="field"><label>Betrag in Euro * <span class="small">(tatsächlich abgebucht, laut Konto)</span></label><input name="betrag" inputmode="decimal" value="${cents(f.betrag_cents)}" placeholder="z. B. 3,43"></div></div>
+        <div class="two" id="ledfxrow"><div class="field"><label>davon Fremdwährungsgebühr der Bank (€) <span class="small">(laut Kontoauszug, optional)</span></label><input name="fx_fee" inputmode="decimal" value="${cents(f.fx_fee_cents)}" placeholder="z. B. 0,05"></div>
+        <div class="field"><p class="small" id="ledusteur" style="margin:30px 0 0"></p></div></div>
         <div class="two"><div class="field"><label>Betrieblicher Anteil in %</label><input name="anteil" inputmode="numeric" value="${v(f.anteil ?? 100)}"></div>
         <div class="field"><label>Bezahlt von</label><select name="bezahlt_von">${sel(led.bezahlt, f.bezahlt_von || "konto")}</select></div></div>
         <div class="field"><label>Beleg-Hinweis (optional)</label><input name="beleg" maxlength="300" value="${v(f.beleg)}" placeholder="z. B. Rechnung per Mail, Ordner Belege 2026"></div>
@@ -634,9 +636,17 @@
         eur.readOnly = w === "EUR";
         if (w === "EUR") eur.value = fld("rechnung").value;
         const b = num(eur.value), out = document.getElementById("ledusteur");
-        out.textContent = ru == null ? "keine USt auf der Rechnung" : w === "EUR" ? `USt in Euro: ${fmt(ru)} €` : r && b ? `USt in Euro: ${fmt(Math.round(b * ru / r * 100) / 100)} € (im Verhältnis der Rechnung)` : "USt in Euro wird berechnet, sobald beide Beträge da sind";
+        const fxr = document.getElementById("ledfxrow"), fx = w === "EUR" ? 0 : num(fld("fx_fee").value) || 0;
+        fxr.querySelector(".field").style.display = w === "EUR" ? "none" : "";
+        const net = b != null ? Math.round((b - fx) * 100) / 100 : null;
+        const parts = [];
+        if (w !== "EUR" && net != null) parts.push(`Rechnungswert in Euro: ${fmt(net)} €${fx ? ` (+ ${fmt(fx)} € Bankspesen)` : ""}`);
+        parts.push(ru == null ? "keine USt auf der Rechnung" : w === "EUR" ? `USt in Euro: ${fmt(ru)} €` : r && net ? `USt in Euro: ${fmt(Math.round(net * ru / r * 100) / 100)} € (im Verhältnis der Rechnung)` : "USt in Euro wird berechnet, sobald beide Beträge da sind");
+        if (fld("steuerart").value === "rc" && (w === "EUR" ? num(fld("rechnung").value) : net)) parts.push(`Reverse Charge 20 %: ${fmt(Math.round((w === "EUR" ? num(fld("rechnung").value) : net) * 20) / 100)} €`);
+        out.textContent = parts.join(" · ");
       };
-      ["waehrung", "rechnung", "rechnung_ust", "betrag"].forEach((n) => fld(n).addEventListener("input", calc));
+      ["waehrung", "rechnung", "rechnung_ust", "betrag", "fx_fee", "steuerart"].forEach((n) => fld(n).addEventListener("input", calc));
+      fld("steuerart").addEventListener("change", calc);
       fld("waehrung").addEventListener("change", () => { if (fld("waehrung").value !== "EUR" && fld("betrag").value === fld("rechnung").value) fld("betrag").value = ""; calc(); });
       calc();
       lf.onsubmit = async (ev) => {
