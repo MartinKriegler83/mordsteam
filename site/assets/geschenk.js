@@ -30,7 +30,8 @@
     })();
     let card;
     if (d.produkt === "solo" && d.solo_code) {
-      const link = `${origin}/spiel/solo.html?c=${encodeURIComponent(d.solo_code)}`;
+      // Kurzlink /s/<Code> (functions/s/[code].js) – zum Antippen, Fotografieren (QR) oder Abtippen
+      const link = `${origin}/s/${encodeURIComponent(d.solo_code)}`;
       const title = EN ? d.solo_title_en : d.solo_title;
       card = {
         eyebrow: T("Ein Krimi für dich", "A mystery for you"),
@@ -38,21 +39,22 @@
         kind: "Solo", tagLabel: T("Beweisstück 1 · Dein Code", "Exhibit 1 · Your code"), code: d.solo_code, link,
         tagText: T("Einmal einlösbar · nach dem ersten Durchgang 30 Tage lang bis zu dreimal wiederholbar", "Redeem once · replay up to three times within 30 days of your first run"),
         steps: [
-          T(`QR-Code scannen oder <span class="mono">${esc(origin.replace(/^https?:\/\//, ""))}/spiel/solo.html</span> öffnen`, `Scan the QR code or open <span class="mono">${esc(origin.replace(/^https?:\/\//, ""))}/spiel/solo.html</span>`),
-          T("Code eingeben und deinen Ermittlernamen wählen", "Enter the code and choose your investigator name"),
+          T("QR-Code scannen, antippen oder den Link oben eingeben – der Code ist schon eingetragen", "Scan or tap the QR code, or type the link above – the code is already filled in"),
+          T("Deinen Ermittlernamen wählen", "Choose your investigator name"),
           T("Die Uhr startet erst, wenn du die Akte öffnest – nimm dir die Zeit am Stück.", "The clock only starts when you open the case file – take the time in one go."),
         ],
       };
     } else if (d.produkt === "friends" && d.org_token) {
-      const link = `${origin}/spiel/friends.html?o=${encodeURIComponent(d.org_token)}`;
+      // Kurzlink /f/<Kurzcode> (functions/f/[code].js); ältere Antworten ohne Kurzcode → langer Link
+      const link = d.org_short ? `${origin}/f/${encodeURIComponent(d.org_short)}` : `${origin}/spiel/friends.html?o=${encodeURIComponent(d.org_token)}`;
       card = {
         eyebrow: T("Ein Krimiabend für dich", "A mystery night for you"),
         title: T("Letzte Runde auf der Hütte", "Last Round at the Chalet"),
         sub: T(`Mordsteam Friends${d.plus ? " Plus mit KI-Verhörraum" : ""} · für ${d.teams} Personen · jeder ermittelt am eigenen Handy`, `Mordsteam Friends${d.plus ? " Plus with AI interrogation room" : ""} · for ${d.teams} people · everyone investigates on their own phone`),
         kind: "Friends", tagLabel: T("Beweisstück 1 · Deine Einladung", "Exhibit 1 · Your invitation"), code: "", link,
-        tagText: T("Der QR-Code führt zu deiner Organisator-Seite. Dort bekommst du den Link für deine Gäste.", "The QR code leads to your organiser page, where you get the link for your guests."),
+        tagText: T("Führt zu deiner Organisator-Seite. Dort bekommst du den Link für deine Gäste.", "Leads to your organiser page, where you get the link for your guests."),
         steps: [
-          T("QR-Code scannen – das ist deine Organisator-Seite (gut aufheben, nicht weitergeben)", "Scan the QR code – that’s your organiser page (keep it safe, don’t pass it on)"),
+          T("QR-Code scannen, antippen oder Link oben eingeben – deine Organisator-Seite (nicht weitergeben)", "Scan or tap the QR code, or type the link above – your organiser page (don’t pass it on)"),
           T("Dort findest du den Einladungslink für deine Gäste", "There you’ll find the invitation link for your guests"),
           d.mode === "week"
             ? T(`Du schaltest den Fall frei, dann hat jede und jeder ${d.days || 7} Tage Zeit, wann es passt`, `You unlock the case, then everyone has ${d.days || 7} days to play whenever it suits them`)
@@ -80,8 +82,8 @@
         <div class="gk-card"><textarea id="gk-ded" autocomplete="off" rows="3" maxlength="180" aria-label="${esc(T("Widmung", "Dedication"))}" placeholder="${esc(T("Deine Widmung, z. B. „Alles Gute zum Geburtstag – löst du ihn schneller als ich?“", "Your dedication, e.g. “Happy birthday – can you crack it faster than me?”"))}"></textarea></div>
         <div class="gk-field"><label for="gk-from">${esc(T("Von", "From"))}</label><input id="gk-from" name="gk-widmung-von" autocomplete="off" data-lpignore="true" data-1p-ignore maxlength="40" placeholder="${esc(T("Dein Name", "Your name"))}"></div>
         <div class="gk-evid">
-          <div class="gk-tag"><small>${esc(card.tagLabel)}</small>${card.code ? `<div class="gk-code">${esc(card.code)}</div>` : ""}<p>${esc(card.tagText)}</p></div>
-          <div class="gk-qrbox"><div class="gk-qr" id="gk-qr" role="img" aria-label="${esc(T("QR-Code zum Spiel", "QR code for the game"))}"></div><span>${esc(T("Scannen und loslegen", "Scan to start"))}</span></div>
+          <div class="gk-tag"><small>${esc(card.tagLabel)}</small>${card.code ? `<div class="gk-code">${esc(card.code)}</div>` : ""}<a class="gk-link${card.code ? "" : " big"}" href="${esc(card.link)}">${esc(card.link.replace(/^https?:\/\//, ""))}</a><p>${esc(card.tagText)}</p></div>
+          <div class="gk-qrbox"><a class="gk-qr" id="gk-qr" href="${esc(card.link)}" aria-label="${esc(T("QR-Code zum Spiel – antippen öffnet den Link", "QR code for the game – tap to open the link"))}"></a><span>${esc(T("Scannen oder antippen", "Scan or tap"))}</span></div>
         </div>
         <ol class="gk-steps">${card.steps.map((x) => `<li>${x}</li>`).join("")}</ol>
       </div>

@@ -2,7 +2,7 @@
 // Benötigt: D1-Binding "DB" und die geheime Umgebungsvariable "ADMIN_KEY".
 import { ledgerYear, expenseSave, expenseDelete, expenseDupOk, rcMarkPaid, dutyDone, expensesCsv, earCsv, viennaYmd, belegUpload, belegGet, belegDelete, costSkip, expenseLink, setEstVz } from "../../../lib/ledger.js";
 import { adminDenied } from "../../../lib/adminauth.js";
-import { accountingSummary, viennaMidnight, viennaDayEnd, migrateAccounting, region, REGION_LABEL, costList, costSave, costDelete, setEuroAmount, recordRefund } from "../../../lib/accounting.js";
+import { accountingSummary, viennaMidnight, viennaDayEnd, migrateAccounting, region, REGION_LABEL, costList, costSave, costDelete, setEuroAmount, setLandOk, recordRefund } from "../../../lib/accounting.js";
 import {
   CASES, caseOf, langOf, RULES, json, fail, randInt, randomToken, randomCode, esc, viennaDate,
   buildVars, render, checkAnswers, norm, same, hintLabel, namesToLetters, lettersToName, hintTimes, hardEnd, refreshStatus, finishIfAllSolved, recordStats, expired, purgeSession, ranking, teamScore,
@@ -93,6 +93,7 @@ export async function onRequest(ctx) {
       if (route === "admin/kosten" && method === "POST") { try { return json(await costSave(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
       if (route === "admin/kosten/loeschen" && method === "POST") { const b = await request.json().catch(() => ({})); return json(await costDelete(env, b.id)); }
       if (route === "admin/bestellung/erstattet" && method === "POST") { try { return json(await recordRefund(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
+      if (route === "admin/buchhaltung/land-ok" && method === "POST") { try { return json(await setLandOk(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
       if (route === "admin/buchhaltung/euro" && method === "POST") { try { return json(await setEuroAmount(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
       if (route === "admin/buchhaltung" && method === "GET") { const u = new URL(request.url); return json(await accountingSummary(env, viennaMidnight(u.searchParams.get("von") || "2000-01-01"), viennaDayEnd(u.searchParams.get("bis") || "2999-12-31"))); }
       if (route === "admin/ops" && method === "GET") return json(await opsSummary(env));

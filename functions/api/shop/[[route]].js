@@ -25,7 +25,7 @@ import { taxContext, TaxInputError, invoiceFooter, invoiceFields } from "../../.
 import { PRICE_TABLE, curOfLand, convPrice } from "../../../lib/prices.js";
 import { nlSignup, nlConfirm, nlUnsubscribe, nlVisit, srcVisit, nlAfterOrder, nlTag, migrateNewsletter } from "../../../lib/newsletter.js";
 import { createSoloTicket, migrateSolo } from "../../../lib/solo.js";
-import { createFriendsGroup, friendsGroupOfOrder, friendsPrice, FRIENDS_PRICE, FRIENDS_PRICE_PLUS, FRIENDS_CASES, friendsCase, friendsCron } from "../../../lib/friends.js";
+import { createFriendsGroup, friendsGroupOfOrder, ensureShortCode, friendsPrice, FRIENDS_PRICE, FRIENDS_PRICE_PLUS, FRIENDS_CASES, friendsCase, friendsCron } from "../../../lib/friends.js";
 
 // Sprache der Webseite (Fehlermeldungen, Stripe, Mail) – getrennt von der Spielsprache
 const L = (lang, de, en) => (lang === "en" ? en : de);
@@ -541,7 +541,7 @@ async function status(request, env) {
     out.teams = order.teams;
     if (order.status === "fulfilled") {
       const g = await friendsGroupOfOrder(env, order.id);
-      if (g) Object.assign(out, { org_token: g.org_token, invite: g.invite, mode: g.mode, days: g.window_days });
+      if (g) Object.assign(out, { org_token: g.org_token, org_short: await ensureShortCode(env, g).catch(() => null), invite: g.invite, mode: g.mode, days: g.window_days });
     }
     return json(out);
   }

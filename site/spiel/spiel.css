@@ -562,3 +562,6 @@ button.btn-big{margin-top:14px}
 .so-blatt{transform:translateZ(0)}
 
 .sbadge{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:10px;background:rgba(200,160,80,.18);border:1px solid var(--folder);font-size:11.5px;white-space:nowrap}
+
+/* Datumsfelder im Admin: Platz für Datum + Kalender-Symbol (Safari/Chrome überlagerten sonst die Jahreszahl) */
+input[type=date]{min-width:11.5em;box-sizing:border-box}

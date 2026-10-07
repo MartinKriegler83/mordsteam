@@ -23,6 +23,8 @@ build.sh                 Build für Cloudflare Pages: erzeugt dist/ (Teaser oder
 db/schema.sql            Grundschema der D1-Datenbank (Teams-Plattform und Shop)
 functions/               Cloudflare Pages Functions (Server)
   _middleware.js           Sprachweiche für "/" (Besucher außerhalb DACH → /en/)
+  s/[code].js              Kurzlink /s/<Solo-Code> → /spiel/solo.html?c=<Code> (Geschenkkarte)
+  f/[code].js              Kurzlink /f/<Kurzcode> → Friends-Organisator-Seite (friends_groups.short_code, angelegt beim ersten Abruf der Geschenkkarte über /api/shop/status → org_short)
   api/_middleware.js       zählt API-Aufrufe je Bereich, protokolliert Serverfehler (ops_hits, ops_err)
   api/spiel/[[route]].js   Teams: Spiel, Spielleitung, Admin-Bereich (alle Produkte)
   api/solo/[[route]].js    Solo (dünne Hülle um lib/solo.js)
