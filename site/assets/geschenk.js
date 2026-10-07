@@ -76,9 +76,9 @@
           <h1 class="gk-title">${esc(card.title)}</h1>
           <p class="gk-sub">${esc(card.sub)}</p>
         </div>
-        <div class="gk-field"><label for="gk-for">${esc(T("Für", "For"))}</label><input id="gk-for" autocomplete="off" maxlength="40" placeholder="${esc(T("Name der Ermittlerin / des Ermittlers", "Name of the investigator"))}"></div>
+        <div class="gk-field"><label for="gk-for">${esc(T("Für", "For"))}</label><input id="gk-for" name="gk-widmung-fuer" autocomplete="off" data-lpignore="true" data-1p-ignore maxlength="40" placeholder="${esc(T("Name der Ermittlerin / des Ermittlers", "Name of the investigator"))}"></div>
         <div class="gk-card"><textarea id="gk-ded" autocomplete="off" rows="3" maxlength="180" aria-label="${esc(T("Widmung", "Dedication"))}" placeholder="${esc(T("Deine Widmung, z. B. „Alles Gute zum Geburtstag – löst du ihn schneller als ich?“", "Your dedication, e.g. “Happy birthday – can you crack it faster than me?”"))}"></textarea></div>
-        <div class="gk-field"><label for="gk-from">${esc(T("Von", "From"))}</label><input id="gk-from" autocomplete="off" maxlength="40" placeholder="${esc(T("Dein Name", "Your name"))}"></div>
+        <div class="gk-field"><label for="gk-from">${esc(T("Von", "From"))}</label><input id="gk-from" name="gk-widmung-von" autocomplete="off" data-lpignore="true" data-1p-ignore maxlength="40" placeholder="${esc(T("Dein Name", "Your name"))}"></div>
         <div class="gk-evid">
           <div class="gk-tag"><small>${esc(card.tagLabel)}</small>${card.code ? `<div class="gk-code">${esc(card.code)}</div>` : ""}<p>${esc(card.tagText)}</p></div>
           <div class="gk-qrbox"><div class="gk-qr" id="gk-qr" role="img" aria-label="${esc(T("QR-Code zum Spiel", "QR code for the game"))}"></div><span>${esc(T("Scannen und loslegen", "Scan to start"))}</span></div>

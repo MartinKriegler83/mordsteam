@@ -291,6 +291,7 @@ P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=Tru
 <p class="for">The mystery night for friends: everyone investigates on their own phone – who unmasks the culprit first?</p>
 <p>You are the suspects – with your real names and your little quirks. Everyone plays at the same time, or whenever they have time this week.</p>
 <p class="meta">4–8 INVESTIGATORS · EVERYONE ON THEIR OWN DEVICE · 50–75 MIN · FROM €29 PER GROUP</p>
+<p class="small" style="margin:0 0 10px">Also a great gift: after buying you get a gift card to print or save as PDF.</p>
 <a class="btn btn-red" href="friends.html">Go to Mordsteam Friends</a>
 </article>
 <article class="game live"><span class="tab">SOLO</span><span class="smark ok">PLAY<br>NOW</span>
@@ -299,6 +300,7 @@ P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=Tru
 <p class="for">A case just for you.</p>
 <p>One countdown, five suspects, one truth. The quick mystery in between – and the perfect taste of a team game.</p>
 <p class="meta">1 INVESTIGATOR · 35–45 MIN · ANY TIME · FROM €8.90</p>
+<p class="small" style="margin:0 0 10px">Also a great gift: after buying you get a gift card to print or save as PDF.</p>
 <a class="btn btn-red" href="solo.html">Go to Mordsteam Solo</a>
 </article>
 </div>
@@ -489,6 +491,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <details><summary>Can people spoil the solution for each other?</summary><p>In theory, yes – but whoever helps others makes their own ranking worse. Anyone who has finished only sees “solved”, not the solution. The culprit, the reveal and the times come for everyone together.</p></details>
 <details><summary>Do we need an app or an account?</summary><p>No. Mordsteam Friends runs right in the browser on phone, tablet or laptop. Everyone only needs the invitation link.</p></details>
 <details><summary>Is this a murder mystery game for home?</summary><p>Yes – no character booklets, no costumes, everyone investigates on their own phone. More: <a href="murder-mystery-game-at-home.html">Murder mystery game at home</a>.</p></details>
+<details><summary>Can I give a mystery night as a gift?</summary><p>Yes. Order the round with the names of the group you are giving it to – the names appear in the case and can’t be changed after purchase. After paying you get a gift card to print or save as PDF, with your dedication and a QR code to the organiser page. The recipient then starts the evening themselves.</p></details>
 <details><summary>Can I use a voucher?</summary><p>Yes: enter the €5 voucher from Mordsteam Solo in the payment step. One voucher per order, not combinable with the early bird discount.</p></details>
 <details><summary>What is the AI interrogation room in Mystery Night Plus?</summary><p>Once you have solved question 1, the interrogation room opens: each of your friends has an AI double with their name and quirk that you can question via chat – you have 40 questions. One of them lies to you, and for the finale – Ferdl's cloud password and his secret “Part 2” – you need what only the doubles know. The AI only knows the invented world of the case; real names never go to the AI provider – we replace them with placeholders first.</p></details>
 <details><summary>From what age?</summary><p>The case is written for adults – a mystery with a wink, no blood and no shock effects. Teenagers can play the Mystery Night well too. Mystery Night Plus with the AI interrogation room is for ages 18 and over; you confirm this when ordering.</p></details>
@@ -730,7 +733,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <details><summary>How do the hints work?</summary><p>Each question has three hints, from a gentle nudge to almost the answer. They cost 1, 2 and 3 penalty minutes. A wrong answer costs 3 minutes, and you can try again straight away.</p></details>
 <details><summary>What does “faster than X %” mean?</summary><p>Your final time (time played plus penalty minutes) is compared with all other investigators who solved the case for the first time. There is no public leaderboard, nobody sees your name.</p></details>
 <details><summary>Can I play the case again?</summary><p>Yes, for all three cases: up to three times within 30 days of your first playthrough. A different killer is drawn for each playthrough, and the matching evidence changes too. Only your first playthrough counts for the comparison.</p></details>
-<details><summary>Can I give Mordsteam Solo as a gift?</summary><p>Yes. Just pass on the code. The name that appears in the story and on the certificate is only entered when playing.</p></details>
+<details><summary>Can I give Mordsteam Solo as a gift?</summary><p>Yes. After buying you get a gift card on the confirmation page and in the order email to print or save as PDF – with your dedication, the code and a QR code. The name that appears in the story and on the certificate is only entered by whoever plays.</p></details>
 <details><summary>What is the €5 voucher?</summary><p>Every Solo case gives you a €5 voucher code after your first playthrough – solved or not. Redeem it in the payment step when ordering Mordsteam Friends or Teams. One voucher per order; it can't be combined with the early bird or other offers and can't be exchanged for cash.</p></details>
 <details><summary>Do I need an app or an account?</summary><p>No. Mordsteam Solo runs right in the browser on phone, tablet or laptop. All you need is your code.</p></details>
 <details><summary>May I use Google or AI?</summary><p>Please don't. The cases are built so you solve them with your wits and the evidence – everything you need is in the file. The only AI allowed to play along are the suspects in the Solo Plus interrogation room. A matter of honour among investigators.</p></details>
@@ -769,7 +772,7 @@ P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy
 <div class="field"><label for="c_name">Your name *</label><input id="c_name" name="c_name" maxlength="120" autocomplete="name"></div>
 <div class="field"><label for="c_email">Email *</label><input id="c_email" name="c_email" type="email" maxlength="160" autocomplete="email"><span class="hint">We'll send your code and invoice here.</span></div>
 </div>
-<p class="hint">A gift? No problem: the name that appears in the story and on the certificate is only entered by whoever plays.</p>
+<p class="hint">A gift? No problem: after paying you get a gift card to print or save as PDF. The name that appears in the story and on the certificate is only entered by whoever plays.</p>
 <div class="field"><span class="label">You are ordering as *</span>
 <label class="check"><input type="radio" name="kunde" value="b2c"><span>Private individual</span></label>
 <label class="check"><input type="radio" name="kunde" value="b2b"><span>Company, club or organisation</span></label>

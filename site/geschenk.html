@@ -68,6 +68,8 @@
 .gk-foot b{color:var(--ink);font-weight:500}
 .gk input:focus-visible,.gk textarea:focus-visible{outline:.3cqw solid var(--red);outline-offset:.6cqw}
 .gk input::placeholder,.gk textarea::placeholder{color:rgba(63,66,74,.45);font-weight:400}
+/* Safari/Chrome-Autofill färbt Felder gelb – mit Papierfarbe übermalen */
+.gk input:-webkit-autofill,.gk input:-webkit-autofill:hover,.gk input:-webkit-autofill:focus{-webkit-box-shadow:0 0 0 100cqw var(--paper) inset;box-shadow:0 0 0 100cqw var(--paper) inset;-webkit-text-fill-color:var(--ink);transition:background-color 9999s}
 @media print{
   @page{size:A4 portrait;margin:0}
   html,body{background:#fff;margin:0}
@@ -75,9 +77,11 @@
   .gk-wrap{max-width:none;margin:0;padding:0}
   /* Blatt füllt den druckbaren Bereich und behält das A4-Verhältnis – passt auch, wenn der Browser (Safari) eigene Ränder druckt */
   html,body{height:auto}
-  .gk-sheet{width:99.5%;margin:0 auto;break-inside:avoid;page-break-inside:avoid}
+  /* 90 % Breite: passt auch, wenn Safari (iPhone/Mac) Ränder plus Kopf- und Fußzeile mit Adresse und Datum druckt */
+  .gk-sheet{width:90%;margin:0 auto;break-inside:avoid;page-break-inside:avoid}
   .gk{width:100%;height:auto;aspect-ratio:210/297;box-shadow:none}
-  .gk input::placeholder,.gk textarea::placeholder{color:transparent}
+  .gk input::placeholder,.gk textarea::placeholder{color:transparent;-webkit-text-fill-color:transparent}
+  .gk input,.gk input:-webkit-autofill{-webkit-box-shadow:0 0 0 100cqw var(--paper) inset;box-shadow:0 0 0 100cqw var(--paper) inset;-webkit-text-fill-color:var(--ink)}
   .gk input:focus-visible,.gk textarea:focus-visible{outline:none}
 }
 </style>
