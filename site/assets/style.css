@@ -573,3 +573,9 @@ a.inlink:hover{color:var(--red)}
 .cursw{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px}
 .cursw button{font:inherit;font-size:13px;padding:3px 9px;border:1px solid currentColor;border-radius:999px;background:transparent;color:inherit;cursor:pointer;opacity:.7}
 .cursw button[aria-pressed="true"]{opacity:1;font-weight:700}
+
+/* Kaufzeile am Ende jedes Falls (Teams, Friends, Solo): Desktop rechts unten, Handy Knopf in voller Breite */
+.case-buy{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:12px 24px;margin-top:6px}
+.case-more{color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.case-more:hover{color:var(--red)}
+@media (max-width:899px){.case-buy{flex-direction:column-reverse;align-items:stretch;margin-top:18px}.case-buy .btn{text-align:center;justify-content:center}.case-more{text-align:center}}

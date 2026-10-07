@@ -153,7 +153,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <li>Your own case intranet with your logo, full of clues</li>
 <li>Red herrings with a wink – nobody is shown up, and the victim survives</li>
 </ul>
-<div class="actions"><a class="btn btn-red" href="order.html?fall=001">Order case 001</a></div>
+<div class="actions case-buy"><a class="case-more" href="#packages">Compare packages →</a><a class="btn btn-red" href="order.html?fall=001">Order case 001 – from €89 per team</a></div>
 </div></section>
 
 <section id="case002" class="section case"><div class="wrap case-grid">
@@ -178,7 +178,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <li>The culprit is always drawn at random from your group – different every round, nobody knows in advance</li>
 <li>Completely different puzzles from case 001 – play both and you won't recognise a single one</li>
 </ul>
-<div class="actions"><a class="btn btn-red" href="order.html?fall=002">Order case 002</a></div>
+<div class="actions case-buy"><a class="case-more" href="#packages">Compare packages →</a><a class="btn btn-red" href="order.html?fall=002">Order case 002 – from €89 per team</a></div>
 </div></section>
 
 <section id="packages" class="section"><div class="wrap stack">
@@ -443,6 +443,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <li>Ranking by time plus penalty minutes – and a fun award for everyone</li>
 <li>A stylish mystery with a wink – no gore, no shock effects</li>
 </ul>
+<div class="actions case-buy"><a class="case-more" href="#price">Basic or Plus? →</a><a class="btn btn-red" href="friends-buy.html">Order your mystery night – from €29</a></div>
 </div></section>
 
 <section id="price" class="section"><div class="wrap stack">
@@ -638,6 +639,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <li>At the end: “faster than X %” of all investigators – how do you measure up?</li>
 <li>A stylish mystery with a wink – no blood, no shock effects</li>
 </ul>
+<div class="actions case-buy"><a class="case-more" href="#price">All Solo cases →</a><a class="btn btn-red" href="solo-buy.html?fall=001">Buy the case – €8.90</a></div>
 </div></section>
 
 <section id="case2" class="section case"><div class="wrap case-grid">
@@ -661,6 +663,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <li>With an investigation sheet to tick off alibis</li>
 <li>A stylish mystery with a wink – no blood, no shock effects</li>
 </ul>
+<div class="actions case-buy"><a class="case-more" href="#price">All Solo cases →</a><a class="btn btn-red" href="solo-buy.html?fall=002">Buy the case – €8.90</a></div>
 </div></section>
 
 <section id="caseplus" class="section case"><div class="wrap case-grid">
@@ -684,6 +687,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <li>The AI only knows the invented world of the case – your name never goes to the AI provider</li>
 <li>Ages 18 and over</li>
 </ul>
+<div class="actions case-buy"><a class="case-more" href="#price">All Solo cases →</a><a class="btn btn-red" href="solo-buy.html?fall=plus">Buy the case – €15.90</a></div>
 </div></section>
 
 <section id="price" class="section"><div class="wrap stack">

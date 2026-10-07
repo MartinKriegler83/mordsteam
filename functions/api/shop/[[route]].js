@@ -220,7 +220,14 @@ async function stripeCustomer(env, contact, site) {
     return c && c.id ? c.id : null;
   } catch { return null; }
 }
+// Länder, deren eigene Währung der Euro ist (Eurozone inkl. Bulgarien ab 2026, dazu Andorra, Monaco, San Marino, Vatikan)
+const EURO_LANDS = ["AT","BE","BG","CY","DE","EE","ES","FI","FR","GR","HR","IE","IT","LT","LU","LV","MT","NL","PT","SI","SK","AD","MC","SM","VA"];
+const homeCur = (land) => (EURO_LANDS.includes(land) ? "EUR" : land === "GB" ? "GBP" : land === "US" ? "USD" : null);
 async function checkoutParams(env, p, contact) {
+  // Adaptive Pricing bietet die Währung nach dem Standort (IP) an. Zahlt der Kunde schon in der Währung seines Rechnungslandes
+  // (z. B. Österreich in Euro, auch wenn er gerade in London ist), keine fremde Währung mit 4 % Umrechnungsgebühr anbieten.
+  const cur = String(p.line_items?.[0]?.price_data?.currency || "").toUpperCase();
+  if (cur && contact.tax_regime !== "uk_mor" && homeCur(contact.bill_land) === cur) p.adaptive_pricing = { enabled: false };   // Managed Payments: nichts zusätzlich setzen
   const cus = await stripeCustomer(env, contact, p.locale);
   if (cus) {
     delete p.customer_email;
