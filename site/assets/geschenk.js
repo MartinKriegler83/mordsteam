@@ -35,7 +35,8 @@
       card = {
         eyebrow: T("Ein Krimi für dich", "A mystery for you"),
         title, sub: T(`Solo-Krimi · ${d.solo_min} Minuten Countdown · im Browser am Handy, Tablet oder Laptop`, `Solo mystery · ${d.solo_min}-minute countdown · in the browser on phone, tablet or laptop`),
-        codeLabel: T("Dein Code", "Your code"), code: d.solo_code, link,
+        kind: "Solo", tagLabel: T("Beweisstück 1 · Dein Code", "Exhibit 1 · Your code"), code: d.solo_code, link,
+        tagText: T("Einmal einlösbar · nach dem ersten Durchgang 30 Tage lang bis zu dreimal wiederholbar", "Redeem once · replay up to three times within 30 days of your first run"),
         steps: [
           T(`QR-Code scannen oder <span class="mono">${esc(origin.replace(/^https?:\/\//, ""))}/spiel/solo.html</span> öffnen`, `Scan the QR code or open <span class="mono">${esc(origin.replace(/^https?:\/\//, ""))}/spiel/solo.html</span>`),
           T("Code eingeben und deinen Ermittlernamen wählen", "Enter the code and choose your investigator name"),
@@ -48,7 +49,8 @@
         eyebrow: T("Ein Krimiabend für dich", "A mystery night for you"),
         title: T("Letzte Runde auf der Hütte", "Last Round at the Chalet"),
         sub: T(`Mordsteam Friends${d.plus ? " Plus mit KI-Verhörraum" : ""} · für ${d.teams} Personen · jeder ermittelt am eigenen Handy`, `Mordsteam Friends${d.plus ? " Plus with AI interrogation room" : ""} · for ${d.teams} people · everyone investigates on their own phone`),
-        codeLabel: "", code: "", link,
+        kind: "Friends", tagLabel: T("Beweisstück 1 · Deine Einladung", "Exhibit 1 · Your invitation"), code: "", link,
+        tagText: T("Der QR-Code führt zu deiner Organisator-Seite. Dort bekommst du den Link für deine Gäste.", "The QR code leads to your organiser page, where you get the link for your guests."),
         steps: [
           T("QR-Code scannen – das ist deine Organisator-Seite (gut aufheben, nicht weitergeben)", "Scan the QR code – that’s your organiser page (keep it safe, don’t pass it on)"),
           T("Dort findest du den Einladungslink für deine Gäste", "There you’ll find the invitation link for your guests"),
@@ -60,26 +62,34 @@
     } else {
       return msg(T("Für diese Bestellung gibt es keine Geschenkkarte. Geschenkkarten gibt es für Mordsteam Solo und Friends.", "There is no gift card for this order. Gift cards are available for Mordsteam Solo and Friends."));
     }
-    root.innerHTML = `<article class="gk" aria-label="${esc(T("Geschenkkarte", "Gift card"))}">
-      <div class="gk-stamp">${esc(T("GESCHENK", "GIFT"))}</div>
-      <div class="gk-l">
-        <div class="gk-wm"><svg width="30" height="30" viewBox="0 0 34 34" fill="none" stroke="#15171C" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/></svg><span><span class="r">MORDS</span>TEAM</span></div>
-        <div class="gk-eyebrow">${esc(card.eyebrow)}</div>
-        <h1 class="gk-title">${esc(card.title)}</h1>
-        <p class="gk-sub">${esc(card.sub)}</p>
-        <div class="gk-ded">
-          <label>${esc(T("Für", "For"))}<input maxlength="60" placeholder="${esc(T("Name", "Name"))}" aria-label="${esc(T("Für", "For"))}"></label>
-          <textarea rows="2" maxlength="220" placeholder="${esc(T("Deine Widmung (optional)", "Your dedication (optional)"))}" aria-label="${esc(T("Widmung", "Dedication"))}"></textarea>
-          <label>${esc(T("Von", "From"))}<input maxlength="60" placeholder="${esc(T("Name", "Name"))}" aria-label="${esc(T("Von", "From"))}"></label>
+    const az = d.nr ? String(d.nr) : "";
+    root.innerHTML = `<div class="gk-sheet"><article class="gk" aria-label="${esc(T("Geschenkkarte", "Gift card"))}">
+      <header class="gk-head">
+        <div class="gk-wm"><svg viewBox="0 0 34 34" fill="none" stroke="#F3EFE6" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#E0574C" stroke="none"/></svg><span><span class="r">MORDS</span>TEAM</span></div>
+        <div class="gk-az">${esc(T("Ermittlungsakte", "Case file"))}${az ? `<br>${esc(T("Aktenzeichen", "Ref."))} ${esc(az)}` : ""}</div>
+      </header>
+      <div class="gk-tabrow"><span class="gk-tab red">${esc(T("Geschenk", "Gift"))}</span><span class="gk-tab">${esc(card.kind)}</span></div>
+      <div class="gk-body">
+        <div class="gk-stamp" aria-hidden="true"><b>${esc(T("GESCHENK", "GIFT"))}</b><span>${esc(T("STRENG PERSÖNLICH", "STRICTLY PERSONAL"))}</span></div>
+        <div>
+          <div class="gk-eyebrow">${esc(card.eyebrow)}</div>
+          <h1 class="gk-title">${esc(card.title)}</h1>
+          <p class="gk-sub">${esc(card.sub)}</p>
         </div>
+        <div class="gk-field"><label for="gk-for">${esc(T("Für", "For"))}</label><input id="gk-for" maxlength="40" placeholder="${esc(T("Name der Ermittlerin / des Ermittlers", "Name of the investigator"))}"></div>
+        <div class="gk-card"><textarea id="gk-ded" rows="3" maxlength="180" aria-label="${esc(T("Widmung", "Dedication"))}" placeholder="${esc(T("Deine Widmung, z. B. „Alles Gute zum Geburtstag – löst du ihn schneller als ich?“", "Your dedication, e.g. “Happy birthday – can you crack it faster than me?”"))}"></textarea></div>
+        <div class="gk-field"><label for="gk-from">${esc(T("Von", "From"))}</label><input id="gk-from" maxlength="40" placeholder="${esc(T("Dein Name", "Your name"))}"></div>
+        <div class="gk-evid">
+          <div class="gk-tag"><small>${esc(card.tagLabel)}</small>${card.code ? `<div class="gk-code">${esc(card.code)}</div>` : ""}<p>${esc(card.tagText)}</p></div>
+          <div class="gk-qrbox"><div class="gk-qr" id="gk-qr" role="img" aria-label="${esc(T("QR-Code zum Spiel", "QR code for the game"))}"></div><span>${esc(T("Scannen und loslegen", "Scan to start"))}</span></div>
+        </div>
+        <ol class="gk-steps">${card.steps.map((x) => `<li>${x}</li>`).join("")}</ol>
       </div>
-      <div class="gk-r">
-        ${card.code ? `<div class="gk-codebox"><small>${esc(card.codeLabel)}</small><div class="gk-code">${esc(card.code)}</div></div>` : ""}
-        <div class="gk-qr" id="gk-qr" role="img" aria-label="QR-Code"></div>
-        <ol class="gk-steps">${card.steps.map((s) => `<li>${s}</li>`).join("")}</ol>
-        <div class="gk-foot">${until ? esc(T(`Gültig bis ${until}`, `Valid until ${until}`)) + " · " : ""}mordsteam.com</div>
-      </div>
-    </article>`;
+      <footer class="gk-foot"><span>${until ? `${esc(T("Gültig bis", "Valid until"))} <b>${esc(until)}</b>` : ""}</span><span><b>mordsteam.com</b></span></footer>
+    </article></div>`;
+    // Widmung: höchstens 3 Zeilen auf der Karteikarte
+    const ta = document.getElementById("gk-ded");
+    ta.addEventListener("input", () => { const lines = ta.value.split("\n"); if (lines.length > 3) ta.value = lines.slice(0, 3).join("\n"); });
     try { const qr = qrcode(0, "M"); qr.addData(card.link); qr.make(); document.getElementById("gk-qr").innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true }); }
     catch { document.getElementById("gk-qr").remove(); }
     btn.hidden = false;

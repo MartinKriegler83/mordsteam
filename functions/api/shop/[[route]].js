@@ -210,8 +210,26 @@ async function saveTax(env, id, contact) {
 // Preise sind Endpreise (tax_behavior inclusive), Steuerkategorie „Video Games – streamed – limited rights“.
 const mpOn = (env) => String(env.MANAGED_PAYMENTS || "").toLowerCase() === "true";
 const MP_TAX_CODE = "txcd_10201003";
-function checkoutParams(p, contact) {
+// Stripe-Kunde mit Rechnungsland anlegen: so ist das Land im Bezahlformular schon richtig ausgewählt
+// (sonst nimmt Stripe das Land aus IP/Sprache, z. B. Österreich bei einer Bestellung aus Großbritannien). Fehler → nur E-Mail.
+async function stripeCustomer(env, contact, site) {
+  if (!contact.bill_land || contact.bill_land === "XX") return null;
+  try {
+    const c = await stripe(env, "POST", "customers", { email: contact.email, name: (contact.kunde === "b2b" && contact.rechnung_firma) || contact.name,
+      address: { country: contact.bill_land }, preferred_locales: [site === "en" ? "en-GB" : "de-AT"] });
+    return c && c.id ? c.id : null;
+  } catch { return null; }
+}
+async function checkoutParams(env, p, contact) {
+  const cus = await stripeCustomer(env, contact, p.locale);
+  if (cus) {
+    delete p.customer_email;
+    p.customer = cus;
+    // Bei normalen Sitzungen die eingegebene Anschrift am Kunden speichern (Rechnung); Managed Payments macht das selbst
+    if (contact.tax_regime !== "uk_mor") p.customer_update = { address: "auto", name: "auto" };
+  }
   if (contact.tax_regime !== "uk_mor") return p;
+  p.billing_address_collection = "required";   // volle Anschrift auch bei Privatkunden (Rechnung von Link)
   const { invoice_creation, ...q } = p;
   q.managed_payments = { enabled: true };
   q.line_items = p.line_items.map((li) => ({ ...li, price_data: { ...li.price_data, tax_behavior: "inclusive", product_data: { ...li.price_data.product_data, tax_code: MP_TAX_CODE } } }));
@@ -300,7 +318,7 @@ async function bestellung(request, env) {
   const title = lang === "en" ? C.EN.META.title : C.META.title;
   const langName = L(site, lang === "en" ? "Englisch" : "Deutsch", lang === "en" ? "English" : "German");
   if (env.STRIPE_SECRET_KEY) {
-    const cs = await stripe(env, "POST", "checkout/sessions", checkoutParams({
+    const cs = await stripe(env, "POST", "checkout/sessions", await checkoutParams(env, {
       mode: "payment",
       // Early Bird: Gutschein fix anhängen. Sonst Feld für eigene Codes (z. B. Friends-Codes) anbieten – Stripe erlaubt nicht beides.
       ...(eb ? { discounts: [{ coupon: await ebCoupon(env, eb.prozent) }] } : { allow_promotion_codes: true }),
@@ -378,7 +396,7 @@ async function soloBestellung(request, env) {
   const pre = site === "en" ? "/en" : "";
   const done = `${origin}${pre}/${site === "en" ? "ordered" : "bestellt"}.html?o=${id}&k=${token}`;
   if (env.STRIPE_SECRET_KEY) {
-    const cs = await stripe(env, "POST", "checkout/sessions", checkoutParams({
+    const cs = await stripe(env, "POST", "checkout/sessions", await checkoutParams(env, {
       mode: "payment", locale: site, customer_email: contact.email, client_reference_id: id,
       success_url: done, cancel_url: `${origin}${pre}/${site === "en" ? "solo-buy" : "solo-kaufen"}.html?abgebrochen=1`,
       billing_address_collection: contact.kunde === "b2b" ? "required" : "auto",   // Firmen: volle Anschrift auf der Rechnung (M15)
@@ -463,7 +481,7 @@ async function friendsBestellung(request, env) {
   const done = `${origin}${pre}/${site === "en" ? "ordered" : "bestellt"}.html?o=${id}&k=${token}`;
   const modeTxt = mode === "live" ? L(site, "gleichzeitig", "all at once") : L(site, `über ${days} Tage`, `over ${days} days`);
   if (env.STRIPE_SECRET_KEY) {
-    const cs = await stripe(env, "POST", "checkout/sessions", checkoutParams({
+    const cs = await stripe(env, "POST", "checkout/sessions", await checkoutParams(env, {
       mode: "payment", locale: site, customer_email: contact.email, client_reference_id: id,
       ...(eb ? { discounts: [{ coupon: await ebCoupon(env, eb.prozent) }] } : { allow_promotion_codes: true }),
       success_url: done, cancel_url: `${origin}${pre}/${site === "en" ? "friends-buy" : "friends-kaufen"}.html?abgebrochen=1`,

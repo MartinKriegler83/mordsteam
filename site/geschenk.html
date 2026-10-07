@@ -10,47 +10,79 @@
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <style>
-/* Geschenkkarte zum Ausdrucken oder als PDF (Go-live-Test 4, 6.10.2026). Druck: A4 quer, eine Seite. */
-.gk-bar{max-width:1060px;margin:24px auto 0;padding:0 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
-.gk-bar p{margin:0;color:var(--ink-2);font-size:15px;max-width:620px}
-.gk-wrap{max-width:1060px;margin:18px auto 40px;padding:0 16px}
-.gk{position:relative;background:var(--card);border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.08);aspect-ratio:297/210;display:grid;grid-template-columns:1.25fr 1fr;overflow:hidden}
-.gk-l{padding:6% 5% 5% 6%;display:flex;flex-direction:column;gap:2.2%;border-right:2px dashed var(--line)}
-.gk-r{padding:6% 6% 5% 5%;display:flex;flex-direction:column;align-items:flex-start;gap:3%;background:var(--paper)}
-.gk-wm{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(20px,3vw,34px);letter-spacing:.5px;display:flex;align-items:center;gap:10px}
-.gk-wm .r{color:var(--red)}
-.gk-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:clamp(10px,1.2vw,13px);letter-spacing:2px;color:var(--red);text-transform:uppercase;margin-top:4%}
-.gk-title{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(26px,4.4vw,52px);line-height:1.02;margin:0}
-.gk-sub{font-size:clamp(13px,1.5vw,17px);color:var(--ink-2);margin:0}
-.gk-ded{margin-top:auto;display:grid;gap:8px}
-.gk-ded label{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:end;font-family:'IBM Plex Mono',monospace;font-size:clamp(11px,1.2vw,13px);letter-spacing:1px;text-transform:uppercase;color:var(--ink-2)}
-.gk-ded input,.gk-ded textarea{font:inherit;font-family:'Fraunces',serif;font-size:clamp(15px,1.8vw,21px);text-transform:none;letter-spacing:0;color:var(--ink);background:transparent;border:0;border-bottom:1.5px solid var(--ink-2);padding:2px 2px 3px;width:100%;resize:none}
-.gk-ded textarea{border:1.5px dashed var(--muted);border-radius:4px;min-height:3.2em;padding:6px 8px;font-family:'IBM Plex Sans',sans-serif;font-size:clamp(13px,1.5vw,16px)}
-.gk-codebox small{display:block;font-family:'IBM Plex Mono',monospace;font-size:clamp(10px,1.2vw,13px);letter-spacing:2px;text-transform:uppercase;color:var(--ink-2)}
-.gk-code{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:clamp(24px,3.6vw,42px);letter-spacing:5px;color:var(--ink)}
-.gk-qr{width:34%;min-width:110px;background:#fff;padding:6px;border:1px solid var(--line)}
-.gk-qr svg{display:block;width:100%;height:auto}
-.gk-steps{margin:0;padding-left:1.2em;font-size:clamp(12px,1.35vw,15px);line-height:1.45;color:var(--ink)}
-.gk-steps li{margin:0 0 4px}
-.gk-steps .mono{font-family:'IBM Plex Mono',monospace;font-size:.92em;word-break:break-all}
-.gk-foot{margin-top:auto;font-size:clamp(10px,1.15vw,13px);color:var(--ink-2)}
-.gk-stamp{position:absolute;right:3.5%;top:4.5%;transform:rotate(-8deg);border:3px double var(--red);color:var(--red);font-family:'IBM Plex Mono',monospace;font-weight:500;letter-spacing:3px;font-size:clamp(11px,1.4vw,16px);padding:4px 10px;opacity:.85}
+/* Geschenkkarte als Ermittlungsakte, ein volles A4-Blatt hochkant (Druck oder „Als PDF sichern“).
+   Alle Maße in cqw (1cqw = 1 % der Blattbreite = 2,1 mm auf A4) – Bildschirm und Druck sehen gleich aus. */
+.gk-bar{max-width:820px;margin:24px auto 0;padding:0 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.gk-bar p{margin:0;color:var(--ink-2);font-size:15px;max-width:560px}
+.gk-wrap{max-width:820px;margin:18px auto 48px;padding:0 16px}
 .gk-msg{max-width:720px;margin:60px auto;padding:0 16px;text-align:center}
-@media (max-width:720px){.gk{aspect-ratio:auto;grid-template-columns:1fr}.gk-l{border-right:0;border-bottom:2px dashed var(--line);min-height:auto}.gk-l,.gk-r{padding:22px}.gk-ded{margin-top:18px}.gk-qr{width:150px}.gk-stamp{top:14px}}
+.gk-sheet{container-type:inline-size;width:100%}
+.gk{position:relative;aspect-ratio:210/297;overflow:hidden;background:var(--paper);color:var(--ink);box-shadow:0 14px 40px rgba(21,23,28,.18);
+  background-image:radial-gradient(circle at 20% 18%,rgba(255,255,255,.6),transparent 50%);
+  display:flex;flex-direction:column;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+/* Kopf: dunkle Leiste wie auf der Website */
+.gk-head{background:var(--ink);color:var(--paper);display:flex;justify-content:space-between;align-items:center;padding:3cqw 6cqw}
+.gk-wm{display:flex;align-items:center;gap:1.6cqw;font-family:'Fraunces',serif;font-weight:900;font-size:4.4cqw;letter-spacing:.06em}
+.gk-wm svg{width:4.6cqw;height:4.6cqw}
+.gk-wm .r{color:#E0574C}
+.gk-az{font-family:'IBM Plex Mono',monospace;font-size:1.7cqw;letter-spacing:.22em;text-transform:uppercase;text-align:right;line-height:1.5;opacity:.85}
+/* Aktenreiter */
+.gk-tabrow{display:flex;gap:1.2cqw;padding:0 6cqw;margin-top:-.2cqw}
+.gk-tab{background:var(--folder);font-family:'IBM Plex Mono',monospace;font-size:1.55cqw;letter-spacing:.2em;text-transform:uppercase;padding:1cqw 2.2cqw 1.1cqw;border-radius:0 0 1cqw 1cqw}
+.gk-tab.red{background:var(--red);color:#fff}
+.gk-body{flex:1;padding:4.4cqw 6cqw 0;display:flex;flex-direction:column;gap:2.5cqw;position:relative}
+.gk-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:1.8cqw;letter-spacing:.3em;text-transform:uppercase;color:var(--red)}
+.gk-title{font-family:'Fraunces',serif;font-weight:900;font-size:7.6cqw;line-height:.98;margin:1cqw 0 0;max-width:66cqw;text-wrap:balance}
+.gk-sub{font-size:2.05cqw;color:var(--ink-2);margin:1.2cqw 0 0;max-width:86cqw}
+/* Gummistempel */
+.gk-stamp{position:absolute;right:5cqw;top:3.6cqw;transform:rotate(-11deg);border:.7cqw double var(--red);color:var(--red);border-radius:1.2cqw;
+  padding:1.4cqw 2.6cqw;text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:500;opacity:.88;mix-blend-mode:multiply}
+.gk-stamp b{display:block;font-size:4.2cqw;letter-spacing:.18em;line-height:1}
+.gk-stamp span{display:block;font-size:1.35cqw;letter-spacing:.25em;margin-top:.8cqw}
+/* Widmung: „Für“ und „Von“ wie ein Formular, dazwischen eine angeheftete Karteikarte */
+.gk-field{display:grid;grid-template-columns:15cqw 1fr;align-items:end;gap:2cqw}
+.gk-field label{font-family:'IBM Plex Mono',monospace;font-size:1.6cqw;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2);padding-bottom:.8cqw}
+.gk-field input{font-family:'Fraunces',serif;font-weight:700;font-size:4cqw;color:var(--ink);background:transparent;border:0;border-bottom:.25cqw solid var(--ink);padding:.4cqw .2cqw;width:100%;min-width:0;border-radius:0}
+.gk-card{position:relative;background:#FFFDF8;margin:.6cqw 3cqw .6cqw 17cqw;padding:3.6cqw 4cqw 2cqw;transform:rotate(-1.2deg);box-shadow:0 .6cqw 1.6cqw rgba(21,23,28,.14)}
+.gk-card::before{content:"";position:absolute;left:0;right:0;top:2.4cqw;border-top:.22cqw solid rgba(179,38,30,.45)}
+.gk-card::after{content:"";position:absolute;top:-1.6cqw;left:50%;width:14cqw;height:3.4cqw;transform:translateX(-50%) rotate(2deg);background:rgba(214,194,155,.7)}
+.gk-card textarea{display:block;width:100%;box-sizing:border-box;border:0;background:transparent;resize:none;font-family:'Fraunces',serif;font-style:italic;font-size:2.9cqw;line-height:4.4cqw;color:var(--ink);height:13.2cqw;padding:0;overflow:hidden;
+  background:repeating-linear-gradient(to bottom,transparent 0,transparent 4.2cqw,rgba(37,99,235,.2) 4.2cqw,rgba(37,99,235,.2) 4.4cqw);background-attachment:local}
+/* Beweisstück: Anhänger mit Code + QR-Code */
+.gk-evid{display:grid;grid-template-columns:1fr 22cqw;gap:4cqw;align-items:center;margin-top:.6cqw}
+.gk-tag{position:relative;background:#FFFDF8;border:.25cqw solid var(--ink);padding:2.4cqw 3.2cqw 2.4cqw 9cqw;clip-path:polygon(5cqw 0,100% 0,100% 100%,5cqw 100%,0 50%);min-width:0}
+.gk-tag::before{content:"";position:absolute;left:4.2cqw;top:50%;width:2.4cqw;height:2.4cqw;margin-top:-1.2cqw;border-radius:50%;border:.25cqw solid var(--ink);background:var(--paper)}
+.gk-tag small{display:block;font-family:'IBM Plex Mono',monospace;font-size:1.55cqw;letter-spacing:.24em;text-transform:uppercase;color:var(--red)}
+.gk-code{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:6cqw;letter-spacing:.14em;margin-top:.8cqw;white-space:nowrap}
+.gk-tag p{margin:.8cqw 0 0;font-size:1.9cqw;color:var(--ink-2)}
+.gk-qrbox{text-align:center}
+.gk-qr{background:#fff;padding:1.6cqw;border:.25cqw solid var(--ink);box-shadow:1cqw 1cqw 0 var(--ink)}
+.gk-qr svg{display:block;width:100%;height:auto}
+.gk-qrbox span{display:block;margin-top:1.8cqw;font-family:'IBM Plex Mono',monospace;font-size:1.45cqw;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2)}
+/* Einsatzbefehl */
+.gk-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:3cqw;counter-reset:s}
+.gk-steps li{counter-increment:s;font-size:1.95cqw;line-height:1.45;border-top:.25cqw solid var(--ink);padding-top:1.6cqw}
+.gk-steps li::before{content:counter(s,decimal-leading-zero);display:block;font-family:'IBM Plex Mono',monospace;font-size:1.6cqw;letter-spacing:.2em;color:var(--red);margin-bottom:.8cqw}
+.gk-steps .mono{font-family:'IBM Plex Mono',monospace;font-size:.9em;word-break:break-all}
+.gk-foot{margin-top:auto;display:flex;justify-content:space-between;gap:3cqw;align-items:center;padding:2.6cqw 6cqw;border-top:.25cqw dashed var(--ink-2);font-family:'IBM Plex Mono',monospace;font-size:1.55cqw;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
+.gk-foot b{color:var(--ink);font-weight:500}
+.gk input:focus-visible,.gk textarea:focus-visible{outline:.3cqw solid var(--red);outline-offset:.6cqw}
+.gk input::placeholder,.gk textarea::placeholder{color:rgba(63,66,74,.45);font-weight:400}
 @media print{
-  @page{size:A4 landscape;margin:0}
-  html,body{background:#fff}
+  @page{size:A4 portrait;margin:0}
+  html,body{background:#fff;margin:0}
   .header,.footer,.gk-bar,.noprint{display:none!important}
   .gk-wrap{max-width:none;margin:0;padding:0}
-  .gk{width:297mm;height:210mm;aspect-ratio:auto;border:0;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .gk-ded textarea{border-color:transparent}
-  .gk-ded input::placeholder,.gk-ded textarea::placeholder{color:transparent}
+  .gk-sheet{width:210mm}
+  .gk{width:210mm;height:297mm;aspect-ratio:auto;box-shadow:none}
+  .gk input::placeholder,.gk textarea::placeholder{color:transparent}
+  .gk input:focus-visible,.gk textarea:focus-visible{outline:none}
 }
 </style>
 </head>
 <body>
 <div class="gk-bar noprint">
-<p id="gk-hint">Trag oben eine Widmung ein und drück auf „Drucken / als PDF“. Im Druckdialog kannst du „Als PDF sichern“ wählen und die Karte per E-Mail verschicken.</p>
+<p id="gk-hint">Trag eine Widmung ein und drück auf „Drucken / als PDF“. Im Druckdialog kannst du „Als PDF sichern“ wählen und die Karte per E-Mail verschicken.</p>
 <button class="btn btn-red" type="button" id="gk-print" hidden>Drucken / als PDF</button>
 </div>
 <div class="gk-wrap" id="gk-root"><p class="gk-msg">Geschenkkarte wird geladen …</p></div>

@@ -11,18 +11,19 @@ if [ "$CF_PAGES_BRANCH" = "main" ] && [ "$LAUNCH" != "true" ]; then
   # Öffentlich nur eine neutrale Seite "im Aufbau" – kein Angebot, keine Werbung.
   # Die Spielplattform (/spiel/, nicht verlinkt, noindex) bleibt für Testrunden erreichbar.
   cp -r site/assets site/spiel site/_headers site/robots.txt site/favicon.ico site/site.webmanifest dist/
-  # VORÜBERGEHEND (Paddle-Prüfung, Okt. 2026): Startseite zeigt die englische Angebotsseite statt "Coming soon".
-  # Paddle hat am 7.10.2026 abgelehnt; die Seite bleibt, bis Stripe Managed Payments geprüft hat. Danach PADDLE_PRUEFUNG=0 setzen → wieder "Coming soon" bis zum Go-live.
-  PADDLE_PRUEFUNG=1
-  if [ "$PADDLE_PRUEFUNG" = "1" ]; then
+  # Angebotsseite statt „Coming soon“ (DE-Startseite und /en/) – war für die Prüfung durch Zahlungsanbieter nötig
+  # (Paddle, Okt. 2026). Seit 7.10.2026 aus: ANGEBOT_SEITE=0. Bei Bedarf wieder auf 1 setzen.
+  ANGEBOT_SEITE=0
+  if [ "$ANGEBOT_SEITE" = "1" ]; then
     cp teaser/paddle-root.html dist/index.html
   else
     cp teaser/index.html dist/index.html
   fi
   cp teaser/impressum.html dist/impressum.html
   # Englische Teaserseite: Besucher außerhalb von DACH landen über functions/_middleware.js automatisch hier
-  mkdir -p dist/en && cp teaser/en/index.html dist/en/index.html && cp teaser/en/imprint.html dist/en/imprint.html
-  # Für die Prüfung durch Paddle: Angebot, Preise, Erstattung und Rechtstexte (nicht verlinkt, noindex)
+  mkdir -p dist/en && cp teaser/en/imprint.html dist/en/imprint.html
+  if [ "$ANGEBOT_SEITE" = "1" ]; then cp teaser/en/angebot.html dist/en/index.html; else cp teaser/en/index.html dist/en/index.html; fi
+  # Angebot, Preise, Erstattung und Rechtstexte für Prüfungen durch Zahlungsanbieter (nicht verlinkt, noindex)
   cp site/products.html dist/products.html
 else
   echo "Modus: VOLLE SEITE"

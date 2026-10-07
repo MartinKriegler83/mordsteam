@@ -1225,10 +1225,12 @@ assert LAND.count(_h1) == 1
 LAND = LAND.replace(_h1, _LAND_HERO + '\n<h2>About us</h2>', 1)
 LAND = LAND.replace('<span>© 2026 Mordsteam e.U.</span></div></footer>', '<span class="ms-foot"><a href="#products">Prices</a><a href="#refunds">Refunds</a><a href="#terms">Terms</a><a href="#privacy">Privacy</a><a href="/en/imprint.html">Imprint</a><a href="/?lang=de" lang="de">Deutsch</a></span><span>© 2026 Mordsteam e.U.</span></div></footer>', 1)
 assert "Coming soon" not in LAND and "ms-cards" in LAND and 'ms-lang' in LAND and 'ms-foot' in LAND
-with open(os.path.join(ROOT, "..", "teaser", "en", "index.html"), "w") as f:
+# Seit 7.10.2026 liegt sie als teaser/en/angebot.html bereit; /en/ zeigt wieder „Coming soon“ (teaser/en/index.html, von Hand gepflegt).
+# build.sh nimmt die Angebotsseite nur, solange ANGEBOT_SEITE=1 gesetzt ist.
+with open(os.path.join(ROOT, "..", "teaser", "en", "angebot.html"), "w") as f:
     f.write(LAND)
 # Vorübergehend für die Paddle-Prüfung (Okt. 2026): dieselbe Angebotsseite auch unter "/", ohne Sprachumschalter
-# (der DE-Link würde auf sich selbst zeigen). build.sh nimmt sie nur, solange PADDLE_PRUEFUNG=1 gesetzt ist.
+# (der DE-Link würde auf sich selbst zeigen). build.sh nimmt sie nur, solange ANGEBOT_SEITE=1 gesetzt ist.
 ROOTP = LAND
 for _a, _b in [('<span class="ms-lang"><a href="/?lang=de" hreflang="de" lang="de">DE</a> · <b>EN</b></span></nav><span class="ms-lang ms-lang-m"><a href="/?lang=de" hreflang="de" lang="de">DE</a> · <b>EN</b></span>', '</nav>'),
                ('<a href="/?lang=de" lang="de">Deutsch</a></span>', '</span>'),
