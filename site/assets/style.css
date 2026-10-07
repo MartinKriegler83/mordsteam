@@ -102,7 +102,7 @@ p{margin:0}
 .pack .per{font-size:14px;opacity:.75;margin-top:-6px}
 .pack .list{font-size:15px;color:#2D3036;gap:6px}
 .pack .btn{margin-top:auto}
-.pack.featured{background:var(--ink);color:var(--paper);border-color:var(--ink);order:-1}
+.pack.featured{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .pack.featured .sub{color:var(--muted)} .pack.featured .list{color:#E4DFD3}
 .badge{position:absolute;top:-12px;left:22px;background:var(--red);color:#fff;font-family:var(--mono);font-size:11px;letter-spacing:1.5px;padding:5px 10px;border-radius:4px}
 
@@ -579,3 +579,9 @@ a.inlink:hover{color:var(--red)}
 .case-more{color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:3px}
 .case-more:hover{color:var(--red)}
 @media (max-width:899px){.case-buy{flex-direction:column-reverse;align-items:stretch;margin-top:18px}.case-buy .btn{text-align:center;justify-content:center}.case-more{text-align:center}}
+
+/* Preiskarten: Knopf mit Preis passt in eine Zeile */
+.pack .btn{padding-left:16px;padding-right:16px}
+@media (min-width:900px){.pack-grid.three .pack{padding:40px 32px}}
+.pack .btn .bp{white-space:nowrap}
+@media (min-width:900px) and (max-width:1219px){.pack-grid.three .pack .btn .bp{display:block}.pack-grid.three .pack .btn .bd{display:none}}

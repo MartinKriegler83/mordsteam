@@ -191,21 +191,21 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <h3>Basic</h3><p class="sub"><svg class="ico-cd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="14" r="8"/><path d="M12 14v-4M9 2h6M12 2v4M19 7l1.5-1.5"/></svg>50-minute countdown · one act</p>
 <p class="price">€89 per team</p><p class="per">around €18 per person in teams of 5</p>
 <ul class="list"><li>Your personal case – with your names, your rooms and your logo</li><li>Digital case file for every team</li><li>Your own case intranet with hidden clues</li><li>One act with four questions</li><li>Digital case desk: automatic hints, award ceremony and solution</li><li>Every team that solves the case can earn bonus minutes for the ranking in the bonus investigation</li><li>Winners' certificates to download</li></ul>
-<a class="btn btn-line" href="order.html?paket=basis">Order Basic</a>
+<a class="btn btn-line" href="order.html?paket=basis">Order Basic<span class="bp"><span class="bd"> – </span>€89</span></a>
 </div>
-<div class="pack featured">
+<div class="pack">
 <span class="badge">THE CLASSIC</span>
 <h3>Premium</h3><p class="sub"><svg class="ico-cd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="14" r="8"/><path d="M12 14v-4M9 2h6M12 2v4M19 7l1.5-1.5"/></svg>70-minute countdown · two acts</p>
 <p class="price">€119 per team</p><p class="per">around €24 per person in teams of 5</p>
 <ul class="list"><li>Everything in Basic</li><li>Act 2 with new evidence and two more, even trickier questions</li><li>Six suspects instead of five</li><li>Every team that solves the case can earn bonus minutes for the ranking in the bonus investigation</li></ul>
-<a class="btn btn-red" href="order.html?paket=premium">Order Premium</a>
+<a class="btn btn-line" href="order.html?paket=premium">Order Premium<span class="bp"><span class="bd"> – </span>€119</span></a>
 </div>
-<div class="pack">
+<div class="pack featured">
 <span class="badge">THE FULL EXPERIENCE</span>
 <h3>Premium Plus</h3><p class="sub"><svg class="ico-cd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="14" r="8"/><path d="M12 14v-4M9 2h6M12 2v4M19 7l1.5-1.5"/></svg>90-minute countdown · two acts and an AI finale</p>
 <p class="price">€149 per team</p><p class="per">around €30 per person in teams of 5</p>
 <ul class="list"><li>Everything in Premium</li><li>Every team that solves the case can earn bonus minutes for the ranking in the bonus investigation</li><li>AI finale: case 001 with ARIA, the AI assistant on the intranet (PIN and cash count), case 002 with an AI interrogation of the honorary chair (code and start year)</li><li>A surprise for teams that finish before minute 70 – an AI interrogation as a special assignment, with the “Special investigators” award</li><li>For participants aged 18 and over</li></ul>
-<a class="btn btn-line" href="order.html?paket=plus">Order Premium Plus</a>
+<a class="btn btn-red" href="order.html?paket=plus">Order Premium Plus<span class="bp"><span class="bd"> – </span>€149</span></a>
 </div>
 </div>
 <div class="devicebox">
@@ -451,19 +451,19 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <h2 class="h2">One price for the whole group</h2>
 <p class="lead">No subscription, no sign-up: order, share the link, start playing. You pay once for everyone – with 8 people that's just over €6 per person.</p>
 <div class="pack-grid">
-<div class="pack featured">
+<div class="pack">
 <span class="badge">BASIC</span>
 <h3>Mystery Night</h3><p class="sub"><svg class="ico-cd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="14" r="8"/><path d="M12 14v-4M9 2h6M12 2v4M19 7l1.5-1.5"/></svg>50-minute countdown · 4–8 people</p>
 <p class="price">from €29</p><p class="per">€29 for up to 4 people, +€5 per extra person</p>
 <ul class="list"><li>“Last Round at the Chalet” with your names and quirks</li><li>12 pieces of evidence, 3 questions, culprit drawn at random</li><li>At the same time or over 3, 5 or 7 days</li><li>Joint reveal with ranking</li><li>A fun award for everyone</li><li>Playable for 12 months, can be started once</li></ul>
-<a class="btn btn-red" href="friends-buy.html">Order the mystery night</a>
+<a class="btn btn-line" href="friends-buy.html">Order the mystery night – from €29</a>
 </div>
-<div class="pack">
+<div class="pack featured">
 <span class="badge">PREMIUM · WITH AI</span>
 <h3>Mystery Night Plus</h3><p class="sub"><svg class="ico-cd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="14" r="8"/><path d="M12 14v-4M9 2h6M12 2v4M19 7l1.5-1.5"/></svg>75-minute countdown · 4–8 people</p>
 <p class="price">from €49</p><p class="per">€49 for up to 4 people, +€8 per extra person</p>
 <ul class="list"><li>Everything in the Mystery Night</li><li><b>The interrogation room:</b> question your friends – played by AI, with their names and quirks</li><li>40 questions per person, spread across all doubles as you like</li><li>One of them lies – catch them out in the interrogation and you find the culprit</li><li>A two-step finale: Ferdl's cloud password and his secret “Part 2” – only your doubles know both</li><li>For players aged 18 and over</li></ul>
-<a class="btn btn-red" href="friends-buy.html?v=plus">Order Mystery Night Plus</a>
+<a class="btn btn-red" href="friends-buy.html?v=plus">Order Mystery Night Plus – from €49</a>
 </div>
 </div>
 <div class="devicebox">
@@ -695,12 +695,12 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <h2 class="h2">Three cases just for you</h2>
 <p class="lead">No subscription, no account: buy, get your code, start playing. Every Solo case comes with a €5 voucher for a game with friends or your team.</p>
 <div class="pack-grid three">
-<div class="pack featured">
+<div class="pack">
 <span class="badge">BASIC</span>
 <h3>Night Train to Venice</h3><p class="sub">Solo 001 · <svg class="ico-cd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="14" r="8"/><path d="M12 14v-4M9 2h6M12 2v4M19 7l1.5-1.5"/></svg>40-minute countdown · 1 person</p>
 <p class="price">€8.90</p><p class="per">A body on the night train – and a forgery in the suitcase</p>
 <ul class="list"><li>16 pieces of evidence, 5 suspects, 3 questions</li><li>Killer drawn anew for every playthrough – replay up to three times</li><li>Hints at the click of a button</li><li>Result “faster than X %” on your first playthrough</li><li>Certificate with your name to print or save as PDF</li><li>€5 voucher for a Friends or Teams game</li></ul>
-<a class="btn btn-red" href="solo-buy.html?fall=001">Buy the case – €8.90</a>
+<a class="btn btn-line" href="solo-buy.html?fall=001">Buy the case – €8.90</a>
 </div>
 <div class="pack">
 <span class="badge">BASIC</span>
@@ -709,7 +709,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <ul class="list"><li>New case, new puzzles: poison, fingerprints and a locked locker</li><li>Killer drawn anew for every playthrough – replay up to three times</li><li>Hints at the click of a button</li><li>Certificate with your name</li><li>€5 voucher for a Friends or Teams game</li></ul>
 <a class="btn btn-line" href="solo-buy.html?fall=002">Buy the case – €8.90</a>
 </div>
-<div class="pack">
+<div class="pack featured">
 <span class="badge">PREMIUM · WITH AI</span>
 <h3>The Last Vintage</h3><p class="sub">Solo Plus · <svg class="ico-cd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="14" r="8"/><path d="M12 14v-4M9 2h6M12 2v4M19 7l1.5-1.5"/></svg>45-minute countdown · 1 person</p>
 <p class="price">€15.90</p><p class="per">Death at a wine festival in the Wachau</p>
