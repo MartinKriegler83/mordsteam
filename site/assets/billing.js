@@ -51,20 +51,21 @@
 
   function paint() {
     const l = sel.value, b2b = kunde() === "b2b";
-    uidF.hidden = !b2b || !l || l === "GB";   // Großbritannien: VAT-Nummer im Paddle-Checkout
-    if (rfF) rfF.hidden = !b2b || l === "GB";   // Firmenname für die Rechnung (Solo/Friends; Teams hat c_firma) – M15
+    uidF.hidden = !b2b || !l;
+    if (rfF) rfF.hidden = !b2b;   // Firmenname für die Rechnung (Solo/Friends; Teams hat c_firma) – M15
     let n = "";
     if (b2b && EU.includes(l) && l !== "AT") uidHint.textContent = T("Mit gültiger UID (geprüft über das EU-System VIES) stellen wir ohne österreichische USt aus – Reverse Charge, die Steuer zahlt ihr in eurem Land.", "With a valid VAT ID (checked via the EU VIES system) we invoice without Austrian VAT – reverse charge, you account for VAT in your country.");
+    else if (b2b && l === "GB") uidHint.textContent = T("Optional, erscheint auf der Rechnung. Ihr zahlt in Pfund ohne Umsatzsteuer – Reverse Charge, die britische USt meldet ihr selbst.", "Optional, shown on the invoice. You pay in pounds without VAT – reverse charge, you account for UK VAT yourselves.");
     else uidHint.textContent = T("Erscheint auf der Rechnung.", "Shown on the invoice.");
-    if (l === "GB") {
+    if (l === "GB" && !b2b) {
       n = paddle && paddle.on
         ? T("Im Vereinigten Königreich zahlt ihr in Pfund (Preis inkl. britischer Umsatzsteuer) über unseren Partner Paddle (paddle.com). Paddle ist dort Verkäufer und stellt die Rechnung aus; Firmen geben Firmenname und VAT-Nummer direkt bei Paddle an. Gutscheincodes können dabei leider nicht eingelöst werden.",
             "In the United Kingdom you pay in pounds (price incl. UK VAT) via our partner Paddle (paddle.com). Paddle is the seller and issues the invoice; businesses enter their company name and VAT number directly at Paddle. Unfortunately, promo codes cannot be redeemed this way.")
           + (SOLO ? " " + T("Bei Käufen über Paddle gibt es keinen 5-€-Gutschein für Friends oder Teams.", "Purchases via Paddle do not include the £5 voucher for Friends or Teams.") : "")
-        : T("Bestellungen aus dem Vereinigten Königreich sind in Kürze möglich.", "Orders from the United Kingdom will be possible very soon.");
+        : T("Bestellungen von Privatpersonen aus dem Vereinigten Königreich sind in Kürze möglich. Firmen, Vereine und Organisationen können schon bestellen („Unternehmen, Verein oder Organisation“ wählen).", "Orders from private individuals in the United Kingdom will be possible very soon. Businesses, clubs and organisations can already order (choose “Company, club or organisation”).");
     }
     note.textContent = n; note.hidden = !n;
-    const viaPaddle = l === "GB" && paddle && paddle.on;
+    const viaPaddle = l === "GB" && !b2b && paddle && paddle.on;
     vatEls.forEach(([el, html]) => { el.innerHTML = viaPaddle ? html.replace(VAT_RE, T("Inkl. britischer Umsatzsteuer (Verkauf über Paddle).", "Including UK VAT (sold via Paddle).")) : html; });
     if (payhint) payhint.innerHTML = viaPaddle
       ? T("Bezahlt wird in Pfund über Paddle (paddle.com), inkl. britischer Umsatzsteuer – Paddle ist für Kunden im Vereinigten Königreich Verkäufer und stellt die Rechnung aus. Spielcode und Links seht ihr direkt danach.", "You pay in pounds via Paddle (paddle.com), including UK VAT – Paddle is the seller for customers in the United Kingdom and issues the invoice. You'll see your code and links right afterwards.")
@@ -84,7 +85,7 @@
     check: () => {
       if (!sel.value) return [T("Bitte das Rechnungsland auswählen.", "Please choose the billing country."), sel];
       const firmEl = rf || (form && form.c_firma);
-      if (kunde() === "b2b" && sel.value !== "GB" && firmEl && !firmEl.value.trim()) return [T("Bitte den Namen von Firma, Verein oder Organisation für die Rechnung angeben.", "Please enter the name of the company, club or organisation for the invoice."), firmEl];
+      if (kunde() === "b2b" && firmEl && !firmEl.value.trim()) return [T("Bitte den Namen von Firma, Verein oder Organisation für die Rechnung angeben.", "Please enter the name of the company, club or organisation for the invoice."), firmEl];
       return null;
     },
   };

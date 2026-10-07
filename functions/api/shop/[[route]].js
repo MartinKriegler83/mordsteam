@@ -187,15 +187,15 @@ async function orderLimit(request, env) {
 }
 async function taxStep(env, k, site, contact) {
   let t;
-  // Firmen: Firmenname für die Rechnung ist Pflicht (alle Produkte; UK erfasst Paddle selbst) – Go-live-Test 4, M15
+  // Firmen: Firmenname für die Rechnung ist Pflicht (alle Produkte und Länder) – Go-live-Test 4, M15
   if (!contact.rechnung_firma && k.rechnung_firma) contact.rechnung_firma = String(k.rechnung_firma).trim().slice(0, 120);
-  if (contact.kunde === "b2b" && !contact.rechnung_firma && String(k.bill_land || "").toUpperCase() !== "GB")
+  if (contact.kunde === "b2b" && !contact.rechnung_firma)
     throw new InputError(L(site, "Bitte den Namen von Firma, Verein oder Organisation für die Rechnung angeben.", "Please enter the name of the company, club or organisation for the invoice."));
   try { t = await taxContext(env, k, site, contact.kunde); }
   catch (e) { if (e instanceof TaxInputError) throw new InputError(e.message); throw e; }
   if (t.regime === "uk_paddle" && !paddleOn(env)) throw new InputError(L(site,
-    "Bestellungen aus dem Vereinigten Königreich sind in Kürze möglich.",
-    "Orders from the United Kingdom will be possible very soon."));
+    "Bestellungen von Privatpersonen aus dem Vereinigten Königreich sind in Kürze möglich. Firmen, Vereine und Organisationen können schon bestellen.",
+    "Orders from private individuals in the United Kingdom will be possible very soon. Businesses, clubs and organisations can already order."));
   Object.assign(contact, { bill_land: t.bill_land, tax_regime: t.regime, ...(t.uid ? { uid: t.uid } : {}), ...(t.uid_name ? { uid_name: t.uid_name } : {}) });
   return t;
 }

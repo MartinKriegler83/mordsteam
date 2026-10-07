@@ -12,7 +12,7 @@ if [ "$CF_PAGES_BRANCH" = "main" ] && [ "$LAUNCH" != "true" ]; then
   # Die Spielplattform (/spiel/, nicht verlinkt, noindex) bleibt für Testrunden erreichbar.
   cp -r site/assets site/spiel site/_headers site/robots.txt site/favicon.ico site/site.webmanifest dist/
   # VORÜBERGEHEND (Paddle-Prüfung, Okt. 2026): Startseite zeigt die englische Angebotsseite statt "Coming soon".
-  # Nach der Freigabe durch Paddle PADDLE_PRUEFUNG=0 setzen → wieder "Coming soon" bis zum Go-live.
+  # Paddle hat am 7.10.2026 abgelehnt; die Seite bleibt, bis Stripe Managed Payments geprüft hat. Danach PADDLE_PRUEFUNG=0 setzen → wieder "Coming soon" bis zum Go-live.
   PADDLE_PRUEFUNG=1
   if [ "$PADDLE_PRUEFUNG" = "1" ]; then
     cp teaser/paddle-root.html dist/index.html
