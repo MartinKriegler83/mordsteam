@@ -98,7 +98,7 @@
   let kunden = null, nlData = null, nlMsg = "", nlSyncMsg = "", nlPrev = "", nlForm = { lang: "de" }, kundenAll = false;
   let tab = "uebersicht";
   try { tab = sessionStorage.getItem("ms_admtab") || "uebersicht"; } catch {}
-  const TABS = [["uebersicht", "Übersicht"], ["finanzen", "Bestellungen & Finanzen"], ["runden", "Spielrunden & Tests"], ["statistik", "Spielstatistik"], ["system", "Kapazität & System"], ["feedback", "Feedback"], ["kunden", "Kunden & Newsletter"]];
+  const TABS = [["uebersicht", "Übersicht"], ["bestellungen", "Bestellungen"], ["finanzen", "Finanzen"], ["runden", "Spielrunden & Tests"], ["statistik", "Spielstatistik"], ["system", "Kapazität & System"], ["feedback", "Feedback"], ["kunden", "Kunden & Newsletter"]];
   const tabBar = () => `<nav class="admtabs" role="tablist">${TABS.map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${l}${k === "system" && ops && (ops.errors.today || ops.alerts.some((a) => Date.now() - a.at < 86400000)) ? ' <span class="dot"></span>' : ""}</button>`).join("")}<button type="button" id="adm-logout" style="margin-left:auto;background:none;border:0;color:var(--ink-2);text-decoration:underline;cursor:pointer;font:inherit;font-size:14px">Abmelden</button></nav>`;
   const eur = (c) => (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
   const usd = (x) => (x || 0).toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " $";
@@ -332,7 +332,7 @@
       <p class="small" style="margin:6px 0 0">„zuordnen“ verbindet eine schon erfasste Ausgabe mit der Vorlage (dann kommt die Meldung nicht mehr). „überspringen“ blendet nur diesen Zeitraum aus, z. B. wenn diesmal nichts abgebucht wurde.</p></div>`);
     if (led.dup_count) warn.push(`<div class="warnbox"><b>Möglicherweise doppelt erfasst (${led.dup_count})</b> – gleicher Verkäufer mit gleicher Rechnungsnummer, oder gleicher Betrag höchstens 5 Tage auseinander. In der Liste unten markiert: löschen oder „ist kein Duplikat“.</div>`);
     if (led.stripe_manual) warn.push(`<div class="warnbox"><b>Stripe-Gebühren von Hand erfasst</b> – die Gebühren kommen automatisch aus den Zahlungen. Bitte die händische Buchung löschen, sonst zählen sie doppelt.</div>`);
-    if (led.eur_missing) warn.push(`<div class="warnbox"><b>${led.eur_missing} Einnahme(n) in Pfund/Dollar ohne Euro-Betrag</b> – zählen noch nicht mit (Bestellungen → „Buchhaltung: Übersicht“).</div>`);
+    if (led.eur_missing) warn.push(`<div class="warnbox"><b>${led.eur_missing} Einnahme(n) in Pfund/Dollar ohne Euro-Betrag</b> – zählen noch nicht mit (Tab „Bestellungen“ → Übersicht).</div>`);
     // E/A je Monat
     const mrows = led.months.map((x, i) => `<tr><td>${MON[i]}</td><td class="mono">${m(x.einnahmen)}</td><td class="mono">${m(x.ausgaben + x.gebuehren + x.rc_bezahlt)}</td><td class="mono"><b>${m(x.gewinn)}</b></td></tr>`).join("");
     const krows = led.by_kategorie.map((k) => `<tr><td>${e(k.kategorie)}</td><td class="mono">${m(k.cents)}</td></tr>`).join("");
@@ -457,14 +457,17 @@
     const paid = orders.filter((o) => o.status !== "pending" && o.status !== "withdrawn" && o.status !== "refunded");
     const toShip = [];
     const y = new Date().getFullYear();
-    return `<div class="panel"><div class="eyebrow">Bestellungen</div>
+    // Umsatz wie in der Übersicht: ohne fremde USt (UK-Privat über Managed Payments/Paddle)
+    const umsatz = (o) => { const g = Math.max(0, o.amount_cents - (o.refunded_cents || 0)); const mor = o.pay_provider === "stripe_mp" || o.pay_provider === "paddle" || o.paddle_txn; return g - (mor && o.amount_cents ? Math.round((o.tax_cents || 0) * g / o.amount_cents) : 0); };
+    return `<div class="panel"><div class="eyebrow">Übersicht</div>
       <div class="actions-row" style="margin:8px 0;align-items:end;flex-wrap:wrap;gap:8px">
         <label class="small">von <input type="date" id="exvon" value="${y}-01-01"></label>
         <label class="small">bis <input type="date" id="exbis" value="${y}-12-31"></label>
-        <button class="btn btn-line" id="exbtn" type="button">Einnahmen exportieren (CSV)</button>
-        <button class="btn btn-line" id="bhbtn" type="button">Buchhaltung: Übersicht</button></div>
-      <div id="bhout"></div>
-      <p style="margin:8px 0">${paid.length} bezahlt · Umsatz ${eur(paid.reduce((a, o) => a + o.amount_cents - (o.refunded_cents || 0), 0))}</p>
+        <button class="btn btn-line" id="bhbtn" type="button">Anzeigen</button>
+        <button class="btn btn-line" id="exbtn" type="button">Einnahmen exportieren (CSV)</button></div>
+      <div id="bhout"></div></div>
+      <div class="panel"><div class="eyebrow">Bestellungen</div>
+      <p style="margin:8px 0">${paid.length} bezahlt · Umsatz ${eur(paid.reduce((a, o) => a + umsatz(o), 0))} (ohne fremde USt)</p>
       <div class="list-sessions">${orders.length ? orders.map((o) => {
         const c = o.contact || {}, l = c.liefer;
         return `<div class="sess">
@@ -543,7 +546,8 @@
         <p class="err">${MS.esc(err)}</p>
       </form></div>` : ""}
       ${tab === "uebersicht" ? overviewPanel(orders) : ""}
-      ${tab === "finanzen" ? ordersPanel(orders) + ledgerPanel() + costsPanel() : ""}
+      ${tab === "bestellungen" ? ordersPanel(orders) : ""}
+      ${tab === "finanzen" ? ledgerPanel() + costsPanel() : ""}
       ${tab === "statistik" ? statsPanel(stats) + soloStatsPanel() : ""}
       ${tab === "system" ? systemPanel() : ""}
       ${tab === "feedback" ? feedbackPanel() : ""}
@@ -791,15 +795,15 @@
         const eu = (c) => (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 }) + " €";
         const RL = { inland: "Inland (AT)", eu: "EU-Ausland", drittland: "Nicht-EU-Ausland", unbekannt: "Land unbekannt" };
         // Spalten überall gleich: Kunde zahlt · fremde USt · Umsatz (unsere Einnahme) · Gebühren · Auszahlung
-        const HEAD = `<th>Anzahl</th><th>Kunde zahlt</th><th>fremde USt</th><th>Umsatz (Einnahme)</th><th>Gebühren</th><th>Auszahlung</th>`;
-        const cells = (g, th) => { const t = th ? "th" : "td"; return `<${t}>${g.count}</${t}><${t} class="mono">${eu(g.gross)}</${t}><${t} class="mono">${g.tax ? eu(g.tax) : "–"}</${t}><${t} class="mono"><b>${eu(g.umsatz)}</b></${t}><${t} class="mono">${eu(g.fee)}</${t}><${t} class="mono">${eu(g.net)}</${t}>`; };
+        const HEAD = `<th>Anzahl</th><th>Kunde zahlt</th><th>fremde USt</th><th>Umsatz (Einnahme)</th><th title="20 % Reverse-Charge-USt auf die Stripe-Gebühr – nur zur Info, in der E/A zählt die bezahlte RC-Steuer">Reverse Charge (Info)</th><th>Gebühren</th><th>Auszahlung</th>`;
+        const cells = (g, th) => { const t = th ? "th" : "td"; return `<${t}>${g.count}</${t}><${t} class="mono">${eu(g.gross)}</${t}><${t} class="mono">${g.tax ? eu(g.tax) : "–"}</${t}><${t} class="mono"><b>${eu(g.umsatz)}</b></${t}><${t} class="mono">${g.rc ? eu(g.rc) : "–"}</${t}><${t} class="mono">${eu(g.fee)}</${t}><${t} class="mono">${eu(g.net)}</${t}>`; };
         const MON = ["Jänner", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
         const RA2 = { ku: "Kleinunternehmer", rc_eu: "Reverse Charge EU", dl_b2b: "Nicht-EU-Firma", dl_b2c: "Nicht-EU-Privat", uk_mor: "UK-Privat (Managed Payments)", uk_paddle: "UK (Paddle, alt)" };
         const order = ["unternehmen:inland", "unternehmen:eu", "unternehmen:drittland", "unternehmen:unbekannt", "privat:inland", "privat:eu", "privat:drittland", "privat:unbekannt"];
         const G = Object.fromEntries(d.groups.map((g) => [g.kunde + ":" + g.region, g]));
-        const rows = order.filter((k) => G[k] || !k.endsWith("unbekannt")).map((k) => { const g = G[k] || { count: 0, gross: 0, tax: 0, umsatz: 0, fee: 0, net: 0 }; const [kd, rg] = k.split(":");
+        const rows = order.filter((k) => G[k] || !k.endsWith("unbekannt")).map((k) => { const g = G[k] || { count: 0, gross: 0, tax: 0, umsatz: 0, rc: 0, fee: 0, net: 0 }; const [kd, rg] = k.split(":");
           return `<tr><td>${kd === "unternehmen" ? "Unternehmen" : "Privat"}</td><td>${RL[rg]}</td>${cells(g)}</tr>`; }).join("");
-        const sum = d.groups.reduce((a, g) => ({ count: a.count + g.count, gross: a.gross + g.gross, tax: a.tax + g.tax, umsatz: a.umsatz + g.umsatz, fee: a.fee + g.fee, net: a.net + g.net }), { count: 0, gross: 0, tax: 0, umsatz: 0, fee: 0, net: 0 });
+        const sum = d.groups.reduce((a, g) => ({ count: a.count + g.count, gross: a.gross + g.gross, tax: a.tax + g.tax, umsatz: a.umsatz + g.umsatz, rc: a.rc + (g.rc || 0), fee: a.fee + g.fee, net: a.net + g.net }), { count: 0, gross: 0, tax: 0, umsatz: 0, rc: 0, fee: 0, net: 0 });
         const pct = Math.round((d.eu_b2c.cents / d.eu_b2c.limit) * 100);
         // Zahlungen in Pfund/Dollar ohne Euro-Betrag (z. B. Paddle-Auszahlung nicht in EUR): zählen nirgends mit, bis nachgetragen (Go-live-Test 4, M12)
         const miss = d.eur_missing && d.eur_missing.length ? `<div class="warnbox" style="margin-top:10px"><b>Euro-Betrag fehlt bei ${d.eur_missing.length} Zahlung(en)</b> – sie zählen in keiner Summe mit. Den Euro-Betrag aus der Abrechnung von ${d.eur_missing.some((m) => m.provider === "paddle") ? "Paddle (Auszahlungswährung auf EUR stellen!)" : "Stripe"} eintragen:
@@ -809,8 +813,8 @@
         const land = d.land_check && d.land_check.length ? `<div class="warnbox" style="margin-top:10px"><b>Land prüfen (${d.land_check.length})</b> – Rechnungsland aus dem Formular weicht vom Land der Karte oder der Adresse bei Stripe ab. Ist das plausibel (z. B. Firmenkarte aus dem Ausland), passt alles; sonst Steuerfall mit Steuerberatung klären.
           <table class="grid small" style="margin-top:6px"><tr><th>Datum</th><th>Bestellung</th><th>Rechnungsland</th><th>Karte</th><th>Adresse</th><th>Rechnungsart</th></tr>${d.land_check.map((m) => `<tr><td>${new Date(m.date).toLocaleDateString("de-AT")}</td><td class="mono">${MS.esc(String(m.id).replace(/-/g, "").slice(0, 8).toUpperCase())}</td><td>${MS.esc(m.bill)}</td><td>${MS.esc(m.card || "–")}</td><td>${MS.esc(m.addr || "–")}</td><td>${MS.esc(RX[m.regime] || m.regime)}</td></tr>`).join("")}</table></div>` : "";
         const monthsT = d.months && d.months.length ? `<h3 style="margin:16px 0 4px;font-size:16px">Je Monat</h3><table class="grid small"><tr><th>Monat</th>${HEAD}</tr>${d.months.map((m) => `<tr><td>${MON[+m.month.slice(5, 7) - 1]} ${m.month.slice(0, 4)}</td>${cells(m)}</tr>`).join("")}<tr><th>Summe</th>${cells(sum, true)}</tr></table>` : "";
-        const payT = d.payments && d.payments.length ? `<details style="margin-top:12px"><summary><b>Alle ${d.payments.length} Zahlungen einzeln</b></summary><div style="overflow-x:auto"><table class="grid small" style="margin-top:6px"><tr><th>Datum</th><th>Bestellung</th><th>Produkt</th><th>Land</th><th>Rechnungsart</th><th>bezahlt</th><th>Kunde zahlt</th><th>fremde USt</th><th>Umsatz</th><th>Gebühr</th><th>Auszahlung</th></tr>${d.payments.map((x) => `<tr><td>${new Date(x.date).toLocaleDateString("de-AT")}</td><td class="mono">${MS.esc(String(x.id).replace(/-/g, "").slice(0, 8).toUpperCase())}</td><td>${MS.esc(x.product)}</td><td>${MS.esc(x.land)}</td><td>${MS.esc(RA2[x.regime] || x.regime || "–")}</td><td class="mono">${MS.esc(x.orig || "")}</td><td class="mono">${eu(x.gross)}${x.refunded ? ` <span title="erstattet">(−${eu(x.refunded)})</span>` : ""}</td><td class="mono">${x.tax ? eu(x.tax) : "–"}</td><td class="mono"><b>${eu(x.umsatz)}</b></td><td class="mono">${eu(x.fee)}</td><td class="mono">${eu(x.net)}</td></tr>`).join("")}</table></div></details>` : "";
-        out.innerHTML = miss + land + `<p class="small" style="margin-top:10px"><b>Umsatz (Einnahme)</b> = was Mordsteam verdient: Kundenzahlung nach Erstattungen, ohne fremde USt. Die fremde USt (britische USt bei UK-Privatkunden) behält Stripe bzw. Paddle ein und führt sie ab – sie ist nie unsere Einnahme. Gebühren sind eine Ausgabe, Auszahlung = was am Konto ankommt. Die E/A-Rechnung zählt den Umsatz.</p>
+        const payT = d.payments && d.payments.length ? `<details style="margin-top:12px"><summary><b>Alle ${d.payments.length} Zahlungen einzeln</b></summary><div style="overflow-x:auto"><table class="grid small" style="margin-top:6px"><tr><th>Datum</th><th>Bestellung</th><th>Produkt</th><th>Land</th><th>Rechnungsart</th><th>bezahlt</th><th>Kunde zahlt</th><th>fremde USt</th><th>Umsatz</th><th>Reverse Charge (Info)</th><th>Gebühr</th><th>Auszahlung</th></tr>${d.payments.map((x) => `<tr><td>${new Date(x.date).toLocaleDateString("de-AT")}</td><td class="mono">${MS.esc(String(x.id).replace(/-/g, "").slice(0, 8).toUpperCase())}</td><td>${MS.esc(x.product)}</td><td>${MS.esc(x.land)}</td><td>${MS.esc(RA2[x.regime] || x.regime || "–")}</td><td class="mono">${MS.esc(x.orig || "")}</td><td class="mono">${eu(x.gross)}${x.refunded ? ` <span title="erstattet">(−${eu(x.refunded)})</span>` : ""}</td><td class="mono">${x.tax ? eu(x.tax) : "–"}</td><td class="mono"><b>${eu(x.umsatz)}</b></td><td class="mono">${x.rc ? eu(x.rc) : "–"}</td><td class="mono">${eu(x.fee)}</td><td class="mono">${eu(x.net)}</td></tr>`).join("")}</table></div></details>` : "";
+        out.innerHTML = miss + land + `<p class="small" style="margin-top:10px"><b>Umsatz (Einnahme)</b> = was Mordsteam verdient: Kundenzahlung nach Erstattungen, ohne fremde USt. Die fremde USt (britische USt bei UK-Privatkunden) behält Stripe bzw. Paddle ein und führt sie ab – sie ist nie unsere Einnahme. <b>Reverse Charge (Info)</b> = 20 % österreichische USt auf die Stripe-Gebühr (Stripe sitzt in Irland), die du ans Finanzamt zahlst – hier nur angezeigt, sie ändert weder Umsatz noch Gebühren; gezählt wird sie unter Finanzen, sobald sie bezahlt ist. Gebühren sind eine Ausgabe, Auszahlung = was am Konto ankommt. Die E/A-Rechnung zählt den Umsatz.</p>
           <table class="grid small" style="margin-top:6px"><tr><th>Kundenart</th><th>Region</th>${HEAD}</tr>${rows}
           <tr><th colspan="2">Summe</th>${cells(sum, true)}</tr></table>${monthsT}${payT}
           <p class="small" style="margin-top:8px"><b>EU-Privatkunden ${d.eu_b2c.year}:</b> ${eu(d.eu_b2c.cents)} von 10.000,00 € (${pct} %)${d.eu_b2c.cents >= d.eu_b2c.warn ? ` <b style="color:var(--red)">– Warnung: 8.000 € überschritten. Ab 10.000 € gilt die Umsatzsteuer des Kundenlandes (OSS) – jetzt mit Steuerberater/WKO klären!</b>` : ""}</p>
@@ -826,6 +830,8 @@
         }));
       } catch (e2) { out.innerHTML = `<p class="err">${MS.esc(e2.message)}</p>`; }
     };
+
+    if (bhb && tab === "bestellungen") bhb.onclick();   // Übersicht gleich beim Öffnen des Tabs laden
 
     // Kunden & Newsletter
     const kall = document.getElementById("kall"); if (kall) kall.onclick = () => { kundenAll = !kundenAll; render(...last); };

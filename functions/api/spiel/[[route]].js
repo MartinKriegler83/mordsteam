@@ -745,7 +745,7 @@ async function adminCreate(request, env) {
 }
 async function adminOrders(env) {
   await migrateAccounting(env);
-  const base = "SELECT o.id, o.created_at, o.status, o.paket, o.teams, o.amount_cents, o.refunded_cents, o.refunded_at, o.event_date, o.contact, o.paid_at, o.shipped_at, json_extract(o.vars,'$.FIRMA') AS firma, s.join_code, s.org_code";
+  const base = "SELECT o.id, o.created_at, o.status, o.paket, o.teams, o.amount_cents, o.refunded_cents, o.refunded_at, o.tax_cents, o.pay_provider, o.paddle_txn, o.event_date, o.contact, o.paid_at, o.shipped_at, json_extract(o.vars,'$.FIRMA') AS firma, s.join_code, s.org_code";
   const tail = " FROM orders o LEFT JOIN sessions s ON s.id=o.session_id ORDER BY o.created_at DESC LIMIT 200";
   const solo = ", (SELECT t.code FROM solo_tickets t WHERE t.order_id=o.id) AS solo_code";
   const friends = ", (SELECT g.org_token FROM friends_groups g WHERE g.order_id=o.id) AS friends_org";
