@@ -18,7 +18,6 @@
 .gk-msg{max-width:720px;margin:60px auto;padding:0 16px;text-align:center}
 .gk-sheet{container-type:inline-size;width:100%}
 .gk{position:relative;aspect-ratio:210/297;overflow:hidden;background:var(--paper);color:var(--ink);box-shadow:0 14px 40px rgba(21,23,28,.18);
-  background-image:radial-gradient(circle at 20% 18%,rgba(255,255,255,.6),transparent 50%);
   display:flex;flex-direction:column;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 /* Kopf: dunkle Leiste wie auf der Website */
 .gk-head{background:var(--ink);color:var(--paper);display:flex;justify-content:space-between;align-items:center;padding:3cqw 6cqw}
@@ -36,18 +35,19 @@
 .gk-sub{font-size:2.05cqw;color:var(--ink-2);margin:1.2cqw 0 0;max-width:86cqw}
 /* Gummistempel */
 .gk-stamp{position:absolute;right:5cqw;top:3.6cqw;transform:rotate(-11deg);border:.7cqw double var(--red);color:var(--red);border-radius:1.2cqw;
-  padding:1.4cqw 2.6cqw;text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:500;opacity:.88;mix-blend-mode:multiply}
+  padding:1.4cqw 2.6cqw;text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:500;opacity:.9}
 .gk-stamp b{display:block;font-size:4.2cqw;letter-spacing:.18em;line-height:1}
 .gk-stamp span{display:block;font-size:1.35cqw;letter-spacing:.25em;margin-top:.8cqw}
 /* Widmung: „Für“ und „Von“ wie ein Formular, dazwischen eine angeheftete Karteikarte */
 .gk-field{display:grid;grid-template-columns:15cqw 1fr;align-items:end;gap:2cqw}
 .gk-field label{font-family:'IBM Plex Mono',monospace;font-size:1.6cqw;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2);padding-bottom:.8cqw}
-.gk-field input{font-family:'Fraunces',serif;font-weight:700;font-size:4cqw;color:var(--ink);background:transparent;border:0;border-bottom:.25cqw solid var(--ink);padding:.4cqw .2cqw;width:100%;min-width:0;border-radius:0}
+.gk-field input{-webkit-appearance:none;appearance:none;font-family:'Fraunces',serif;font-weight:700;font-size:4cqw;color:var(--ink);background:var(--paper);border:0;border-bottom:.25cqw solid var(--ink);padding:.4cqw .2cqw;width:100%;min-width:0;border-radius:0}
 .gk-card{position:relative;background:#FFFDF8;margin:.6cqw 3cqw .6cqw 17cqw;padding:3.6cqw 4cqw 2cqw;transform:rotate(-1.2deg);box-shadow:0 .6cqw 1.6cqw rgba(21,23,28,.14)}
 .gk-card::before{content:"";position:absolute;left:0;right:0;top:2.4cqw;border-top:.18cqw solid var(--red)}
 .gk-card::after{content:"";position:absolute;top:-1.6cqw;left:50%;width:14cqw;height:3.4cqw;transform:translateX(-50%) rotate(2deg);background:rgba(214,194,155,.7)}
-.gk-card textarea{display:block;width:100%;box-sizing:border-box;border:0;background:transparent;resize:none;font-family:'Fraunces',serif;font-style:italic;font-size:2.9cqw;line-height:4.4cqw;color:var(--ink);height:13.2cqw;padding:0;overflow:hidden;
-  background:repeating-linear-gradient(to bottom,transparent 0,transparent 4.2cqw,var(--line) 4.2cqw,var(--line) 4.4cqw);background-attachment:local}
+.gk-card textarea{display:block;width:100%;box-sizing:border-box;border:0;background:transparent;resize:none;font-family:'Fraunces',serif;font-style:italic;font-size:2.9cqw;line-height:4.4cqw;color:var(--ink);height:13.2cqw;padding:0;overflow:hidden;-webkit-appearance:none;appearance:none;border-radius:0;
+  /* Linien ohne „transparent“ (Safari druckt transparente Verläufe schwarz) */
+  background-color:#FFFDF8;background-image:linear-gradient(to bottom,#FFFDF8 4.2cqw,#DDD5C4 4.2cqw);background-size:100% 4.4cqw;background-repeat:repeat-y}
 /* Beweisstück: Anhänger mit Code + QR-Code */
 .gk-evid{display:grid;grid-template-columns:1fr 22cqw;gap:4cqw;align-items:center;margin-top:.6cqw}
 .gk-tag{position:relative;background:#FFFDF8;border:.25cqw solid var(--ink);padding:2.4cqw 3.2cqw 2.4cqw 9cqw;clip-path:polygon(5cqw 0,100% 0,100% 100%,5cqw 100%,0 50%);min-width:0}
@@ -73,8 +73,10 @@
   html,body{background:#fff;margin:0}
   .header,.footer,.gk-bar,.noprint{display:none!important}
   .gk-wrap{max-width:none;margin:0;padding:0}
-  .gk-sheet{width:210mm}
-  .gk{width:210mm;height:297mm;aspect-ratio:auto;box-shadow:none}
+  /* Blatt füllt den druckbaren Bereich und behält das A4-Verhältnis – passt auch, wenn der Browser (Safari) eigene Ränder druckt */
+  html,body{height:auto}
+  .gk-sheet{width:99.5%;margin:0 auto;break-inside:avoid;page-break-inside:avoid}
+  .gk{width:100%;height:auto;aspect-ratio:210/297;box-shadow:none}
   .gk input::placeholder,.gk textarea::placeholder{color:transparent}
   .gk input:focus-visible,.gk textarea:focus-visible{outline:none}
 }
