@@ -796,7 +796,7 @@ async function adminExport(request, env) {
   const q = (x) => { const t = String(x ?? ""); return /[;"\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
   const d = (ms) => new Intl.DateTimeFormat("de-AT", { timeZone: "Europe/Vienna", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(ms));
   const e = (c) => (c == null ? "" : (c / 100).toFixed(2).replace(".", ","));
-  const lines = [["Datum (bezahlt)", "Rechnungsnr. (Stripe)", "Bestell-ID", "Kunde / Firma", "Produkt", "Anzahl", "Early Bird", "Kundenart", "Land", "Region", "Einnahme brutto (€)", "Gebühr (€)", "Auszahlung netto (€)", "davon USt (€)", "Zahlungsweg", "Rechnungsart", "UID Kunde", "bezahlt in Fremdwährung", "erstattet (€)", "Status", "Kartenland (Stripe)", "Adressland (Stripe)"].join(";")];
+  const lines = [["Datum (bezahlt)", "Rechnungsnr. (Stripe)", "Bestell-ID", "Kunde / Firma", "Produkt", "Anzahl", "Early Bird", "Kundenart", "Land", "Region", "Kunde zahlt (€)", "Gebühr (€)", "Auszahlung netto (€)", "fremde USt (€)", "Umsatz/Einnahme (€)", "Zahlungsweg", "Rechnungsart", "UID Kunde", "bezahlt in Fremdwährung", "erstattet (€)", "Status", "Kartenland (Stripe)", "Adressland (Stripe)"].join(";")];
   const RA = { ku: "Kleinunternehmer (steuerfrei)", rc_eu: "Reverse Charge EU (ZM)", dl_b2b: "Nicht-EU-Firma, nicht steuerbar", dl_b2c: "Nicht-EU-Privat, nicht steuerbar", uk_mor: "UK-Privat über Stripe Managed Payments (britische USt führt Stripe/Link ab)", uk_paddle: "UK über Paddle (alt)" };
   for (const o of results) {
     const c = JSON.parse(o.contact || "{}");
@@ -804,7 +804,7 @@ async function adminExport(request, env) {
     const kind = c.kunde === "b2b" || (!o.tax_regime && o.tax_id) ? "Unternehmen" : "Privat";
     const prod = o.paket === "solo" ? `Solo ${String(c.produkt || "solo-001").replace("solo-", "")}` : P[o.paket] || o.paket;
     lines.push([d(o.paid_at), o.invoice_no || "", o.id.slice(0, 8), [c.name, firma].filter(Boolean).join(" / "), prod, o.teams,
-      c.earlybird ? "Ja" : "Nein", kind, o.bill_country || "", REGION_LABEL[region(o.bill_country)], e(o.amount_cents), e(o.fee_cents), e(o.net_cents), e(o.tax_cents || 0), o.paddle_txn ? "Paddle" : o.pay_provider === "stripe_mp" ? "Stripe Managed Payments" : o.stripe_session ? "Stripe" : "Test (ohne Zahlung)", RA[o.tax_regime] || "", o.cust_uid || "", o.currency && o.currency !== "EUR" && o.amount_orig_cents != null ? `${o.currency} ${(o.amount_orig_cents / 100).toFixed(2)}` : "",
+      c.earlybird ? "Ja" : "Nein", kind, o.bill_country || "", REGION_LABEL[region(o.bill_country)], e(o.amount_cents), e(o.fee_cents), e(o.net_cents), e(o.tax_cents || 0), e((o.amount_cents || 0) - (o.pay_provider === "stripe_mp" || o.pay_provider === "paddle" || o.paddle_txn ? (o.tax_cents || 0) : 0)), o.paddle_txn ? "Paddle" : o.pay_provider === "stripe_mp" ? "Stripe Managed Payments" : o.stripe_session ? "Stripe" : "Test (ohne Zahlung)", RA[o.tax_regime] || "", o.cust_uid || "", o.currency && o.currency !== "EUR" && o.amount_orig_cents != null ? `${o.currency} ${(o.amount_orig_cents / 100).toFixed(2)}` : "",
       o.refunded_cents != null ? e(o.refunded_cents) : o.status === "withdrawn" ? e(o.amount_cents) : "", ({ refunded: "erstattet", withdrawn: "widerrufen" })[o.status] || (o.currency && o.currency !== "EUR" && !o.eur_ok ? "Euro-Betrag fehlt" : ""), o.card_country || "", o.addr_country || ""].map(q).join(";"));
   }
   return new Response("\ufeff" + lines.join("\r\n"), { headers: { "content-type": "text/csv; charset=utf-8",
