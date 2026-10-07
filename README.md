@@ -169,6 +169,7 @@ Nur Namen, keine Werte. Production und Preview haben je eigene Werte.
 | `MAIL_FROM` | Text | Absender der automatischen Mails; ohne ihn werden keine Mails verschickt |
 | `ARIA_MODEL` | Text | Claude-Modell (Standard: `claude-haiku-4-5-20251001`) |
 | `SHOP_OPEN` | Text | `true` = Bestellungen möglich |
+| `MANAGED_PAYMENTS` | Text | `true` = Privatkunden aus Großbritannien kaufen über Stripe Managed Payments (Link ist Verkäufer, Preis inkl. britischer USt, Steuercode `txcd_10201003`, API-Version 2025-03-31.basil nur für diese Sitzungen). Sonst sehen sie „in Kürze möglich“. UK-Firmen zahlen immer über das normale Stripe (Reverse Charge). Vorher Managed Payments im Stripe-Dashboard aktivieren (Einstellungen → Managed Payments) |
 | `ORDER_FAKE_PAY` | Text | `true` = Bestellung ohne Stripe gilt als bezahlt (nur Tests) |
 | `LAUNCH` | Text (Build) | `true` = auf `main` volle Seite statt Teaser |
 | `EARLYBIRD_PROZENT`, `EARLYBIRD_BIS`, `EARLYBIRD_COUPON` | Text | Early-Bird-Rabatt (Standard 25 %), Enddatum (Standard 2026-11-30), Stripe-Coupon |

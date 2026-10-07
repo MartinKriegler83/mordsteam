@@ -24,8 +24,6 @@ if [ "$CF_PAGES_BRANCH" = "main" ] && [ "$LAUNCH" != "true" ]; then
   mkdir -p dist/en && cp teaser/en/index.html dist/en/index.html && cp teaser/en/imprint.html dist/en/imprint.html
   # Für die Prüfung durch Paddle: Angebot, Preise, Erstattung und Rechtstexte (nicht verlinkt, noindex)
   cp site/products.html dist/products.html
-  # Paddle-Kasse (Default payment link im Paddle-Konto) – erst nach dem Go-live genutzt, aber für die Prüfung erreichbar
-  cp site/zahlung.html dist/zahlung.html
 else
   echo "Modus: VOLLE SEITE"
   cp -r site/. dist/

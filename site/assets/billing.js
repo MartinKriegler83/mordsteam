@@ -1,5 +1,5 @@
 // Rechnungsland und UID in allen Bestellformularen (Teams, Friends, Solo; DE und EN).
-// Danach richtet sich die Rechnung: Kleinunternehmer, Reverse Charge, nicht steuerbar – oder Paddle für Privatkunden in Großbritannien.
+// Danach richtet sich die Rechnung: Kleinunternehmer, Reverse Charge, nicht steuerbar – oder Stripe Managed Payments (Link) für Privatkunden in Großbritannien.
 (function () {
   const box = document.getElementById("billbox");
   if (!box) return;
@@ -21,8 +21,8 @@
   const top = EN ? ["GB", "IE", "US", "AT", "DE"] : ["AT", "DE", "CH"];
   const rest = Object.keys(N).filter((k) => !top.includes(k)).sort((a, b) => name(a).localeCompare(name(b), EN ? "en" : "de"));
   const opt = (k) => `<option value="${k}">${name(k)}</option>`;
-  let paddle = null;
-  fetch("/api/shop/paddle-config").then((r) => r.json()).then((d) => { paddle = d; paint(); }).catch(() => {});
+  let uk = null;   // { on: true } wenn UK-Privatkunden über Stripe Managed Payments kaufen können
+  fetch("/api/shop/uk-config").then((r) => r.json()).then((d) => { uk = d; paint(); }).catch(() => {});
 
   box.innerHTML = `
     <div class="field"><label for="bill_land">${T("Rechnungsland *", "Billing country *")}</label>
@@ -45,7 +45,7 @@
   const payhint = document.getElementById("payhint"), payhint0 = payhint ? payhint.innerHTML : "";
   const kunde = () => (form && form.kunde ? form.kunde.value : "");
   const SOLO = !!(form && form.id === "solo");
-  // „Umsatzsteuerfrei (Kleinunternehmerregelung)“ in der Zusammenfassung stimmt bei Paddle nicht – dort ist die britische USt enthalten (Go-live-Test 4)
+  // „Umsatzsteuerfrei (Kleinunternehmerregelung)“ in der Zusammenfassung stimmt für UK-Privatkunden nicht – dort ist die britische USt enthalten (Go-live-Test 4)
   const VAT_RE = /Umsatzsteuerfrei \(Kleinunternehmerregelung\)\.|VAT exempt \(small business scheme\)\./;
   const vatEls = [...document.querySelectorAll(".summary p, .summary .small")].filter((el) => el !== payhint && VAT_RE.test(el.innerHTML)).map((el) => [el, el.innerHTML]);
 
@@ -58,17 +58,16 @@
     else if (b2b && l === "GB") uidHint.textContent = T("Optional, erscheint auf der Rechnung. Ihr zahlt in Pfund ohne Umsatzsteuer – Reverse Charge, die britische USt meldet ihr selbst.", "Optional, shown on the invoice. You pay in pounds without VAT – reverse charge, you account for UK VAT yourselves.");
     else uidHint.textContent = T("Erscheint auf der Rechnung.", "Shown on the invoice.");
     if (l === "GB" && !b2b) {
-      n = paddle && paddle.on
-        ? T("Im Vereinigten Königreich zahlt ihr in Pfund (Preis inkl. britischer Umsatzsteuer) über unseren Partner Paddle (paddle.com). Paddle ist dort Verkäufer und stellt die Rechnung aus; Firmen geben Firmenname und VAT-Nummer direkt bei Paddle an. Gutscheincodes können dabei leider nicht eingelöst werden.",
-            "In the United Kingdom you pay in pounds (price incl. UK VAT) via our partner Paddle (paddle.com). Paddle is the seller and issues the invoice; businesses enter their company name and VAT number directly at Paddle. Unfortunately, promo codes cannot be redeemed this way.")
-          + (SOLO ? " " + T("Bei Käufen über Paddle gibt es keinen 5-€-Gutschein für Friends oder Teams.", "Purchases via Paddle do not include the £5 voucher for Friends or Teams.") : "")
+      n = uk && uk.on
+        ? T("Im Vereinigten Königreich zahlt ihr in Pfund, der Preis enthält die britische Umsatzsteuer. Verkäufer ist dort Link, der Bezahldienst von Stripe; die Rechnung kommt per E-Mail von Link.",
+            "In the United Kingdom you pay in pounds; the price includes UK VAT. The seller there is Link, Stripe's payment service; the invoice comes by email from Link.")
         : T("Bestellungen von Privatpersonen aus dem Vereinigten Königreich sind in Kürze möglich. Firmen, Vereine und Organisationen können schon bestellen („Unternehmen, Verein oder Organisation“ wählen).", "Orders from private individuals in the United Kingdom will be possible very soon. Businesses, clubs and organisations can already order (choose “Company, club or organisation”).");
     }
     note.textContent = n; note.hidden = !n;
-    const viaPaddle = l === "GB" && !b2b && paddle && paddle.on;
-    vatEls.forEach(([el, html]) => { el.innerHTML = viaPaddle ? html.replace(VAT_RE, T("Inkl. britischer Umsatzsteuer (Verkauf über Paddle).", "Including UK VAT (sold via Paddle).")) : html; });
-    if (payhint) payhint.innerHTML = viaPaddle
-      ? T("Bezahlt wird in Pfund über Paddle (paddle.com), inkl. britischer Umsatzsteuer – Paddle ist für Kunden im Vereinigten Königreich Verkäufer und stellt die Rechnung aus. Spielcode und Links seht ihr direkt danach.", "You pay in pounds via Paddle (paddle.com), including UK VAT – Paddle is the seller for customers in the United Kingdom and issues the invoice. You'll see your code and links right afterwards.")
+    const viaMor = l === "GB" && !b2b && uk && uk.on;
+    vatEls.forEach(([el, html]) => { el.innerHTML = viaMor ? html.replace(VAT_RE, T("Inkl. britischer Umsatzsteuer (Verkauf über Link/Stripe).", "Including UK VAT (sold via Link/Stripe).")) : html; });
+    if (payhint) payhint.innerHTML = viaMor
+      ? T("Bezahlt wird in Pfund über Link (Stripe), inkl. britischer Umsatzsteuer – Link ist für Privatkunden im Vereinigten Königreich Verkäufer und schickt die Rechnung. Spielcode und Links seht ihr direkt danach.", "You pay in pounds via Link (Stripe), including UK VAT – Link is the seller for private customers in the United Kingdom and sends the invoice. You'll see your code and links right afterwards.")
       : MSCur_cur() !== "EUR" ? payhint0.replace(/Prices in euros\.|Preise in Euro\./, "") + " " + T(`Bezahlt wird in ${MSCur_cur() === "GBP" ? "Pfund" : "US-Dollar"}.`, `You pay in ${MSCur_cur() === "GBP" ? "pounds" : "US dollars"}.`) : payhint0;
   }
   sel.addEventListener("change", paint);

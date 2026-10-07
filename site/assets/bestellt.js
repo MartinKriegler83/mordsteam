@@ -3,8 +3,8 @@
   "use strict";
   var EN=document.documentElement.lang==="en";
   function T(de,en){return EN?en:de;}
-  // Rechnungshinweis passend zum Bezahlweg (Paddle für Privatkunden in Großbritannien)
-  function INV(d){return d&&d.provider==='paddle'?T('Die Rechnung kommt per E-Mail von Paddle.com (Verkäufer für Kunden im Vereinigten Königreich). Fragen? ','The invoice will be emailed by Paddle.com (the seller for customers in the United Kingdom). Questions? '):T('Die Rechnung kommt per E-Mail von unserem Zahlungsanbieter Stripe. Fragen? ','The invoice will be emailed by our payment provider Stripe. Questions? ');}
+  // Rechnungshinweis passend zum Bezahlweg (Link/Stripe Managed Payments für Privatkunden in Großbritannien)
+  function INV(d){return d&&d.provider==='link'?T('Die Rechnung kommt per E-Mail von Link (Stripe), dem Verkäufer für Privatkunden im Vereinigten Königreich. Fragen? ','The invoice will be emailed by Link (Stripe), the seller for private customers in the United Kingdom. Questions? '):T('Die Rechnung kommt per E-Mail von unserem Zahlungsanbieter Stripe. Fragen? ','The invoice will be emailed by our payment provider Stripe. Questions? ');}
   var out=document.getElementById("out");
   var q=new URLSearchParams(location.search), o=q.get("o"), k=q.get("k"), tries=0;
   var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];

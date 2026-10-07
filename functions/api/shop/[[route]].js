@@ -11,7 +11,7 @@
 //                                „MORDSTEAM40“ (bzw. MORDSTEAM<Prozent>) beim ersten Bedarf selbst in Stripe an.
 //   RESEND_API_KEY, MAIL_FROM   optional: Bestätigungsmail über Resend (z. B. MAIL_FROM="Mordsteam <office@mordsteam.com>")
 //   UID_NR                      eigene UID (z. B. ATU12345678) – erscheint auf allen Rechnungen, sobald gesetzt
-//   PADDLE_*                    Paddle für Privatkunden in Großbritannien, siehe lib/paddle.js
+//   MANAGED_PAYMENTS=true       Privatkunden in Großbritannien über Stripe Managed Payments (Link als Merchant of Record)
 // Umsatzsteuer je Bestellung (Rechnungsland, UID, Fußzeile): lib/tax.js
 import { CASES, json, fail, randomToken, viennaDate, randInt } from "../../../lib/game.js";
 import { migrate, createGameSession, normalizeVars, InputError } from "../../../lib/create.js";
@@ -22,7 +22,6 @@ import { handleWithdraw, orderNo } from "../../../lib/withdraw.js";
 import { sendMail as opsMail } from "../../../lib/ops.js";
 import { enrichPayment, migrateAccounting } from "../../../lib/accounting.js";
 import { taxContext, TaxInputError, invoiceFooter, invoiceFields } from "../../../lib/tax.js";
-import { paddleOn, paddleTransaction, paddleGet, paddleAmounts, paddlePaid, verifyPaddle, ukPrice } from "../../../lib/paddle.js";
 import { PRICE_TABLE, curOfLand, convPrice } from "../../../lib/prices.js";
 import { nlSignup, nlConfirm, nlUnsubscribe, nlVisit, srcVisit, nlAfterOrder, nlTag, migrateNewsletter } from "../../../lib/newsletter.js";
 import { createSoloTicket, migrateSolo } from "../../../lib/solo.js";
@@ -67,9 +66,8 @@ export async function onRequest({ request, env, params }) {
     await migrate(env);
     if (route === "meta" && method === "GET") return await meta(env, request);
     if (route === "stripe-webhook" && method === "POST") return await webhook(request, env);
-    if (route === "paddle-webhook" && method === "POST") return await paddleWebhook(request, env);
     if (route === "geo" && method === "GET") { const h = request.headers.get("cf-ipcountry"), c = String((env.GEO_TEST && h) || (request.cf && request.cf.country) || h || "").toUpperCase(); /* GEO_TEST nur im lokalen Test */ return json({ country: /^[A-Z]{2}$/.test(c) ? c : "", currency: curOfLand(c), table: PRICE_TABLE }); }
-    if (route === "paddle-config" && method === "GET") return json({ on: paddleOn(env), token: paddleOn(env) ? env.PADDLE_CLIENT_TOKEN : null, env: String(env.PADDLE_ENV || "sandbox").toLowerCase() === "live" ? "live" : "sandbox" });
+    if (route === "uk-config" && method === "GET") return json({ on: mpOn(env) });
     if (route === "status" && method === "GET") return await status(request, env);
     if (route === "bestellung" && method === "POST") return (await orderLimit(request, env)) || await bestellung(request, env);
     if (route === "solo" && method === "POST") return (await orderLimit(request, env)) || await soloBestellung(request, env);
@@ -157,14 +155,14 @@ function meta(env, request) {
 
 
 // ---------- Umsatzsteuer und Bezahlweg (für Teams, Solo, Friends gleich) ----------
-// Preis in der Mail: Pfund bei Paddle-Bestellungen, sonst Euro
+// Preis in der Mail: in der Bestellwährung (Pfund/Dollar), sonst Euro
 const priceTxt = (o) => (o.currency && o.currency !== "EUR" && o.amount_orig_cents != null ? `${o.currency === "GBP" ? "£" : "$"}${(o.amount_orig_cents / 100).toFixed(2)}` : `${(o.amount_cents / 100).toLocaleString("de-AT", { minimumFractionDigits: 2 })} €`);
 // Steuerhinweis in der Bestätigungsmail (passend zur Rechnung)
 function vatNote(c, T) {
   const r = c.tax_regime || "ku";
   if (r === "rc_eu") return T(`(Endpreis ohne USt – Reverse Charge, die Steuer schuldet ihr als Leistungsempfänger; eure UID ${c.uid || ""}). Bezahlt über Stripe.`, `(final price without VAT – reverse charge, VAT is accounted for by you as the recipient; your VAT ID ${c.uid || ""}). Paid via Stripe.`);
   if (r === "dl_b2b" || r === "dl_b2c") return T("(Endpreis; in Österreich nicht steuerbar, keine österreichische USt). Bezahlt über Stripe.", "(final price; not subject to Austrian VAT). Paid via Stripe.");
-  if (r === "uk_paddle") return T("(Endpreis inkl. britischer Umsatzsteuer). Verkauf und Rechnung über Paddle.com (Merchant of Record).", "(final price incl. UK VAT). Sold and invoiced by Paddle.com (merchant of record).");
+  if (r === "uk_mor" || r === "uk_paddle") return T("(Endpreis inkl. britischer Umsatzsteuer). Verkauf und Rechnung über Link (Stripe) als Merchant of Record – die Rechnung kommt per E-Mail von Link.", "(final price incl. UK VAT). Sold and invoiced by Link (Stripe) as merchant of record – the invoice comes by email from Link.");
   return T("(Endpreis; Kleinunternehmer, keine USt gemäß § 6 Abs. 1 Z 27 UStG). Bezahlt über Stripe.", "(final price; small business, no VAT under § 6 (1) no. 27 UStG). Paid via Stripe.");
 }
 // Begrenzung der Bestellversuche: höchstens 10 je Anschluss in 10 Minuten, über alle Produkte (Go-live-Test 4, M16).
@@ -193,7 +191,7 @@ async function taxStep(env, k, site, contact) {
     throw new InputError(L(site, "Bitte den Namen von Firma, Verein oder Organisation für die Rechnung angeben.", "Please enter the name of the company, club or organisation for the invoice."));
   try { t = await taxContext(env, k, site, contact.kunde); }
   catch (e) { if (e instanceof TaxInputError) throw new InputError(e.message); throw e; }
-  if (t.regime === "uk_paddle" && !paddleOn(env)) throw new InputError(L(site,
+  if (t.regime === "uk_mor" && !mpOn(env)) throw new InputError(L(site,
     "Bestellungen von Privatpersonen aus dem Vereinigten Königreich sind in Kürze möglich. Firmen, Vereine und Organisationen können schon bestellen.",
     "Orders from private individuals in the United Kingdom will be possible very soon. Businesses, clubs and organisations can already order."));
   Object.assign(contact, { bill_land: t.bill_land, tax_regime: t.regime, ...(t.uid ? { uid: t.uid } : {}), ...(t.uid_name ? { uid_name: t.uid_name } : {}) });
@@ -205,13 +203,19 @@ async function saveTax(env, id, contact) {
   // amount_cents steht bis zur Zahlung in der Bestellwährung; nach der Zahlung in Euro (Stripe-/Paddle-Auszahlung), Originalbetrag in amount_orig_cents
   const cur = contact.currency || "EUR";
   await env.DB.prepare("UPDATE orders SET bill_country=?, tax_regime=?, cust_uid=?, pay_provider=?, currency=?, amount_orig_cents=CASE WHEN ?<>'EUR' THEN amount_cents ELSE NULL END WHERE id=?")
-    .bind(contact.bill_land, contact.tax_regime, contact.uid || null, contact.tax_regime === "uk_paddle" ? "paddle" : "stripe", cur, cur, id).run();
+    .bind(contact.bill_land, contact.tax_regime, contact.uid || null, contact.tax_regime === "uk_mor" ? "stripe_mp" : "stripe", cur, cur, id).run();
 }
-// Paddle-Kasse (britische Privatkunden): Transaktion anlegen, Weiterleitung auf /zahlung.html
-async function paddleStep(env, origin, { id, token, site, gbp, name, description, email }) {
-  const t = await paddleTransaction(env, { amount: gbp, currency: "GBP", name, description, orderId: id, email });
-  await env.DB.prepare("UPDATE orders SET paddle_txn=?, currency='GBP', amount_orig_cents=? WHERE id=?").bind(t.id, gbp, id).run();
-  return json({ redirect: `${origin}/zahlung.html?_ptxn=${encodeURIComponent(t.id)}&o=${id}&k=${token}&l=${site}` });
+// Stripe Managed Payments (britische Privatkunden, Regime uk_mor): Link ist Verkäufer und führt die britische USt ab.
+// Nicht erlaubt sind dann invoice_creation (Rechnung kommt von Link), automatic_tax, tax_id_collection u. a.;
+// Preise sind Endpreise (tax_behavior inclusive), Steuerkategorie „Video Games – streamed – limited rights“.
+const mpOn = (env) => String(env.MANAGED_PAYMENTS || "").toLowerCase() === "true";
+const MP_TAX_CODE = "txcd_10201003";
+function checkoutParams(p, contact) {
+  if (contact.tax_regime !== "uk_mor") return p;
+  const { invoice_creation, ...q } = p;
+  q.managed_payments = { enabled: true };
+  q.line_items = p.line_items.map((li) => ({ ...li, price_data: { ...li.price_data, tax_behavior: "inclusive", product_data: { ...li.price_data.product_data, tax_code: MP_TAX_CODE } } }));
+  return q;
 }
 
 // ---------- Bestellung anlegen ----------
@@ -295,12 +299,8 @@ async function bestellung(request, env) {
   const done = `${origin}${pre}/${site === "en" ? "ordered" : "bestellt"}.html?o=${id}&k=${token}`;
   const title = lang === "en" ? C.EN.META.title : C.META.title;
   const langName = L(site, lang === "en" ? "Englisch" : "Deutsch", lang === "en" ? "English" : "German");
-  if (contact.tax_regime === "uk_paddle") return paddleStep(env, origin, { id, token, site, email: contact.email,
-    gbp: amount,
-    name: L(site, `Mordsteam Fall ${caseNr(caseId)} „${title}“ – ${NAMES[paket]} × ${teams}`, `Mordsteam Case ${caseNr(caseId)} “${title}” – ${NAMES_EN[paket]} × ${teams}`),
-    description: L(site, `${teams} Team${teams === 1 ? "" : "s"} · gültig bis ${validUntil} · Spielsprache ${langName}`, `${teams} team${teams === 1 ? "" : "s"} · valid until ${validUntil} · game language ${langName}`) });
   if (env.STRIPE_SECRET_KEY) {
-    const cs = await stripe(env, "POST", "checkout/sessions", {
+    const cs = await stripe(env, "POST", "checkout/sessions", checkoutParams({
       mode: "payment",
       // Early Bird: Gutschein fix anhängen. Sonst Feld für eigene Codes (z. B. Friends-Codes) anbieten – Stripe erlaubt nicht beides.
       ...(eb ? { discounts: [{ coupon: await ebCoupon(env, eb.prozent) }] } : { allow_promotion_codes: true }),
@@ -324,7 +324,7 @@ async function bestellung(request, env) {
         metadata: { order_id: id },
         ...invoiceFields(env, site, contact),
       } },
-    });
+    }, contact));
     await env.DB.prepare("UPDATE orders SET stripe_session=? WHERE id=?").bind(cs.id, id).run();
     return json({ redirect: cs.url });
   }
@@ -377,11 +377,8 @@ async function soloBestellung(request, env) {
   const origin = new URL(request.url).origin;
   const pre = site === "en" ? "/en" : "";
   const done = `${origin}${pre}/${site === "en" ? "ordered" : "bestellt"}.html?o=${id}&k=${token}`;
-  if (contact.tax_regime === "uk_paddle") return paddleStep(env, origin, { id, token, site, gbp: price, email: contact.email,
-    name: L(site, `Mordsteam ${F.no} „${F.de}“`, `Mordsteam ${F.no} “${F.en}”`),
-    description: L(site, `Krimi für eine Person · Code gültig bis ${validUntil} · Spielsprache ${GL}`, `Murder mystery for one person · code valid until ${validUntil} · game language ${GL}`) });
   if (env.STRIPE_SECRET_KEY) {
-    const cs = await stripe(env, "POST", "checkout/sessions", {
+    const cs = await stripe(env, "POST", "checkout/sessions", checkoutParams({
       mode: "payment", locale: site, customer_email: contact.email, client_reference_id: id,
       success_url: done, cancel_url: `${origin}${pre}/${site === "en" ? "solo-buy" : "solo-kaufen"}.html?abgebrochen=1`,
       billing_address_collection: contact.kunde === "b2b" ? "required" : "auto",   // Firmen: volle Anschrift auf der Rechnung (M15)
@@ -393,7 +390,7 @@ async function soloBestellung(request, env) {
         description: L(site, `Mordsteam ${F.no} „${F.de}“, digitaler Krimi für eine Person, spielbar bis ${validUntil}.`, `Mordsteam ${F.no} “${F.en}”, digital murder mystery for one person, playable until ${validUntil}.`),
         footer: invoiceFooter(contact.tax_regime, site),
         metadata: { order_id: id }, ...invoiceFields(env, site, contact) } },
-    });
+    }, contact));
     await env.DB.prepare("UPDATE orders SET stripe_session=? WHERE id=?").bind(cs.id, id).run();
     return json({ redirect: cs.url });
   }
@@ -465,12 +462,8 @@ async function friendsBestellung(request, env) {
   const lim = plus ? C.LIMIT_MIN_PLUS : C.LIMIT_MIN, vName = plus ? L(site, "Krimiabend Plus", "Mystery Night Plus") : L(site, "Krimiabend", "mystery night");
   const done = `${origin}${pre}/${site === "en" ? "ordered" : "bestellt"}.html?o=${id}&k=${token}`;
   const modeTxt = mode === "live" ? L(site, "gleichzeitig", "all at once") : L(site, `über ${days} Tage`, `over ${days} days`);
-  if (contact.tax_regime === "uk_paddle") return paddleStep(env, origin, { id, token, site, email: contact.email,
-    gbp: amount,
-    name: L(site, `Mordsteam Friends 001 – ${vName} für ${n} Personen`, `Mordsteam Friends 001 – ${vName} for ${n} people`),
-    description: L(site, `Countdown ${lim} Min., gespielt ${modeTxt} · spielbar bis ${validUntil} · Spielsprache ${GL}`, `${lim}-minute countdown, played ${modeTxt} · playable until ${validUntil} · game language ${GL}`) });
   if (env.STRIPE_SECRET_KEY) {
-    const cs = await stripe(env, "POST", "checkout/sessions", {
+    const cs = await stripe(env, "POST", "checkout/sessions", checkoutParams({
       mode: "payment", locale: site, customer_email: contact.email, client_reference_id: id,
       ...(eb ? { discounts: [{ coupon: await ebCoupon(env, eb.prozent) }] } : { allow_promotion_codes: true }),
       success_url: done, cancel_url: `${origin}${pre}/${site === "en" ? "friends-buy" : "friends-kaufen"}.html?abgebrochen=1`,
@@ -483,7 +476,7 @@ async function friendsBestellung(request, env) {
         description: L(site, `Mordsteam Friends 001, digitaler ${plus ? "Krimiabend Plus mit KI-Verhörraum" : "Krimiabend"} für ${n} Personen, einmal spielbar bis ${validUntil}.`, `Mordsteam Friends 001, digital ${plus ? "Mystery Night Plus with AI interrogation room" : "mystery night"} for ${n} people, playable once until ${validUntil}.`),
         footer: invoiceFooter(contact.tax_regime, site),
         metadata: { order_id: id }, ...invoiceFields(env, site, contact) } },
-    });
+    }, contact));
     await env.DB.prepare("UPDATE orders SET stripe_session=? WHERE id=?").bind(cs.id, id).run();
     return json({ redirect: cs.url });
   }
@@ -511,17 +504,9 @@ async function status(request, env) {
     }
     order = await env.DB.prepare("SELECT * FROM orders WHERE id=?").bind(order.id).first();
   }
-  // Paddle: falls die Benachrichtigung (noch) nicht da ist, direkt nachfragen
-  if (order.status === "pending" && order.paddle_txn && paddleOn(env)) {
-    try {
-      const t = await paddleGet(env, order.paddle_txn);
-      if (paddlePaid(t)) await paddlePaidOrder(env, order.id, t, u.origin);
-    } catch {}
-    order = await env.DB.prepare("SELECT * FROM orders WHERE id=?").bind(order.id).first();
-  }
   const ct = JSON.parse(order.contact || "{}");
   const out = { status: order.status, paket: order.paket, teams: order.teams, event_date: order.event_date, amount_cents: order.amount_cents,
-    firma: JSON.parse(order.vars).FIRMA, lang: ct.lang || "de", land: JSON.parse(order.vars).LAND || "AT", earlybird: ct.earlybird || 0, nr: orderNo(order.id), kunde: ct.kunde || "", fall_nr: caseNr(caseIdOf(ct.fall)), provider: order.paddle_txn ? "paddle" : "stripe" };
+    firma: JSON.parse(order.vars).FIRMA, lang: ct.lang || "de", land: JSON.parse(order.vars).LAND || "AT", earlybird: ct.earlybird || 0, nr: orderNo(order.id), kunde: ct.kunde || "", fall_nr: caseNr(caseIdOf(ct.fall)), provider: order.paddle_txn ? "paddle" : order.pay_provider === "stripe_mp" ? "link" : "stripe" };
   if (order.paket === "solo") {
     out.produkt = "solo";
     const SF = soloOffer(ct.produkt);
@@ -567,34 +552,6 @@ async function webhook(request, env) {
     }
   }
   return json({ received: true });
-}
-
-// ---------- Paddle-Benachrichtigung (britische Privatkunden) ----------
-async function paddleWebhook(request, env) {
-  const raw = await request.text();
-  if (!env.PADDLE_WEBHOOK_SECRET) return fail("Webhook nicht eingerichtet.", 503);
-  if (!(await verifyPaddle(raw, request.headers.get("paddle-signature") || "", env.PADDLE_WEBHOOK_SECRET))) return fail("Signatur ungültig.", 400);
-  const ev = JSON.parse(raw);
-  const t = ev.data || {};
-  if ((ev.event_type === "transaction.completed" || ev.event_type === "transaction.paid") && paddlePaid(t)) {
-    const id = (t.custom_data && t.custom_data.order_id) || (await env.DB.prepare("SELECT id FROM orders WHERE paddle_txn=?").bind(t.id || "").first() || {}).id;
-    if (id) await paddlePaidOrder(env, id, t, new URL(request.url).origin);
-  }
-  return json({ received: true });
-}
-async function paddlePaidOrder(env, id, t, origin) {
-  const o = await env.DB.prepare("SELECT paddle_txn FROM orders WHERE id=?").bind(id).first();
-  if (!o || !o.paddle_txn || o.paddle_txn !== t.id) return;   // nur die Transaktion, die wir für diese Bestellung angelegt haben (Go-live-Test 4)
-  await env.DB.prepare("UPDATE orders SET status='paid', paid_at=? WHERE id=? AND status='pending'").bind(Date.now(), id).run();
-  try {
-    await migrateAccounting(env);
-    const a = paddleAmounts(t);
-    // amount_cents = Endpreis inkl. britischer Steuer; tax_cents = britische Steuer (führt Paddle ab); fee/net laut Paddle-Auszahlung
-    // eur_ok nur, wenn Paddle in Euro auszahlt (Auszahlungswährung EUR) – sonst Warnung in der Buchhaltung (Go-live-Test 4, M12)
-    await env.DB.prepare("UPDATE orders SET amount_cents=COALESCE(?, amount_cents), tax_cents=COALESCE(?, tax_cents), fee_cents=COALESCE(?, fee_cents), net_cents=COALESCE(?, net_cents), invoice_no=COALESCE(?, invoice_no), amount_orig_cents=COALESCE(?, amount_orig_cents), currency=COALESCE(?, currency), eur_ok=CASE WHEN ? IS NOT NULL THEN 1 ELSE eur_ok END WHERE id=?")
-      .bind(a.gross, a.tax, a.fee, a.net, t.invoice_number || null, a.paid, a.paid_currency, a.gross, id).run();
-  } catch { /* Buchhaltungsdaten blockieren nie */ }
-  await fulfill(env, id, origin);
 }
 
 async function verifyStripe(payload, header, secret) {
@@ -824,7 +781,8 @@ function formEncode(obj, prefix = "", out = []) {
 async function stripe(env, method, path, data) {
   const r = await fetch(`${env.STRIPE_API_BASE || "https://api.stripe.com/v1"}/${path}`, {
     method,
-    headers: { authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "content-type": "application/x-www-form-urlencoded" },
+    // Managed Payments verlangt mindestens API-Version 2025-03-31.basil (nur für diese Sitzungen gesetzt)
+    headers: { authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, "content-type": "application/x-www-form-urlencoded", ...(data && data.managed_payments ? { "stripe-version": "2025-03-31.basil" } : {}) },
     body: data ? formEncode(data) : undefined,
   });
   const d = await r.json();
