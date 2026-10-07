@@ -261,7 +261,7 @@
       ${n.errors.length ? `<p class="err">Letzter Übertragungsfehler: ${e(n.errors[0].sync_error)}</p>` : ""}
       <div class="actions-row" style="margin-top:10px"><button class="btn btn-red" type="button" id="nlsync">Kunden nachtragen und übertragen</button></div>
       ${nlSyncMsg ? `<p class="small"><b>${e(nlSyncMsg)}</b></p>` : ""}
-      <p class="small">Neue Kunden und bestätigte Anmeldungen werden automatisch übertragen. Der Knopf trägt ältere Bestellungen nach und wiederholt Fehlgeschlagenes. Wer sich bei Resend abgemeldet hat, wird nie wieder aufgenommen.</p>
+      <p class="small">Neue Kunden und bestätigte Anmeldungen werden automatisch übertragen. Der Knopf trägt ältere Bestellungen nach und wiederholt Fehlgeschlagenes. Wer sich abgemeldet hat, wird nicht wieder aufgenommen – außer er meldet sich selbst neu an und bestätigt per Mail.</p>
 
       <div class="eyebrow" style="margin-top:18px">ECG-Liste der RTR</div>
       ${n.ecg.api ? `<p class="small"><b style="color:#2E6B3A">Automatisch über die Schnittstelle der RTR:</b> Jede Kundenadresse wird vor der Übertragung geprüft, und vor jedem Newsletter-Entwurf werden alle aktiven Kunden-Kontakte neu abgeglichen. Ein Datei-Upload ist nicht nötig.</p>
