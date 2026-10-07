@@ -65,7 +65,7 @@
     const az = d.nr ? String(d.nr) : "";
     root.innerHTML = `<div class="gk-sheet"><article class="gk" aria-label="${esc(T("Geschenkkarte", "Gift card"))}">
       <header class="gk-head">
-        <div class="gk-wm"><svg viewBox="0 0 34 34" fill="none" stroke="#F3EFE6" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#E0574C" stroke="none"/></svg><span><span class="r">MORDS</span>TEAM</span></div>
+        <div class="gk-wm"><svg viewBox="0 0 34 34" fill="none" stroke="#F3EFE6" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#E0463C" stroke="none"/></svg><span><span class="r">MORDS</span>TEAM</span></div>
         <div class="gk-az">${esc(T("Ermittlungsakte", "Case file"))}${az ? `<br>${esc(T("Aktenzeichen", "Ref."))} ${esc(az)}` : ""}</div>
       </header>
       <div class="gk-tabrow"><span class="gk-tab red">${esc(T("Geschenk", "Gift"))}</span><span class="gk-tab">${esc(card.kind)}</span></div>
