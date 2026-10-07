@@ -37,8 +37,8 @@
       ops = await MS.api("GET", "admin/ops", null, H()).catch(() => null);
       kosten = await MS.api("GET", "admin/kosten", null, H()).catch(() => null);
       led = await MS.api("GET", "admin/ausgaben?jahr=" + ledYear, null, H()).catch(() => null);
+      nlData = await MS.api("GET", "admin/newsletter", null, H()).catch(() => null);   // zuerst: übernimmt Abmeldungen aus Resend
       kunden = await MS.api("GET", "admin/kunden", null, H()).catch(() => null);
-      nlData = await MS.api("GET", "admin/newsletter", null, H()).catch(() => null);
       render(list.sessions, ord.orders, st.stats);
     } catch (e) {
       if (e.status === 401 || e.status === 503 || e.status === 429) { forgetKey(); return keyView(e.status === 401 ? "Schlüssel falsch." : e.message); }
@@ -262,6 +262,7 @@
       <div class="actions-row" style="margin-top:10px"><button class="btn btn-red" type="button" id="nlsync">Kunden nachtragen und übertragen</button></div>
       ${nlSyncMsg ? `<p class="small"><b>${e(nlSyncMsg)}</b></p>` : ""}
       <p class="small">Neue Kunden und bestätigte Anmeldungen werden automatisch übertragen. Der Knopf trägt ältere Bestellungen nach und wiederholt Fehlgeschlagenes. Wer sich abgemeldet hat, wird nicht wieder aufgenommen – außer er meldet sich selbst neu an und bestätigt per Mail.</p>
+      <p class="small">Abmeldungen über den Link im Newsletter (bei Resend) werden beim Öffnen des Admins und vor jedem Entwurf übernommen. ${n.pull && n.pull.error ? `<b style="color:var(--red)">Abgleich mit Resend fehlgeschlagen: ${e(n.pull.error)}</b>` : n.pull && n.pull.at ? `Letzter Abgleich: ${new Date(n.pull.at).toLocaleString("de-AT", { dateStyle: "short", timeStyle: "short" })} · ${n0(n.pull.removed)} abgemeldet übernommen` : ""}</p>
 
       <div class="eyebrow" style="margin-top:18px">ECG-Liste der RTR</div>
       ${n.ecg.api ? `<p class="small"><b style="color:#2E6B3A">Automatisch über die Schnittstelle der RTR:</b> Jede Kundenadresse wird vor der Übertragung geprüft, und vor jedem Newsletter-Entwurf werden alle aktiven Kunden-Kontakte neu abgeglichen. Ein Datei-Upload ist nicht nötig.</p>
