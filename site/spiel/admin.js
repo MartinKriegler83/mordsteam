@@ -1,18 +1,25 @@
 // Mordsteam – Admin: Spielrunden anlegen (nur mit ADMIN_KEY)
 (function () {
   const root = document.getElementById("root");
+  // Schlüssel: „angemeldet bleiben“ → localStorage (dieses Gerät), sonst nur bis der Tab zu ist (sessionStorage)
   let key = null;
-  try { key = sessionStorage.getItem("ms_admin"); } catch {}
+  try { key = localStorage.getItem("ms_admin") || sessionStorage.getItem("ms_admin"); } catch {}
+  const forgetKey = () => { try { localStorage.removeItem("ms_admin"); sessionStorage.removeItem("ms_admin"); } catch {} key = null; };
   let meta = null, created = null, err = "";
   const H = () => ({ "x-admin": key });
 
   function keyView(e) {
     root.innerHTML = `<div class="panel center"><h1 style="font-family:var(--serif);font-size:30px;margin-bottom:10px">Admin</h1>
-      <form id="kf" class="form"><div class="field"><label for="k">Admin-Schlüssel</label><input id="k" type="password" required autocomplete="off"></div>
-      <div><button class="btn btn-ink" type="submit">Weiter</button></div><p class="err">${e ? MS.esc(e) : ""}</p></form></div>`;
+      <form id="kf" class="form" method="post" action="#">
+        <!-- Benutzername „admin“: damit die Passwörter-App (Mac/iPhone) den Schlüssel speichert und automatisch ausfüllt -->
+        <input type="text" name="username" autocomplete="username" value="admin" readonly hidden>
+        <div class="field"><label for="k">Admin-Schlüssel</label><input id="k" name="password" type="password" required autocomplete="current-password" spellcheck="false"></div>
+        <label class="check"><input type="checkbox" id="kstay" checked><span>Auf diesem Gerät angemeldet bleiben</span></label>
+        <div><button class="btn btn-ink" type="submit">Anmelden</button></div><p class="err">${e ? MS.esc(e) : ""}</p></form></div>`;
     document.getElementById("kf").onsubmit = (ev) => {
       ev.preventDefault(); key = document.getElementById("k").value.trim();
-      try { sessionStorage.setItem("ms_admin", key); } catch {}
+      const stay = document.getElementById("kstay").checked;
+      try { (stay ? localStorage : sessionStorage).setItem("ms_admin", key); (stay ? sessionStorage : localStorage).removeItem("ms_admin"); } catch {}
       load();
     };
   }
@@ -34,7 +41,7 @@
       nlData = await MS.api("GET", "admin/newsletter", null, H()).catch(() => null);
       render(list.sessions, ord.orders, st.stats);
     } catch (e) {
-      if (e.status === 401 || e.status === 503) { try { sessionStorage.removeItem("ms_admin"); } catch {} key = null; return keyView(e.status === 401 ? "Schlüssel falsch." : e.message); }
+      if (e.status === 401 || e.status === 503 || e.status === 429) { forgetKey(); return keyView(e.status === 401 ? "Schlüssel falsch." : e.message); }
       root.innerHTML = `<p class="err">${MS.esc(e.message)}</p>`;
     }
   }
@@ -92,7 +99,7 @@
   let tab = "uebersicht";
   try { tab = sessionStorage.getItem("ms_admtab") || "uebersicht"; } catch {}
   const TABS = [["uebersicht", "Übersicht"], ["finanzen", "Bestellungen & Finanzen"], ["runden", "Spielrunden & Tests"], ["statistik", "Spielstatistik"], ["system", "Kapazität & System"], ["feedback", "Feedback"], ["kunden", "Kunden & Newsletter"]];
-  const tabBar = () => `<nav class="admtabs" role="tablist">${TABS.map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${l}${k === "system" && ops && (ops.errors.today || ops.alerts.some((a) => Date.now() - a.at < 86400000)) ? ' <span class="dot"></span>' : ""}</button>`).join("")}</nav>`;
+  const tabBar = () => `<nav class="admtabs" role="tablist">${TABS.map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${l}${k === "system" && ops && (ops.errors.today || ops.alerts.some((a) => Date.now() - a.at < 86400000)) ? ' <span class="dot"></span>' : ""}</button>`).join("")}<button type="button" id="adm-logout" style="margin-left:auto;background:none;border:0;color:var(--ink-2);text-decoration:underline;cursor:pointer;font:inherit;font-size:14px">Abmelden</button></nav>`;
   const eur = (c) => (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
   const usd = (x) => (x || 0).toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " $";
   const n0 = (x) => (x || 0).toLocaleString("de-AT");
@@ -548,6 +555,7 @@
           <div><button class="tipbtn" data-del="${s.id}">Löschen</button></div></div>`).join("") : `<p class="muted">Noch keine Runden.</p>`}</div></div>` : ""}
     </div>`;
     root.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => { tab = b.dataset.tab; try { sessionStorage.setItem("ms_admtab", tab); } catch {} render(...last); }));
+    { const lo = root.querySelector("#adm-logout"); if (lo) lo.onclick = () => { forgetKey(); keyView(); }; }
     const nfEl = document.getElementById("nf");
     if (nfEl) nfEl.onsubmit = async (e) => {
       e.preventDefault();

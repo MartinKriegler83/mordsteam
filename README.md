@@ -159,7 +159,7 @@ Nur Namen, keine Werte. Production und Preview haben je eigene Werte.
 |---|---|---|
 | `DB` | D1-Binding | Datenbank (Production: `mordsteam-live`, Preview: Testdatenbank) |
 | `BELEGE` | R2-Binding | Belege der Buchhaltung (Fotos, PDFs). Production: Bucket `mordsteam-belege`, Preview: `mordsteam-belege-test`. Ohne Binding: Upload im Admin ausgeblendet |
-| `ADMIN_KEY` | Secret | Zugang zum Admin-Bereich |
+| `ADMIN_KEY` | Secret | Zugang zum Admin-Bereich (Production und Preview getrennt; gilt erst nach einem neuen Deployment). Prüfung in `lib/adminauth.js` für Spiel-, Solo- und Friends-API: nach 10 Fehlversuchen je Anschluss in 15 Minuten 15 Minuten gesperrt (Tabelle `admin_fail`, IP nur als Hash). Das Login-Formular ist für die Passwörter-App gebaut (Benutzer „admin“), „Auf diesem Gerät angemeldet bleiben“ speichert den Schlüssel im Browser, „Abmelden“ löscht ihn |
 | `CRON_KEY` | Secret | Schutz der Route `shop/cron` (gleicher Wert als GitHub-Repository-Secret `CRON_KEY`) |
 | `ANTHROPIC_API_KEY` | Secret | Claude API für ARIA, Verhörräume, Sonderauftrag. Fehlt er, antworten die Figuren im Notfallmodus mit festen Texten. |
 | `STRIPE_SECRET_KEY` | Secret | Stripe API |

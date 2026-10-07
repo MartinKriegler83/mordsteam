@@ -1,6 +1,7 @@
 // Cloudflare Pages Function: /api/spiel/*
 // Benötigt: D1-Binding "DB" und die geheime Umgebungsvariable "ADMIN_KEY".
 import { ledgerYear, expenseSave, expenseDelete, expenseDupOk, rcMarkPaid, dutyDone, expensesCsv, earCsv, viennaYmd, belegUpload, belegGet, belegDelete, costSkip, expenseLink, setEstVz } from "../../../lib/ledger.js";
+import { adminDenied } from "../../../lib/adminauth.js";
 import { accountingSummary, viennaMidnight, viennaDayEnd, migrateAccounting, region, REGION_LABEL, costList, costSave, costDelete, setEuroAmount, recordRefund } from "../../../lib/accounting.js";
 import {
   CASES, caseOf, langOf, RULES, json, fail, randInt, randomToken, randomCode, esc, viennaDate,
@@ -55,8 +56,7 @@ export async function onRequest(ctx) {
     if (route === "leitung/aufloesung" && method === "GET") return withOrg(request, env, aufloesung);
     // --- Admin (Mordsteam) ---
     if (route.startsWith("admin/")) {
-      if (!env.ADMIN_KEY) return fail("ADMIN_KEY ist in dieser Umgebung nicht gesetzt (oder das Deployment ist älter als die Variable).", 503);
-      if ((request.headers.get("x-admin") || "").trim() !== String(env.ADMIN_KEY).trim()) return fail("Nicht berechtigt.", 401);
+      { const denied = await adminDenied(request, env, fail); if (denied) return denied; }
       if (route === "admin/meta" && method === "GET") return adminMeta(request);
       if (route === "admin/sessions" && method === "GET") return adminList(env);
       if (route === "admin/session" && method === "POST") return adminCreate(request, env);

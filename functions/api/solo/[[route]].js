@@ -1,5 +1,6 @@
 // Cloudflare Pages Function: /api/solo/* – Mordsteam Solo (Einzelfälle)
 import { json, fail } from "../../../lib/game.js";
+import { adminDenied } from "../../../lib/adminauth.js";
 import { soloTicketInfo, soloStart, soloState, soloHint, soloAnswer, soloGiveUp, soloBegin, soloForward, soloAdmin, soloFeedback, soloVerhoerGet, soloVerhoerAsk } from "../../../lib/solo.js";
 
 export async function onRequest({ request, env, params }) {
@@ -19,8 +20,7 @@ export async function onRequest({ request, env, params }) {
     if (route === "feedback" && m === "POST") return await soloFeedback(request, env);
     if (route === "test/vorspulen" && m === "POST") return await soloForward(request, env);
     if (route.startsWith("admin/")) {
-      if (!env.ADMIN_KEY) return fail("ADMIN_KEY ist nicht gesetzt.", 503);
-      if ((request.headers.get("x-admin") || "").trim() !== String(env.ADMIN_KEY).trim()) return fail("Nicht berechtigt.", 401);
+      { const denied = await adminDenied(request, env, fail); if (denied) return denied; }
       return await soloAdmin(route, request, env);
     }
     return fail("Nicht gefunden.", 404);
