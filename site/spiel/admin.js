@@ -520,7 +520,7 @@
           <label class="small">Fall <select id="gcase">${cases.map((c) => `<option value="${c.id}" ${c.id === "solo-plus-001" ? "selected" : ""}>${MS.esc(c.no)} · ${MS.esc(c.title)}${c.plus ? " (KI, ab 18)" : ""}</option>`).join("")}</select></label>
           <label class="small">Sprache <select id="glang"><option value="de">Deutsch</option><option value="en">Englisch</option></select></label>
           <label class="small">Anzahl <input id="gn" type="number" min="1" max="20" value="1" style="width:5em"></label>
-          <label class="small" style="flex:1;min-width:220px">Für wen (nur für dich) <input id="gnote" maxlength="80" placeholder="z. B. HR, Firma X, Messe Wien" style="width:100%"></label>
+          <label class="small" style="flex:1;min-width:220px">Für wen (nur für dich, nicht auf der Karte) <input id="gnote" maxlength="80" placeholder="z. B. HR, Firma X, Messe Wien" style="width:100%"></label>
         </div>
         <div class="actions-row" style="flex-wrap:wrap;gap:10px 14px;margin-top:10px">
           <label class="small">Teams-Gutschein <select id="gptype"><option value="eur" selected>Betrag in €</option><option value="pct">Prozent</option><option value="none">keiner</option></select></label>
@@ -621,13 +621,14 @@
       gnew.onclick = async () => {
         gnew.disabled = true;
         const lang = document.getElementById("glang").value;
+        const note = document.getElementById("gnote").value.trim();
         try {
           const r = await fetch("/api/solo/admin/geschenk", { method: "POST", headers: { "content-type": "application/json", ...H() }, body: JSON.stringify({
             case: document.getElementById("gcase").value, lang, n: Number(document.getElementById("gn").value), note: document.getElementById("gnote").value,
             promo: gt.value === "none" ? null : { type: gt.value, value: Number(gv.value), until: gu.value } }) });
           const d = await r.json(); if (!r.ok) throw new Error(d.error || "Fehler");
           giftMsg = `<p style="margin:0 0 6px"><b>${d.codes.length} Geschenk-Code${d.codes.length > 1 ? "s" : ""} angelegt${d.promo_label ? ` – mit Teams-Gutschein ${MS.esc(d.promo_label)}` : ""}:</b></p>
-            <table class="grid small"><tr><th>Code</th><th>Kurzlink</th><th>Teams-Gutschein</th><th></th></tr>${d.codes.map((c) => `<tr><td class="mono"><b>${c.code}</b></td><td class="mono">${location.host}/s/${c.code}</td><td class="mono">${c.promo || "–"}</td><td><a class="btn btn-line small" href="/geschenk.html?c=${c.code}&l=${lang}" target="_blank" rel="noopener">Geschenkkarte öffnen</a></td></tr>`).join("")}</table>`;
+            <table class="grid small"><tr><th>Code</th><th>Für wen</th><th>Kurzlink</th><th>Teams-Gutschein</th><th></th></tr>${d.codes.map((c) => `<tr><td class="mono"><b>${c.code}</b></td><td>${MS.esc(note || "–")}</td><td class="mono">${location.host}/s/${c.code}</td><td class="mono">${c.promo || "–"}</td><td><a class="btn btn-line small" href="/geschenk.html?c=${c.code}&l=${lang}" target="_blank" rel="noopener">Geschenkkarte öffnen</a></td></tr>`).join("")}</table>`;
         } catch (e2) { giftMsg = `<p class="err">${MS.esc(e2.message)}</p>`; }
         load();
       };

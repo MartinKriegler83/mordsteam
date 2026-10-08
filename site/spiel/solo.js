@@ -238,9 +238,9 @@
       <div class="eyebrow">${L(`Ermittlung · ${done.length} von ${S.questions.length} gelöst`, `Investigation · ${done.length} of ${S.questions.length} solved`)}</div>
       <h2>${q ? `${L("Frage", "Question")} ${q.nr}` : L("Alle Fragen gelöst", "All questions solved")}</h2>
       <p class="muted">${L(`Jede falsche Antwort kostet ${S.rules.wrong} Strafminuten, Hinweise kosten ${S.rules.hints.join(" / ")} Minuten.`, `Every wrong answer costs ${S.rules.wrong} penalty minutes; hints cost ${S.rules.hints.join(" / ")} minutes.`)}</p>
-      ${done.map((x) => `<div class="qrow so-done"><span class="qn">${x.nr}</span><div class="qf"><label>${esc(x.label)}</label><span class="so-ans">✓ ${esc(x.answer)}</span></div></div>`).join("")}
+      ${done.map((x) => `<div class="qrow so-done"><span class="qn">${x.nr}</span><div class="qf"><label>${esc(x.label)}</label><span class="so-ans">✓ ${esc(x.answer)}</span>${verdict && verdict.at === x.nr ? `<div class="verdict ${verdict.cls}" role="alert" style="margin:12px 0 0">${verdict.html}</div>` : ""}</div></div>`).join("")}
       ${q ? `<div class="qrow"><span class="qn">${q.nr}</span><div class="qf"><label for="ans">${esc(q.label)}</label><span class="hint">${esc(q.hint)}</span>${field}${hintList(q)}</div></div>
-      ${verdict ? `<div class="verdict ${verdict.cls}" role="alert">${verdict.html}</div>` : ""}
+      ${verdict && !verdict.at ? `<div class="verdict ${verdict.cls}" role="alert">${verdict.html}</div>` : ""}
       <button type="button" class="btn btn-red btn-big" id="check">${L("Antwort prüfen", "Check answer")}</button>
       <div class="ctip"><div><b>${L("Hinweis nehmen", "Take a hint")}</b><p>${cost ? L(`Hinweis ${q.hints.length + 1} von 3 für diese Frage. Kostet ${cost} Strafminuten.`, `Hint ${q.hints.length + 1} of 3 for this question. Costs ${cost} penalty minutes.`) : L("Für diese Frage hast du alle Hinweise.", "You’ve had all the hints for this question.")}</p></div>
         ${cost ? `<button type="button" class="btn ${armed ? "btn-ink" : "btn-line"}" id="hint">${armed ? L(`Ja, Hinweis nehmen (+${cost} Min.)`, `Yes, take the hint (+${cost} min)`) : L("Hinweis anzeigen", "Show hint")}</button>${armed ? `<button type="button" class="linkbtn" id="hintno">${L("Abbrechen", "Cancel")}</button>` : ""}` : ""}</div>` : ""}
@@ -328,7 +328,7 @@
         await refresh(d);
         const vNow = S.verhoer && S.verhoer.open && q.nr === S.verhoer.from_question;
         if (vNow) V = null;
-        if (!d.ended) { verdict = { cls: "good", html: L(`<strong>Richtig!</strong>Frage ${q.nr} ist gelöst. Neue Beweisstücke liegen in deiner Akte.${vNow ? " Und der Verhörraum ist offen." : ""}`, `<strong>Correct!</strong>Question ${q.nr} is solved. New evidence is waiting in your file.${vNow ? " And the interrogation room is open." : ""}`) }; fragenView(); toast(vNow ? L(`🗣️ Der Verhörraum ist offen <b>Ansehen</b>`, `🗣️ The interrogation room is open <b>View</b>`) : L(`📁 Neue Beweisstücke in deiner Akte <b>Ansehen</b>`, `📁 New evidence in your file <b>View</b>`)); }
+        if (!d.ended) { verdict = { cls: "good", at: q.nr, html: L(`<strong>Richtig!</strong>Frage ${q.nr} ist gelöst. Neue Beweisstücke liegen in deiner Akte.${vNow ? " Und der Verhörraum ist offen." : ""}`, `<strong>Correct!</strong>Question ${q.nr} is solved. New evidence is waiting in your file.${vNow ? " And the interrogation room is open." : ""}`) }; fragenView(); toast(vNow ? L(`🗣️ Der Verhörraum ist offen <b>Ansehen</b>`, `🗣️ The interrogation room is open <b>View</b>`) : L(`📁 Neue Beweisstücke in deiner Akte <b>Ansehen</b>`, `📁 New evidence in your file <b>View</b>`)); }
         scrollTo(0, 0);
       } else if (d.stale) {
         verdict = null; await refresh(d);   // schon in einem anderen Tab gelöst

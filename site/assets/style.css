@@ -585,3 +585,5 @@ a.inlink:hover{color:var(--red)}
 @media (min-width:900px){.pack-grid.three .pack{padding:40px 32px}}
 .pack .btn .bp{white-space:nowrap}
 @media (min-width:900px) and (max-width:1219px){.pack-grid.three .pack .btn .bp{display:block}.pack-grid.three .pack .btn .bd{display:none}}
+/* Fehlermeldung in Zeilen-Rastern (Friends-Personen, Teams-Verdächtige): über die ganze Breite */
+.fr-person .fielderr,.prow .fielderr{grid-column:1/-1}
