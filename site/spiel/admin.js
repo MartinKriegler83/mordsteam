@@ -33,6 +33,7 @@
       const st = await MS.api("GET", "admin/stats" + (statTests ? "?tests=1" : ""), null, H()).catch(() => ({ stats: {} }));
       fb = await MS.api("GET", "admin/feedback", null, H()).catch(() => null);
       soloList = await fetch("/api/solo/admin/list", { headers: H() }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      giftList = await fetch("/api/solo/admin/geschenke", { headers: H() }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
       friendsList = await fetch("/api/friends/admin/list", { headers: H() }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
       ops = await MS.api("GET", "admin/ops", null, H()).catch(() => null);
       kosten = await MS.api("GET", "admin/kosten", null, H()).catch(() => null);
@@ -92,7 +93,7 @@
   let statTests = true;
   let fb = null, fbMsg = "";
   let friendsMsg = "", friendsList = null;
-  let soloMsg = "", soloList = null, ops = null, last = [[], [], {}];
+  let soloMsg = "", soloList = null, giftList = null, giftMsg = "", ops = null, last = [[], [], {}];
   let kosten = null, kostenEdit = null, kostenMsg = "";
   let led = null, ledYear = new Date().getFullYear(), ledEdit = null, ledMsg = "", ledAll = false;
   let kunden = null, nlData = null, nlMsg = "", nlSyncMsg = "", nlPrev = "", nlForm = { lang: "de" }, kundenAll = false;
@@ -507,6 +508,32 @@
         ${friendsMsg ? `<div style="margin-top:12px">${friendsMsg}</div>` : ""}
         ${friendsList && friendsList.groups.length ? `<details style="margin-top:12px"><summary>Letzte Friends-Gruppen (${friendsList.groups.length})</summary><table class="grid" style="margin-top:8px"><tr><th>Gruppe</th><th>Spielart</th><th>Status</th><th>Verbunden</th><th>Gelöst</th><th>Ø Endzeit</th><th>Links</th></tr>
           ${friendsList.groups.map((x) => `<tr><td class="mono">${x.id}${x.test_mode ? " (Test)" : ""}</td><td>${x.mode === "live" ? "gleichzeitig" : "Woche"}${x.plus ? " · Plus" : ""}</td><td>${({ ready: "wartet auf Start", running: "läuft", revealed: "aufgelöst" })[x.status] || x.status}</td><td>${x.joined} / ${x.n}</td><td>${x.solved}</td><td class="mono">${x.avg ? MS.dur(x.avg) : "–"}</td><td><a href="/spiel/friends.html?o=${x.org_token}" target="_blank" rel="noopener">Organisator</a> · <a href="/spiel/friends.html?e=${x.invite}" target="_blank" rel="noopener">Einladung</a></td></tr>`).join("")}</table></details>` : ""}</div>
+      ${(() => {
+        // Geschenk-Codes (Werbung): echte Solo-Codes ohne Kauf, mit Geschenkkarte und optionalem Teams-Gutschein
+        const cases = (giftList && giftList.cases) || [];
+        const dIn = (m) => { const d = new Date(); d.setMonth(d.getMonth() + m); return d.toISOString().slice(0, 10); };
+        const dm = (x) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(x || "")); return m ? `${+m[3]}.${+m[2]}.${m[1]}` : "–"; };
+        const g = (giftList && giftList.gifts) || [];
+        return `<div class="panel" id="giftpanel"><div class="eyebrow">Geschenk-Codes · Werbung</div>
+        <p style="margin:8px 0 14px">Echte Solo-Codes ohne Kauf zum Verschenken, z. B. an mögliche Teams-Kunden. Jeder Code bekommt eine Geschenkkarte (Ausdruck oder PDF) und auf Wunsch einen eigenen Teams-Gutschein. Kein Umsatz, keine Buchung.</p>
+        <div class="actions-row" style="flex-wrap:wrap;gap:10px 14px">
+          <label class="small">Fall <select id="gcase">${cases.map((c) => `<option value="${c.id}" ${c.id === "solo-plus-001" ? "selected" : ""}>${MS.esc(c.no)} · ${MS.esc(c.title)}${c.plus ? " (KI, ab 18)" : ""}</option>`).join("")}</select></label>
+          <label class="small">Sprache <select id="glang"><option value="de">Deutsch</option><option value="en">Englisch</option></select></label>
+          <label class="small">Anzahl <input id="gn" type="number" min="1" max="20" value="1" style="width:5em"></label>
+          <label class="small" style="flex:1;min-width:220px">Für wen (nur für dich) <input id="gnote" maxlength="80" placeholder="z. B. HR, Firma X, Messe Wien" style="width:100%"></label>
+        </div>
+        <div class="actions-row" style="flex-wrap:wrap;gap:10px 14px;margin-top:10px">
+          <label class="small">Teams-Gutschein <select id="gptype"><option value="eur" selected>Betrag in €</option><option value="pct">Prozent</option><option value="none">keiner</option></select></label>
+          <label class="small">Wert <input id="gpval" type="number" min="1" max="149" value="20" style="width:5em"></label>
+          <label class="small">gültig bis <input id="gpuntil" type="date" value="${dIn(6)}"></label>
+          <button class="btn btn-red" id="gnew" type="button">Geschenk-Codes anlegen</button>
+        </div>
+        <p class="small" style="margin-top:6px">Der Teams-Gutschein gilt einmal, nur für Teams (ab 89 € / £89 / $99 Bestellwert) und nicht zusammen mit Early Bird. Er steht auf der Geschenkkarte und am Ende des Spiels. Ohne Teams-Gutschein gibt es nach dem Spiel den normalen 5-€-Gutschein.</p>
+        ${giftMsg ? `<div style="margin-top:12px">${giftMsg}</div>` : ""}
+        ${g.length ? `<details style="margin-top:12px" ${giftMsg ? "" : ""}><summary>Verschenkte Codes (${g.length})</summary><div style="overflow-x:auto"><table class="grid small" style="margin-top:8px"><tr><th>Angelegt</th><th>Code</th><th>Fall</th><th>Für wen</th><th>Gespielt</th><th>Zeit</th><th>Teams-Gutschein</th><th></th></tr>
+          ${g.map((x) => `<tr><td>${new Date(x.created_at).toLocaleDateString("de-AT")}</td><td class="mono">${x.code}</td><td>${MS.esc((cases.find((c) => c.id === x.case_id) || {}).no || x.case_id)}</td><td>${MS.esc(x.gift_note || "–")}</td><td>${x.first_at ? new Date(x.first_at).toLocaleDateString("de-AT") + (x.runs > 1 ? ` (${x.runs}×)` : "") : "noch nicht"}</td><td class="mono">${x.score ? MS.dur(x.score) : "–"}</td><td class="mono">${x.promo ? `${MS.esc(x.promo)} · ${MS.esc(x.promo_label)} bis ${dm(x.promo_until)}${x.promo_used ? " · <b>eingelöst ✓</b>" : ""}` : "–"}</td><td><a href="/geschenk.html?c=${x.code}&l=${x.lang === "en" ? "en" : "de"}" target="_blank" rel="noopener">Karte</a></td></tr>`).join("")}</table></div></details>` : ""}
+      </div>`;
+      })()}
       <div class="panel"><div class="eyebrow">Mordsteam Solo · Testcode</div>
         <p style="margin:8px 0 14px">Legt einen Solo-Code im Testmodus an (eigene Wertung, getrennt von echten Spielen; mit „+5 Min.“-Knopf).</p>
         <div class="actions-row"><label class="small">Fall <select id="solocase"><option value="solo-001">001 · Nachtzug nach Venedig</option><option value="solo-002">002 · Applaus für einen Toten</option><option value="solo-plus-001">Plus · Der letzte Jahrgang (KI)</option></select></label><label class="small">Sprache <select id="solol"><option value="de">Deutsch</option><option value="en">Englisch</option></select></label><button class="btn btn-red" id="solonew" data-test="1">Solo-Testcode anlegen</button><button class="btn btn-line" id="solonew2" data-test="0">Solo-Code für Tester (ohne Vorspulen)</button></div>
@@ -586,6 +613,25 @@
       try { await quickTest(Number(b.dataset.quick)); err = ""; scrollTo(0, 0); } catch (e2) { err = e2.message; }
       load();
     }));
+    const gnew = document.getElementById("gnew");
+    if (gnew) {
+      const gt = document.getElementById("gptype"), gv = document.getElementById("gpval"), gu = document.getElementById("gpuntil");
+      const sync = () => { const none = gt.value === "none"; gv.disabled = gu.disabled = none; gv.max = gt.value === "pct" ? 50 : 149; if (gt.value === "pct" && Number(gv.value) > 50) gv.value = 10; };
+      gt.onchange = sync; sync();
+      gnew.onclick = async () => {
+        gnew.disabled = true;
+        const lang = document.getElementById("glang").value;
+        try {
+          const r = await fetch("/api/solo/admin/geschenk", { method: "POST", headers: { "content-type": "application/json", ...H() }, body: JSON.stringify({
+            case: document.getElementById("gcase").value, lang, n: Number(document.getElementById("gn").value), note: document.getElementById("gnote").value,
+            promo: gt.value === "none" ? null : { type: gt.value, value: Number(gv.value), until: gu.value } }) });
+          const d = await r.json(); if (!r.ok) throw new Error(d.error || "Fehler");
+          giftMsg = `<p style="margin:0 0 6px"><b>${d.codes.length} Geschenk-Code${d.codes.length > 1 ? "s" : ""} angelegt${d.promo_label ? ` – mit Teams-Gutschein ${MS.esc(d.promo_label)}` : ""}:</b></p>
+            <table class="grid small"><tr><th>Code</th><th>Kurzlink</th><th>Teams-Gutschein</th><th></th></tr>${d.codes.map((c) => `<tr><td class="mono"><b>${c.code}</b></td><td class="mono">${location.host}/s/${c.code}</td><td class="mono">${c.promo || "–"}</td><td><a class="btn btn-line small" href="/geschenk.html?c=${c.code}&l=${lang}" target="_blank" rel="noopener">Geschenkkarte öffnen</a></td></tr>`).join("")}</table>`;
+        } catch (e2) { giftMsg = `<p class="err">${MS.esc(e2.message)}</p>`; }
+        load();
+      };
+    }
     ["solonew", "solonew2"].map((id) => document.getElementById(id)).filter(Boolean).forEach((sn) => sn.onclick = async () => {
       sn.disabled = true;
       try {

@@ -62,6 +62,17 @@
 .gk-qr{background:#fff;padding:1.6cqw;border:.25cqw solid var(--ink);box-shadow:1cqw 1cqw 0 var(--ink)}
 .gk-qr svg{display:block;width:100%;height:auto}
 .gk-qrbox span{display:block;margin-top:1.8cqw;font-family:'IBM Plex Mono',monospace;font-size:1.45cqw;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2)}
+/* Teams-Gutschein auf Geschenk-Codes aus dem Admin */
+.gk-promo{display:grid;grid-template-columns:auto 1fr;gap:.4cqw 3cqw;align-items:center;border:.25cqw dashed var(--red);background:#FFFDF8;padding:1.8cqw 3cqw;margin-top:-.4cqw}
+.gk-promo small{grid-column:1/-1;font-family:'IBM Plex Mono',monospace;font-size:1.45cqw;letter-spacing:.24em;text-transform:uppercase;color:var(--red)}
+.gk-promo b{font-family:'Fraunces',serif;font-weight:900;font-size:4.6cqw;line-height:1;color:var(--red);white-space:nowrap}
+.gk-promo span{font-size:1.8cqw;line-height:1.4;color:var(--ink-2)}
+.gk-promo .mono{font-family:'IBM Plex Mono',monospace;font-weight:500;color:var(--ink);letter-spacing:.06em}
+.gk.has-promo .gk-body{gap:1.5cqw;padding-top:3.4cqw}
+.gk.has-promo .gk-title{font-size:6.6cqw}
+.gk.has-promo .gk-stamp{top:1.6cqw;transform:rotate(-11deg) scale(.8);transform-origin:top right}
+.gk.has-promo .gk-steps li{padding-top:1.2cqw}
+.gk.has-promo .gk-card textarea{height:8.8cqw}
 /* Einsatzbefehl */
 .gk-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:3cqw;counter-reset:s}
 .gk-steps li{counter-increment:s;font-size:1.95cqw;line-height:1.45;border-top:.25cqw solid var(--ink);padding-top:1.6cqw}

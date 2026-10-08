@@ -1,5 +1,6 @@
 // Geschenkkarte zum Ausdrucken oder als PDF (Go-live-Test 4, 6.10.2026).
 // Aufruf: /geschenk.html?o=<Bestellung>&k=<Schlüssel>&l=de|en – nur für bezahlte Solo- und Friends-Bestellungen.
+// Oder: /geschenk.html?c=<Solo-Code>&l=de|en – für Geschenk-Codes, die im Admin angelegt wurden (Werbung, ohne Kauf).
 // Solo: Code + Link zum Fall. Friends: Link zur Organisator-Seite (dort gibt es den Einladungslink für die Gäste).
 (function () {
   const q = new URLSearchParams(location.search);
@@ -8,6 +9,7 @@
   document.documentElement.lang = EN ? "en" : "de";
   document.title = T("Geschenkkarte – Mordsteam", "Gift card – Mordsteam");
   const root = document.getElementById("gk-root"), btn = document.getElementById("gk-print");
+  const dmy = (x) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(x || "")); if (!m) return ""; return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString(EN ? "en-GB" : "de-AT", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }); };
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
   document.getElementById("gk-hint").textContent = T(
     "Trag eine Widmung ein und drück auf „Drucken / als PDF“. Im Druckdialog kannst du „Als PDF sichern“ wählen und die Karte per E-Mail verschicken.",
@@ -16,9 +18,15 @@
   btn.onclick = () => window.print();
   const msg = (t) => { root.innerHTML = `<p class="gk-msg">${esc(t)}</p>`; };
 
-  const o = q.get("o"), k = q.get("k");
-  if (!o || !k) return msg(T("Dieser Link ist unvollständig. Öffne die Geschenkkarte bitte über deine Bestellbestätigung.", "This link is incomplete. Please open the gift card from your order confirmation."));
-  fetch(`/api/shop/status?o=${encodeURIComponent(o)}&k=${encodeURIComponent(k)}&l=${EN ? "en" : "de"}`).then((r) => r.json()).then((d) => {
+  const o = q.get("o"), k = q.get("k"), gc = q.get("c");
+  if (!gc && (!o || !k)) return msg(T("Dieser Link ist unvollständig. Öffne die Geschenkkarte bitte über deine Bestellbestätigung.", "This link is incomplete. Please open the gift card from your order confirmation."));
+  // Geschenk-Code aus dem Admin: Angaben in die Form einer bezahlten Solo-Bestellung bringen
+  const load = gc
+    ? fetch(`/api/solo/geschenk?c=${encodeURIComponent(gc)}`).then((r) => r.json()).then((g) => g.error ? { error: T("Diese Geschenkkarte gibt es nicht. Bitte den Link prüfen.", "This gift card does not exist. Please check the link.") } : ({
+        status: "fulfilled", produkt: "solo", solo_code: g.code, solo_title: g.title, solo_title_en: g.title_en, solo_min: g.min, gift: true,
+        event_date: new Date(g.created_at).toISOString().slice(0, 10), promo: g.promo, promo_label: g.promo_label, promo_until: g.promo_until }))
+    : fetch(`/api/shop/status?o=${encodeURIComponent(o)}&k=${encodeURIComponent(k)}&l=${EN ? "en" : "de"}`).then((r) => r.json());
+  load.then((d) => {
     if (d.error) return msg(d.error);
     if (d.status !== "fulfilled") return msg(T("Die Bestellung ist noch nicht abgeschlossen. Bitte in ein paar Sekunden neu laden.", "The order isn't complete yet. Please reload in a few seconds."));
     const origin = location.origin;
@@ -64,8 +72,9 @@
     } else {
       return msg(T("Für diese Bestellung gibt es keine Geschenkkarte. Geschenkkarten gibt es für Mordsteam Solo und Friends.", "There is no gift card for this order. Gift cards are available for Mordsteam Solo and Friends."));
     }
-    const az = d.nr ? String(d.nr) : "";
-    root.innerHTML = `<div class="gk-sheet"><article class="gk" aria-label="${esc(T("Geschenkkarte", "Gift card"))}">
+    // Aktenzeichen = der Code, mit dem gespielt wird (Solo-Code bzw. Kurzcode der Organisator-Seite), sonst Bestellnummer
+    const az = card.code || d.org_short || (d.nr ? String(d.nr) : "");
+    root.innerHTML = `<div class="gk-sheet"><article class="gk${d.promo ? " has-promo" : ""}" aria-label="${esc(T("Geschenkkarte", "Gift card"))}">
       <header class="gk-head">
         <div class="gk-wm"><svg viewBox="0 0 34 34" fill="none" stroke="#F3EFE6" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#E0463C" stroke="none"/></svg><span><span class="r">MORDS</span>TEAM</span></div>
         <div class="gk-az">${esc(T("Ermittlungsakte", "Case file"))}${az ? `<br>${esc(T("Aktenzeichen", "Ref."))} ${esc(az)}` : ""}</div>
@@ -86,6 +95,7 @@
           <div class="gk-qrbox"><a class="gk-qr" id="gk-qr" href="${esc(card.link)}" aria-label="${esc(T("QR-Code zum Spiel – antippen öffnet den Link", "QR code for the game – tap to open the link"))}"></a><span>${esc(T("Scannen oder antippen", "Scan or tap"))}</span></div>
         </div>
         <ol class="gk-steps">${card.steps.map((x) => `<li>${x}</li>`).join("")}</ol>
+        ${d.promo ? `<div class="gk-promo"><small>${esc(T("Beweisstück 2 · Bonus für euer Team", "Exhibit 2 · Bonus for your team"))}</small><b>${esc(d.promo_label)}</b><span>${esc(T("Rabatt auf euer erstes Mordsteam-Teams-Event, das Krimi-Teamevent für Firmen und Vereine. Code im Bezahlschritt eingeben:", "off your first Mordsteam Teams event, the murder mystery team event for companies and clubs. Enter the code at checkout:"))} <span class="mono">${esc(d.promo)}</span> · ${esc(T("gültig bis", "valid until"))} ${esc(dmy(d.promo_until))} · mordsteam.com/teams</span></div>` : ""}
       </div>
       <footer class="gk-foot"><span>${until ? `${esc(T("Gültig bis", "Valid until"))} <b>${esc(until)}</b>` : ""}</span><span><b>mordsteam.com</b></span></footer>
     </article></div>`;
@@ -94,6 +104,7 @@
     ta.addEventListener("input", () => { const lines = ta.value.split("\n"); if (lines.length > 3) ta.value = lines.slice(0, 3).join("\n"); });
     try { const qr = qrcode(0, "M"); qr.addData(card.link); qr.make(); document.getElementById("gk-qr").innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true }); }
     catch { document.getElementById("gk-qr").remove(); }
+    if (d.gift) document.getElementById("gk-from").value = "Mordsteam";
     btn.hidden = false;
   }).catch(() => msg(T("Die Geschenkkarte konnte nicht geladen werden. Bitte später noch einmal versuchen.", "The gift card could not be loaded. Please try again later.")));
 })();

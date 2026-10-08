@@ -1,13 +1,14 @@
 // Cloudflare Pages Function: /api/solo/* – Mordsteam Solo (Einzelfälle)
 import { json, fail } from "../../../lib/game.js";
 import { adminDenied } from "../../../lib/adminauth.js";
-import { soloTicketInfo, soloStart, soloState, soloHint, soloAnswer, soloGiveUp, soloBegin, soloForward, soloAdmin, soloFeedback, soloVerhoerGet, soloVerhoerAsk } from "../../../lib/solo.js";
+import { soloTicketInfo, soloStart, soloState, soloHint, soloAnswer, soloGiveUp, soloBegin, soloForward, soloAdmin, soloFeedback, soloVerhoerGet, soloVerhoerAsk, soloGiftInfo } from "../../../lib/solo.js";
 
 export async function onRequest({ request, env, params }) {
   if (!env.DB) return fail("Datenbank nicht eingerichtet.", 500);
   const route = (params.route || []).join("/");
   const m = request.method;
   try {
+    if (route === "geschenk" && m === "GET") return await soloGiftInfo(env, new URL(request.url));
     if (route === "ticket" && m === "GET") return await soloTicketInfo(env, new URL(request.url), request);
     if (route === "start" && m === "POST") return await soloStart(request, env);
     if (route === "state" && m === "GET") return await soloState(request, env);
@@ -21,7 +22,7 @@ export async function onRequest({ request, env, params }) {
     if (route === "test/vorspulen" && m === "POST") return await soloForward(request, env);
     if (route.startsWith("admin/")) {
       { const denied = await adminDenied(request, env, fail); if (denied) return denied; }
-      return await soloAdmin(route, request, env);
+      try { return await soloAdmin(route, request, env); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; }
     }
     return fail("Nicht gefunden.", 404);
   } catch (e) {
