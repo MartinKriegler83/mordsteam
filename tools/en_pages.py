@@ -1248,3 +1248,6 @@ assert "?lang=de" not in ROOTP
 with open(os.path.join(ROOT, "..", "teaser", "paddle-root.html"), "w") as f:
     f.write(ROOTP)
 print("ok", len(P))
+# Fotokarten auf den Fallseiten (DE und EN) wieder einsetzen – die englischen Seiten wurden gerade neu geschrieben
+import subprocess
+subprocess.run(["node", os.path.join(os.path.dirname(os.path.abspath(__file__)), "site_bilder.mjs")], check=True)

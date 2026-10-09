@@ -55,7 +55,9 @@ site/                    Öffentliche Website (deutsch) + site/en/ (englisch, ge
   _headers                 Sicherheits-Header, noindex für /spiel/ und Bestellseiten
 teaser/                  Platzhalter-Startseite und Impressum für den Teaser-Modus, englisch unter teaser/en/ (index = Coming soon, imprint, angebot), paddle-root.html (Angebotsseite für /, nur mit ANGEBOT_SEITE=1)
 tools/                   Prüf- und Hilfsskripte (siehe „Lokal testen“)
-  en_pages.py              erzeugt site/en/*.html (englische Seiten nie direkt bearbeiten)
+  en_pages.py              erzeugt site/en/*.html (englische Seiten nie direkt bearbeiten; ruft am Ende site_bilder.mjs auf)
+  site_bilder.mjs          Fotokarten auf den Fallseiten (solo, friends, teams, DE+EN) aus lib/art mit festen Beispieldaten,
+                           zwischen <!-- bild:… --> und <!-- /bild -->; nach Änderungen an lib/art erneut ausführen
   check_*.mjs              Prüfskripte je Fall (Eindeutigkeit der Lösung über alle Varianten); check_*_en.mjs prüft die englische Fassung gegen die deutsche
   placeholder_guard.mjs    rendert Teams-Akten und meldet offene Platzhalter wie {TORTE} (läuft in check_teams/check_teams002)
   github-workflow-feedback-mails.yml   Vorlage der GitHub-Action (Kopie von .github/workflows/feedback-mails.yml)
