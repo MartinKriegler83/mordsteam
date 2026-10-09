@@ -36,6 +36,12 @@
 /* Gummistempel */
 .gk-stamp{position:absolute;right:5cqw;top:3.6cqw;transform:rotate(-11deg);border:.7cqw double var(--red);color:var(--red);border-radius:1.2cqw;
   padding:1.4cqw 2.6cqw;text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:500;opacity:.9}
+.gk-top.has-cover{display:grid;grid-template-columns:minmax(0,1fr) 21cqw;gap:3cqw;align-items:start}
+.gk-top.has-cover .gk-title{font-size:6.8cqw}
+.gk-cover{width:100%;height:auto;display:block;transform:rotate(3deg);box-shadow:0 1.2cqw 2.4cqw rgba(21,23,28,.3);margin-top:3.5cqw}
+.gk:has(.gk-cover) .gk-stamp{display:none} /* Titelbild trägt schon den Stempel; „Geschenk“ steht im Reiter */
+.gk.has-promo .gk-top.has-cover{grid-template-columns:minmax(0,1fr) 17cqw}
+.gk.has-promo .gk-cover{margin-top:1.5cqw}
 .gk-stamp b{display:block;font-size:4.2cqw;letter-spacing:.18em;line-height:1}
 .gk-stamp span{display:block;font-size:1.35cqw;letter-spacing:.25em;margin-top:.8cqw}
 /* Widmung: „Für“ und „Von“ wie ein Formular, dazwischen eine angeheftete Karteikarte */

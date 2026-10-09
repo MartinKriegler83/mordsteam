@@ -38,6 +38,9 @@
       const dt = new Date(Date.UTC(Number(m[1]) + 1, Number(m[2]) - 1, Number(m[3])));
       return dt.toLocaleDateString(EN ? "en-GB" : "de-AT", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
     })();
+    // Titelbild des Falls (site/assets/cover, tools/cover_bilder.mjs) – Zuordnung über den Titel
+    const COVER = { "Nachtzug nach Venedig": "solo001", "Night Train to Venice": "solo001", "Applaus für einen Toten": "solo002", "Applause for a Dead Man": "solo002", "Der letzte Jahrgang": "soloplus", "The Last Vintage": "soloplus" };
+    const coverImg = (key) => key ? `<img class="gk-cover" src="/assets/cover/${key}-${EN ? "en" : "de"}.webp" alt="" width="600" height="750">` : "";
     let card;
     if (d.produkt === "solo" && d.solo_code) {
       // Kurzlink /s/<Code> (functions/s/[code].js) – zum Antippen, Fotografieren (QR) oder Abtippen
@@ -46,7 +49,7 @@
       card = {
         eyebrow: T("Ein Krimi für dich", "A mystery for you"),
         title, sub: T(`Solo-Krimi · ${d.solo_min} Minuten Countdown · im Browser am Handy, Tablet oder Laptop`, `Solo mystery · ${d.solo_min}-minute countdown · in the browser on phone, tablet or laptop`),
-        kind: "Solo", tagLabel: T("Beweisstück 1 · Dein Code", "Exhibit 1 · Your code"), code: d.solo_code, link,
+        kind: "Solo", cover: COVER[d.solo_title] || COVER[d.solo_title_en] || "", tagLabel: T("Beweisstück 1 · Dein Code", "Exhibit 1 · Your code"), code: d.solo_code, link,
         tagText: T("Einmal einlösbar · nach dem ersten Durchgang 30 Tage lang bis zu dreimal wiederholbar", "Redeem once · replay up to three times within 30 days of your first run"),
         steps: [
           T("QR-Code scannen, antippen oder den Link oben eingeben – der Code ist schon eingetragen", "Scan or tap the QR code, or type the link above – the code is already filled in"),
@@ -61,7 +64,7 @@
         eyebrow: T("Ein Krimiabend für dich", "A mystery night for you"),
         title: T("Letzte Runde auf der Hütte", "Last Round at the Chalet"),
         sub: T(`Mordsteam Friends${d.plus ? " Plus mit KI-Verhörraum" : ""} · für ${d.teams} Personen · jeder ermittelt am eigenen Handy`, `Mordsteam Friends${d.plus ? " Plus with AI interrogation room" : ""} · for ${d.teams} people · everyone investigates on their own phone`),
-        kind: "Friends", tagLabel: T("Beweisstück 1 · Deine Einladung", "Exhibit 1 · Your invitation"), code: "", link,
+        kind: "Friends", cover: "friends", tagLabel: T("Beweisstück 1 · Deine Einladung", "Exhibit 1 · Your invitation"), code: "", link,
         tagText: T("Führt zu deiner Organisator-Seite. Dort bekommst du den Link für deine Gäste.", "Leads to your organiser page, where you get the link for your guests."),
         steps: [
           T("QR-Code scannen, antippen oder Link oben eingeben – deine Organisator-Seite (nicht weitergeben)", "Scan or tap the QR code, or type the link above – your organiser page (don’t pass it on)"),
@@ -84,11 +87,11 @@
       <div class="gk-tabrow"><span class="gk-tab red">${esc(T("Geschenk", "Gift"))}</span><span class="gk-tab">${esc(card.kind)}</span></div>
       <div class="gk-body">
         <div class="gk-stamp" aria-hidden="true"><b>${esc(T("GESCHENK", "GIFT"))}</b><span>${esc(T("STRENG PERSÖNLICH", "STRICTLY PERSONAL"))}</span></div>
-        <div>
+        <div class="gk-top${card.cover ? " has-cover" : ""}"><div>
           <div class="gk-eyebrow">${esc(card.eyebrow)}</div>
           <h1 class="gk-title">${esc(card.title)}</h1>
           <p class="gk-sub">${esc(card.sub)}</p>
-        </div>
+        </div>${coverImg(card.cover)}</div>
         <div class="gk-field"><label for="gk-for">${esc(T("Für", "For"))}</label><input id="gk-for" name="gk-widmung-fuer" autocomplete="off" data-lpignore="true" data-1p-ignore maxlength="40" placeholder="${esc(T("Name der Ermittlerin / des Ermittlers", "Name of the investigator"))}"></div>
         <div class="gk-card"><textarea id="gk-ded" autocomplete="off" rows="3" maxlength="180" aria-label="${esc(T("Widmung", "Dedication"))}" placeholder="${esc(T("Deine Widmung, z. B. „Alles Gute zum Geburtstag – löst du ihn schneller als ich?“", "Your dedication, e.g. “Happy birthday – can you crack it faster than me?”"))}"></textarea></div>
         <div class="gk-field"><label for="gk-from">${esc(T("Von", "From"))}</label><input id="gk-from" name="gk-widmung-von" autocomplete="off" data-lpignore="true" data-1p-ignore maxlength="40" placeholder="${esc(T("Dein Name", "Your name"))}"></div>
