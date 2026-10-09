@@ -48,11 +48,12 @@
     f.appendChild(d);
   }
   document.addEventListener("change", (e) => { if (e.target && e.target.id === "bill_land") apply(); });
-  let cache = null; try { cache = JSON.parse(sessionStorage.getItem("ms_geo") || "null"); } catch {}
+  // Besucherland nur 30 Min. zwischenspeichern – sonst bleibt nach einer Reise das alte Land (z. B. GB) im offenen Tab hängen (Test 9.10.2026)
+  let cache = null; try { cache = JSON.parse(sessionStorage.getItem("ms_geo") || "null"); if (!cache || !cache.t || Date.now() - cache.t > 30 * 60000) cache = null; } catch {}
   const whenDom = (fn) => (document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", fn) : fn());
   const ready = (d) => { table = d.table; country = d.country || ""; whenDom(() => { switcher(); apply(); listeners.splice(0).forEach((fn) => fn()); }); };
   if (cache && cache.table) ready(cache);
-  else fetch("/api/shop/geo").then((r) => r.json()).then((d) => { try { sessionStorage.setItem("ms_geo", JSON.stringify(d)); } catch {} ready(d); }).catch(() => {});
+  else fetch("/api/shop/geo").then((r) => r.json()).then((d) => { try { sessionStorage.setItem("ms_geo", JSON.stringify({ ...d, t: Date.now() })); } catch {} ready(d); }).catch(() => {});
 
   window.MSCur = {
     forLand, fmt,
