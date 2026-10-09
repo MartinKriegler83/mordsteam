@@ -21,7 +21,7 @@ for (let v = 0; v < C.TIME_SHIFTS.length; v++) for (const c of C.CULPRITS) {
   if (!C.SPOTS[sol.versteck]) fail(`${tag} Versteck unbekannt`);
   const r = C.resolution(c, v);
   if (!/Blister/.test(r.text)) fail(`${tag} Blister in der Auflösung fehlt`);
-  for (const d of D) (lens[d.id] ||= new Set()).add((d.html.match(/<tr>/g) || []).length + "/" + (d.html.match(/<p/g) || []).length);
+  for (const d of D) (lens[d.id] ||= new Set()).add((d.html.match(/<tr>/g) || []).length + "/" + (d.html.replace(/<svg[\s\S]*?<\/svg>/g, "").match(/<p[\s>]/g) || []).length);
 }
 for (const [id, s] of Object.entries(lens)) if (s.size > 2) fail(`Länge ${id}: ${[...s]}`);
 console.log(err ? `${err} Fehler` : `${n} Kombinationen: Lösung auffindbar, keine bekannten Widersprüche`);

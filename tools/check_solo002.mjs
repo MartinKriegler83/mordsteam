@@ -16,6 +16,9 @@ for (let v = 0; v < C.VARIANTS; v++) for (const c of C.CULPRITS) {
   // Frage 2: Abdrücke (3 Verdächtige inkl. Täter) und nur der Täter ohne Beleg fürs Fenster
   const P = C.prints(c, v)[sol.gift].sus;
   if (P.length !== 3 || !P.includes(c)) fail(`${tag} Abdrücke ${P}`);
+  // Bild der Abdrücke (9.10.): je Gegenstand so viele Muster wie Verdächtige mit Abdruck, auf dem vergifteten genau drei
+  { const sp = docs.find((d) => d.id === "spuren").html, all = C.prints(c, v), want = C.Q1_OPTS.reduce((s, k) => s + all[k].sus.length, 0) + 5;
+    if ((sp.match(/<clipPath id="fp/g) || []).length !== want) fail(`${tag} Abdruck-Bild: ${(sp.match(/<clipPath id="fp/g) || []).length} statt ${want} Muster`); }
   const [a, b] = C.ITEMS[sol.gift].win.map(hm), S = C.slots(c, v);
   // Brandt (unschuldig, Pokal/Wasser): die ersten 2 Minuten deckt das Inspizientenbuch („von mir gesehen … direkt zur Bühnenpforte“), S2-1
   const insp = docs.find((d) => d.id === "inspizient").html;
@@ -32,7 +35,7 @@ for (let v = 0; v < C.VARIANTS; v++) for (const c of C.CULPRITS) {
   const codes = new Set(C.CULPRITS.map((k) => C.solution(k, v).code));
   if (codes.size !== 5 || !/^\d{4}$/.test(sol.code)) fail(`${tag} Codes`);
   // gleich lange Beweisstücke
-  for (const d of docs) { const rows = (d.html.match(/<tr>/g) || []).length + "/" + (d.html.match(/<p/g) || []).length; (lens[d.id] ||= new Set()).add(rows); }
+  for (const d of docs) { const rows = (d.html.match(/<tr>/g) || []).length + "/" + (d.html.replace(/<svg[\s\S]*?<\/svg>/g, "").match(/<p[\s>]/g) || []).length; (lens[d.id] ||= new Set()).add(rows); }
   if (!C.resolution(c, v).text) fail(`${tag} Auflösung`);
 }
 for (const [id, s] of Object.entries(lens)) if (s.size !== 1) fail(`Länge ${id}: ${[...s]}`);

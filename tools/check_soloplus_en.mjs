@@ -51,7 +51,7 @@ for (let v = 0; v < DE.TIME_SHIFTS.length; v++) for (const c of DE.CULPRITS) {
   D.forEach((d, i) => {
     const e = DD[i]; if (!e) return;
     if ((d.html.match(/<tr>/g) || []).length !== (e.html.match(/<tr>/g) || []).length) fail(`${tag} ${d.id}: Anzahl <tr>`);
-    if ((d.html.match(/<p/g) || []).length !== (e.html.match(/<p/g) || []).length) fail(`${tag} ${d.id}: Anzahl <p`);
+    if ((d.html.replace(/<svg[\s\S]*?<\/svg>/g, "").match(/<p[\s>]/g) || []).length !== (e.html.replace(/<svg[\s\S]*?<\/svg>/g, "").match(/<p[\s>]/g) || []).length) fail(`${tag} ${d.id}: Anzahl <p`);
     if ((d.html.match(/<li>/g) || []).length !== (e.html.match(/<li>/g) || []).length) fail(`${tag} ${d.id}: Anzahl <li>`);
     // Uhrzeiten in den Tabellen identisch (gleiche Logik)
     // „24:00“ steht auf Englisch als „Midnight“ im Festprogramm
@@ -80,7 +80,7 @@ for (let v = 0; v < DE.TIME_SHIFTS.length; v++) for (const c of DE.CULPRITS) {
   const free = [...doc("verstecke").matchAll(/<tr><td>([^<]+)<\/td><td>([^<]+)<\/td><td>(–|yes, nothing)<\/td>/g)].filter((r) => r[3] === "–").map((r) => r[1]);
   if (!free.includes(C.SPOTS[sol.schluessel].name)) fail(`${tag} Versteck durchsucht`);
   if (!doc("fotos2").includes(C.SUSPECTS[c].name)) fail(`${tag} Nachher-Foto`);
-  for (const d of D) (lens[d.id] ||= new Set()).add((d.html.match(/<tr>/g) || []).length + "/" + (d.html.match(/<p/g) || []).length);
+  for (const d of D) (lens[d.id] ||= new Set()).add((d.html.match(/<tr>/g) || []).length + "/" + (d.html.replace(/<svg[\s\S]*?<\/svg>/g, "").match(/<p[\s>]/g) || []).length);
   // Hinweise
   const H = C.HINTS(v, c), HD = DE.HINTS(v, c);
   for (const q of Object.keys(HD)) { if (!H[q] || H[q].length !== HD[q].length) fail(`${tag} Hinweise ${q}`); residue(`${tag} Hinweise ${q}`, (H[q] || []).join(" ")); }

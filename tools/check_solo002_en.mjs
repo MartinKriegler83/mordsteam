@@ -12,7 +12,7 @@ const EN = { ...DE, ...ENmod };
 let err = 0, n = 0;
 const fail = (m) => { err++; console.log("FEHLER", m); };
 const trs = (h) => (h.match(/<tr>/g) || []).length;
-const lenKey = (h) => (h.match(/<tr>/g) || []).length + "/" + (h.match(/<p/g) || []).length;
+const lenKey = (h) => (h.match(/<tr>/g) || []).length + "/" + (h.replace(/<svg[\s\S]*?<\/svg>/g, "").match(/<p[\s>]/g) || []).length;
 
 // deutsche Reste: Umlaute/ß, deutsche Anführungszeichen, typische Wörter. Erlaubte Eigennamen werden vorher entfernt.
 const ALLOW = ["Theater am Kanal", "Tobias Grün", "Mr Grün", "Herr Grün"];

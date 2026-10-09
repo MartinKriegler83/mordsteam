@@ -40,7 +40,7 @@ for (let v = 0; v < C.TIME_SHIFTS.length; v++) for (const c of C.CULPRITS) {
     const left = free.filter((x) => pair.includes(x) && !Object.entries(C.SPOTS).some(([k, s]) => s.name === x && fl.includes(C.POSTEN[k]?.[1] || "§")));
     if (left.length !== 1 || left[0] !== C.SPOTS[sol.schluessel].name) fail(`${tag} Frage 4 nicht eindeutig: ${left}`); }
   const after = doc("fotos2"); if (!after.includes(C.SUSPECTS[c].name) || after.includes("außer Atem")) fail(`${tag} Nachher-Foto`);
-  for (const d of D) (lens[d.id] ||= new Set()).add((d.html.match(/<tr>/g) || []).length + "/" + (d.html.match(/<p/g) || []).length);
+  for (const d of D) (lens[d.id] ||= new Set()).add((d.html.match(/<tr>/g) || []).length + "/" + (d.html.replace(/<svg[\s\S]*?<\/svg>/g, "").match(/<p[\s>]/g) || []).length);
   if (!C.verhoerSystem(c, v, c).includes(C.LIES[c].say)) fail(`${tag} Prompt`);
 }
 // Go-live-Test 5 (H4): Toni sucht nach 23:00 und meldet „ja, nichts“ – jede Sperre der Festleitung beginnt spätestens 22:20 und ist um 23:00 vorbei
