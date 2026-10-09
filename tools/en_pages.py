@@ -141,10 +141,6 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <div class="objects"><span>your top floor as the victim</span><span>your colleagues as suspects</span><span>your intranet</span></div>
 </div>
 <div class="clues" aria-label="Examples from the case file">
-<div class="clue"><small>ACCESS LOG</small><span>Who was where, and when?<br>??:?? · door ??? · badge ????</span></div>
-<div class="clue"><small>CATERING DELIVERY NOTE</small><span>“What would you like to drink?”<br>order ?? · collected ??:??</span></div>
-<div class="clue dark"><small>CASE DESK</small><div class="codebox" aria-label="Four-digit solution code"><i>?</i><i>?</i><i>?</i><i>?</i></div><span class="hint">Enter your answers, solve the case, make the podium.</span></div>
-<div class="clue"><small>ARIA · AI ASSISTANT</small><span>Premium Plus only:<br>“How can I help you today?”</span></div>
 </div>
 <ul class="list case-points">
 <li>Act 1: Who? When? Where did the money go? Where is the folder?</li>
@@ -165,10 +161,6 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <div class="objects"><span>your chair as the victim</span><span>your members as suspects</span><span>your fête and your club website</span></div>
 </div>
 <div class="clues" aria-label="Examples from the case file">
-<div class="clue"><small>TEMPERATURE LOGGER</small><span>When did the door close?<br>??:?? · door closed · set point ?? °C</span></div>
-<div class="clue"><small>SHIFT ROTA</small><span>What colour is your wristband?<br>bar · barbecue · token till · clear-up</span></div>
-<div class="clue dark"><small>CASE DESK</small><div class="codebox" aria-label="Four-digit solution code"><i>?</i><i>?</i><i>?</i><i>?</i></div><span class="hint">Enter your answers, solve the case, make the podium.</span></div>
-<div class="clue"><small>HONORARY CHAIR · AI INTERROGATION</small><span>Premium Plus only:<br>“Everything used to be simpler …”</span></div>
 </div>
 <ul class="list case-points">
 <li>Act 1: Who? When did the door close? How much money is missing? Where is the cash box?</li>
@@ -430,15 +422,11 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <div class="objects"><span>snores like a chainsaw</span><span>sings in the shower</span><span>secretly eats other people's chocolate</span><span>can't lose at dice</span><span>dances while cooking</span><span>is afraid of cows</span></div>
 </div>
 <div class="clues" aria-label="Examples from the case file">
-<div class="clue"><small>SAUNA CONTROL</small><span>Setpoint 95 → 110 °C<br>??:?? · outside panel</span></div>
-<div class="clue"><small>SCORE PAD, KITCHEN</small><span>“Round 4 – three of us”<br>Who was missing?</span></div>
-<div class="clue dark"><small>YOUR INVESTIGATION</small><div class="codebox" aria-label="Questions"><i>1</i><i>2</i><i>3</i></div><span class="hint">Time, culprit, hiding place – before the helicopter.</span></div>
-<div class="clue"><small>CHALET APP</small><span>Motion on the stairs · ??:??<br>Who wasn't in their place?</span></div>
 </div>
 <ul class="list case-points">
 <li>You are the suspects – with your names, rooms and quirks</li>
 <li>The culprit is drawn at random; everyone finds out at the reveal</li>
-<li>Questions that build on each other – new evidence after each correct answer</li>
+<li>Three questions that build on each other: time, culprit, hiding place – Plus adds the password and the motive. New evidence after each correct answer</li>
 <li>Hints at the click of a button, each costs penalty minutes</li>
 <li>Ranking by time plus penalty minutes – and a fun award for everyone</li>
 <li>A stylish mystery with a wink – no gore, no shock effects</li>
@@ -626,10 +614,6 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <div class="objects"><span>the business partner</span><span>the nephew</span><span>the journalist</span><span>the conductor</span><span>the art appraiser</span></div>
 </div>
 <div class="clues" aria-label="Examples from the case file">
-<div class="clue"><small>DOOR LOG COMPARTMENT 4</small><span>Who let whom in?<br>??:?? · opened · inside</span></div>
-<div class="clue"><small>DINING CAR RECEIPT</small><span>“Table 3, two teas”<br>paid ??:??</span></div>
-<div class="clue dark"><small>YOUR INVESTIGATION</small><div class="codebox" aria-label="Three questions"><i>1</i><i>2</i><i>3</i></div><span class="hint">Time, killer, hiding place – before Udine.</span></div>
-<div class="clue"><small>WI-FI LOG</small><span>Which phone was where?<br>AP 327 · ??:?? to ??:??</span></div>
 </div>
 <ul class="list case-points">
 <li>Three questions that build on each other: time, killer, hiding place</li>
@@ -651,13 +635,9 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <div class="objects"><span>the ex-partner</span><span>the understudy</span><span>the assistant director</span><span>the dresser</span><span>the prop master</span></div>
 </div>
 <div class="clues" aria-label="Examples from the case file">
-<div class="clue"><small>DOCTOR'S FINDINGS</small><span>“swallowed about<br>?? to ?? minutes ago”</span></div>
-<div class="clue"><small>FINGERPRINTS</small><span>Who touched<br>the glass?</span></div>
-<div class="clue dark"><small>YOUR INVESTIGATION</small><div class="codebox" aria-label="Questions"><i>1</i><i>2</i><i>3</i></div><span class="hint">What, who – and the locker code.</span></div>
-<div class="clue"><small>LOCKER BOOK</small><span>Locker 9 · code word ????<br>ABC = 2, DEF = 3 …</span></div>
 </div>
 <ul class="list case-points">
-<li>New puzzles: work out time windows, match fingerprints, crack a locker code</li>
+<li>Three questions: how, who – and the locker code. To get there you work out time windows, match fingerprints and crack a locker code</li>
 <li>Evidence in three stages – the next only after the right answer</li>
 <li>Killer and source of the poison drawn anew for every playthrough</li>
 <li>With an investigation sheet to tick off alibis</li>
@@ -675,10 +655,6 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <div class="objects"><span>the son</span><span>the daughter</span><span>the foreman</span><span>the wine merchant</span><span>the neighbouring winemaker</span></div>
 </div>
 <div class="clues" aria-label="Examples from the case file">
-<div class="clue"><small>VENTILATION LOG</small><span>OFF · switch in the hall<br>??:??</span></div>
-<div class="clue"><small>FIREWORKS PHOTOS</small><span>Who can be seen –<br>and who can't?</span></div>
-<div class="clue dark"><small>THE INTERROGATION ROOM</small><div class="codebox" aria-label="Questions"><i>1</i><i>2</i><i>3</i><i>4</i></div><span class="hint">One is lying. Find the contradiction.</span></div>
-<div class="clue"><small>ANNOUNCEMENTS</small><span>“Attention, change …”<br>10:20 pm</span></div>
 </div>
 <ul class="list case-points">
 <li>The interrogation room: you ask in the chat, the suspects answer live – played by an AI</li>

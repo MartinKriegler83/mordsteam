@@ -609,14 +609,14 @@ a.inlink:hover{color:var(--red)}
 .case-cover{display:block;height:auto;box-shadow:0 14px 30px rgba(21,23,28,.32);transform:rotate(-1.5deg)}
 .cover-m{width:min(78%,320px);margin:6px auto 10px}
 .cover-d{display:none}
-/* Notizen wie Zettel auf dem Tisch: leicht übereinander, teils gezackt, gewellt oder schräg abgeschnitten */
+/* Fallseiten rechts: Titelbild und Fotokarte (Text-Notizen seit 9.10.2026 entfernt); Zettel-Formen bleiben für spätere Notizen */
 .case .clues{gap:0;filter:drop-shadow(0 5px 8px rgba(21,23,28,.16))}
 .case .clues>.clue{margin:-3px;position:relative}
 .case .clues .clue:nth-of-type(1){transform:rotate(-2deg) translate(5px,6px);clip-path:polygon(0 0,100% 0,100.00% calc(100% - 0px),92.86% calc(100% - 7px),85.71% calc(100% - 0px),78.57% calc(100% - 7px),71.43% calc(100% - 0px),64.29% calc(100% - 7px),57.14% calc(100% - 0px),50.00% calc(100% - 7px),42.86% calc(100% - 0px),35.71% calc(100% - 7px),28.57% calc(100% - 0px),21.43% calc(100% - 7px),14.29% calc(100% - 0px),7.14% calc(100% - 7px),0.00% calc(100% - 0px));padding-bottom:22px;z-index:1}
 .case .clues .clue:nth-of-type(2){transform:rotate(1.6deg) translate(-6px,-2px);clip-path:polygon(0 0,calc(100% - 3.0px) 0.00%,calc(100% - 6.0px) 6.25%,calc(100% - 3.0px) 12.50%,calc(100% - 0.0px) 18.75%,calc(100% - 3.0px) 25.00%,calc(100% - 6.0px) 31.25%,calc(100% - 3.0px) 37.50%,calc(100% - 0.0px) 43.75%,calc(100% - 3.0px) 50.00%,calc(100% - 6.0px) 56.25%,calc(100% - 3.0px) 62.50%,calc(100% - 0.0px) 68.75%,calc(100% - 3.0px) 75.00%,calc(100% - 6.0px) 81.25%,calc(100% - 3.0px) 87.50%,calc(100% - 0.0px) 93.75%,calc(100% - 3.0px) 100.00%,0 100%);padding-right:22px;z-index:2}
 .case .clues .clue:nth-of-type(3){transform:rotate(1deg) translate(4px,-4px);z-index:1}
 .case .clues .clue:nth-of-type(4){transform:rotate(-1.4deg) translate(-5px,-9px);clip-path:polygon(14px 0,100% 0,100% calc(100% - 4px),97% 100%,0 100%,0 18px);z-index:3}
-.case .clues .clue.wide{transform:rotate(-.6deg) translateY(-6px);clip-path:polygon(0 0,100% 0,100.00% calc(100% - 2.6px),95.45% calc(100% - 1.2px),90.91% calc(100% - 5.2px),86.36% calc(100% - 0.6px),81.82% calc(100% - 4.3px),77.27% calc(100% - 2.9px),72.73% calc(100% - 0.5px),68.18% calc(100% - 4.1px),63.64% calc(100% - 0.3px),59.09% calc(100% - 3.5px),54.55% calc(100% - 0.6px),50.00% calc(100% - 0.7px),45.45% calc(100% - 3.4px),40.91% calc(100% - 6.6px),36.36% calc(100% - 1.0px),31.82% calc(100% - 1.8px),27.27% calc(100% - 5.0px),22.73% calc(100% - 7.6px),18.18% calc(100% - 4.6px),13.64% calc(100% - 3.2px),9.09% calc(100% - 7.8px),4.55% calc(100% - 0.4px),0.00% calc(100% - 6.9px));padding-bottom:20px;z-index:4}
+.case .clues .clue.wide{transform:rotate(1.2deg);margin:0;clip-path:polygon(0 0,100% 0,100.00% calc(100% - 2.6px),95.45% calc(100% - 1.2px),90.91% calc(100% - 5.2px),86.36% calc(100% - 0.6px),81.82% calc(100% - 4.3px),77.27% calc(100% - 2.9px),72.73% calc(100% - 0.5px),68.18% calc(100% - 4.1px),63.64% calc(100% - 0.3px),59.09% calc(100% - 3.5px),54.55% calc(100% - 0.6px),50.00% calc(100% - 0.7px),45.45% calc(100% - 3.4px),40.91% calc(100% - 6.6px),36.36% calc(100% - 1.0px),31.82% calc(100% - 1.8px),27.27% calc(100% - 5.0px),22.73% calc(100% - 7.6px),18.18% calc(100% - 4.6px),13.64% calc(100% - 3.2px),9.09% calc(100% - 7.8px),4.55% calc(100% - 0.4px),0.00% calc(100% - 6.9px));padding-bottom:20px;z-index:4}
 /* Desktop: links Text und Punkte (senkrecht mittig), rechts Titelbild, Notizen und Foto */
 @media (min-width:900px){
   .case .case-grid{align-items:start;grid-template-rows:1fr auto auto 1fr}
@@ -625,5 +625,5 @@ a.inlink:hover{color:var(--red)}
   .case .case-grid>.clues{grid-column:2;grid-row:1/span 4;margin-top:0}
   .case .case-grid>.case-buy{grid-column:1/-1;grid-row:5;margin-top:28px}
   .cover-m{display:none}
-  .clues .cover-d{display:block;grid-column:1/-1;width:min(100%,300px);justify-self:center;margin:0 0 30px;box-shadow:none}
+  .clues .cover-d{display:block;grid-column:1/-1;width:min(100%,330px);justify-self:center;margin:0 0 26px;box-shadow:none}
 }
