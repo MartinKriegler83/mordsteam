@@ -45,3 +45,5 @@ for (let i = 0; i < 500; i++) for (const premium of [false, true]) {
 // Offene Platzhalter in gerenderten Akten (9.10.2026, {TORTE})
 for (const e of placeholderGuard("fall-001", 40)) fail(e);
 console.log(err ? `${err} Fehler` : `IBAN in ${COUNTRY_ORDER.length} Ländern, 1000 Runden Zusatzermittlung/Sonderauftrag: alles ok`);
+// Bild-Rätsel Archivregal und Kantine-Akte (9.10.2026)
+{ const { pictureGuard } = await import("./picture_guard.mjs"); for (const e of pictureGuard("fall-001", 80)) fail(e); }

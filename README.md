@@ -63,6 +63,7 @@ tools/                   Prüf- und Hilfsskripte (siehe „Lokal testen“)
                            braucht Playwright/Chromium und Python mit Pillow (Claudes Arbeitsumgebung)
   check_*.mjs              Prüfskripte je Fall (Eindeutigkeit der Lösung über alle Varianten); check_*_en.mjs prüft die englische Fassung gegen die deutsche
   placeholder_guard.mjs    rendert Teams-Akten und meldet offene Platzhalter wie {TORTE} (läuft in check_teams/check_teams002)
+  picture_guard.mjs        prüft die Teams-Bildrätsel in gerenderten Runden: Archivregal (Fall 001) und Strichliste (Fall 002)
   github-workflow-feedback-mails.yml   Vorlage der GitHub-Action (Kopie von .github/workflows/feedback-mails.yml)
 .github/workflows/feedback-mails.yml   stündlicher Aufruf von /api/shop/cron
 faelle/                  alte Arbeitsdokumente (nicht ausgeliefert)

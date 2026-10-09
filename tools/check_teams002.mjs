@@ -141,3 +141,5 @@ for (let i = 0; i < 1200; i++) {
 for (const e of placeholderGuard("fall-002", 40)) fail(e);
 console.log(err ? `${err} Fehler` : `${rounds} Runden (3 Pakete, ${ARTEN.length} Vereinsarten, Länder gemischt): alles ok`);
 process.exit(err ? 1 : 0);
+// Bild-Rätsel Strichliste und Zettel-Akte (9.10.2026)
+{ const { pictureGuard } = await import("./picture_guard.mjs"); for (const e of pictureGuard("fall-002", 80)) { console.log("FEHLER", e); process.exitCode = 1; } }
