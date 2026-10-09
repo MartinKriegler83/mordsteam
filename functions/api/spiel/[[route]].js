@@ -804,8 +804,10 @@ async function adminExport(request, env) {
     const firma = c.rechnung_firma || (c.fiktiv ? "" : (JSON.parse(o.vars || "{}").FIRMA || ""));
     const kind = c.kunde === "b2b" || (!o.tax_regime && o.tax_id) ? "Unternehmen" : "Privat";
     const prod = o.paket === "solo" ? `Solo ${String(c.produkt || "solo-001").replace("solo-", "")}` : P[o.paket] || o.paket;
+    // Go-live-Test 5 (M19): £/$ ohne Euro-Betrag → €-Spalten leer (Originalbetrag steht in eigener Spalte)
+    const miss = !!o.currency && o.currency !== "EUR" && !o.eur_ok, eE = (c) => (miss ? "" : e(c));
     lines.push([d(o.paid_at), o.invoice_no || "", o.id.slice(0, 8), [c.name, firma].filter(Boolean).join(" / "), prod, o.teams,
-      c.earlybird ? "Ja" : "Nein", kind, o.bill_country || "", REGION_LABEL[region(o.bill_country)], e(o.amount_cents), e(o.fee_cents), e(o.net_cents), e(o.tax_cents || 0), e((o.amount_cents || 0) - (o.pay_provider === "stripe_mp" || o.pay_provider === "paddle" || o.paddle_txn ? (o.tax_cents || 0) : 0)), o.paddle_txn ? "Paddle" : o.pay_provider === "stripe_mp" ? "Stripe Managed Payments" : o.stripe_session ? "Stripe" : "Test (ohne Zahlung)", RA[o.tax_regime] || "", o.cust_uid || "", o.currency && o.currency !== "EUR" && o.amount_orig_cents != null ? `${o.currency} ${(o.amount_orig_cents / 100).toFixed(2)}` : "",
+      c.earlybird ? "Ja" : "Nein", kind, o.bill_country || "", REGION_LABEL[region(o.bill_country)], eE(o.amount_cents), eE(o.fee_cents), eE(o.net_cents), eE(o.tax_cents || 0), eE((o.amount_cents || 0) - (o.pay_provider === "stripe_mp" || o.pay_provider === "paddle" || o.paddle_txn ? (o.tax_cents || 0) : 0)), o.paddle_txn ? "Paddle" : o.pay_provider === "stripe_mp" ? "Stripe Managed Payments" : o.stripe_session ? "Stripe" : "Test (ohne Zahlung)", RA[o.tax_regime] || "", o.cust_uid || "", o.currency && o.currency !== "EUR" && o.amount_orig_cents != null ? `${o.currency} ${(o.amount_orig_cents / 100).toFixed(2)}` : "",
       o.refunded_cents != null ? e(o.refunded_cents) : o.status === "withdrawn" ? e(o.amount_cents) : "", ({ refunded: "erstattet", withdrawn: "widerrufen" })[o.status] || (o.currency && o.currency !== "EUR" && !o.eur_ok ? "Euro-Betrag fehlt" : ""), o.card_country || "", o.addr_country || ""].map(q).join(";"));
   }
   return new Response("\ufeff" + lines.join("\r\n"), { headers: { "content-type": "text/csv; charset=utf-8",

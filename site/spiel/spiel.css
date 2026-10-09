@@ -43,6 +43,8 @@ body.app{background:var(--paper);min-height:100vh}
 .mono{font-family:var(--mono)}
 .big{font-family:var(--serif);font-weight:900;font-size:22px;text-align:center}
 table.grid,table.kv{width:100%;border-collapse:collapse;font-size:14px;margin:0 0 14px}
+/* Go-live-Test 5 (M22): Admin am Handy – breite Tabellen wischen für sich, die Seite bleibt schmal */
+@media (max-width:700px){.adm table.grid{display:block;overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}.adm .panel{min-width:0}.adm .sess{min-width:0;overflow-wrap:anywhere}.adm table.grid th{white-space:nowrap}}
 table.grid th,table.grid td,table.kv th,table.kv td{border:1px solid #D8D1C2;padding:7px 8px;text-align:left;vertical-align:top}
 table.grid th,table.kv th{background:var(--paper-2);font-weight:600}
 table.kv th{width:36%}
@@ -435,10 +437,11 @@ button.btn-big{margin-top:14px}
 .ev .gel.neu{color:#1F6B3A;border-color:#1F6B3A}
 .so-result p{margin:0 0 10px}
 .so-result h3{font-family:var(--serif);font-size:22px;margin:26px 0 8px}
-.so-score{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:26px 0 10px}
-.so-score div{background:var(--paper-2);border-radius:4px;padding:12px;text-align:center}
+.so-score{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:26px 0 10px}
+.so-score div{background:var(--paper-2);border-radius:4px;padding:12px;text-align:center;min-width:0}
 .so-score small{display:block;font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#5A5D66}
 .so-score b{font-family:var(--mono);font-size:26px}
+@media (max-width:480px){.so-score{gap:6px}.so-score div{padding:10px 4px}.so-score small{font-size:10px;letter-spacing:.3px;overflow-wrap:anywhere}.so-score b{font-size:22px}}   /* Go-live-Test 5 (M21): „Strafminuten“ passt bei 360–390 px */
 .so-pct{text-align:center;font-size:18px;margin:10px 0 0}
 .so-voucher{margin-top:22px;border:2px dashed var(--red);border-radius:6px;padding:16px;text-align:center;display:grid;gap:4px}
 .so-voucher small{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--red)}

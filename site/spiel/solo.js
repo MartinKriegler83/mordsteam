@@ -8,6 +8,8 @@
   let token = null, S = null, off = 0, tab = "einsatz", openDoc = null, busy = false, verdict = null, armed = false, giveArmed = false;
   let seen = new Set(JSON.parse(MS.get("ms_solo_seen") || "[]"));
   // Feste Oberflächentexte zweisprachig: L(deutsch, englisch) – die Spielsprache der Runde (S.lang) gewinnt
+// Go-live-Test 5 (M17): Euro-Gutscheine auf Englisch in allen drei Kassenwährungen (wie die Stripe-Gutscheinvorlage: £ gleich, $ ≈ × 1,15)
+const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ? `€${m[1]} / £${m[1]} / $${Math.round(m[1] * 1.15)}` : l; };
   const dmy = (d) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(d || "")); return m ? `${Number(m[3])}.${Number(m[2])}.${m[1]}` : String(d || ""); };
   const L = (de, en) => MS.t(de, en);
   const EN = () => MS.lang === "en";
@@ -71,7 +73,13 @@
     </div></section>`;
     $("sf").onsubmit = async (e) => {
       e.preventDefault();
-      const btn = e.target.querySelector("button"); btn.disabled = true;
+      const btn = e.target.querySelector("button");
+      // Go-live-Test 5 (N5e): Spielername gleich einer Figur → einmal darauf hinweisen, beim zweiten Klick geht es weiter
+      if (needName && !e.target.dataset.ok) {
+        const toks = $("nm").value.toLowerCase().split(/[^\p{L}]+/u), hit = (t.names || []).find((n) => toks.includes(n.toLowerCase()));
+        if (hit) { e.target.dataset.ok = "1"; e.target.querySelector(".err").textContent = L(`„${hit}“ ist auch der Name einer Figur im Fall – das kann verwirren. Bitte Nachnamen oder Spitznamen ergänzen. Oder einfach nochmal auf „Weiter zum Einsatz“ tippen.`, `“${hit}” is also the name of a character in the case – that can be confusing. Please add a surname or nickname. Or just tap “On to the briefing” again.`); return; }
+      }
+      btn.disabled = true;
       try { const d = await api("POST", "start", { code, name: needName ? $("nm").value : undefined }); token = d.token; seen = new Set(); MS.set("ms_solo_seen", "[]"); tab = "einsatz"; await refresh(); scrollTo(0, 0); }
       catch (e2) { briefingView(t, e2.message); }
     };
@@ -242,7 +250,7 @@
       ${q ? `<div class="qrow"><span class="qn">${q.nr}</span><div class="qf"><label for="ans">${esc(q.label)}</label><span class="hint">${esc(q.hint)}</span>${field}${hintList(q)}</div></div>
       ${verdict && !verdict.at ? `<div class="verdict ${verdict.cls}" role="alert">${verdict.html}</div>` : ""}
       <button type="button" class="btn btn-red btn-big" id="check">${L("Antwort prüfen", "Check answer")}</button>
-      <div class="ctip"><div><b>${L("Hinweis nehmen", "Take a hint")}</b><p>${cost ? L(`Hinweis ${q.hints.length + 1} von 3 für diese Frage. Kostet ${cost} Strafminuten.`, `Hint ${q.hints.length + 1} of 3 for this question. Costs ${cost} penalty minutes.`) : L("Für diese Frage hast du alle Hinweise.", "You’ve had all the hints for this question.")}</p></div>
+      <div class="ctip"><div><b>${L("Hinweis nehmen", "Take a hint")}</b><p>${cost ? L(`Hinweis ${q.hints.length + 1} von 3 für diese Frage. Kostet ${cost} ${cost === 1 ? "Strafminute" : "Strafminuten"}.`, `Hint ${q.hints.length + 1} of 3 for this question. Costs ${cost} penalty ${cost === 1 ? "minute" : "minutes"}.`) : L("Für diese Frage hast du alle Hinweise.", "You’ve had all the hints for this question.")}</p></div>
         ${cost ? `<button type="button" class="btn ${armed ? "btn-ink" : "btn-line"}" id="hint">${armed ? L(`Ja, Hinweis nehmen (+${cost} Min.)`, `Yes, take the hint (+${cost} min)`) : L("Hinweis anzeigen", "Show hint")}</button>${armed ? `<button type="button" class="linkbtn" id="hintno">${L("Abbrechen", "Cancel")}</button>` : ""}` : ""}</div>` : ""}
       ${locked.map((x) => `<div class="qrow so-locked"><span class="qn">${x.nr}</span><div class="qf"><label>${esc(x.label)}</label><span class="hint">${L(`Wird frei, sobald du Frage ${x.nr - 1} gelöst hast.`, `Unlocks once you’ve solved question ${x.nr - 1}.`)}</span></div></div>`).join("")}
       ${blattHtml()}
@@ -410,7 +418,7 @@
       <h3>${L("Die Auflösung", "The solution")}</h3>
       <p>${r.summary ? `<b>${esc(r.summary)}</b>` : `<b>${L("Täter/in", "Culprit")}: ${esc(r.culprit)}</b> · ${L("Tatzeit", "Time of the crime")} ${esc(r.zeit || "01:31")} · ${L("Versteck", "Hiding place")}: ${esc(r.item)}`}</p>
       <p>${esc(r.text)}</p>
-      ${r.voucher ? `<div class="so-voucher"><small>${r.voucher_teams ? L("Dein Gutschein für ein Teams-Event", "Your voucher for a Teams event") : L("Dein Gutschein für ein Friends- oder Teams-Spiel", "Your voucher for a Friends or Teams game")}</small><b class="mono">${esc(r.voucher)}</b><span>${r.voucher_teams ? L(`${esc(r.voucher_teams.label)} Rabatt auf euer Mordsteam-Teams-Event · gültig bis ${esc(dmy(r.voucher_teams.until))} · im Bezahlschritt eingeben · nicht mit Early Bird kombinierbar`, `${esc(r.voucher_teams.label)} off your Mordsteam Teams event · valid until ${esc(dmy(r.voucher_teams.until))} · enter it at checkout · can’t be combined with Early Bird`) : L("5 € Rabatt auf ein Friends- oder Teams-Spiel · im Bezahlschritt eingeben · 1 Gutschein pro Bestellung, nicht mit Early Bird kombinierbar", "€5 off a Friends or Teams game · enter it at checkout · 1 voucher per order, can’t be combined with Early Bird")}</span><button type="button" class="btn btn-line" id="copyv">${L("Code kopieren", "Copy code")}</button></div>` : ""}
+      ${r.voucher ? `<div class="so-voucher"><small>${r.voucher_teams ? L("Dein Gutschein für ein Teams-Event", "Your voucher for a Teams event") : L("Dein Gutschein für ein Friends- oder Teams-Spiel", "Your voucher for a Friends or Teams game")}</small><b class="mono">${esc(r.voucher)}</b><span>${r.voucher_teams ? L(`${esc(r.voucher_teams.label)} Rabatt auf euer Mordsteam-Teams-Event · gültig bis ${esc(dmy(r.voucher_teams.until))} · im Bezahlschritt eingeben · nicht mit Early Bird kombinierbar`, `${esc(enAmt(r.voucher_teams.label))} off your Mordsteam Teams event · valid until ${esc(dmy(r.voucher_teams.until))} · enter it at checkout · can’t be combined with Early Bird`) : L("5 € Rabatt auf ein Friends- oder Teams-Spiel · im Bezahlschritt eingeben · 1 Gutschein pro Bestellung, nicht mit Early Bird kombinierbar", "€5 / £5 / $6 off a Friends or Teams game · enter it at checkout · 1 voucher per order, can’t be combined with Early Bird")}</span><button type="button" class="btn btn-line" id="copyv">${L("Code kopieren", "Copy code")}</button></div>` : ""}
       ${solved && S.first_play ? `<div class="actions-row" style="margin-top:22px"><button type="button" class="btn btn-red" id="pdf">${L("Urkunde als PDF speichern", "Save certificate as PDF")}</button><button type="button" class="btn btn-line" id="png">${L("Urkunde als Bild", "Certificate as image")}</button></div><p class="small" style="margin-top:6px">${L("A4 im Querformat – zum Ausdrucken oder Teilen.", "A4 landscape – for printing or sharing.")}</p>` : ""}
       ${rp.left > 0 ? `<div class="actions-row" style="margin-top:18px"><button type="button" class="btn btn-line" id="again">${L("Nochmal spielen – anderer Täter", "Play again – different culprit")}</button></div>
       <p class="small" style="margin-top:8px">${L(`Noch ${rp.left} ${rp.left === 1 ? "Wiederholung" : "Wiederholungen"} möglich${until ? `, bis ${until}` : ""}. Jedes Mal wird ein anderer Täter ausgelost, einige Beweisstücke ändern sich. Wiederholungen zählen nicht für die Wertung.`, `${rp.left} ${rp.left === 1 ? "replay" : "replays"} left${until ? `, until ${until}` : ""}. Each time a different culprit is drawn and some of the evidence changes. Replays don’t count towards the ranking.`)}</p>`

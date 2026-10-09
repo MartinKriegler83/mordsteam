@@ -174,6 +174,7 @@ Nur Namen, keine Werte. Production und Preview haben je eigene Werte.
 | `MANAGED_PAYMENTS` | Text | `true` = Privatkunden aus Großbritannien kaufen über Stripe Managed Payments (Link ist Verkäufer, Preis inkl. britischer USt, Steuercode `txcd_10201003`, API-Version 2025-03-31.basil nur für diese Sitzungen). Sonst sehen sie „in Kürze möglich“. UK-Firmen zahlen immer über das normale Stripe (Reverse Charge). Vorher Managed Payments im Stripe-Dashboard aktivieren (Einstellungen → Managed Payments) |
 | `ORDER_FAKE_PAY` | Text | `true` = Bestellung ohne Stripe gilt als bezahlt (nur Tests) |
 | `LAUNCH` | Text (Build) | `true` = auf `main` volle Seite statt Teaser |
+| `UID_NR` | Text (auch Build) | eigene UID (`ATU` + 8 Ziffern): auf allen Rechnungen und – beim Bauen – im Impressum (DE/EN, Teaser, products.html) anstelle der Platzhalter `<!--UID_DE-->` / `<!--UID_EN-->`. Muss **Text** sein, Secrets sind beim Build nicht sichtbar |
 | `EARLYBIRD_PROZENT`, `EARLYBIRD_BIS`, `EARLYBIRD_COUPON` | Text | Early-Bird-Rabatt (Standard 25 %), Enddatum (Standard 2026-11-30), Stripe-Coupon |
 | `KI_BUDGET_USD` | Text | Monatsbudget Claude API, Warnung bei 70 % (Standard 20) |
 | `MAIL_LIMIT_DAY`, `MAIL_LIMIT_MONTH` | Text | Mail-Kontingent für Warnungen (Standard 100 / 3000; 0 = kein Limit) |
@@ -191,6 +192,8 @@ Cloudflare Pages führt `build.sh` aus und veröffentlicht `dist/`:
 - Alle anderen Fälle (Branch `vorschau`, oder `LAUNCH=true`) → **volle Seite**: ganz `site/`.
 
 Die Functions (`functions/`) laufen in beiden Modi.
+
+Zum Schluss setzt `build.sh` die UID aus `UID_NR` ins Impressum ein (nur gültiges Format `ATU12345678`, sonst bleiben die unsichtbaren Platzhalter).
 
 ## Deploy
 

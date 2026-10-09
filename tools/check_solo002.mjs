@@ -23,6 +23,9 @@ for (let v = 0; v < C.VARIANTS; v++) for (const c of C.CULPRITS) {
   const noAlibi = C.CULPRITS.filter((k) => !S[k].some(([x, y]) => x <= a + cover(k) && y >= b));
   if (noAlibi.length !== 1 || noAlibi[0] !== c) fail(`${tag} ohne Beleg: ${noAlibi}`);
   for (const k of C.CULPRITS) { const r = S[k]; for (let i = 1; i < r.length; i++) if (r[i][0] <= r[i - 1][1]) fail(`${tag} Überschneidung bei ${k}`); }
+  // Go-live-Test 5 (M10): keine zwei Unschuldigen mit minutengleichem Beginn oder Ende im Tatfenster-Beleg
+  { const [wa, wb] = C.ITEMS[C.varOf(v).item].win.map(hm), th = C.CULPRITS.filter((k) => k !== c).map((k) => S[k].find((p) => p[0] <= wa + 2 && p[1] >= wb) || [k, k]);
+    if (new Set(th.map((p) => p[0])).size < th.length || new Set(th.map((p) => p[1])).size < th.length) fail(`${tag} Belege minutengleich`); }
   // Täter-Eintrag darf das Fenster nicht einmal berühren
   if (S[c].some(([x, y]) => y >= a && x <= b)) fail(`${tag} Täter-Eintrag berührt Fenster`);
   // Frage 3: Code eindeutig, Tausch wirkt

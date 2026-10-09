@@ -13,7 +13,18 @@
     v.setAttribute("muted", ""); v.setAttribute("playsinline", ""); v.setAttribute("autoplay", "");
     v.poster = "/assets/video/" + name + "-" + fmt + ".jpg";
     v.src = "/assets/video/" + name + "-" + fmt + ".mp4";
-    var sichtbar = false, wartet = false;
+    var sichtbar = false, wartet = false, angehalten = false;
+    // Pause-Knopf (Go-live-Test 5, N8d): wer anhält, dem startet das Video nicht von selbst wieder
+    var EN = document.documentElement.lang === "en";
+    var pb = document.createElement("button"); pb.type = "button"; pb.className = "tvid-sound tvid-pause";
+    pb.textContent = EN ? "Pause" : "Pause"; pb.setAttribute("aria-label", EN ? "Pause video" : "Video anhalten");
+    pb.addEventListener("click", function () {
+      angehalten = !v.paused;
+      if (angehalten) v.pause(); else play();
+      pb.textContent = angehalten ? (EN ? "Play" : "Abspielen") : "Pause";
+      pb.setAttribute("aria-label", angehalten ? (EN ? "Play video" : "Video abspielen") : (EN ? "Pause video" : "Video anhalten"));
+    });
+    box.appendChild(pb);
     function nachKlick() {
       if (wartet) return;
       wartet = true;
@@ -22,7 +33,7 @@
         document.removeEventListener("pointerdown", los, true);
         document.removeEventListener("keydown", los, true);
         wartet = false;
-        if (sichtbar) play();
+        if (sichtbar && !angehalten) play();
       };
       document.addEventListener("pointerdown", los, true);
       document.addEventListener("keydown", los, true);
@@ -30,12 +41,12 @@
     function play() { var p = v.play(); if (p && p.catch) p.catch(nachKlick); }
     if ("IntersectionObserver" in window) {
       new IntersectionObserver(function (es) {
-        es.forEach(function (e) { sichtbar = e.isIntersecting; if (sichtbar) play(); else v.pause(); });
+        es.forEach(function (e) { sichtbar = e.isIntersecting; if (sichtbar && !angehalten) play(); else v.pause(); });
       }, { threshold: 0.25 }).observe(v);
     } else { sichtbar = true; play(); }
     if (btn) btn.addEventListener("click", function () {
       v.muted = !v.muted;
-      if (!v.muted) { v.currentTime = 0; play(); }
+      if (!v.muted) { v.currentTime = 0; angehalten = false; pb.textContent = "Pause"; play(); }
       btn.setAttribute("aria-pressed", String(!v.muted));
       btn.textContent = v.muted ? btn.getAttribute("data-on") : btn.getAttribute("data-off");
     });

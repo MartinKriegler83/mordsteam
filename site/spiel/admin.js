@@ -115,7 +115,11 @@
     if (!ops) return `<div class="panel"><p class="err">Betriebsdaten konnten nicht geladen werden.</p></div>`;
     const L = ops.limits, C = ops.configured;
     const paid = orders.filter((o) => o.status !== "pending" && o.status !== "withdrawn");
-    const mon = paid.filter((o) => new Date(o.created_at).toISOString().slice(0, 7) === ops.month);
+    // Go-live-Test 5 (M19): Wiener Monat, ohne Erstattetes, £/$ ohne Euro-Betrag erst nach der Auszahlung
+    const vMon = (t) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Vienna", year: "numeric", month: "2-digit" }).format(new Date(t)).slice(0, 7);
+    const noEur = (o) => !!o.currency && o.currency !== "EUR" && !o.eur_ok;
+    const mon = paid.filter((o) => o.status !== "refunded" && vMon(o.paid_at || o.created_at) === ops.month);
+    const monOpen = mon.filter(noEur).length;
     const chk = (ok, txt, warn) => `<li class="${ok ? "ok" : warn ? "bad" : "no"}">${ok ? "✓" : warn ? "!" : "–"} ${txt}</li>`;
     return `<div class="panel"><div class="eyebrow">Ampel · heute ${ops.today}</div>
       <div class="tiles">
@@ -124,7 +128,7 @@
         ${tile("KI-Kosten im Monat", ops.ai.month_cost, L.ai_budget, "", usd)}
         ${tile("Server-Aufrufe heute", ops.hits.today, L.req_day, "Workers Paid: kein Tageslimit")}
         <div class="tile ${ops.errors.today > 10 ? "red" : ops.errors.today ? "yellow" : "green"}"><small>Fehler heute</small><b>${ops.errors.today}</b><span>Warnung ab 11</span></div>
-        <div class="tile green"><small>Umsatz im Monat</small><b>${eur(mon.reduce((a, o) => a + o.amount_cents, 0))}</b><span>${mon.length} Bestellung(en)</span></div>
+        <div class="tile green"><small>Umsatz im Monat</small><b>${eur(mon.filter((o) => !noEur(o)).reduce((a, o) => a + o.amount_cents, 0))}</b><span>${mon.length} Bestellung(en)${monOpen ? ` · ${monOpen} in £/$ offen` : ""}</span></div>
       </div></div>
       <div class="two-col">
       <div class="panel"><div class="eyebrow">Einrichtung dieser Umgebung</div><ul class="checks">
@@ -222,7 +226,7 @@
     return `<div class="panel"><div class="eyebrow">Kunden · kommen sie wieder?</div>
       <div class="tiles" style="margin-top:10px">
         ${tile("Kunden (E-Mail-Adressen)", k.customers, 0, `${n0(k.orders)} bezahlte Bestellungen`)}
-        ${tile("Umsatz gesamt", k.cents, 0, `Ø ${eur(k.customers ? k.cents / k.customers : 0)} pro Kunde`, eur)}
+        ${tile("Umsatz gesamt", k.cents, 0, `Ø ${eur(k.customers ? k.cents / k.customers : 0)} pro Kunde${k.open ? ` · + ${k.open} in £/$ offen (bis zur Auszahlung)` : ""}`, eur)}
         ${tile("Wiederkäufer", k.repeat, 0, `${pct(k.repeat_rate)} der Kunden haben mehr als einmal gekauft`)}
         ${tile("Tage bis zum 2. Kauf", k.days_to_second == null ? 0 : Math.round(k.days_to_second), 0, k.days_to_second == null ? "noch keine Wiederkäufe" : "Median")}
         ${tile("Solo → Gruppe", k.solo_up, 0, `von ${n0(k.solo_first)} Kunden, die mit Solo angefangen haben`)}
@@ -230,12 +234,12 @@
         ${tile("Bestellungen über Newsletter", k.nl_orders, 0, "Links mit Newsletter-Kürzel")}
       </div>
       ${kunden.list.length ? `<div style="overflow-x:auto;margin-top:12px"><table class="grid small"><tr><th>Kunde</th><th>Käufe</th><th>Umsatz</th><th>Erster / letzter Kauf</th><th>Teams · Friends · Solo</th><th>Gutschein</th><th>Newsletter</th></tr>
-        ${list.map((c) => `<tr><td><b>${e(c.name || "–")}</b><br><span class="mono">${e(c.email)}</span>${c.kunde === "b2b" ? ' <span class="chip">Firma</span>' : ""}</td><td>${c.orders}${c.orders > 1 ? " ★" : ""}</td><td class="mono">${eur(c.cents)}</td><td>${d(c.first)}<br>${d(c.last)}</td><td>${c.products.teams} · ${c.products.friends} · ${c.products.solo}</td><td>${c.voucher || "–"}</td><td>${NS[c.news] || e(c.news)}</td></tr>`).join("")}</table></div>
+        ${list.map((c) => `<tr><td><b>${e(c.name || "–")}</b><br><span class="mono">${e(c.email)}</span>${c.kunde === "b2b" ? ' <span class="chip">Firma</span>' : ""}</td><td>${c.orders}${c.orders > 1 ? " ★" : ""}</td><td class="mono">${eur(c.cents)}${c.open ? `<br><span class="small">+ ${c.open} in £/$ offen</span>` : ""}</td><td>${d(c.first)}<br>${d(c.last)}</td><td>${c.products.teams} · ${c.products.friends} · ${c.products.solo}</td><td>${c.voucher || "–"}</td><td>${NS[c.news] || e(c.news)}</td></tr>`).join("")}</table></div>
         ${kunden.list.length > 30 ? `<p class="small"><button class="btn btn-line" type="button" id="kall">${kundenAll ? "Nur die letzten 30 zeigen" : `Alle ${kunden.list.length} zeigen`}</button></p>` : ""}` : `<p class="small" style="margin-top:10px">Noch keine bezahlten Bestellungen.</p>`}
       <p class="small" style="margin-top:8px">Gezählt werden bezahlte Bestellungen, zusammengefasst nach E-Mail-Adresse. ★ = mehr als ein Kauf.</p></div>
     <div class="panel"><div class="eyebrow">Werbung · bringt sie Bestellungen?</div>
       ${(kunden.sources || []).length ? `<div style="overflow-x:auto;margin-top:10px"><table class="grid small"><tr><th>Herkunft</th><th>Besuche<br>30 Tage / gesamt</th><th>Bestellungen<br>30 Tage / gesamt</th><th>Umsatz<br>30 Tage / gesamt</th><th>Werbekosten<br>letzte 30 Tage</th><th>Kosten je Bestellung</th><th>Umsatz je € Werbung</th></tr>
-        ${kunden.sources.map((s, i) => `<tr><td class="mono"><b>${e(s.src)}</b>${s.src === "gads" ? "<br>Google Ads" : s.src === "meta" ? "<br>Facebook/Instagram" : s.src === "linkedin" ? "<br>LinkedIn" : s.src === "bing" ? "<br>Microsoft Ads" : ""}</td><td>${n0(s.visits30)} / ${n0(s.visits)}</td><td>${n0(s.orders30)} / ${n0(s.orders)}${s.visits30 ? `<br><span class="small">${(s.orders30 / s.visits30 * 100).toFixed(1).replace(".", ",")} % kaufen</span>` : ""}</td><td class="mono">${eur(s.cents30)} / ${eur(s.cents)}</td>
+        ${kunden.sources.map((s, i) => `<tr><td class="mono"><b>${e(s.src)}</b>${s.src === "gads" ? "<br>Google Ads" : s.src === "meta" ? "<br>Facebook/Instagram" : s.src === "linkedin" ? "<br>LinkedIn" : s.src === "bing" ? "<br>Microsoft Ads" : ""}</td><td>${n0(s.visits30)} / ${n0(s.visits)}</td><td>${n0(s.orders30)} / ${n0(s.orders)}${s.visits30 ? `<br><span class="small">${(s.orders30 / s.visits30 * 100).toFixed(1).replace(".", ",")} % kaufen</span>` : ""}</td><td class="mono">${eur(s.cents30)} / ${eur(s.cents)}${s.open ? `<br><span class="small">+ ${s.open} in £/$ offen</span>` : ""}</td>
           <td><input class="srccost" data-i="${i}" inputmode="decimal" placeholder="z. B. 500" style="width:90px"> €</td><td class="mono" id="srccpo${i}">–</td><td class="mono" id="srcroas${i}">–</td></tr>`).join("")}</table></div>
         <p class="small">Werbekosten der letzten 30 Tage aus dem Werbekonto abschreiben (Google Ads: Kampagnen → Kosten, Zeitraum „Letzte 30 Tage“); sie werden nicht gespeichert. Rechnet sich Werbung, ist der Umsatz je € Werbung über 1,20 (wegen 20 % Reverse Charge).</p>`
         : `<p class="small" style="margin-top:10px">Noch keine Besuche über Werbung. Im Google-Ads-Konto unter <b>Verwaltung → Kontoeinstellungen → Tracking → Suffix der finalen URL</b> <span class="mono">src=gads</span> eintragen. Klicks mit Google-Kennung (gclid) werden auch ohne Suffix als <span class="mono">gads</span> gezählt.</p>`}
@@ -276,7 +280,7 @@
       <p class="small" id="ecgout"></p>
 
       <div class="eyebrow" style="margin-top:18px">Wirkung je Newsletter</div>
-      ${n.tags.length ? `<table class="grid small" style="margin-top:6px"><tr><th>Kürzel</th><th>Besuche</th><th>Bestellungen</th><th>Umsatz</th></tr>${n.tags.map((t) => `<tr><td class="mono">${e(t.tag)}</td><td>${n0(t.visits)}</td><td>${n0(t.orders)}</td><td class="mono">${eur(t.cents)}</td></tr>`).join("")}</table>
+      ${n.tags.length ? `<table class="grid small" style="margin-top:6px"><tr><th>Kürzel</th><th>Besuche</th><th>Bestellungen</th><th>Umsatz</th></tr>${n.tags.map((t) => `<tr><td class="mono">${e(t.tag)}</td><td>${n0(t.visits)}</td><td>${n0(t.orders)}</td><td class="mono">${eur(t.cents)}${t.open ? `<br><span class="small">+ ${t.open} in £/$ offen</span>` : ""}</td></tr>`).join("")}</table>
         <p class="small">Öffnungen und Klicks zeigt Resend unter Broadcasts. Besuche = Aufrufe der Website über einen Newsletter-Link.</p>` : `<p class="small">Noch kein Newsletter verschickt.</p>`}
     </div>
     <div class="panel"><div class="eyebrow">Newsletter schreiben</div>
@@ -858,7 +862,7 @@
           <table class="grid small" style="margin-top:6px"><tr><th>Datum</th><th>Bestellung</th><th>Bezahlt</th><th>Euro-Betrag</th><th></th></tr>${d.eur_missing.map((m) => `<tr><td>${new Date(m.date).toLocaleDateString("de-AT")}</td><td class="mono">${MS.esc(String(m.id).replace(/-/g, "").slice(0, 8).toUpperCase())}</td><td class="mono">${MS.esc(m.currency)} ${m.orig != null ? (m.orig / 100).toFixed(2) : "?"}</td><td><input class="eurin" data-id="${MS.esc(m.id)}" inputmode="decimal" placeholder="z. B. 103,45" style="width:7em"></td><td><button type="button" class="btn btn-line small" data-eursave="${MS.esc(m.id)}">Speichern</button></td></tr>`).join("")}</table></div>` : "";
         // Rechnungsland ≠ Kartenland/Adressland laut Stripe (Go-live-Test 4, M14)
         const RX = { ku: "Kleinunternehmer", rc_eu: "Reverse Charge", dl_b2b: "Nicht-EU-Firma", dl_b2c: "Nicht-EU-Privat" };
-        const land = d.land_check && d.land_check.length ? `<div class="warnbox" style="margin-top:10px"><b>Land prüfen (${d.land_check.length})</b> – die Anschrift bei Stripe (oder ohne Anschrift das Kartenland) passt nicht zum Rechnungsland aus dem Bestellformular. Danach richtet sich die Umsatzsteuer. Prüfen: Wohnt bzw. sitzt der Kunde wirklich im Rechnungsland? Ja (z. B. Firma mit Sitz dort, Kunde mit ausländischer Karte) → „passt“. Nein → Rechnungsart mit Steuerberatung klären.
+        const land = d.land_check && d.land_check.length ? `<div class="warnbox" style="margin-top:10px"><b>Land prüfen (${d.land_check.length})</b> – die Anschrift bei Stripe (oder ohne Anschrift das Kartenland) passt nicht zum Rechnungsland aus dem Bestellformular; bei EU-Privatkunden außerhalb Österreichs zählt auch ein abweichendes Kartenland. Danach richtet sich die Umsatzsteuer. Prüfen: Wohnt bzw. sitzt der Kunde wirklich im Rechnungsland? Ja (z. B. Firma mit Sitz dort, Kunde mit ausländischer Karte) → „passt“. Nein → Rechnungsart mit Steuerberatung klären.
           <table class="grid small" style="margin-top:6px"><tr><th>Datum</th><th>Bestellung</th><th>Rechnungsland</th><th>Karte</th><th>Adresse</th><th>Rechnungsart</th><th></th></tr>${d.land_check.map((m) => `<tr><td>${new Date(m.date).toLocaleDateString("de-AT")}</td><td class="mono">${MS.esc(String(m.id).replace(/-/g, "").slice(0, 8).toUpperCase())}</td><td>${MS.esc(m.bill)}</td><td>${MS.esc(m.card || "–")}</td><td>${MS.esc(m.addr || "–")}</td><td>${MS.esc(RX[m.regime] || m.regime)}</td><td><button type="button" class="btn btn-line small" data-landok="${MS.esc(m.id)}">passt</button></td></tr>`).join("")}</table></div>` : "";
         const monthsT = d.months && d.months.length ? `<h3 style="margin:16px 0 4px;font-size:16px">Je Monat</h3><table class="grid small"><tr><th>Monat</th>${HEAD}</tr>${d.months.map((m) => `<tr><td>${MON[+m.month.slice(5, 7) - 1]} ${m.month.slice(0, 4)}</td>${cells(m)}</tr>`).join("")}<tr><th>Summe</th>${cells(sum, true)}</tr></table>` : "";
         const payT = d.payments && d.payments.length ? `<details style="margin-top:12px"><summary><b>Alle ${d.payments.length} Zahlungen einzeln</b></summary><div style="overflow-x:auto"><table class="grid small" style="margin-top:6px"><tr><th>Datum</th><th>Bestellung</th><th>Produkt</th><th>Land</th><th>Rechnungsart</th><th>bezahlt</th><th>Kunde zahlt</th><th>fremde USt</th><th>Umsatz</th><th>Gebühr</th><th>Reverse Charge (Info)</th><th>Auszahlung</th></tr>${d.payments.map((x) => `<tr><td>${new Date(x.date).toLocaleDateString("de-AT")}</td><td class="mono">${MS.esc(String(x.id).replace(/-/g, "").slice(0, 8).toUpperCase())}</td><td>${MS.esc(x.product)}</td><td>${MS.esc(x.land)}</td><td>${MS.esc(RA2[x.regime] || x.regime || "–")}</td><td class="mono">${MS.esc(x.orig || "")}</td><td class="mono">${eu(x.gross)}${x.refunded ? ` <span title="erstattet">(−${eu(x.refunded)})</span>` : ""}</td><td class="mono">${x.tax ? eu(x.tax) : "–"}</td><td class="mono"><b>${eu(x.umsatz)}</b></td><td class="mono">${eu(x.fee)}</td><td class="mono">${x.rc ? eu(x.rc) : "–"}</td><td class="mono">${eu(x.net)}</td></tr>`).join("")}</table></div></details>` : "";

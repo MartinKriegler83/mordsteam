@@ -108,7 +108,7 @@ export async function onRequest({ request, env, params }) {
     }
     return fail("Nicht gefunden.", 404);
   } catch (e) {
-    if (e instanceof InputError) return fail(e.message);
+    if (e instanceof InputError) return json({ error: e.message, ...(e.field ? { field: e.field } : {}) }, 400);
     // Details nur ins Log, Kunden sehen eine allgemeine Meldung
     console.error("shop", route, method, e && e.stack ? e.stack : e);
     return fail(SERVER_ERROR[reqSite(request)], 500);
@@ -125,6 +125,8 @@ function earlybird(env) {
   if (bis && viennaDate() > bis) return null;
   return { prozent: p, bis };
 }
+// Datum lesbar statt ISO (Go-live-Test 5, N7b): DE 9.10.2027, EN 9 October 2027
+const hd = (iso, lang) => { const [y, m, d] = String(iso).split("-").map(Number); return lang === "en" ? `${d} ${["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][m - 1]} ${y}` : `${d}.${m}.${y}`; };
 const addDays = (dateStr, d) => { const t = new Date(dateStr + "T12:00:00Z"); t.setUTCDate(t.getUTCDate() + d); return t.toISOString().slice(0, 10); };
 
 function meta(env, request) {
@@ -190,7 +192,7 @@ async function taxStep(env, k, site, contact) {
   if (contact.kunde === "b2b" && !contact.rechnung_firma)
     throw new InputError(L(site, "Bitte den Namen von Firma, Verein oder Organisation für die Rechnung angeben.", "Please enter the name of the company, club or organisation for the invoice."));
   try { t = await taxContext(env, k, site, contact.kunde); }
-  catch (e) { if (e instanceof TaxInputError) throw new InputError(e.message); throw e; }
+  catch (e) { if (e instanceof TaxInputError) throw new InputError(e.message, e.field); throw e; }
   if (t.regime === "uk_mor" && !mpOn(env)) throw new InputError(L(site,
     "Bestellungen von Privatpersonen aus dem Vereinigten Königreich sind in Kürze möglich. Firmen, Vereine und Organisationen können schon bestellen.",
     "Orders from private individuals in the United Kingdom will be possible very soon. Businesses, clubs and organisations can already order."));
@@ -214,9 +216,15 @@ const MP_TAX_CODE = "txcd_10201003";
 // (sonst nimmt Stripe das Land aus IP/Sprache, z. B. Österreich bei einer Bestellung aus Großbritannien). Fehler → nur E-Mail.
 async function stripeCustomer(env, contact, site) {
   if (!contact.bill_land || contact.bill_land === "XX") return null;
+  const data = { name: (contact.kunde === "b2b" && contact.rechnung_firma) || contact.name, address: { country: contact.bill_land }, preferred_locales: [site === "en" ? "en-GB" : "de-AT"] };
+  // Bestehenden Stripe-Kunden mit dieser Adresse wiederverwenden statt bei jedem Versuch neu anlegen (Go-live-Test 5, N8e)
   try {
-    const c = await stripe(env, "POST", "customers", { email: contact.email, name: (contact.kunde === "b2b" && contact.rechnung_firma) || contact.name,
-      address: { country: contact.bill_land }, preferred_locales: [site === "en" ? "en-GB" : "de-AT"] });
+    const f = await stripe(env, "GET", `customers?email=${encodeURIComponent(contact.email)}&limit=1`);
+    const ex = f && Array.isArray(f.data) && f.data[0];
+    if (ex && ex.id) { try { await stripe(env, "POST", `customers/${ex.id}`, data); } catch {} return ex.id; }
+  } catch {}
+  try {
+    const c = await stripe(env, "POST", "customers", { email: contact.email, ...data });
     return c && c.id ? c.id : null;
   } catch { return null; }
 }
@@ -339,12 +347,12 @@ async function bestellung(request, env) {
         quantity: teams,
         price_data: { currency: cur.toLowerCase(), unit_amount: unit,
           product_data: { name: L(site, `Mordsteam Fall ${caseNr(caseId)} „${title}“ – ${NAMES[paket]}`, `Mordsteam Case ${caseNr(caseId)} “${title}” – ${NAMES_EN[paket]}`),
-            description: L(site, `Pro Team · sofort spielbar, gültig bis ${validUntil} · Spielsprache ${langName}`, `Per team · playable right away, valid until ${validUntil} · game language ${langName}`) } },
+            description: L(site, `Pro Team · sofort spielbar, gültig bis ${hd(validUntil, "de")} · Spielsprache ${langName}`, `Per team · playable right away, valid until ${hd(validUntil, "en")} · game language ${langName}`) } },
       }],
       metadata: { order_id: id },
       payment_intent_data: { metadata: { order_id: id } },
       invoice_creation: { enabled: true, invoice_data: {
-        description: L(site, `Personalisierter Krimi-Fall für ${teams} Team${teams === 1 ? "" : "s"}, einmal spielbar bis ${validUntil}.`, `Personalised murder-mystery case for ${teams} team${teams === 1 ? "" : "s"}, playable once until ${validUntil}.`),
+        description: L(site, `Personalisierter Krimi-Fall für ${teams} Team${teams === 1 ? "" : "s"}, einmal spielbar bis ${hd(validUntil, "de")}.`, `Personalised murder-mystery case for ${teams} team${teams === 1 ? "" : "s"}, playable once until ${hd(validUntil, "en")}.`),
         footer: invoiceFooter(contact.tax_regime, site),
         metadata: { order_id: id },
         ...invoiceFields(env, site, contact),
@@ -409,10 +417,10 @@ async function soloBestellung(request, env) {
       billing_address_collection: contact.kunde === "b2b" ? "required" : "auto",   // Firmen: volle Anschrift auf der Rechnung (M15)
       line_items: [{ quantity: 1, price_data: { currency: cur.toLowerCase(), unit_amount: price,
         product_data: { name: L(site, `Mordsteam ${F.no} „${F.de}“`, `Mordsteam ${F.no} “${F.en}”`),
-          description: L(site, `Krimi für eine Person, Countdown ${F.min} Min.${F.plus ? " mit KI-Verhörraum" : ""} · Code gültig bis ${validUntil} · Spielsprache ${GL}`, `Murder mystery for one person, ${F.min}-minute countdown${F.plus ? " with AI interrogation room" : ""} · code valid until ${validUntil} · game language ${GL}`) } } }],
+          description: L(site, `Krimi für eine Person, Countdown ${F.min} Min.${F.plus ? " mit KI-Verhörraum" : ""} · Code gültig bis ${hd(validUntil, "de")} · Spielsprache ${GL}`, `Murder mystery for one person, ${F.min}-minute countdown${F.plus ? " with AI interrogation room" : ""} · code valid until ${hd(validUntil, "en")} · game language ${GL}`) } } }],
       metadata: { order_id: id }, payment_intent_data: { metadata: { order_id: id } },
       invoice_creation: { enabled: true, invoice_data: {
-        description: L(site, `Mordsteam ${F.no} „${F.de}“, digitaler Krimi für eine Person, spielbar bis ${validUntil}.`, `Mordsteam ${F.no} “${F.en}”, digital murder mystery for one person, playable until ${validUntil}.`),
+        description: L(site, `Mordsteam ${F.no} „${F.de}“, digitaler Krimi für eine Person, spielbar bis ${hd(validUntil, "de")}.`, `Mordsteam ${F.no} “${F.en}”, digital murder mystery for one person, playable until ${hd(validUntil, "en")}.`),
         footer: invoiceFooter(contact.tax_regime, site),
         metadata: { order_id: id }, ...invoiceFields(env, site, contact) } },
     }, contact));
@@ -495,10 +503,10 @@ async function friendsBestellung(request, env) {
       billing_address_collection: contact.kunde === "b2b" ? "required" : "auto",   // Firmen: volle Anschrift auf der Rechnung (M15)
       line_items: [{ quantity: 1, price_data: { currency: cur.toLowerCase(), unit_amount: full,
         product_data: { name: L(site, `Mordsteam Friends 001 „${C.TITLE}“ – ${vName} für ${n} Personen`, `Mordsteam Friends 001 “Last Round at the Chalet” – ${vName} for ${n} people`),
-          description: L(site, `Countdown ${lim} Min.${plus ? " mit KI-Verhörraum" : ""}, gespielt ${modeTxt} · spielbar bis ${validUntil} · Spielsprache ${GL}`, `${lim}-minute countdown${plus ? " with AI interrogation room" : ""}, played ${modeTxt} · playable until ${validUntil} · game language ${GL}`) } } }],
+          description: L(site, `Countdown ${lim} Min.${plus ? " mit KI-Verhörraum" : ""}, gespielt ${modeTxt} · spielbar bis ${hd(validUntil, "de")} · Spielsprache ${GL}`, `${lim}-minute countdown${plus ? " with AI interrogation room" : ""}, played ${modeTxt} · playable until ${hd(validUntil, "en")} · game language ${GL}`) } } }],
       metadata: { order_id: id }, payment_intent_data: { metadata: { order_id: id } },
       invoice_creation: { enabled: true, invoice_data: {
-        description: L(site, `Mordsteam Friends 001, digitaler ${plus ? "Krimiabend Plus mit KI-Verhörraum" : "Krimiabend"} für ${n} Personen, einmal spielbar bis ${validUntil}.`, `Mordsteam Friends 001, digital ${plus ? "Mystery Night Plus with AI interrogation room" : "mystery night"} for ${n} people, playable once until ${validUntil}.`),
+        description: L(site, `Mordsteam Friends 001, digitaler ${plus ? "Krimiabend Plus mit KI-Verhörraum" : "Krimiabend"} für ${n} Personen, einmal spielbar bis ${hd(validUntil, "de")}.`, `Mordsteam Friends 001, digital ${plus ? "Mystery Night Plus with AI interrogation room" : "mystery night"} for ${n} people, playable once until ${hd(validUntil, "en")}.`),
         footer: invoiceFooter(contact.tax_regime, site),
         metadata: { order_id: id }, ...invoiceFields(env, site, contact) } },
     }, contact));
@@ -703,7 +711,7 @@ async function soloMail(env, o, code, origin) {
 <div style="font-family:Georgia,serif;font-weight:900;font-size:28px;letter-spacing:.5px;margin-bottom:6px"><span style="color:#B3261E">MORDS</span><span style="color:#15171C">TEAM</span></div>
 <h2 style="font-family:Georgia,serif">${T(F.head[0], F.head[1])}</h2>
 <p>${T("Hallo", "Hi")} ${e(c.name)},</p>
-<p>${T(`danke für deine Bestellung von <b>Mordsteam ${F.no} „${F.de}“</b> (Spielsprache ${GL}). Dein Code ist 12 Monate gültig, bis`, `thank you for ordering <b>Mordsteam ${F.no} “${F.en}”</b> (game language ${GL}). Your code is valid for 12 months, until`)} ${validUntil}.</p>
+<p>${T(`danke für deine Bestellung von <b>Mordsteam ${F.no} „${F.de}“</b> (Spielsprache ${GL}). Dein Code ist 12 Monate gültig, bis`, `thank you for ordering <b>Mordsteam ${F.no} “${F.en}”</b> (game language ${GL}). Your code is valid for 12 months, until`)} ${hd(validUntil, site)}.</p>
 <p style="margin:18px 0"><span style="font-size:13px;color:#5A5D66">${T("Dein Solo-Code", "Your Solo code")}</span><br><b style="font-family:monospace;font-size:28px;letter-spacing:4px">${code}</b></p>
 <p style="margin:22px 0"><a href="${link}" style="background:#B3261E;color:#fff;text-decoration:none;padding:13px 22px;border-radius:6px;font-weight:bold;display:inline-block">${T("Fall öffnen", "Open the case")}</a></p>
 <p>${T(`Die Uhr startet erst, wenn du die Akte öffnest – dann hast du ${F.min} Minuten, ${F.goal[0]}. Pausieren geht nicht: Ab dann läuft die Uhr durch, auch wenn du das Fenster schließt. Nimm dir die Zeit also am Stück.${F.plus ? " Im Verhörraum befragst du die Verdächtigen selbst – sie werden von einer KI gespielt." : ""} Als Geschenk? Einfach Code oder Link weitergeben, den Namen gibt ein, wer spielt.`, `The clock only starts when you open the case file – then you have ${F.min} minutes ${F.goal[1]}. There is no pause: from then on the clock keeps running, even if you close the window. So take the time in one go.${F.plus ? " In the interrogation room you question the suspects yourself – they are played by an AI." : ""} A gift? Just pass on the code or link; the name is entered by whoever plays.`)}</p>
@@ -730,15 +738,15 @@ async function friendsMail(env, o, g, origin) {
   const orgLink = `${origin}/spiel/friends.html?o=${g.org_token}`, invLink = `${origin}/spiel/friends.html?e=${g.invite}`;
   const validUntil = addDays(viennaDate(o.created_at), 365);
   const GL = g.lang === "en" ? T("Englisch", "English") : T("Deutsch", "German");
-  const gd = JSON.parse(g.data), n = gd.players.length, plus = !!gd.plus, lim = plus ? 70 : 45;
+  const gd = JSON.parse(g.data), n = gd.players.length, plus = !!gd.plus, FC = FRIENDS_CASES["friends-001"], lim = plus ? FC.LIMIT_MIN_PLUS : FC.LIMIT_MIN;   // Go-live-Test 5 (H2): Zeit aus der Falldatei
   const vName = plus ? T("Krimiabend Plus mit KI-Verhörraum", "Mystery Night Plus with AI interrogation room") : T("Krimiabend", "Mystery Night");
   const modeTxt = g.mode === "live" ? T("gleichzeitig – du startest den Fall für alle", "all at once – you start the case for everyone") : T(`über ${g.window_days} Tage – jeder spielt, wann er Zeit hat`, `over ${g.window_days} days – everyone plays when they have time`);
   const btn = (href, label, dark) => `<a href="${href}" style="background:${dark ? "#15171C" : "#B3261E"};color:#fff;text-decoration:none;padding:13px 22px;border-radius:6px;font-weight:bold;display:inline-block;margin:4px 0">${label}</a>`;
   const html = `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.55;color:#15171C;max-width:560px">
 <div style="font-family:Georgia,serif;font-weight:900;font-size:28px;letter-spacing:.5px;margin-bottom:6px"><span style="color:#B3261E">MORDS</span><span style="color:#15171C">TEAM</span></div>
-<h2 style="font-family:Georgia,serif">${T("Die Hütte wartet.", "The hut is waiting.")}</h2>
+<h2 style="font-family:Georgia,serif">${T("Die Hütte wartet.", "The chalet is waiting.")}</h2>
 <p>${T("Hallo", "Hi")} ${e(c.name)},</p>
-<p>${T(`danke für deine Bestellung von <b>Mordsteam Friends 001 „Letzte Runde auf der Hütte“ – ${vName}</b> für ${n} Personen (Spielsprache ${GL}). Gespielt wird ${modeTxt}. Eure Runde ist 12 Monate spielbar, bis ${validUntil}, und lässt sich einmal starten.`, `thank you for ordering <b>Mordsteam Friends 001 “Last Round at the Chalet” – ${vName}</b> (game language ${GL}) for ${n} people. You play ${modeTxt}. Your round is playable for 12 months, until ${validUntil}, and can be started once.`)}</p>
+<p>${T(`danke für deine Bestellung von <b>Mordsteam Friends 001 „Letzte Runde auf der Hütte“ – ${vName}</b> für ${n} Personen (Spielsprache ${GL}). Gespielt wird ${modeTxt}. Eure Runde ist 12 Monate spielbar, bis ${hd(validUntil, "de")}, und lässt sich einmal starten.`, `thank you for ordering <b>Mordsteam Friends 001 “Last Round at the Chalet” – ${vName}</b> (game language ${GL}) for ${n} people. You play ${modeTxt}. Your round is playable for 12 months, until ${hd(validUntil, "en")}, and can be started once.`)}</p>
 <p><b>1. ${T("Einladungslink an alle schicken", "Send the invitation link to everyone")}</b><br>${T("Jeder öffnet ihn und tippt auf seinen Namen – auch du, wenn du mitspielst.", "Everyone opens it and taps their name – you too, if you're playing.")}<br><a href="${invLink}">${e(invLink)}</a></p>
 <p><b>2. ${T("Deine Organisator-Seite (nicht weitergeben)", "Your organiser page (don't pass on)")}</b><br>${T("Dort siehst du, wer schon da ist, und startest den Fall.", "There you can see who has joined and start the case.")}</p>
 <p>${btn(orgLink, T("Organisator-Seite öffnen", "Open organiser page"), true)}</p>

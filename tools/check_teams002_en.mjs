@@ -38,6 +38,9 @@ for (const land of COUNTRY_ORDER) for (let tier = 0; tier < 3; tier++) for (let 
     const m = txt.match(GERMAN);
     if (m) fail(`${land}/${tier} ${id}: deutsches Wort „${m[0]}“ in: …${txt.slice(Math.max(0, m.index - 50), m.index + 40)}…`);
     if (/\b[Ii]n the (rehearsal stage|fire station yard|sports ground|village green)\b/.test(h)) fail(`${land}/${tier} ${id}: „in the …“ statt „at the …“`);
+    if (land === "US") { const b = txt.match(/\b(fêtes?|Fête|village green|marquees?|[Ll]andlord|rota|token till|[Aa]nnual [Gg]eneral [Mm]eeting|Programme|[Rr]umour\w*|[Oo]rganiser\w*|[Nn]eighbour\w*|[Tt]heatre|Fire Brigade|Maxl|Seppi|Schorsch)\b/);
+      if (b) fail(`US/${tier} ${id}: britisch/österreichisch „${b[0]}“`); }
+    if (["GB", "IE", "US", "CA", "AU", "NZ"].includes(land) && /\b(Poldi|Hansi|Maxl|Bertl|Schorsch|Lumpi|Rudi|Seppi|Fritzi)\b/.test(h)) fail(`${land}/${tier} ${id}: österreichisches Maskottchen`);
   }
   // gleiche Lösung wie die deutsche Logik, Ehrenobmann englisch
   const sol = F.solution(sec, cast);
@@ -46,13 +49,21 @@ for (const land of COUNTRY_ORDER) for (let tier = 0; tier < 3; tier++) for (let 
     const x = { ...cast, ...sec, LANG: "en" };
     const sys = E.ARIA.system(x);
     if (!sys.includes(String(sec.ZELT)) || GERMAN.test(sys.replace(kill, " ").replace(/\[PERSON\d\]/g, ""))) fail(`${land}: Ehrenobmann-Prompt nicht sauber englisch`);
-    const fb = E.ARIA.fallback(x, "What did they ask you about last week?");
-    if (!fb.includes(String(sec.ZELT))) fail(`${land}: Notfall-Antwort ohne Code-Jahr`);
+    // Go-live-Test 5 (M4): step by step – without a name only the pointer to the culprit, with the name the code year
+    { const tn = String(x[`S${x.T_IDX + 1}`] || ""), last = tn.split(" ").pop();
+      const fb0 = E.ARIA.fallback(x, "What did they ask you about last week?");
+      if (fb0.includes(String(sec.ZELT)) || !fb0.includes(tn)) fail(`${land}: Notfall-Antwort ohne Namen: kein Fingerzeig oder Code-Jahr`);
+      if (!E.ARIA.fallback(x, `What did ${last} ask you about last week?`).includes(String(sec.ZELT))) fail(`${land}: Notfall-Antwort ohne Code-Jahr`);
+      for (const q of ["Hi, the police asked us to call you", "Bonjour", "Where is the cash box?"]) if (/\b(19|20)\d\d\b/.test(E.ARIA.fallback(x, q))) fail(`${land}: Notfall-Antwort verrät Jahr bei “${q}”`); }
     if (E.ARIA.fallback(x, "When was the first fête with a marquee?").includes(String(sec.ZELT))) fail(`${land}: Notfall-Antwort verrät das Code-Jahr bei reiner Zelt-Frage`);
     if (/\bover eighty\b/.test(sys)) fail(`${land}: Alter im Faktenblatt`);
     if (!E.SONDER.options()[F.zielOf(sec)]) fail("Sonderauftrag ungültig");
   }
   rounds++;
 }
+// Go-live-Test 5 (M5): Maskottchen-Listen gleich lang und gleiche Reihenfolge wie im deutschen Fall; US-Runden ohne britische Fest-Wörter
+{ const src = (await import("fs")).readFileSync(new URL("../lib/cases/fall-002.js", import.meta.url), "utf8");
+  const de = JSON.parse(src.match(/const MASKOTTCHEN = (\[[^\]]+\])/)[1]); const { MASK_DE } = await import("../lib/cases/fall-002-en.js");
+  if (JSON.stringify(de) !== JSON.stringify(MASK_DE)) fail("Maskottchen-Liste EN weicht von DE ab"); }
 console.log(err ? `${err} Fehler` : `${rounds} englische Runden (${COUNTRY_ORDER.length} Länder × 3 Pakete × 3, Vereinsarten gemischt): alles ok`);
 process.exit(err ? 1 : 0);

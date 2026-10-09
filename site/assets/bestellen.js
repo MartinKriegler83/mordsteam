@@ -95,6 +95,8 @@
     const tip = $("#teamtip");
     if (!n || n < 1) return;
     if (n < 3) { tip.textContent = T("Teams ist ab 3 Personen gedacht – allein oder zu zweit passt Mordsteam Solo.", "Teams is meant for 3 or more – on your own or as a pair, Mordsteam Solo fits."); return; }
+    // Go-live-Test 5 (N7g): über 90 Personen (15 Teams à 6) keine Aufteilung vorschlagen
+    if (n > 90) { $("#teams").value = "15"; tip.textContent = T("Für so große Gruppen bitte kurz melden – office@mordsteam.com. Wir finden eine Lösung.", "For groups this large, please get in touch – office@mordsteam.com. We'll find a solution."); return; }
     const t = teamPlan(n);
     $("#teams").value = String(t);
     const base = Math.floor(n / t), extra = n % t;
@@ -223,8 +225,12 @@
     el.classList.add("bad");
     const p = document.createElement("p");
     p.className = "fielderr"; p.setAttribute("role", "alert"); p.textContent = msg;
+    // Go-live-Test 5 (M15): Meldung IM Feld unter der Eingabe (zweispaltige Zeilen bleiben ruhig); Personenzeile: in voller Breite darunter
+    const row = el.closest(".fr-person, .prow"), fld = el.closest(".field");
     if (el.type === "radio") (el.closest(".check") || el).parentElement.appendChild(p);
-    else (el.closest(".field") || el.closest(".check") || el).insertAdjacentElement("afterend", p);
+    else if (row) row.insertAdjacentElement("afterend", p);
+    else if (fld) fld.appendChild(p);
+    else (el.closest(".check") || el).insertAdjacentElement("afterend", p);
     el.scrollIntoView({ behavior: "smooth", block: "center" });
     setTimeout(() => el.focus({ preventScroll: true }), 300);
   }
@@ -296,11 +302,11 @@
     try {
       const r = await fetch("/api/shop/bestellung", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...body, nl: new URLSearchParams(location.search).get("nl") || "", src: window.msSrc || "" }) });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok || !d.redirect) throw new Error(d.error || T("Die Bestellung konnte nicht angelegt werden.", "The order could not be created."));
+      if (!r.ok || !d.redirect) throw Object.assign(new Error(d.error || T("Die Bestellung konnte nicht angelegt werden.", "The order could not be created.")), { field: d.field });
       save();
       location.href = d.redirect;
     } catch (e) {
-      showErr(e.message);
+      showErr(e.message, e.field && form.elements[e.field]);
       btn.disabled = false; btn.textContent = T("Zahlungspflichtig bestellen", "Order and pay");
     }
   }

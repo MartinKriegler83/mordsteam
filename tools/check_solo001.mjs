@@ -16,6 +16,8 @@ for (let v = 0; v < C.TIME_SHIFTS.length; v++) for (const c of C.CULPRITS) {
   const kofler = all.split("Anton Kofler, Dienstabteil 1")[1] || "";
   const kStmt = kofler.slice(0, kofler.indexOf("</p>", kofler.indexOf("<p class=\"a\">")));
   if (c === "sofia" && /halb zwei|01:3/.test(kStmt)) fail(`${tag} Kofler bestätigt Sofias falsche Zeit`);
+  // Go-live-Test 5 (M8): Koflers Aussage (Stufe 1) ohne Uhrzeit – die Zeiten stehen erst in Notizbuch und Funk (Stufe 2)
+  if (/\d\d:\d\d|\b(eins|zwei|halb)\b/.test(kStmt.replace(/<[^>]+>/g, ""))) fail(`${tag} Kofler nennt in der Aussage eine Uhrzeit`);
   if (!C.SPOTS[sol.versteck]) fail(`${tag} Versteck unbekannt`);
   const r = C.resolution(c, v);
   if (!/Blister/.test(r.text)) fail(`${tag} Blister in der Auflösung fehlt`);

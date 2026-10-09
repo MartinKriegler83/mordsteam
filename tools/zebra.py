@@ -50,6 +50,8 @@ def tag_prices(html):
 def finish(html, lang):
     if lang == "en":
         html = tag_prices(html)
+        # FAQ-Frage mit Preis: als ein Textblock, sonst zieht das Flex-Layout von summary sie auseinander (Go-live-Test 5, N7h)
+        html = re.sub(r"<summary>((?:(?!</summary>|<span>).)*?data-eur(?:(?!</summary>).)*?)</summary>", r"<summary><span>\1</span></summary>", html)
         if "/assets/currency.js" not in html:
             html = html.replace("</head>", '<script src="/assets/currency.js"></script>\n</head>', 1)
     return zebra(add_sig(html, lang))

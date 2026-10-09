@@ -43,5 +43,11 @@ for (let v = 0; v < C.TIME_SHIFTS.length; v++) for (const c of C.CULPRITS) {
   for (const d of D) (lens[d.id] ||= new Set()).add((d.html.match(/<tr>/g) || []).length + "/" + (d.html.match(/<p/g) || []).length);
   if (!C.verhoerSystem(c, v, c).includes(C.LIES[c].say)) fail(`${tag} Prompt`);
 }
+// Go-live-Test 5 (H4): Toni sucht nach 23:00 und meldet „ja, nichts“ – jede Sperre der Festleitung beginnt spätestens 22:20 und ist um 23:00 vorbei
+for (const [k, [t, txt]] of Object.entries(C.POSTEN)) {
+  if (hm(t) > hm("22:20")) fail(`Festleitung ${k}: beginnt erst ${t}`);
+  for (const m of txt.matchAll(/\b(\d\d):(\d\d)\b/g)) if (hm(m[0]) > hm("23:00")) fail(`Festleitung ${k}: ${m[0]} nach 23:00`);
+  if (/kein Stroh mehr|plombiert|zugeklebt/i.test(txt)) fail(`Festleitung ${k}: Stelle danach nicht durchsuchbar`);
+}
 for (const [id, s] of Object.entries(lens)) if (s.size !== 1) fail(`Länge ${id}: ${[...s]}`);
 console.log(err ? `${err} Fehler` : `${n} Kombinationen: alles eindeutig und gleich lang`);

@@ -105,7 +105,7 @@ for (let i = 0; i < 1200; i++) {
   if (tier >= 2) {
     if (new Set([sec.GRUENDUNG, sec.WIESE, sec.ZELT]).size !== 3 || sec.ZELT <= sec.WIESE) fail("Chronik-Jahre");
     if (strip(v.CHRONIK_ROWS).includes(String(sec.ZELT))) fail("Code-Jahr steht in der Chronik");
-    const fc = [...v.FESTCHRONIK.matchAll(/<tr><td>(\d{4})<\/td><td>([\d.,]+)<\/td><td>([^<]+)<\/td><\/tr>/g)].map((m) => ({ y: Number(m[1]), r: Number(m[3].replace(/[^0-9]/g, "")) / Number(m[2].replace(/[^0-9]/g, "")) }));
+    const fc = [...v.FESTCHRONIK.matchAll(/<tr><td>(\d{4})<\/td><td>([\d.,’]+)<\/td><td>([^<]+)<\/td><\/tr>/g)].map((m) => ({ y: Number(m[1]), r: Number(m[3].replace(/[^0-9]/g, "")) / Number(m[2].replace(/[^0-9]/g, "")) }));
     const f = { EUR: 1 }; void f;
     const pre = fc.filter((x) => x.y < sec.START).map((x) => x.r), post = fc.filter((x) => x.y >= sec.START).map((x) => x.r);
     if (!pre.length || !post.length || Math.min(...pre) <= Math.max(...post)) fail(`Festchronik zeigt den Start nicht klar (${sec.START})`);
@@ -118,8 +118,12 @@ for (let i = 0; i < 1200; i++) {
       const dropRel = (avg(pre) - avg(post)) / avg(pre);
       if (dropRel < 0.04 || dropRel > 0.11) fail(`Festchronik: Rückgang pro Kopf ${Math.round(dropRel * 100)} % statt ca. 1–2 € von ~19,5 €`); }
     { const o = F.SONDER.options(); if (!o[F.zielOf(sec)] || new Set(o.map((x) => x[0])).size !== o.length) fail("Sonderauftrag ungültig"); }
-    const fb = F.ARIA.fallback({ ...cast, ...sec }, "Wonach hat sich jemand bei dir erkundigt?");
-    if (!fb.includes(String(sec.ZELT))) fail("Notfall-Antwort nennt das Code-Jahr nicht");
+    // Go-live-Test 5 (M4): stufenweise – ohne Namen nur der Fingerzeig auf den Täter, mit Namen das Code-Jahr
+    { const X = { ...cast, ...sec }, tn = String(X[`S${X.T_IDX + 1}`] || ""), last = tn.split(" ").pop();
+      const fb0 = F.ARIA.fallback(X, "Wonach hat sich jemand bei dir erkundigt?");
+      if (fb0.includes(String(sec.ZELT)) || !fb0.includes(tn)) fail("Notfall-Antwort ohne Namen: kein Fingerzeig oder verrät Code-Jahr");
+      if (!F.ARIA.fallback(X, `Wonach hat sich ${last} bei dir erkundigt?`).includes(String(sec.ZELT))) fail(`Notfall-Antwort nennt das Code-Jahr nicht (${tn})`);
+      for (const q of ["Hallo, kurzer Anruf von der Polizei", "Bonjour!", "Wo ist die Festkassa?"]) if (/\b(19|20)\d\d\b/.test(F.ARIA.fallback(X, q))) fail(`Notfall-Antwort verrät Jahr bei „${q}“`); }
     // Punkt 17: reine Zelt-Frage verrät das Code-Jahr nicht
     if (F.ARIA.fallback({ ...cast, ...sec }, "Wann war das erste Fest mit Zelt?").includes(String(sec.ZELT))) fail("Notfall-Antwort verrät das Code-Jahr bei reiner Zelt-Frage");
   }

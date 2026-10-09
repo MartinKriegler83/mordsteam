@@ -29,3 +29,11 @@ else
   echo "Modus: VOLLE SEITE"
   cp -r site/. dist/
 fi
+# Eigene UID ins Impressum (Go-live-Test 5, M23): aus der Cloudflare-Text-Variable UID_NR, nur im Format ATU + 8 Ziffern.
+# Ohne Variable bleiben die unsichtbaren Platzhalter <!--UID_DE--> / <!--UID_EN--> stehen.
+if echo "$UID_NR" | grep -Eq '^ATU[0-9]{8}$'; then
+  for f in $(grep -rl -e '<!--UID_DE-->' -e '<!--UID_EN-->' dist --include='*.html'); do
+    sed -i "s|<!--UID_DE-->|<br>UID-Nummer: $UID_NR|; s|<!--UID_EN-->|<br>VAT ID: $UID_NR|" "$f"
+  done
+  echo "UID im Impressum: gesetzt"
+fi

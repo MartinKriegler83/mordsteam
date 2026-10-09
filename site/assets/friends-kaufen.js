@@ -18,8 +18,10 @@
   const draftKey = "ms_friends_draft";
   function rows() {
     const n = Number(form.n.value), keep = [...people.querySelectorAll(".fr-person")].map((r) => ({ name: r.querySelector("input").value, quirk: r.querySelector("select").value }));
-    let saved = []; try { saved = JSON.parse(localStorage.getItem(draftKey) || "[]"); } catch {}
-    const src = keep.length ? keep : saved;
+    const D = draft(), saved = D.people;
+    // Go-live-Test 5 (M20): beim ersten Aufbau die gespeicherte Personenzahl wiederherstellen
+    if (!keep.length && D.n && [...form.n.options].some((o) => Number(o.value) === D.n) && D.n !== n) { form.n.value = String(D.n); return rows(); }
+    const src = keep.length ? keep.concat(saved.slice(keep.length)) : saved;
     people.innerHTML = Array.from({ length: n }, (_, i) => {
       const v = src[i] || {};
       return `<div class="fr-person"><span class="fr-nr">${i + 1}</span>
@@ -28,7 +30,10 @@
     }).join("");
     paint();
   }
-  function save() { try { localStorage.setItem(draftKey, JSON.stringify([...people.querySelectorAll(".fr-person")].map((r) => ({ name: r.querySelector("input").value, quirk: r.querySelector("select").value })))); } catch {} }
+  // Entwurf: { n, people } – Personen über der aktuellen Zahl bleiben erhalten, falls man die Zahl wieder erhöht (früher nur eine Liste)
+  function draft() { let d = null; try { d = JSON.parse(localStorage.getItem(draftKey) || "null"); } catch {} return Array.isArray(d) ? { n: d.length, people: d } : d && Array.isArray(d.people) ? d : { n: 0, people: [] }; }
+  function save() { try { const vis = [...people.querySelectorAll(".fr-person")].map((r) => ({ name: r.querySelector("input").value, quirk: r.querySelector("select").value }));
+    localStorage.setItem(draftKey, JSON.stringify({ n: Number(form.n.value), people: vis.concat(draft().people.slice(vis.length)) })); } catch {} }
   function paint() {
     const n = Number(form.n.value), full = priceOf(n);
     const eb = M.earlybird && form.earlybird.checked, pay = eb ? Math.round(full * (100 - M.earlybird.prozent) / 100) : full;
@@ -41,7 +46,7 @@
       : T(`Mordsteam Friends 001 „Letzte Runde auf der Hütte“ · Krimiabend · ${n} Personen · Countdown 50 Min. · ${sl}`, `Mordsteam Friends 001 “Last Round at the Chalet” · Mystery Night · ${n} people · 50-minute countdown · ${sl}`);
     document.getElementById("sumprice").textContent = money(full);
     document.getElementById("ebrow").hidden = !eb;
-    if (eb) document.getElementById("ebprice").textContent = money(pay - full);
+    if (eb) document.getElementById("ebprice").textContent = "−" + money(full - pay);
     document.getElementById("voucherhint").hidden = !!eb;
     btn.innerHTML = T("Zahlungspflichtig bestellen – ", "Order and pay – ") + money(pay).replace(" ", "&nbsp;");
   }
@@ -63,8 +68,12 @@
     el.classList.add("bad");
     const p = document.createElement("p");
     p.className = "fielderr"; p.setAttribute("role", "alert"); p.textContent = msg;
+    // Go-live-Test 5 (M15): Meldung IM Feld unter der Eingabe (zweispaltige Zeilen bleiben ruhig); Personenzeile: in voller Breite darunter
+    const row = el.closest(".fr-person, .prow"), fld = el.closest(".field");
     if (el.type === "radio") (el.closest(".check") || el).parentElement.appendChild(p);
-    else (el.closest(".field") || el.closest(".check") || el).insertAdjacentElement("afterend", p);
+    else if (row) row.insertAdjacentElement("afterend", p);
+    else if (fld) fld.appendChild(p);
+    else (el.closest(".check") || el).insertAdjacentElement("afterend", p);
     el.scrollIntoView({ behavior: "smooth", block: "center" });
     setTimeout(() => el.focus({ preventScroll: true }), 300);
   }
@@ -79,7 +88,8 @@
     if (emptyName) return fail(T("Bitte für jede Person einen Namen eintragen.", "Please enter a name for every person."), emptyName.el.querySelector("input"));
     if (emptyQ) return fail(T("Bitte für jede Person eine Eigenheit auswählen.", "Please choose a quirk for every person."), emptyQ.el.querySelector("select"));
     const low = list.map((p) => p.name.toLowerCase());
-    if (new Set(low).size !== low.length) return fail(T("Zwei Personen haben denselben Namen. Bitte unterscheidbar machen, z. B. mit Initial.", "Two people have the same name. Please make them distinguishable, e.g. with an initial."));
+    const dup = low.findIndex((x, i) => low.indexOf(x) !== i);
+    if (dup >= 0) return fail(T("Zwei Personen haben denselben Namen. Bitte unterscheidbar machen, z. B. mit Initial.", "Two people have the same name. Please make them distinguishable, e.g. with an initial."), list[dup].el.querySelector("input"));
     if (!form.zustimmung.checked) return fail(T("Bitte bestätigen, dass alle Genannten einverstanden sind.", "Please confirm that everyone named has agreed."), form.zustimmung);
     const contact = { name: form.c_name.value.trim(), email: form.c_email.value.trim(), kunde: form.kunde.value, ...(window.MSBill ? MSBill.read() : {}) };
     const consent = { zustimmung: true, sofort: form.sofort.checked, agb: form.agb.checked, ab18: form.ab18.checked, no_news: !!(form.no_news && form.no_news.checked) };
@@ -94,9 +104,9 @@
     try {
       const r = await fetch("/api/shop/friends", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: EN ? "en" : "de", lang: form.lang.value === "en" ? "en" : "de", variant: isPlus() ? "plus" : "basis", players: list.map((p) => ({ name: p.name, quirk: p.quirk })), mode: form.mode.value, days: Number(form.days.value), earlybird: !!(M.earlybird && form.earlybird.checked), contact, consent, nl: new URLSearchParams(location.search).get("nl") || "", src: window.msSrc || "" }) });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok || !d.redirect) throw new Error(d.error || T("Das hat nicht geklappt.", "That didn't work."));
+      if (!r.ok || !d.redirect) throw Object.assign(new Error(d.error || T("Das hat nicht geklappt.", "That didn't work.")), { field: d.field });
       try { localStorage.removeItem(draftKey); } catch {}
       location.href = d.redirect;
-    } catch (e) { fail(e.message); btn.disabled = !open; btn.innerHTML = label; }
+    } catch (e) { fail(e.message, e.field && form.elements[e.field]); btn.disabled = !open; btn.innerHTML = label; }
   });
 })();

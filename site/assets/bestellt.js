@@ -52,7 +52,7 @@
     var inv=location.origin+"/spiel/friends.html?e="+d.invite, org=location.origin+"/spiel/friends.html?o="+d.org_token;
     var mode=d.mode==="week"?T("über "+d.days+" Tage – jeder spielt, wann er Zeit hat","over "+d.days+" days – everyone plays when they have time"):T("gleichzeitig – du startest den Fall für alle","all at once – you start the case for everyone");
     show('<div class="eyebrow">'+T("Bezahlt · Mordsteam Friends","Paid · Mordsteam Friends")+'</div>'+
-      '<h1>'+T("Die Hütte wartet.","The hut is waiting.")+'</h1>'+
+      '<h1>'+T("Die Hütte wartet.","The chalet is waiting.")+'</h1>'+
       '<p class="lead">'+T('„Letzte Runde auf der Hütte“'+(d.plus?' – Krimiabend Plus mit KI-Verhörraum –':'')+' für '+d.teams+' Personen, gespielt '+mode+'. 12 Monate spielbar, einmal startbar. Wir haben dir beide Links auch per E-Mail geschickt.','“Last Round at the Chalet”'+(d.plus?' – Mystery Night Plus with AI interrogation room –':'')+' (game language '+(d.lang==="en"?"English":"German")+') for '+d.teams+' people, played '+mode+'. Playable for 12 months, can be started once. We have also emailed you both links.')+'</p>'+
       '<div class="codes">'+
       '<div class="codecard"><small>'+T("1 · EINLADUNGSLINK FÜR ALLE","1 · INVITATION LINK FOR EVERYONE")+'</small><p style="word-break:break-all"><a href="'+esc(inv)+'">'+esc(inv.replace(/^https?:\/\//,""))+'</a></p><p>'+T("Schick ihn in eure Gruppe. Jeder tippt auf seinen Namen – auch du, wenn du mitspielst.","Send it to your group. Everyone taps their name – you too, if you're playing.")+'</p><p><button type="button" class="btn btn-ink" id="cpinv">'+T("Link kopieren","Copy link")+'</button></p></div>'+

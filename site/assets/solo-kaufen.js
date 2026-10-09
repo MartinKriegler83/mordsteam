@@ -38,8 +38,12 @@
     el.classList.add("bad");
     const p = document.createElement("p");
     p.className = "fielderr"; p.setAttribute("role", "alert"); p.textContent = msg;
+    // Go-live-Test 5 (M15): Meldung IM Feld unter der Eingabe (zweispaltige Zeilen bleiben ruhig); Personenzeile: in voller Breite darunter
+    const row = el.closest(".fr-person, .prow"), fld = el.closest(".field");
     if (el.type === "radio") (el.closest(".check") || el).parentElement.appendChild(p);
-    else (el.closest(".field") || el.closest(".check") || el).insertAdjacentElement("afterend", p);
+    else if (row) row.insertAdjacentElement("afterend", p);
+    else if (fld) fld.appendChild(p);
+    else (el.closest(".check") || el).insertAdjacentElement("afterend", p);
     el.scrollIntoView({ behavior: "smooth", block: "center" });
     setTimeout(() => el.focus({ preventScroll: true }), 300);
   }
@@ -63,8 +67,8 @@
     try {
       const r = await fetch("/api/shop/solo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: EN ? "en" : "de", lang: form.lang.value === "en" ? "en" : "de", fall, contact, consent, nl: new URLSearchParams(location.search).get("nl") || "", src: window.msSrc || "" }) });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok || !d.redirect) throw new Error(d.error || T("Das hat nicht geklappt.", "That didn't work."));
+      if (!r.ok || !d.redirect) throw Object.assign(new Error(d.error || T("Das hat nicht geklappt.", "That didn't work.")), { field: d.field });
       location.href = d.redirect;
-    } catch (e) { fail(e.message); btn.disabled = !open; btn.textContent = label; }
+    } catch (e) { fail(e.message, e.field && form.elements[e.field]); btn.disabled = !open; btn.textContent = label; }
   });
 })();

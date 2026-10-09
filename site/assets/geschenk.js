@@ -6,6 +6,8 @@
   const q = new URLSearchParams(location.search);
   const EN = q.get("l") === "en";
   const T = (de, en) => (EN ? en : de);
+  // Go-live-Test 5 (M17): Euro-Bonus auf Englisch in allen drei Kassenwährungen (wie die Stripe-Gutscheinvorlage)
+  const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ? `€${m[1]} / £${m[1]} / $${Math.round(m[1] * 1.15)}` : l; };
   document.documentElement.lang = EN ? "en" : "de";
   document.title = T("Geschenkkarte – Mordsteam", "Gift card – Mordsteam");
   const root = document.getElementById("gk-root"), btn = document.getElementById("gk-print");
@@ -24,7 +26,7 @@
   const load = gc
     ? fetch(`/api/solo/geschenk?c=${encodeURIComponent(gc)}`).then((r) => r.json()).then((g) => g.error ? { error: T("Diese Geschenkkarte gibt es nicht. Bitte den Link prüfen.", "This gift card does not exist. Please check the link.") } : ({
         status: "fulfilled", produkt: "solo", solo_code: g.code, solo_title: g.title, solo_title_en: g.title_en, solo_min: g.min, gift: true,
-        event_date: new Date(g.created_at).toISOString().slice(0, 10), promo: g.promo, promo_label: g.promo_label, promo_until: g.promo_until }))
+        event_date: new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Vienna" }).format(new Date(g.created_at)), promo: g.promo, promo_label: g.promo_label, promo_until: g.promo_until }))
     : fetch(`/api/shop/status?o=${encodeURIComponent(o)}&k=${encodeURIComponent(k)}&l=${EN ? "en" : "de"}`).then((r) => r.json());
   load.then((d) => {
     if (d.error) return msg(d.error);
@@ -95,7 +97,7 @@
           <div class="gk-qrbox"><a class="gk-qr" id="gk-qr" href="${esc(card.link)}" aria-label="${esc(T("QR-Code zum Spiel – antippen öffnet den Link", "QR code for the game – tap to open the link"))}"></a><span>${esc(T("Scannen oder antippen", "Scan or tap"))}</span></div>
         </div>
         <ol class="gk-steps">${card.steps.map((x) => `<li>${x}</li>`).join("")}</ol>
-        ${d.promo ? `<div class="gk-promo"><small>${esc(T("Beweisstück 2 · Bonus für euer Team", "Exhibit 2 · Bonus for your team"))}</small><b>${esc(d.promo_label)}</b><span>${esc(T("Rabatt auf euer erstes Mordsteam-Teams-Event, das Krimi-Teamevent für Firmen und Vereine. Code im Bezahlschritt eingeben:", "off your first Mordsteam Teams event, the murder mystery team event for companies and clubs. Enter the code at checkout:"))} <span class="mono">${esc(d.promo)}</span> · ${esc(T("gültig bis", "valid until"))} ${esc(dmy(d.promo_until))} · mordsteam.com/teams</span></div>` : ""}
+        ${d.promo ? `<div class="gk-promo"><small>${esc(T("Beweisstück 2 · Bonus für euer Team", "Exhibit 2 · Bonus for your team"))}</small><b>${esc(T(d.promo_label, enAmt(d.promo_label)))}</b><span>${esc(T("Rabatt auf euer erstes Mordsteam-Teams-Event, das Krimi-Teamevent für Firmen und Vereine. Code im Bezahlschritt eingeben:", "off your first Mordsteam Teams event, the murder mystery team event for companies and clubs. Enter the code at checkout:"))} <span class="mono">${esc(d.promo)}</span> · ${esc(T("gültig bis", "valid until"))} ${esc(dmy(d.promo_until))} · mordsteam.com/teams</span></div>` : ""}
       </div>
       <footer class="gk-foot"><span>${until ? `${esc(T("Gültig bis", "Valid until"))} <b>${esc(until)}</b>` : ""}</span><span><b>mordsteam.com</b></span></footer>
     </article></div>`;

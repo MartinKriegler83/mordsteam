@@ -37,4 +37,8 @@ for (let i = 0; i < 500; i++) for (const premium of [false, true]) {
     if (!PRICE_TABLE[m[1]]) fail(`Preis ${m[1]} Cent auf en/${f} fehlt in lib/prices.js`);
   for (const c of [8900, 11900, 14900, 2900, 500, 4900, 800, 890, 1590]) for (const cur of ["GBP", "USD"]) { try { convPrice(c, cur); } catch (e) { fail(e.message); } }
 }
+// Go-live-Test 5 (H3): Scheinrechnungen aufsteigend und knapp UNTER der Freigabegrenze, in jedem Land
+{ const { scaled } = await import("../lib/countries.js");
+  for (const c of COUNTRY_ORDER) { const r = [4850, 4920, 4990].map((e) => scaled(c, e)), g = F.freigabeOf(c);
+    if (!(r[0] < r[1] && r[1] < r[2] && r[2] < g)) fail(`${c}: Rechnungen ${r.join("/")} nicht aufsteigend unter Freigabegrenze ${g}`); } }
 console.log(err ? `${err} Fehler` : `IBAN in ${COUNTRY_ORDER.length} Ländern, 1000 Runden Zusatzermittlung/Sonderauftrag: alles ok`);

@@ -30,7 +30,7 @@
       <span class="hint">${T("Land der Rechnungsadresse – danach richtet sich die Umsatzsteuer.", "Country of the billing address – this determines the VAT treatment.")}</span></div>
     ${form && form.c_firma ? "" : `<div class="field" id="rfirmafield" hidden><label for="c_rfirma">${T("Firma, Verein oder Organisation (für die Rechnung) *", "Company, club or organisation (for the invoice) *")}</label>
       <input id="c_rfirma" name="c_rfirma" maxlength="120" autocomplete="organization"><span class="hint">${T("Die Rechnungsadresse gebt ihr beim Bezahlen an.", "You enter the billing address when paying.")}</span></div>`}
-    <div class="field" id="uidfield" hidden><label for="c_uid">${T("UID-Nummer", "VAT ID")} <span class="opt">${T("optional", "optional")}</span></label>
+    <div class="field" id="uidfield" hidden><label for="c_uid"><span id="uidlbl">${T("UID-Nummer", "VAT ID")}</span> <span class="opt">${T("optional", "optional")}</span></label>
       <input id="c_uid" name="c_uid" maxlength="24" autocomplete="off" spellcheck="false" placeholder="${T("z. B. DE123456789", "e.g. DE123456789")}">
       <span class="hint" id="uidhint"></span></div>
     <p class="hint" id="billnote" hidden></p>`;
@@ -46,7 +46,8 @@
   const kunde = () => (form && form.kunde ? form.kunde.value : "");
   const SOLO = !!(form && form.id === "solo");
   // „Umsatzsteuerfrei (Kleinunternehmerregelung)“ in der Zusammenfassung stimmt für UK-Privatkunden nicht – dort ist die britische USt enthalten (Go-live-Test 4)
-  const VAT_RE = /Umsatzsteuerfrei \(Kleinunternehmerregelung\)\.|VAT exempt \(small business scheme\)\./;
+  // Go-live-Test 5 (H1): Hinweis folgt der Rechnungsart (Reverse Charge, nicht steuerbar), wie die Rechnungsfußzeile in lib/tax.js
+  const VAT_RE = /Umsatzsteuerfrei \(Kleinunternehmerregelung\)\.|VAT exempt \(small business scheme\)\.|No VAT charged \(Austrian small business scheme\)\./;
   const vatEls = [...document.querySelectorAll(".summary p, .summary .small")].filter((el) => el !== payhint && VAT_RE.test(el.innerHTML)).map((el) => [el, el.innerHTML]);
 
   function paint() {
@@ -57,6 +58,8 @@
     if (b2b && EU.includes(l) && l !== "AT") uidHint.textContent = T("Mit gültiger UID (geprüft über das EU-System VIES) stellen wir ohne österreichische USt aus – Reverse Charge, die Steuer zahlt ihr in eurem Land.", "With a valid VAT ID (checked via the EU VIES system) we invoice without Austrian VAT – reverse charge, you account for VAT in your country.");
     else if (b2b && l === "GB") uidHint.textContent = T("Optional, erscheint auf der Rechnung. Ihr zahlt in Pfund ohne Umsatzsteuer – Reverse Charge, die britische USt meldet ihr selbst.", "Optional, shown on the invoice. You pay in pounds without VAT – reverse charge, you account for UK VAT yourselves.");
     else uidHint.textContent = T("Erscheint auf der Rechnung.", "Shown on the invoice.");
+    // Go-live-Test 5 (N7f): außerhalb der EU (ohne GB) heißt das Feld Steuernummer
+    const lbl = box.querySelector("#uidlbl"); if (lbl) lbl.textContent = l && !EU.includes(l) && l !== "GB" ? T("Steuernummer", "Tax ID") : l === "GB" ? T("VAT-Nummer", "VAT number") : T("UID-Nummer", "VAT ID");
     if (l === "GB" && !b2b) {
       n = uk && uk.on
         ? T("Im Vereinigten Königreich zahlt ihr in Pfund, der Preis enthält die britische Umsatzsteuer. Verkäufer ist dort Link, der Bezahldienst von Stripe; die Rechnung kommt per E-Mail von Link.",
@@ -65,10 +68,23 @@
     }
     note.textContent = n; note.hidden = !n;
     const viaMor = l === "GB" && !b2b && uk && uk.on;
-    vatEls.forEach(([el, html]) => { el.innerHTML = viaMor ? html.replace(VAT_RE, T("Inkl. britischer Umsatzsteuer (Verkauf über Link/Stripe).", "Including UK VAT (sold via Link/Stripe).")) : html; });
+    const vat = vatText(l, b2b);
+    vatEls.forEach(([el, html]) => { el.innerHTML = vat ? html.replace(VAT_RE, vat) : html; });
+    const ph0 = vat ? payhint0.replace(VAT_RE, vat) : payhint0;
     if (payhint) payhint.innerHTML = viaMor
       ? T("Bezahlt wird in Pfund über Link (Stripe), inkl. britischer Umsatzsteuer – Link ist für Privatkunden im Vereinigten Königreich Verkäufer und schickt die Rechnung. Spielcode und Links seht ihr direkt danach.", "You pay in pounds via Link (Stripe), including UK VAT – Link is the seller for private customers in the United Kingdom and sends the invoice. You'll see your code and links right afterwards.")
-      : MSCur_cur() !== "EUR" ? payhint0.replace(/Prices in euros\.|Preise in Euro\./, "") + " " + T(`Bezahlt wird in ${MSCur_cur() === "GBP" ? "Pfund" : "US-Dollar"}.`, `You pay in ${MSCur_cur() === "GBP" ? "pounds" : "US dollars"}.`) : payhint0;
+      : MSCur_cur() !== "EUR" ? ph0.replace(/Prices in euros\.|Preise in Euro\./, "") + " " + T(`Bezahlt wird in ${MSCur_cur() === "GBP" ? "Pfund" : "US-Dollar"}.`, `You pay in ${MSCur_cur() === "GBP" ? "pounds" : "US dollars"}.`) : ph0;
+  }
+  // Steuerhinweis je Rechnungsart; null = Kleinunternehmer (Text bleibt wie im HTML)
+  function vatText(l, b2b) {
+    if (!l || l === "AT") return null;
+    if (l === "GB" && !b2b) return uk && uk.on ? T("Inkl. britischer Umsatzsteuer (Verkauf über Link/Stripe).", "Including UK VAT (sold via Link/Stripe).") : null;
+    if (EU.includes(l)) return b2b && uid.value.trim()
+      ? T("Ohne Umsatzsteuer – Reverse Charge, sofern eure UID gültig ist (wird beim Bestellen geprüft).", "No VAT – reverse charge, provided your VAT ID is valid (checked when you order).")
+      : null;
+    return b2b
+      ? T("Ohne österreichische Umsatzsteuer – nicht im Inland steuerbar, Reverse Charge.", "No Austrian VAT – not taxable in Austria, reverse charge.")
+      : T("Ohne österreichische Umsatzsteuer – Leistungsort in eurem Land.", "No Austrian VAT – place of supply is your country.");
   }
   sel.addEventListener("change", paint);
   uid.addEventListener("input", paint);

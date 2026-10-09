@@ -97,5 +97,11 @@ for (let v = 0; v < DE.TIME_SHIFTS.length; v++) for (const c of DE.CULPRITS) {
   if (R.zeit !== RD.zeit || R.culprit !== RD.culprit) fail(`${tag} Auflösung`);
   residue(`${tag} Auflösung`, R.text + " " + R.summary + " " + R.item);
 }
+// Go-live-Test 5 (H4): Toni sucht nach 23:00 und meldet „ja, nichts“ – jede Sperre der Festleitung beginnt spätestens 22:20 und ist um 23:00 vorbei
+for (const [k, [t, txt]] of Object.entries(ENm.POSTEN)) {
+  if (hm(t) > hm("22:20")) fail(`Festleitung ${k}: beginnt erst ${t}`);
+  for (const m of txt.matchAll(/\b(\d\d):(\d\d)\b/g)) if (hm(m[0]) > hm("23:00")) fail(`Festleitung ${k}: ${m[0]} nach 23:00`);
+  if (/No straw left|sealed|taped shut/i.test(txt)) fail(`Festleitung ${k}: Stelle danach nicht durchsuchbar`);
+}
 for (const [id, s] of Object.entries(lens)) if (s.size !== 1) fail(`Länge ${id}: ${[...s]}`);
 console.log(err ? `${err} Fehler` : `EN: ${n} Kombinationen geprüft – Struktur, Lösungen, Längen und Sprache: alles ok`);
