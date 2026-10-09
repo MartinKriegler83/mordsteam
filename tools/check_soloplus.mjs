@@ -17,7 +17,9 @@ for (let v = 0; v < C.TIME_SHIFTS.length; v++) for (const c of C.CULPRITS) {
   if (cand.length !== 1 || cand[0] !== sol.zeit) fail(`${tag} Frage 2: ${cand}`);
   // Frage 3: auf Fotos in [T-6, T+6] fehlen genau Täter und Lockvogel
   const T = hm(sol.zeit), seen = new Set();
-  for (const r of doc("fotos").matchAll(/<td class="mono">(\d\d:\d\d)<\/td><td>[^<]*<\/td><td>([^<]*)<\/td>/g)) if (Math.abs(hm(r[1]) - T) <= 6) C.CULPRITS.forEach((k) => { if (r[2].includes(C.SUSPECTS[k].name)) seen.add(k); });
+  // Bild (9.10.): Personen an der Kleidungsfarbe im Foto erkennen (wie die Spieler am Merkmal)
+  const COL = { leopold: "#2E3A55", hanna: "#2F4A3A", mirko: "#D8CFBE", clemens: "#6B6E72", sabine: "#4A7BB0" };
+  for (const part of doc("fotos").split('<g data-t="').slice(1)) { const t = part.slice(0, 5); if (Math.abs(hm(t) - T) <= 6) C.CULPRITS.forEach((k) => { if (part.includes(`fill="${COL[k]}"`)) seen.add(k); }); }
   const miss = C.CULPRITS.filter((k) => !seen.has(k)).sort(), want = [c, C.decoyOf(c, v)].sort();
   if (miss.join() !== want.join()) fail(`${tag} ohne Foto: ${miss} statt ${want}`);
   // Photo-Unschuldige: mind. je ein Foto vor und nach T (6 Minuten Weg)
@@ -28,7 +30,10 @@ for (let v = 0; v < C.TIME_SHIFTS.length; v++) for (const c of C.CULPRITS) {
   const all = D.filter((d) => d.stage === 3).map((d) => d.html).join(" ");
   if (!all.includes(KEY[c])) fail(`${tag} Widerlegung fehlt`);
   // Frage 4: am Ort des Täters genau ein nicht durchsuchter Platz
-  const free = [...doc("verstecke").matchAll(/<tr><td>([^<]+)<\/td><td>([^<]+)<\/td><td>(–|ja, nichts)<\/td>/g)].filter((r) => r[3] === "–").map((r) => r[1]);
+  // Bild (9.10.): Legende im Lageplan – durchsucht = durchgestrichen
+  const names = new Set(Object.values(C.SPOTS).map((x) => x.name));
+  const free = [...doc("verstecke").matchAll(/<text( text-decoration="line-through")? [^>]*>([^<]+)<\/text>/g)].filter((r) => !r[1] && names.has(r[2])).map((r) => r[2]);
+  if (free.length !== 4) fail(`${tag} Lageplan: ${free.length} offene Stellen statt 4`);
   if (!free.includes(C.SPOTS[sol.schluessel].name)) fail(`${tag} Versteck durchsucht`);
   // Frage 4 (seit 8.10.2026): am Ort des Täters zwei freie Stellen, die Festleitung schließt genau die falsche aus
   { const loc = C.AFTER[c], pair = [loc, loc + "2"].map((k) => C.SPOTS[k].name), fl = doc("festleitung");
@@ -39,7 +44,10 @@ for (let v = 0; v < C.TIME_SHIFTS.length; v++) for (const c of C.CULPRITS) {
     // keine freie Stelle außer dem Versteck bleibt übrig, wenn man Ort + Festleitung kombiniert
     const left = free.filter((x) => pair.includes(x) && !Object.entries(C.SPOTS).some(([k, s]) => s.name === x && fl.includes(C.POSTEN[k]?.[1] || "§")));
     if (left.length !== 1 || left[0] !== C.SPOTS[sol.schluessel].name) fail(`${tag} Frage 4 nicht eindeutig: ${left}`); }
-  const after = doc("fotos2"); if (!after.includes(C.SUSPECTS[c].name) || after.includes("außer Atem")) fail(`${tag} Nachher-Foto`);
+  { // Bild (9.10.): fünf Fotos mit je genau einer verdächtigen Person, der Täter ist dabei
+    const COL2 = { leopold: "#2E3A55", hanna: "#2F4A3A", mirko: "#D8CFBE", clemens: "#6B6E72", sabine: "#4A7BB0" };
+    const parts = doc("fotos2").split('<g data-t="').slice(1), who = parts.map((p) => C.CULPRITS.filter((k) => p.includes(`fill="${COL2[k]}"`)));
+    if (parts.length !== 5 || who.some((w) => w.length !== 1) || !who.flat().includes(c) || /außer Atem|out of breath/.test(doc("fotos2"))) fail(`${tag} Nachher-Foto ${JSON.stringify(who)}`); }
   for (const d of D) (lens[d.id] ||= new Set()).add((d.html.match(/<tr>/g) || []).length + "/" + (d.html.replace(/<svg[\s\S]*?<\/svg>/g, "").match(/<p[\s>]/g) || []).length);
   if (!C.verhoerSystem(c, v, c).includes(C.LIES[c].say)) fail(`${tag} Prompt`);
 }
