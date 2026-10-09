@@ -136,7 +136,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <div class="stack">
 <div class="eyebrow">Case 001 · The Red Folder · for companies</div>
 <h2 class="h2">Your boss survived. Barely. And one of you did it.</h2>
-<p class="lead">After the strategy evening, your boss is found poisoned. A red folder is missing – with evidence that someone in the company is diverting money. At 12:00 noon it was due with the top boss – CEO, group chair or board. By then you need to know who did it.</p>
+<p class="lead">After the strategy evening, your boss is found poisoned. A red folder is missing – with evidence that someone in the company is diverting money. At 12:00 noon it was due with the top boss – CEO, group chair or board. By then you need to know who did it. You search your own company intranet, check access logs, taxi receipts and video calls – and soon realise that almost everyone had a motive. Including the person next to you.</p>
 <p><b>Everything happens in your company:</b></p>
 <div class="objects"><span>your top floor as the victim</span><span>your colleagues as suspects</span><span>your intranet</span></div>
 </div>
@@ -160,7 +160,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 <div class="stack">
 <div class="eyebrow">Case 002 · Cold Cash · for clubs</div>
 <h2 class="h2">After the fête, your chair is in the fridge trailer. And the cash box is gone.</h2>
-<p class="lead">Sunday, just before midnight: your club's fête is over and the helpers are clearing up. Your chair – or president, chief, captain – is found locked in the refrigerated trailer, badly chilled but alive. The cash box with the cash book has vanished. At 7:00 the brewery collects the empties, and in the evening the annual general meeting wants the treasurer's report.</p>
+<p class="lead">Sunday, just before midnight: your club's fête is over and the helpers are clearing up. Your chair – or president, chief, captain – is found locked in the refrigerated trailer, badly chilled but alive. The cash box with the cash book has vanished. At 7:00 the brewery collects the empties, and in the evening the annual general meeting wants the treasurer's report. You check the rota, the wristbands and the photos from the fête, read the trailer's temperature log, add up the tally sheet against the token book and search the empties for the cash box. One of you did it.</p>
 <p><b>Everything happens in your club:</b></p>
 <div class="objects"><span>your chair as the victim</span><span>your members as suspects</span><span>your fête and your club website</span></div>
 </div>
@@ -425,7 +425,7 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 <div class="stack">
 <div class="eyebrow">Friends 001 · Last Round at the Chalet</div>
 <h2 class="h2">“Ferdl! In the sauna! Dead!”</h2>
-<p class="lead">A weekend at the Zirbenblick chalet. Landlord Ferdl has digitised his chalet right down to the sauna and films a vlog about his guests. In the evening he proudly shows you the trailer for the new episode – with a secretly filmed clip of every one of you. In the morning he lies dead in the sauna. The road is snowed in, the helicopter is on its way. By the time it lands, it must be clear who did it.</p>
+<p class="lead">A weekend at the Zirbenblick chalet. Landlord Ferdl has digitised his chalet right down to the sauna and films a vlog about his guests. In the evening he proudly shows you the trailer for the new episode – with a secretly filmed clip of every one of you. In the morning he lies dead in the sauna. The road is snowed in, the helicopter is on its way. By the time it lands, it must be clear who did it. Everyone gets the same file: the sauna control log, the chalet app, the dice game score sheet and Ferdl's notes. Who spots the gap first – and who has something to hide?</p>
 <p><b>The suspects – that's you, for example:</b></p>
 <div class="objects"><span>snores like a chainsaw</span><span>sings in the shower</span><span>secretly eats other people's chocolate</span><span>can't lose at dice</span><span>dances while cooking</span><span>is afraid of cows</span></div>
 </div>
@@ -621,7 +621,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <div class="stack">
 <div class="eyebrow">Solo 001 · Night Train to Venice</div>
 <h2 class="h2">The conductor knocks. “You read crime novels, don't you?”</h2>
-<p class="lead">Night train from Vienna to Venice, 2:15 am. The art dealer Viktor Hallwachs lies dead in his compartment, and the painting in his suitcase is a copy. At 2:55 am the police board in Udine – by then you want to be able to tell them who did it.</p>
+<p class="lead">Night train from Vienna to Venice, 2:15 am. The art dealer Viktor Hallwachs lies dead in his compartment, and the painting in his suitcase is a copy. At 2:55 am the police board in Udine – by then you want to be able to tell them who did it. The conductor hands you everything he has: the compartment door log, a passenger's photos and the statements of the five suspects. Somewhere in there an alibi has a gap – and the real painting is still on the train.</p>
 <p><b>Five suspects, five motives:</b></p>
 <div class="objects"><span>the business partner</span><span>the nephew</span><span>the journalist</span><span>the conductor</span><span>the art appraiser</span></div>
 </div>
@@ -646,7 +646,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <div class="stack">
 <div class="eyebrow">Solo 002 · Applause for a Dead Man</div>
 <h2 class="h2">The curtain falls. The star doesn't get up again.</h2>
-<p class="lead">Opening night at a theatre in Vienna. Richard Adler, the celebrated Prospero, takes his bow – and collapses behind the curtain. Poison. The artistic director asks for your help: the police will be here in just over half an hour.</p>
+<p class="lead">Opening night at a theatre in Vienna. Richard Adler, the celebrated Prospero, takes his bow – and collapses behind the curtain. Poison. The artistic director asks for your help: the police will be here in just over half an hour. Backstage, everyone has touched something – tea, throat spray, goblet, glasses. You compare fingerprints, work back from the doctor's findings and finally crack the culprit's locker.</p>
 <p><b>Five suspects backstage:</b></p>
 <div class="objects"><span>the ex-partner</span><span>the understudy</span><span>the assistant director</span><span>the dresser</span><span>the prop master</span></div>
 </div>
@@ -670,7 +670,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <div class="stack">
 <div class="eyebrow">Solo Plus · The Last Vintage · with AI</div>
 <h2 class="h2">“Talk to the people.”</h2>
-<p class="lead">Harvest festival at a winery in the Wachau. Winemaker Ferdinand Aigner lies dead in the fermentation cellar, the door locked from outside, the key gone. The five suspects are waiting in the press house – and this time you interrogate them yourself.</p>
+<p class="lead">Harvest festival at a winery in the Wachau. Winemaker Ferdinand Aigner lies dead in the fermentation cellar, the door locked from outside, the key gone. The five suspects are waiting in the press house – and this time you interrogate them yourself. The press photographer's pictures, the ventilation log and the announcements from the organisers show who was where and when. Who is lying to you, and where the key went, you only find out in the interrogation.</p>
 <p><b>Five suspects who answer you live:</b></p>
 <div class="objects"><span>the son</span><span>the daughter</span><span>the foreman</span><span>the wine merchant</span><span>the neighbouring winemaker</span></div>
 </div>

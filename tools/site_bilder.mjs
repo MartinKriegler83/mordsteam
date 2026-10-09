@@ -12,6 +12,7 @@ import * as S2E from "../lib/cases/solo-002-en.js";
 import * as F from "../lib/cases/friends-001.js";
 import * as FE from "../lib/cases/friends-001-en.js";
 import { feuerwerk } from "../lib/art/soloplus.js";
+import { COVERS } from "../lib/art/covers.js";
 import { CASES, caseOf, buildVars, render, RULES } from "../lib/game.js";
 import { normalizeVars } from "../lib/create.js";
 import { randomCast } from "../lib/countries.js";
@@ -97,5 +98,37 @@ for (const c of CARDS) {
     pages[p] = s.slice(0, a) + neu + s.slice(end);
   }
 }
+// Titelbilder (tools/cover_bilder.mjs erzeugt site/assets/cover/*.webp): Fallseiten – am Handy nach der Überschrift, am Mac über den Notizen
+const img = (key, en, cls) => { const T = COVERS[key][en ? "en" : "de"]; return `<img class="${cls}" src="/assets/cover/${key}-${en ? "en" : "de"}.webp" alt="${en ? "Case cover" : "Titelbild"}: ${T.t1} ${T.t2}" width="600" height="750" loading="lazy" decoding="async">`; };
+const swap = (sec, mark, html, where) => {
+  const re = new RegExp(`<!-- ${mark} -->[\\s\\S]*?<!-- /cover -->`);
+  const block = `<!-- ${mark} -->${html}<!-- /cover -->`;
+  if (re.test(sec)) return sec.replace(re, () => block);
+  const m = sec.match(where);
+  if (!m) throw new Error("Stelle für " + mark + " nicht gefunden");
+  return sec.replace(m[0], () => m[0] + block);
+};
+for (const c of CARDS) {
+  for (const en of [false, true]) {
+    const p = en ? c.pageEn : c.page, id = en ? c.secEn : c.sec;
+    let s = get(p);
+    const a = s.indexOf(`<section id="${id}"`), end = s.indexOf("</section>", a);
+    let sec = s.slice(a, end);
+    sec = swap(sec, `cover-m:${c.key}`, img(c.key, en, "case-cover cover-m"), /<h2 class="h2">[\s\S]*?<\/h2>/);
+    sec = swap(sec, `cover-d:${c.key}`, img(c.key, en, "case-cover cover-d"), /<div class="clues"[^>]*>/);
+    pages[p] = s.slice(0, a) + sec + s.slice(end);
+  }
+}
+// Startseite: Titelbilder in den Spielkarten
+const HOME = { TEAMS: ["t001", "t002"], FRIENDS: ["friends"], SOLO: ["solo001", "solo002", "soloplus"] };
+for (const en of [false, true]) {
+  const p = en ? "en/index.html" : "index.html";
+  let s = get(p);
+  for (const [gp, keys] of Object.entries(HOME)) {
+    const html = `<div class="covers${keys.length === 1 ? " one" : ""}">${keys.map((k) => img(k, en, "cv")).join("")}</div>`;
+    s = swap(s, `cover-home:${gp}`, html, new RegExp(`<h3 class="gname">[^\\n]*<span class="gp">${gp}</span></h3>`));
+  }
+  pages[p] = s;
+}
 for (const [p, s] of Object.entries(pages)) fs.writeFileSync(path.join(ROOT, p), s);
-console.log("Fallseiten-Bilder geschrieben:", Object.keys(pages).join(", "));
+console.log("Fallseiten- und Titelbilder geschrieben:", Object.keys(pages).join(", "));
