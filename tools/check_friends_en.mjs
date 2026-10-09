@@ -12,6 +12,11 @@ const M = { ...DE, ...EN };
 
 const hm = (t) => { const [h, m] = t.split(":").map(Number); return (h < 12 ? h + 24 : h) * 60 + m; };
 const rows = (html) => [...html.matchAll(/<tr>(.*?)<\/tr>/gs)].map((m) => [...m[1].matchAll(/<t[dh][^>]*>(.*?)<\/t[dh]>/gs)].map((c) => c[1].replace(/<[^>]+>/g, "")));
+// Zeitraffer als Bild (9.10.): je Bild [Nr, Zeit, Namen auf der Bank] wie früher die Tabellenzeilen
+const frameRows = (html) => [["Bild", "Zeit", "Namen"], ...html.split('<g data-f="').slice(1).map((g) => { const tx = [...g.matchAll(/<text[^>]*>([^<]*)<\/text>/g)].map((m) => m[1]); const t = tx.find((x) => /^\d\d:\d\d$/.test(x)); return [tx[tx.length - 1] === t ? tx[0] : tx.find((x) => /^\d\d$/.test(x)), t, tx.filter((x) => x !== t && !/^\d\d$/.test(x)).join(", ")]; })];
+// Punkteblock als Bild (9.10.): je Runde [Nr, Beginn, Namen mit Punkten] – leeres Feld = nicht am Tisch
+const blockRows = (html) => { const tx = (h) => [...h.matchAll(/<text[^>]*>([^<]*)<\/text>/g)].map((m) => m[1]); const head = tx(html.split('<g data-h="1">')[1].split("</g>")[0]);
+  return [["Runde", "Beginn", "Am Tisch"], ...html.split('<g data-r="').slice(1).map((g) => { const t = tx(g.split('<g data-p=')[0]); return [t[0].replace(".", ""), t[1], [...g.matchAll(/<g data-p="(\d+)">/g)].map((m) => head[+m[1]]).join(", ")]; })]; };
 const trs = (html) => (html.match(/<tr>/g) || []).length;
 const ps = (html) => (html.match(/<p[ >]/g) || []).length;
 const monos = (html) => [...html.matchAll(/<td class="mono">(.*?)<\/td>/g)].map((m) => m[1]).join(",");
@@ -117,13 +122,13 @@ for (let n = 4; n <= 8; n++) for (const cAct of ["karten", "balkon"]) for (const
   const q1 = sr.filter((r) => /→/.test(r[1]) && !door.some((t) => Math.abs(t - hm(r[0])) <= 2)).map((r) => r[0]);
   if (q1.length !== 1 || q1[0] !== sol.zeit) err("Frage 1", tag, q1, sol.zeit);
   const T = hm(sol.zeit), lo = T - 2, hi = T + 8;
-  const kOK = (p) => rows(by.karten.html).slice(1).filter((r) => { const st = hm(r[1]); return st <= hi && st + 9 >= lo; }).every((r) => r[2].includes(p.name));
-  const bOK = (p) => rows(by.balkon.html).slice(1).filter((r) => hm(r[1]) >= lo && hm(r[1]) <= hi).every((r) => r[2].includes(p.name));
+  const kOK = (p) => blockRows(by.karten.html).slice(1).filter((r) => { const st = hm(r[1]); return st <= hi && st + 9 >= lo; }).every((r) => r[2].includes(p.name));
+  const bOK = (p) => frameRows(by.balkon.html).slice(1).filter((r) => hm(r[1]) >= lo && hm(r[1]) <= hi).every((r) => r[2].includes(p.name));
   const gone = G.players.map((p, i) => ({ p, i })).filter(({ p }) => !(p.act === "karten" ? kOK(p) : bOK(p))).map((x) => x.i).sort();
   if (gone.join() !== [S.culprit, S.decoy].sort().join()) err("Frage 2 Lücken", tag, gone);
   const [ex] = M.excuseOf(G), app = rows(by.app.html).slice(1);
   if (/front door|car|fox/.test(ex) && app.filter((r) => r[1] === "Front door").some((r) => hm(r[0]) > hm("23:40") && hm(r[0]) < hm("07:00"))) err("Haustür", tag);
-  if (/balcony/.test(ex) && rows(by.balkon.html).slice(1).some((r) => hm(r[1]) >= lo && hm(r[1]) <= hi && r[2].includes(G.players[S.culprit].name))) err("Balkon-Ausrede", tag);
+  if (/balcony/.test(ex) && frameRows(by.balkon.html).slice(1).some((r) => hm(r[1]) >= lo && hm(r[1]) <= hi && r[2].includes(G.players[S.culprit].name))) err("Balkon-Ausrede", tag);
   if (/kitchen/.test(ex) && !/Nobody but us came into the kitchen/.test(by.karten.html)) err("Küchen-Ausrede", tag);
   if (!app.some((r) => r[1] === "Stairs" && hm(r[0]) >= T - 3 && hm(r[0]) <= T + 12)) err("Treppe Lockvogel", tag);
   const lt = by.luecken.html, both = [S.culprit, S.decoy].every((i) => lt.includes(G.players[i].name));
