@@ -54,8 +54,8 @@ for (let v = 0; v < DE.TIME_SHIFTS.length; v++) for (const c of DE.CULPRITS) {
     if ((d.html.replace(/<svg[\s\S]*?<\/svg>/g, "").match(/<p[\s>]/g) || []).length !== (e.html.replace(/<svg[\s\S]*?<\/svg>/g, "").match(/<p[\s>]/g) || []).length) fail(`${tag} ${d.id}: Anzahl <p`);
     if ((d.html.match(/<li>/g) || []).length !== (e.html.match(/<li>/g) || []).length) fail(`${tag} ${d.id}: Anzahl <li>`);
     // Uhrzeiten in den Tabellen identisch (gleiche Logik)
-    // „24:00“ steht auf Englisch als „Midnight“ im Festprogramm
-    const times = (h) => [...h.matchAll(/<td class="mono">([^<]+)<\/td>/g)].map((r) => (r[1] === "Midnight" ? "24:00" : r[1])).join();
+    // „Mitternacht“ steht auf Englisch als „Midnight“ im Festprogramm (seit 9.10.2026 statt 24:00)
+    const times = (h) => [...h.matchAll(/<td class="mono">([^<]+)<\/td>/g)].map((r) => (r[1] === "Midnight" ? "Mitternacht" : r[1])).join();
     if (times(d.html) !== times(e.html)) fail(`${tag} ${d.id}: Uhrzeiten abweichend`);
     // Namen der Verdächtigen pro Zeile identisch (Fotos)
     const names = (h) => h.split("<tr>").map((row) => DE.CULPRITS.filter((k) => row.includes(DE.SUSPECTS[k].name)).join("+")).join("|");
