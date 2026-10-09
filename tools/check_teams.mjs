@@ -7,6 +7,7 @@ import { regioGuard } from "./regio_guard.mjs";
 import { answerGuard } from "./answer_guard.mjs";
 import { readdirSync, readFileSync } from "fs";
 import { PRICE_TABLE, convPrice } from "../lib/prices.js";
+import { placeholderGuard } from "./placeholder_guard.mjs";
 let err = 0;
 const fail = (m) => { err++; console.log("FEHLER", m); };
 for (const c of COUNTRY_ORDER) for (const k of ["9697", "0102", "4521"]) for (const bank of [false, true]) {
@@ -41,4 +42,6 @@ for (let i = 0; i < 500; i++) for (const premium of [false, true]) {
 { const { scaled } = await import("../lib/countries.js");
   for (const c of COUNTRY_ORDER) { const r = [4850, 4920, 4990].map((e) => scaled(c, e)), g = F.freigabeOf(c);
     if (!(r[0] < r[1] && r[1] < r[2] && r[2] < g)) fail(`${c}: Rechnungen ${r.join("/")} nicht aufsteigend unter Freigabegrenze ${g}`); } }
+// Offene Platzhalter in gerenderten Akten (9.10.2026, {TORTE})
+for (const e of placeholderGuard("fall-001", 40)) fail(e);
 console.log(err ? `${err} Fehler` : `IBAN in ${COUNTRY_ORDER.length} Ländern, 1000 Runden Zusatzermittlung/Sonderauftrag: alles ok`);

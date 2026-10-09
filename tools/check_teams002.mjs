@@ -6,6 +6,7 @@ import { COUNTRY_ORDER } from "../lib/countries.js";
 import * as F from "../lib/cases/fall-002.js";
 import { regioGuard } from "./regio_guard.mjs";
 import { answerGuard } from "./answer_guard.mjs";
+import { placeholderGuard } from "./placeholder_guard.mjs";
 let err = 0;
 const fail = (m) => { if (err < 40) console.log("FEHLER", m); err++; };
 const rand = (n) => Math.floor(Math.random() * n);
@@ -56,6 +57,10 @@ for (let i = 0; i < 1200; i++) {
   const serie = /Helfer-Gruppenfotos[^·]*Serie bis (\d\d:\d\d)/.exec(fotos);
   const fStart = [...v.FOTO_ROWS.matchAll(/<td>(\d\d:\d\d)<\/td><td>Helfer-Gruppenfotos/g)].map((m) => t2m(m[1]))[0];
   if (!serie || !(fStart < sec.TAT && t2m(serie[1]) > sec.TAT)) fail("Foto-Alibi deckt die Tatzeit nicht");
+  // Bild (9.10.): Gruppenfoto zeigt R2 mit Namensschild, Serie bis wie in der Bildliste; Täter-Foto ohne Bändchen
+  // Bild (9.10.): Stapelplan zeigt die Lösungs-Kiste (Palette und Lage) im Bildtext
+  if (!new RegExp(`P${sec.PA} [^;]*Lage ${sec.LA} `).test(v.STAPEL_BILD)) fail("Stapel-Bild: Lösungs-Kiste fehlt");
+  if (!v.FOTO_BILD.includes(`>${byRole.R2.name}<`) || !v.FOTO_BILD.includes(serie ? serie[1] : "xx")) fail("Foto-Bild: Gruppenfoto/Serie passt nicht");
   const schicht = strip(v.SCHICHT_ROWS);
   const farbe = sec.COLOR ? "grün" : "rot";
   const row = schicht.split(/(?=Bonkassa|Ausschank|Grill|Auf- und Abbau)/).find((x) => x.includes(` ${farbe} `));
@@ -132,5 +137,7 @@ for (let i = 0; i < 1200; i++) {
 { const rg = regioGuard("fall-002", 60); for (const e of rg.errs) fail(e); }
 // Go-live-Test 4 (6.10.2026): richtige Antworten aller Stufen zählen als richtig
 { const ag = answerGuard("fall-002", 120); for (const e of ag.errs) fail(e); }
+// Offene Platzhalter in gerenderten Akten (9.10.2026, {TORTE})
+for (const e of placeholderGuard("fall-002", 40)) fail(e);
 console.log(err ? `${err} Fehler` : `${rounds} Runden (3 Pakete, ${ARTEN.length} Vereinsarten, Länder gemischt): alles ok`);
 process.exit(err ? 1 : 0);

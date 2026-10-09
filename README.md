@@ -39,6 +39,9 @@ lib/                     Spiellogik – wird nie ausgeliefert, nur von functions
     fall-001.js / fall-001-en.js   Teams-Fall, deutsch und englische Textschicht
     friends-001.js, solo-001.js, solo-002.js, solo-plus-001.js   Friends- und Solo-Fälle (deutsch, mit der Logik)
     *-en.js                  englische Textschicht je Fall: exportiert nur die Exporte mit sichtbarem Text, gleiche Namen und Struktur
+  art/                     Bilder in den Akten (SVG, Graphic-Novel-Stil), je Runde aus den Falldaten gezeichnet
+    gn.js                    Baukasten: Farben, Figuren (fig/roster/face), defs(), pic() = <figure class="gn-pic"> (antippen = groß, spiel/common.js)
+    solo001.js, solo002.js, soloplus.js, friends.js, teams001.js, teams002.js   Bilder je Fall; Handschrift über die Schrift Caveat (spiel.css)
   stripe.js                Stripe-Hilfe für lib/ (der Shop hat eine eigene Kopie)
   accounting.js            Buchhaltung: Einnahmen nach Kundenart und Region, EU-Privatkunden-Schwelle, Kostenvorlagen
   ledger.js                Ausgabenbuch, Einnahmen-Ausgaben-Rechnung je Monat, Reverse Charge je Quartal (inkl. Stripe-Gebühren), Fristen, CSV-Exporte
@@ -54,6 +57,7 @@ teaser/                  Platzhalter-Startseite und Impressum für den Teaser-Mo
 tools/                   Prüf- und Hilfsskripte (siehe „Lokal testen“)
   en_pages.py              erzeugt site/en/*.html (englische Seiten nie direkt bearbeiten)
   check_*.mjs              Prüfskripte je Fall (Eindeutigkeit der Lösung über alle Varianten); check_*_en.mjs prüft die englische Fassung gegen die deutsche
+  placeholder_guard.mjs    rendert Teams-Akten und meldet offene Platzhalter wie {TORTE} (läuft in check_teams/check_teams002)
   github-workflow-feedback-mails.yml   Vorlage der GitHub-Action (Kopie von .github/workflows/feedback-mails.yml)
 .github/workflows/feedback-mails.yml   stündlicher Aufruf von /api/shop/cron
 faelle/                  alte Arbeitsdokumente (nicht ausgeliefert)
