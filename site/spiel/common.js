@@ -78,3 +78,24 @@ document.addEventListener("DOMContentLoaded", () => {
   paint();
   b.onclick = () => { MS.setLang(MS.lang === "en" ? "de" : "en"); paint(); document.dispatchEvent(new Event("ms-lang")); };
 });
+// Bilder in den Akten: antippen oder Enter öffnet das Bild groß, Esc / Tippen schließt
+(() => {
+  let last = null;
+  const close = () => { const z = document.querySelector(".gn-zoom"); if (z) { z.remove(); document.body.style.overflow = ""; if (last) last.focus(); } };
+  const open = (f) => {
+    const svg = f.querySelector("svg"); if (!svg) return;
+    last = f;
+    const z = document.createElement("div");
+    z.className = "gn-zoom"; z.setAttribute("role", "dialog"); z.setAttribute("aria-modal", "true");
+    z.setAttribute("aria-label", f.getAttribute("aria-label") || "");
+    const b = document.createElement("button"); b.type = "button"; b.textContent = "×"; b.setAttribute("aria-label", MS.t("Schließen", "Close"));
+    const inner = document.createElement("div"); inner.className = "gn-in"; inner.appendChild(svg.cloneNode(true));
+    z.append(b, inner); document.body.appendChild(z); document.body.style.overflow = "hidden"; b.focus();
+    z.addEventListener("click", (e) => { if (e.target === z || e.target === b || !z.scrollWidth || z.scrollWidth <= z.clientWidth) close(); });
+  };
+  document.addEventListener("click", (e) => { const f = e.target.closest && e.target.closest(".gn-pic"); if (f && !f.closest(".gn-zoom")) open(f); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") return close();
+    if ((e.key === "Enter" || e.key === " ") && document.activeElement && document.activeElement.classList.contains("gn-pic")) { e.preventDefault(); open(document.activeElement); }
+  });
+})();

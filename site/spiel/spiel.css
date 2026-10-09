@@ -568,3 +568,13 @@ button.btn-big{margin-top:14px}
 
 /* Datumsfelder im Admin: Platz für Datum + Kalender-Symbol (Safari/Chrome überlagerten sonst die Jahreszahl) */
 input[type=date]{min-width:11.5em;box-sizing:border-box}
+/* Bilder in den Akten (Graphic Novel): antippen öffnet groß */
+.gn-pic{margin:12px 0 14px;border:3px solid #15171C;border-radius:4px;overflow:hidden;cursor:zoom-in;background:#F3EEE6;box-shadow:4px 4px 0 rgba(21,23,28,.18)}
+.gn-pic:focus-visible{outline:3px solid #C62828;outline-offset:3px}
+.gn-pic svg{width:100%;height:auto;display:block}
+.gn-zoom{position:fixed;inset:0;z-index:1000;background:rgba(15,16,20,.92);display:flex;padding:56px 10px 10px;overflow:auto;cursor:zoom-out}
+.gn-zoom .gn-in{width:min(1400px,100%);min-width:min(900px,240vw);margin:auto}
+.gn-zoom svg{width:100%;height:auto;display:block;border:3px solid #15171C;border-radius:4px}
+.gn-zoom button{position:fixed;top:8px;right:10px;width:36px;height:36px;border:0;border-radius:50%;background:#FFFDF8;color:#15171C;font:700 20px/36px system-ui;cursor:pointer}
+.gn-zoom .gn-in{flex:none}
+.gn-pic.gn-small{max-width:440px}
