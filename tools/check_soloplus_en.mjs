@@ -82,7 +82,7 @@ for (let v = 0; v < DE.TIME_SHIFTS.length; v++) for (const c of DE.CULPRITS) {
   // Bild (9.10.): Legende im Lageplan – durchsucht = durchgestrichen
   const names = new Set(Object.values(C.SPOTS).map((x) => x.name));
   const free = [...doc("verstecke").matchAll(/<text( text-decoration="line-through")? [^>]*>([^<]+)<\/text>/g)].filter((r) => !r[1] && names.has(r[2])).map((r) => r[2]);
-  if (free.length !== 4) fail(`${tag} Lageplan: ${free.length} offene Stellen statt 4`);
+  if (free.length !== 8) fail(`${tag} Lageplan: ${free.length} offene Stellen statt 8`);
   if (!free.includes(C.SPOTS[sol.schluessel].name)) fail(`${tag} Versteck durchsucht`);
   { // Bild (9.10.): fünf Fotos mit je genau einer verdächtigen Person, der Täter ist dabei
     const COL2 = { leopold: "#2E3A55", hanna: "#2F4A3A", mirko: "#D8CFBE", clemens: "#6B6E72", sabine: "#4A7BB0" };

@@ -33,7 +33,7 @@ for (let v = 0; v < C.TIME_SHIFTS.length; v++) for (const c of C.CULPRITS) {
   // Bild (9.10.): Legende im Lageplan – durchsucht = durchgestrichen
   const names = new Set(Object.values(C.SPOTS).map((x) => x.name));
   const free = [...doc("verstecke").matchAll(/<text( text-decoration="line-through")? [^>]*>([^<]+)<\/text>/g)].filter((r) => !r[1] && names.has(r[2])).map((r) => r[2]);
-  if (free.length !== 4) fail(`${tag} Lageplan: ${free.length} offene Stellen statt 4`);
+  if (free.length !== 8) fail(`${tag} Lageplan: ${free.length} offene Stellen statt 8`);
   if (!free.includes(C.SPOTS[sol.schluessel].name)) fail(`${tag} Versteck durchsucht`);
   // Frage 4 (seit 8.10.2026): am Ort des Täters zwei freie Stellen, die Festleitung schließt genau die falsche aus
   { const loc = C.AFTER[c], pair = [loc, loc + "2"].map((k) => C.SPOTS[k].name), fl = doc("festleitung");
@@ -43,7 +43,13 @@ for (let v = 0; v < C.TIME_SHIFTS.length; v++) for (const c of C.CULPRITS) {
     if (fl.includes(C.POSTEN[sol.schluessel][1])) fail(`${tag} Frage 4: Versteck ausgeschlossen`);
     // keine freie Stelle außer dem Versteck bleibt übrig, wenn man Ort + Festleitung kombiniert
     const left = free.filter((x) => pair.includes(x) && !Object.entries(C.SPOTS).some(([k, s]) => s.name === x && fl.includes(C.POSTEN[k]?.[1] || "§")));
-    if (left.length !== 1 || left[0] !== C.SPOTS[sol.schluessel].name) fail(`${tag} Frage 4 nicht eindeutig: ${left}`); }
+    if (left.length !== 1 || left[0] !== C.SPOTS[sol.schluessel].name) fail(`${tag} Frage 4 nicht eindeutig: ${left}`);
+    // seit 9.10.2026: drei Orte mit zwei freien Stellen – an jedem anderen Ort schließt die Festleitung genau eine aus, Täter-Ort nur über die Fotos
+    const locs = C.openLocs(c, v);
+    if (locs.length !== 3 || new Set(locs).size !== 3 || !locs.includes(loc)) fail(`${tag} Frage 4: Orte ${locs}`);
+    for (const o of locs) { const pr = [o, o + "2"]; if (!pr.every((k) => free.includes(C.SPOTS[k].name))) fail(`${tag} Frage 4: ${o} nicht frei`);
+      if (pr.filter((k) => fl.includes(C.POSTEN[k][1])).length !== 1) fail(`${tag} Frage 4: Festleitung an ${o} nicht genau eine Stelle`); }
+    if (!doc("fotos2").includes(C.SPOTS[loc].loc) && !/data-t/.test(doc("fotos2"))) fail(`${tag} Frage 4: Täter-Ort nicht auf den Fotos`); }
   { // Bild (9.10.): fünf Fotos mit je genau einer verdächtigen Person, der Täter ist dabei
     const COL2 = { leopold: "#2E3A55", hanna: "#2F4A3A", mirko: "#D8CFBE", clemens: "#6B6E72", sabine: "#4A7BB0" };
     const parts = doc("fotos2").split('<g data-t="').slice(1), who = parts.map((p) => C.CULPRITS.filter((k) => p.includes(`fill="${COL2[k]}"`)));
