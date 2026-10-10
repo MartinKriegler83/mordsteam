@@ -246,6 +246,19 @@
     </div>`;
   }
 
+  // Anmeldungen über die Website (auch ohne Kauf), neueste zuerst
+  function signupTable(n) {
+    const L = n.signups || [], e = MS.esc;
+    if (!L.length) return `<p class="small" style="margin-top:10px">Noch keine Anmeldungen über die Website.</p>`;
+    const ST = { active: "bestätigt", pending: "unbestätigt", unsub: "abgemeldet", ecg: "ECG-Liste" };
+    const d = (t) => (t ? new Date(t).toLocaleString("de-AT", { dateStyle: "short", timeStyle: "short" }) : "–");
+    const rs = (r) => (r.status !== "active" ? "–" : r.sync_error ? `<span style="color:var(--red)">Fehler</span>` : r.synced_at ? "✓" : "offen");
+    return `<details ${L.length <= 20 ? "open" : ""} style="margin-top:12px"><summary><b>Anmeldungen über die Website (${L.length})</b></summary>
+      <div style="overflow-x:auto;margin-top:8px"><table class="grid small"><tr><th>E-Mail</th><th>Sprache</th><th>Status</th><th>Angemeldet</th><th>Bestätigt</th><th>In Resend</th><th>Käufer</th></tr>
+      ${L.map((r) => `<tr><td class="mono">${e(r.email)}</td><td>${r.lang === "en" ? "EN" : "DE"}</td><td>${ST[r.status] || e(r.status)}</td><td>${d(r.created_at)}</td><td>${d(r.confirmed_at)}</td><td>${rs(r)}</td><td>${r.buyer ? "ja" : "–"}</td></tr>`).join("")}</table></div>
+      <p class="small">Unbestätigt = Bestätigungslink noch nicht geklickt; diese Adressen bekommen keinen Newsletter und gehen nicht an Resend.</p></details>`;
+  }
+
   // ---------- Newsletter: Liste, ECG-Abgleich, Entwurf ----------
   function newsletterPanel() {
     const n = nlData, e = MS.esc;
@@ -262,6 +275,7 @@
         ${tile("Unbestätigt", c("anmeldung", "pending"), 0, "Bestätigungslink noch nicht geklickt")}
         ${tile("Gesperrt / abgemeldet", c(null, "ecg") + c(null, "unsub"), 0, `${n0(c(null, "ecg"))} ECG-Liste · ${n0(c(null, "unsub"))} abgemeldet`)}
       </div>
+      ${signupTable(n)}
       ${!n.key ? `<p class="err">RESEND_API_KEY fehlt – Übertragung und Entwürfe gehen erst, wenn der Schlüssel gesetzt ist.</p>` : ""}
       ${n.errors.length ? `<p class="err">Letzter Übertragungsfehler: ${e(n.errors[0].sync_error)}</p>` : ""}
       <div class="actions-row" style="margin-top:10px"><button class="btn btn-red" type="button" id="nlsync">Kunden nachtragen und übertragen</button></div>
