@@ -39,3 +39,9 @@ if echo "$UID_NR" | grep -Eq '^ATU[0-9]{8}$'; then
   done
   echo "UID im Impressum: gesetzt"
 fi
+# Stylesheets mit Versionsnummer je Deployment (10.10.2026): Safari behielt sonst das alte style.css im Speicher
+V=$(printf '%s' "${CF_PAGES_COMMIT_SHA:-$(date +%s)}" | cut -c1-8)
+for f in $(grep -rl -e 'style.css"' -e 'spiel.css"' dist --include='*.html'); do
+  sed -i "s|assets/style.css\"|assets/style.css?v=$V\"|g; s|spiel/spiel.css\"|spiel/spiel.css?v=$V\"|g" "$f"
+done
+echo "CSS-Version: $V"
