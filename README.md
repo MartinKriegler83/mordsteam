@@ -64,6 +64,7 @@ tools/                   Prüf- und Hilfsskripte (siehe „Lokal testen“)
   check_*.mjs              Prüfskripte je Fall (Eindeutigkeit der Lösung über alle Varianten); check_*_en.mjs prüft die englische Fassung gegen die deutsche
   placeholder_guard.mjs    rendert Teams-Akten und meldet offene Platzhalter wie {TORTE} (läuft in check_teams/check_teams002)
   picture_guard.mjs        prüft die Teams-Bildrätsel in gerenderten Runden: Archivregal (Fall 001) und Strichliste (Fall 002)
+  teaser_pages.py          erzeugt teaser/newsletter.html, teaser/datenschutz.html, teaser/en/newsletter.html und teaser/en/privacy.html aus den Seiten der vollen Website (Inhalt gleich, ohne Navigation zum Angebot); nach Änderungen an Newsletter- oder Datenschutzseite erneut ausführen
   github-workflow-feedback-mails.yml   Vorlage der GitHub-Action (Kopie von .github/workflows/feedback-mails.yml)
 .github/workflows/feedback-mails.yml   stündlicher Aufruf von /api/shop/cron
 faelle/                  alte Arbeitsdokumente (nicht ausgeliefert)
@@ -198,7 +199,7 @@ GitHub-Repository-Secret: `CRON_KEY`.
 ## Build
 
 Cloudflare Pages führt `build.sh` aus und veröffentlicht `dist/`:
-- Branch `main` und `LAUNCH` ≠ `true` → **Teaser-Modus**: nur `teaser/index.html` und `teaser/impressum.html` als öffentliche Seite, englisch `teaser/en/index.html` → `/en/` („Coming soon“) und `/en/imprint.html` (Besucher außerhalb von DACH werden über `functions/_middleware.js` dorthin geleitet, Umschalter DE · EN oben rechts). Schalter `ANGEBOT_SEITE` in `build.sh` (seit 7.10.2026 `0`): mit `1` zeigen `/` und `/en/` stattdessen die englische Angebotsseite mit Spielen, Preisen, Erstattung und Rechtstexten ohne Bestellknöpfe (`teaser/paddle-root.html` und `teaser/en/angebot.html`, beide von `tools/en_pages.py` aus products.html erzeugt) – war für die Prüfung durch Paddle nötig. `/products.html` (noindex, nicht verlinkt) bleibt immer erreichbar. Dazu `site/spiel/` (nicht verlinkt, `noindex`) und die Assets.
+- Branch `main` und `LAUNCH` ≠ `true` → **Teaser-Modus**: nur `teaser/index.html` und `teaser/impressum.html` als öffentliche Seite, englisch `teaser/en/index.html` → `/en/` („Coming soon“) und `/en/imprint.html` (Besucher außerhalb von DACH werden über `functions/_middleware.js` dorthin geleitet, Umschalter DE · EN oben rechts). Schalter `ANGEBOT_SEITE` in `build.sh` (seit 7.10.2026 `0`): mit `1` zeigen `/` und `/en/` stattdessen die englische Angebotsseite mit Spielen, Preisen, Erstattung und Rechtstexten ohne Bestellknöpfe (`teaser/paddle-root.html` und `teaser/en/angebot.html`, beide von `tools/en_pages.py` aus products.html erzeugt) – war für die Prüfung durch Paddle nötig. `/products.html` (noindex, nicht verlinkt) bleibt immer erreichbar. Dazu `site/spiel/` (nicht verlinkt, `noindex`) und die Assets. Seit 10.10.2026 zeigt der Teaser unter „Könnt ihr den Fall knacken?“ eine rote Box „Nichts verpassen“ / „Don’t miss a thing“ zur Newsletter-Anmeldung; dafür liefert der Teaser auch `/newsletter.html`, `/datenschutz.html`, `/en/newsletter.html` und `/en/privacy.html` aus (aus `tools/teaser_pages.py`). Die Anmeldung braucht in Production `RESEND_API_KEY` und `MAIL_FROM`.
 - Alle anderen Fälle (Branch `vorschau`, oder `LAUNCH=true`) → **volle Seite**: ganz `site/`.
 
 Die Functions (`functions/`) laufen in beiden Modi.

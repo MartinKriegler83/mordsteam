@@ -20,8 +20,10 @@ if [ "$CF_PAGES_BRANCH" = "main" ] && [ "$LAUNCH" != "true" ]; then
     cp teaser/index.html dist/index.html
   fi
   cp teaser/impressum.html dist/impressum.html
+  # Newsletter-Anmeldung mit Datenschutzerklärung (seit 10.10.2026, erzeugt von tools/teaser_pages.py)
+  cp teaser/newsletter.html teaser/datenschutz.html dist/
   # Englische Teaserseite: Besucher außerhalb von DACH landen über functions/_middleware.js automatisch hier
-  mkdir -p dist/en && cp teaser/en/imprint.html dist/en/imprint.html
+  mkdir -p dist/en && cp teaser/en/imprint.html teaser/en/newsletter.html teaser/en/privacy.html dist/en/
   if [ "$ANGEBOT_SEITE" = "1" ]; then cp teaser/en/angebot.html dist/en/index.html; else cp teaser/en/index.html dist/en/index.html; fi
   # Angebot, Preise, Erstattung und Rechtstexte für Prüfungen durch Zahlungsanbieter (nicht verlinkt, noindex)
   cp site/products.html dist/products.html
