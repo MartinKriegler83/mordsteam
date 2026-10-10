@@ -48,6 +48,14 @@ for src, dst, lang, other in PAGES:
     base = "/en/" if lang == "en" else "/"
     s = s.replace('href="datenschutz.html', 'href="/datenschutz.html').replace('href="privacy.html', f'href="{base}privacy.html')
     s = re.sub(r'<link rel="(alternate|manifest)"[^>]*>\n?', "", s)
+    # Vorschaubild beim Teilen (Facebook, WhatsApp …), seit 10.10.2026 – Bilder aus tools/og_bilder.mjs
+    url = "https://mordsteam.com" + ("/en/newsletter.html" if lang == "en" else "/newsletter.html")
+    if "newsletter" in dst:
+        t, d = (("Newsletter – Mordsteam", "Mystery games where you are the suspects. Sign up and be the first to hear about new cases.") if lang == "en"
+                else ("Newsletter – Mordsteam", "Krimispiele, in denen ihr die Verdächtigen seid. Jetzt anmelden und neue Fälle zuerst erfahren."))
+        s = s.replace('<link rel="stylesheet"', (f'<meta property="og:type" content="website">\n<meta property="og:site_name" content="Mordsteam">\n<meta property="og:url" content="{url}">\n'
+            f'<meta property="og:title" content="{t}">\n<meta property="og:description" content="{d}">\n<meta property="og:image" content="https://mordsteam.com/assets/og/teaser-{lang}.png">\n'
+            f'<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n<meta name="twitter:card" content="summary_large_image">\n<link rel="stylesheet"'), 1)
     os.makedirs(os.path.dirname(os.path.join(ROOT, dst)), exist_ok=True)
     open(os.path.join(ROOT, dst), "w", encoding="utf-8").write(s)
     left = sorted(set(re.findall(r'href="([^"#:]+\.html)', s)) - {"/newsletter.html", "/datenschutz.html", "/impressum.html", "/en/newsletter.html", "/en/privacy.html", "/en/imprint.html"})
