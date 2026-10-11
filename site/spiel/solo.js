@@ -116,7 +116,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
   }
   function render() {
     tick();
-    if (S.ended) { tabs.hidden = true; return resultView(); }
+    if (S.ended) { tabs.hidden = true; return MS.get(rbKey()) ? resultView() : rbIntro(); }
     tabs.hidden = false;
     tabs.querySelectorAll("[data-tab]").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === tab));
     const unseen = S.docs.filter((d) => !seen.has(d.id)).length;
@@ -403,6 +403,26 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
     };
   }
 
+  // ---------- Rückblende (animiertes Finale, 11.10.2026): vor Zusammenfassung und Urkunde ----------
+  const rbKey = () => "ms_rb_" + (S.code || "") + "_" + (S.started_at || "");
+  async function playRb(after) {
+    try {
+      if (!window.Rueckblende) await new Promise((ok, no) => { const s = document.createElement("script"); s.src = "/spiel/rueckblende.js"; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+      const d = await api("GET", "rueckblende");
+      window.Rueckblende.play(d, { en: EN(), onEnd: after });
+    } catch { after(); }
+  }
+  function rbIntro() {
+    const done = () => { MS.set(rbKey(), "1"); resultView(); scrollTo(0, 0); };
+    root.innerHTML = `<section class="report paper so-result" style="text-align:center">
+      <div class="solved"><div class="bigstamp ${S.solved ? "" : "grey"}"><div><small>MORDSTEAM SOLO · ${esc(U().stamp)}</small><strong>${S.solved ? L("FALL GELÖST", "CASE SOLVED") : L("AKTE GESCHLOSSEN", "FILE CLOSED")}</strong><small>${esc((S.name || "").toUpperCase())}</small></div></div></div>
+      <h3 style="margin-top:18px">${L("Was ist wirklich passiert?", "What really happened?")}</h3>
+      <p>${L("Die Rückblende zeigt die Tat Schritt für Schritt – rund 40 Sekunden, am besten mit Ton.", "The flashback shows the crime step by step – about 40 seconds, best with sound on.")}</p>
+      <div class="actions-row" style="justify-content:center;margin-top:18px"><button type="button" class="btn btn-red" id="rbgo">▶ ${L("Rückblende ansehen", "Watch the flashback")}</button></div>
+      <p style="margin-top:12px"><button type="button" class="linkbtn" id="rbskip">${L("Direkt zur Auflösung", "Skip to the solution")}</button></p></section>`;
+    $("rbgo").onclick = () => playRb(done);
+    $("rbskip").onclick = done;
+  }
   function resultView() {
     const r = S.result || {};
     const solved = S.solved;
@@ -416,6 +436,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
       ${solved ? `<div class="so-score"><div><small>${L("Endzeit", "Final time")}</small><b>${MS.dur(r.score_ms)}</b></div><div><small>${L("Gespielt", "Played")}</small><b>${MS.dur(r.played_ms)}</b></div><div><small>${L("Strafminuten", "Penalty minutes")}</small><b>${S.penalty_min}</b></div></div>
         <p class="so-pct">${pctLine}</p>` : `<p class="so-pct">${S.first_play ? L("Diesmal hat es nicht gereicht – hier ist die Auflösung.", "Not this time – here’s the solution.") : L("Hier ist die Auflösung.", "Here’s the solution.")}</p>`}
       <h3>${L("Die Auflösung", "The solution")}</h3>
+      <p><button type="button" class="btn btn-line" id="rbagain">▶ ${L("Rückblende ansehen", "Watch the flashback")}</button></p>
       <p>${r.summary ? `<b>${esc(r.summary)}</b>` : `<b>${L("Täter/in", "Culprit")}: ${esc(r.culprit)}</b> · ${L("Tatzeit", "Time of the crime")} ${esc(r.zeit || "01:31")} · ${L("Versteck", "Hiding place")}: ${esc(r.item)}`}</p>
       <p>${esc(r.text)}</p>
       ${r.voucher ? `<div class="so-voucher"><small>${r.voucher_teams ? L("Dein Gutschein für ein Teams-Event", "Your voucher for a Teams event") : L("Dein Gutschein für ein Friends- oder Teams-Spiel", "Your voucher for a Friends or Teams game")}</small><b class="mono">${esc(r.voucher)}</b><span>${r.voucher_teams ? L(`${esc(r.voucher_teams.label)} Rabatt auf euer Mordsteam-Teams-Event · gültig bis ${esc(dmy(r.voucher_teams.until))} · im Bezahlschritt eingeben · nicht mit Early Bird kombinierbar`, `${esc(enAmt(r.voucher_teams.label))} off your Mordsteam Teams event · valid until ${esc(dmy(r.voucher_teams.until))} · enter it at checkout · can’t be combined with Early Bird`) : L("5 € Rabatt auf ein Friends- oder Teams-Spiel · im Bezahlschritt eingeben · 1 Gutschein pro Bestellung, nicht mit Early Bird kombinierbar", "€5 / £5 / $6 off a Friends or Teams game · enter it at checkout · 1 voucher per order, can’t be combined with Early Bird")}</span><button type="button" class="btn btn-line" id="copyv">${L("Code kopieren", "Copy code")}</button></div>` : ""}
@@ -426,6 +447,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
     </section>
     ${fbHtml()}`;
     bindFeedback();
+    if ($("rbagain")) $("rbagain").onclick = () => playRb(() => {});
     if ($("copyv")) $("copyv").onclick = async () => { try { await navigator.clipboard.writeText(r.voucher); $("copyv").textContent = L("Kopiert ✓", "Copied ✓"); } catch { $("copyv").textContent = r.voucher; } };
     if ($("pdf")) $("pdf").onclick = () => certificate("pdf", r);
     if ($("png")) $("png").onclick = () => certificate("png", r);

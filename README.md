@@ -71,6 +71,9 @@ faelle/                  alte Arbeitsdokumente (nicht ausgeliefert)
 design/                  Designentwürfe (nicht ausgeliefert)
 ```
 
+Rückblende (Solo, seit 11.10.2026): Nach Spielende zeigt der Solo-Client zuerst „Was ist wirklich passiert?“ mit Knopf „▶ Rückblende ansehen“ (oder „Direkt zur Auflösung“), danach Zusammenfassung und Urkunde; auf der Ergebnisseite lässt sie sich erneut abspielen. Ablauf: `GET /api/solo/rueckblende` (erst nach Spielende, sonst 409) → `lib/rueckblende.js` holt die Rundendaten → Szenen aus `lib/art/rb_solo001.js`, `rb_solo002.js`, `rb_soloplus.js` (je 6 SVG-Szenen, Untertitel, Geräusch-Zeitpunkte) → Player `site/spiel/rueckblende.js` (16:9, CSS-Animationen `rb-*`, Musik `site/assets/audio/rueckblende-solo.m4a` aus dem Solo-Teaser, Geräusche per WebAudio, Überspringen/Ton aus, Esc). Gesehen wird je Durchgang im Browser gemerkt (`ms_rb_<code>_<start>`).
+
+
 ## Wie die Produkte technisch funktionieren
 
 ### Teams (`/spiel/`)
