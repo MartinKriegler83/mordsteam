@@ -75,6 +75,8 @@ Rückblende (Solo, seit 11.10.2026): Nach Spielende zeigt der Solo-Client zuerst
 
 Rückblende (Friends, seit 11.10.2026): Erst nach der gemeinsamen Auflösung (`friends_groups.status = revealed`, vorher 409) zeigt der Friends-Client „Was ist wirklich passiert?“, danach Auflösung und Rangliste; auf der Auflösungsseite lässt sie sich erneut abspielen. `GET /api/friends/rueckblende` → `friendsRueckblende` in `lib/rueckblende.js` (Täter, Würfeln/Balkon, Uhrzeiten der Zeitvariante, Versteck, alle Spielernamen roh aus `friends_groups.data`) → `lib/art/rb_friends.js` (Spieler als Silhouetten ohne Gesicht mit Namensschild) → Player mit Musik `site/assets/audio/rueckblende-friends.m4a` (aus dem Friends-Teaser). Gesehen-Merker je Spieler: `ms_rb_f_<token[0:12]>`.
 
+Rückblende (Teams, seit 11.10.2026): erst nach Spielende (`sessions.status = finished`, vorher 409). Die Spielleitung zeigt sie für alle (Kasten „Das Finale“ mit „▶ Rückblende für alle zeigen“ auf `leitung.html`, gedacht für Bildschirm teilen/Beamer); jedes Team kann sie auf der Ergebnisseite neben „Umschlag öffnen“ selbst starten – nie automatisch, damit es im Raum kein Ton-Durcheinander gibt. `GET /api/spiel/leitung/rueckblende` (x-leitung) und `GET /api/spiel/rueckblende` (x-team/x-view) → `teamsRueckblende(session)` in `lib/rueckblende.js` → `lib/art/rb_teams.js` (Fall 001 und 002, Szenen aus `buildVars`; Basic nur Akt 1, Premium + Mitwisser/Geld, Premium Plus + Finale). Musik je Gesamtlänge `site/assets/audio/rueckblende-teams-<Sekunden>.m4a` (41/47/48/54/55/61, aus dem Teams-Teaser) – ändert sich eine Szenenlänge, passende Datei neu schneiden.
+
 
 ## Wie die Produkte technisch funktionieren
 
@@ -127,8 +129,8 @@ Alle Routen liefern JSON. Fehlermeldungen kommen in der Spielsprache bzw., wenn 
 | `x-cron-key` | GitHub-Action |
 
 **`/api/spiel/…`** (Teams und Admin)
-- Spiel: `GET state`, `GET akte`, `GET code`, `POST join`, `POST mitlesen`, `POST loesung`, `POST kontrolle`, `GET firma`, `POST firma/login`, `GET aria`, `POST aria/chat`, `POST aria/kennwort`, `POST bonus`, `POST bonus/fertig`, `GET sonder`, `POST sonder/chat`, `POST feedback`
-- Leitung: `POST leitung/login`, `GET leitung/state`, `POST leitung/aktion`, `GET leitung/aufloesung`
+- Spiel: `GET state`, `GET akte`, `GET code`, `POST join`, `POST mitlesen`, `POST loesung`, `POST kontrolle`, `GET firma`, `POST firma/login`, `GET aria`, `POST aria/chat`, `POST aria/kennwort`, `POST bonus`, `POST bonus/fertig`, `GET sonder`, `POST sonder/chat`, `GET rueckblende`, `POST feedback`
+- Leitung: `POST leitung/login`, `GET leitung/state`, `POST leitung/aktion`, `GET leitung/aufloesung`, `GET leitung/rueckblende`
 - Admin: `POST admin/session`, `GET admin/sessions`, `POST admin/delete`, `GET admin/orders`, `POST admin/order-shipped`, `GET admin/stats`, `GET admin/export`, `GET admin/meta`, `GET admin/ops`, `GET admin/buchhaltung`, `GET/POST admin/kosten`, `POST admin/kosten/loeschen`, `GET admin/ausgaben?jahr=`, `POST admin/ausgaben`, `POST admin/ausgaben/loeschen`, `POST admin/ausgaben/doppelt-ok`, `POST admin/rc/bezahlt` (`quartal`, `paid`, `datum`), `POST admin/pflicht` (`key` zm:/u1:/e1:), `POST admin/est-vz` (`jahr`, `euro`), `POST admin/kosten/ueberspringen` (`cost_id`, `period`, `undo`), `POST admin/ausgaben/zuordnen` (`id`, `cost_id`), `GET admin/export/ausgaben?von=&bis=`, `GET admin/export/ea?jahr=`, `POST admin/ausgaben/beleg?id=` (roher Body, Kopf `x-filename`; PDF/JPG/PNG/HEIC/WebP bis 20 MB), `GET admin/ausgaben/beleg?file=`, `POST admin/ausgaben/beleg/loeschen` (nur markieren, Datei bleibt im Speicher), `GET admin/feedback`, `POST admin/feedback-approve`, `POST admin/feedback-run`, `GET admin/kunden`, `GET admin/newsletter`, `POST admin/newsletter/sync`, `POST admin/newsletter/ecg` (`phase` start/chunk/done), `POST admin/newsletter/entwurf` (`preview: true` = nur Vorschau)
 - Nur Testrunden: `POST test/vorspulen` (Spielzeit vorspulen)
 

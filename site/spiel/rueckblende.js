@@ -44,6 +44,7 @@
 .rb-gas{opacity:0;animation:rbGas 6s ease-in forwards} @keyframes rbGas{to{opacity:.2}}
 .rb-co2{animation:rbBlink .6s steps(2) infinite}
 @keyframes rbBlink{50%{opacity:.2}}
+.rb-into{animation:rbInto 1.3s ease-in-out forwards;animation-delay:var(--d,1.5s)} @keyframes rbInto{to{transform:translate(var(--x,0),var(--y,0)) scale(.45);opacity:0}}
 .rb-snow{animation:rbSnow 7s linear infinite;animation-delay:var(--d,0s)} @keyframes rbSnow{from{transform:translate(0,-30px)}to{transform:translate(-30px,330px)}}
 .rb-bolt{animation:rbBolt .5s ease-in 1.2s forwards} @keyframes rbBolt{to{transform:translateX(-36px)}}
 .rb-heat{opacity:0;animation:rbOn .3s ease 3.6s forwards} @keyframes rbOn{to{opacity:1}}

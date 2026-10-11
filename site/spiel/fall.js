@@ -272,6 +272,13 @@
     };
   }
 
+  // Rückblende (animiertes Finale, 11.10.2026): startet nur auf Knopfdruck – im Raum zeigt sie meist die Spielleitung für alle
+  async function playRb(get, after = () => {}) {
+    try {
+      if (!window.Rueckblende) await new Promise((ok, no) => { const s = document.createElement("script"); s.src = "/spiel/rueckblende.js"; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+      window.Rueckblende.play(await get(), { en: MS.lang === "en", onEnd: after });
+    } catch (e) { alert(e.message || e); }
+  }
   function viewFinal() {
     const A = S.aufloesung;
     root.innerHTML = `<div class="final">
@@ -290,12 +297,13 @@
       ${A ? `<section class="paper reveal">
         <div class="eyebrow">${t("Die Auflösung", "The solution")}</div><h2 class="h2p">${t("Was wirklich geschah", "What really happened")}</h2>
         <div id="revealbox"><p class="muted">${t("Wartet mit dem Aufdecken, bis euer Organisator so weit ist.", "Wait with the reveal until your organiser is ready.")}</p>
-        <button type="button" class="btn btn-ink btn-big" id="reveal">${t("Umschlag öffnen", "Open the envelope")}</button></div>
+        <div class="actions-row"><button type="button" class="btn btn-ink btn-big" id="reveal">${t("Umschlag öffnen", "Open the envelope")}</button><button type="button" class="btn btn-line" id="rbteam">▶ ${t("Rückblende ansehen", "Watch the flashback")}</button></div></div>
       </section>` : ""}
       ${playerFb()}
       ${thanks()}
     </div>`;
     bindPlayerFb();
+    if ($("rbteam")) $("rbteam").onclick = () => playRb(() => MS.api("GET", "rueckblende", null, H));
     const r = $("reveal");
     if (r) r.onclick = () => {
       $("revealbox").innerHTML = `<div class="answers">${A.answers.map((a, i) => `<div><i>${pad(i + 1)}</i><span>${a.label}</span><b>${MS.esc(a.answer)}${a.detail ? ` · ${MS.esc(a.detail)}` : ""}</b></div>`).join("")}

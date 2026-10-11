@@ -41,6 +41,13 @@
     poll();
   }
 
+  // Rückblende (animiertes Finale, 11.10.2026) – erst nach Spielende
+  async function playRb(after = () => {}) {
+    try {
+      if (!window.Rueckblende) await new Promise((ok, no) => { const s = document.createElement("script"); s.src = "/spiel/rueckblende.js"; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+      window.Rueckblende.play(await MS.api("GET", "leitung/rueckblende", null, { "x-leitung": token }), { en: MS.lang === "en", onEnd: after });
+    } catch (e) { alert(e.message || e); }
+  }
   async function showSolution() {
     if (S.status === "running" && !confirm(t("Die Auflösung verrät den ganzen Fall. Nur öffnen, wenn niemand mehr mitspielt oder zusieht.", "The solution gives away the whole case. Only open it when nobody is playing or watching any more."))) return;
     try {
@@ -61,7 +68,7 @@
     if (S.status === "created") steps = `<p>${t("Bereit, wann immer ihr es seid: Öffnet den Fall, dann können sich die Teams mit dem Spielcode anmelden. Gestartet wird erst im nächsten Schritt.", "Ready whenever you are: open the case and the teams can join with the game code. The clock only starts in the next step.")}</p><button class="btn btn-red" id="a-open">${t("Fall öffnen", "Open case")}</button>`;
     if (S.status === "open") steps = `<p>${t("Die Teams melden sich jetzt an. Startet den Fall, wenn alle bereit sind – die Uhr läuft dann für alle gleichzeitig und ohne Pause.", "The teams are joining now. Start the case when everyone is ready – the clock then runs for everyone at the same time, without a pause.")}</p><p><b>${t(`${(S.ranking || []).length} von ${S.max_teams} Teams angemeldet`, `${(S.ranking || []).length} of ${S.max_teams} teams joined`)}</b></p><button class="btn btn-red" id="a-start">${t("Fall starten", "Start case")}</button>`;
     if (S.status === "running") steps = `<p>${t("Läuft seit", "Running for")} <b class="mono">${MS.dur(now - S.started_at)}</b>. ${t(`${S.ui_end || "Übergabe der Mappe (Spielende)"} nach ${S.duration_min} Minuten (${MS.esc(S.tier_name || "")}). Haben alle Teams gelöst und ihre Zusatzermittlung abgeschlossen, endet die Runde automatisch und alle sehen Rangliste und Auflösung. Schafft es ein Team nicht, beendet ihr die Runde hier selbst. Plant das Zeitlimit als Obergrenze: Schnelle Teams sind oft nach der Hälfte fertig – die Zusatzermittlung hält sie beschäftigt.`, `${S.ui_end || "Handover of the folder (end of game)"} after ${S.duration_min} minutes (${MS.esc(S.tier_name || "")}). Once all teams have solved it and closed their bonus investigation, the round ends automatically and everyone sees the ranking and the solution. If a team doesn't make it, end the round here yourself. Plan the time limit as a maximum: fast teams are often done after half the time – the bonus investigation keeps them busy.`)}</p><button class="btn btn-line" id="a-stop">${t("Runde beenden", "End round")}</button>`;
-    if (S.status === "finished") steps = `<p>${t("Die Runde ist beendet. Die Urkunden der Teams könnt ihr unten in der Rangliste öffnen und speichern. Rangliste und Urkunden bleiben 30 Tage abrufbar, dann werden alle Daten gelöscht.", "The round has ended. You can open and save the teams' certificates in the ranking below. Ranking and certificates remain available for 30 days, then all data is deleted.")}</p>`;
+    if (S.status === "finished") steps = `<div class="panel" style="background:var(--ink);color:var(--paper);margin:0 0 16px"><div class="eyebrow" style="color:#F2C14E">${t("Das Finale", "The finale")}</div><p style="margin:8px 0 14px">${t("Zeigt allen die Rückblende – rund eine Minute: Bildschirm teilen oder Beamer, Ton an. Danach öffnen die Teams auf ihren Geräten den Umschlag mit der Auflösung.", "Show everyone the flashback – about one minute: share your screen or use a projector, sound on. Then the teams open the envelope with the solution on their devices.")}</p><button class="btn btn-red" id="a-rb" type="button">▶ ${t("Rückblende für alle zeigen", "Show the flashback to everyone")}</button></div><p>${t("Die Runde ist beendet. Die Urkunden der Teams könnt ihr unten in der Rangliste öffnen und speichern. Rangliste und Urkunden bleiben 30 Tage abrufbar, dann werden alle Daten gelöscht.", "The round has ended. You can open and save the teams' certificates in the ranking below. Ranking and certificates remain available for 30 days, then all data is deleted.")}</p>`;
     root.innerHTML = `<div class="stack" style="gap:18px;max-width:900px">
       <div class="panel"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
         <div><div class="eyebrow">${MS.esc(S.fall)}</div><h1 style="font-family:var(--serif);font-size:30px;margin:4px 0">${S.firma}</h1></div>
@@ -86,6 +93,7 @@
     const b = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
     b("a-open", () => act("oeffnen")); b("a-start", () => act("starten")); b("a-stop", () => act("beenden"));
     b("a-sol", showSolution);
+    b("a-rb", () => playRb());
     b("copy", () => { try { navigator.clipboard.writeText(link); } catch {} });
     b("logout", (e) => { e.preventDefault(); MS.del("ms_org"); token = null; loginView(); });
   }

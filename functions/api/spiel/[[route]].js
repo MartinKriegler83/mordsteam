@@ -10,6 +10,7 @@ import {
 } from "../../../lib/game.js";
 
 import { migrate, createGameSession, InputError } from "../../../lib/create.js";
+import { teamsRueckblende } from "../../../lib/rueckblende.js";
 import { logAI, opsSummary } from "../../../lib/ops.js";
 import { customers, nlAdmin, syncAll, ecgUpload, nlDraft, ecgCheckNow } from "../../../lib/newsletter.js";
 import { migrateFeedback, dueFeedback, runFeedbackMails } from "../../../lib/feedback.js";
@@ -48,12 +49,14 @@ export async function onRequest(ctx) {
     if (route === "sonder" && method === "GET") return withTeam(request, env, sonderGet);
     if (route === "sonder/chat" && method === "POST") return withTeam(request, env, sonderChat, true, false);
     if (route === "test/vorspulen" && method === "POST") return withTeam(request, env, vorspulen, true, false);
+    if (route === "rueckblende" && method === "GET") return withTeam(request, env, rueckblende);
     if (route === "feedback" && method === "POST") return withTeam(request, env, playerFeedback);
     // --- Organisator ---
     if (route === "leitung/login" && method === "POST") return leitungLogin(request, env);
     if (route === "leitung/state" && method === "GET") return withOrg(request, env, leitungState);
     if (route === "leitung/aktion" && method === "POST") return withOrg(request, env, leitungAktion);
     if (route === "leitung/aufloesung" && method === "GET") return withOrg(request, env, aufloesung);
+    if (route === "leitung/rueckblende" && method === "GET") return withOrg(request, env, rueckblende);
     // --- Admin (Mordsteam) ---
     if (route.startsWith("admin/")) {
       { const denied = await adminDenied(request, env, fail); if (denied) return denied; }
@@ -696,6 +699,11 @@ function extraSolutions(session, c, v, plus) {
       answer: opts[c.zielOf(secrets)][1], detail: L(lg, "Antwort im Verhör, sobald ein Beweis vorgehalten wird", "revealed in the interrogation once evidence is put forward") });
   }
   return out;
+}
+// Rückblende (animiertes Finale, 11.10.2026): erst nach Spielende, für Spielleitung und Teams
+async function rueckblende({ session }) {
+  if (session.status !== "finished") return fail(L(langOf(session), "Die Rückblende gibt es erst nach Spielende.", "The flashback is only available after the game has ended."), 409);
+  return json(teamsRueckblende(session));
 }
 async function aufloesung({ session }) {
   const ok = session.status === "finished" || (session.status === "running" && (!!session.test_mode ||
