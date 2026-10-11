@@ -97,7 +97,7 @@ Rückblende (Teams, seit 11.10.2026): erst nach Spielende (`sessions.status = fi
 - Spielsprache: `solo_tickets.lang`. `soloCase(id, lang)` in `lib/solo.js` legt bei `en` die Textschicht `<id>-en.js` über das deutsche Modul (`{ ...DE, ...EN }`). Der Spielstand liefert `lang`, die Oberfläche übernimmt sie.
 
 ### Friends (`/spiel/friends.html`)
-- Eine **Gruppe** (`friends_groups`) hat einen Fall für alle (Besetzung, Täter, Zeitvariante), jede Person einen eigenen Durchgang (`friends_players`). Modus `live` (gemeinsame Uhr, Organisator startet) oder `week` (3/5/7 Tage, jeder startet selbst). Lösung und Rangliste erst bei der gemeinsamen Auflösung (`org/reveal` oder automatisch per Cron). Verhöre in `friends_chat`.
+- Eine **Gruppe** (`friends_groups`) hat einen Fall für alle (Besetzung, Täter, Zeitvariante), jede Person einen eigenen Durchgang (`friends_players`). Modus `live` (gemeinsame Uhr, Organisator startet) oder `week` (3/5/7 Tage, jeder startet selbst). Lösung und Rangliste erst bei der gemeinsamen Auflösung (automatisch, sobald alle fertig sind oder die Frist um ist, per Cron; oder vom Organisator über `org/reveal`). Der Organisator darf vorziehen, sobald mindestens eine Person fertig ist und niemand mehr mitten im Spiel ist – wer nie angefangen hat, steht dann als „nicht gespielt“ in der Rangliste (seit 11.10.2026; Testgruppen immer). Verhöre in `friends_chat`.
 - Spielsprache: `friends_groups.lang`, gilt für die ganze Gruppe; `friendsCase(id, lang)` in `lib/friends.js` wie bei Solo. Einladung, Spielstand und Organisator-Seite liefern `lang`.
 
 ### Shop (`/api/shop/`)
