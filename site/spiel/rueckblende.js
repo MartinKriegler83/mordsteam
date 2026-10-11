@@ -44,6 +44,11 @@
 .rb-gas{opacity:0;animation:rbGas 6s ease-in forwards} @keyframes rbGas{to{opacity:.2}}
 .rb-co2{animation:rbBlink .6s steps(2) infinite}
 @keyframes rbBlink{50%{opacity:.2}}
+.rb-snow{animation:rbSnow 7s linear infinite;animation-delay:var(--d,0s)} @keyframes rbSnow{from{transform:translate(0,-30px)}to{transform:translate(-30px,330px)}}
+.rb-bolt{animation:rbBolt .5s ease-in 1.2s forwards} @keyframes rbBolt{to{transform:translateX(-36px)}}
+.rb-heat{opacity:0;animation:rbOn .3s ease 3.6s forwards} @keyframes rbOn{to{opacity:1}}
+.rb-heat0{animation:rbOff .3s ease 2.8s forwards} @keyframes rbOff{to{opacity:0}}
+.rb-card{animation:rbCard 1.4s ease-in 1.6s forwards} @keyframes rbCard{to{transform:translate(60px,90px) rotate(30deg);opacity:0}}
 @media (prefers-reduced-motion:reduce){.rb-ov *{animation-duration:.01s!important;animation-delay:0s!important}}`;
 
   // Geräusche, im Browser erzeugt
@@ -63,6 +68,9 @@
     chord: (t) => { [147, 175, 220].forEach((f) => tone(t, f, f, 2.4, 0.07, "triangle")); },
     applause: (t) => { for (let i = 0; i < 26; i++) noise(t + Math.random() * 1.6, 0.05, 1800 + Math.random() * 1500, 2, 0.12); },
     boom: (t) => { tone(t, 80, 30, 0.9, 0.5); noise(t, 0.6, 200, 0.6, 0.25); },
+    wind: (t) => { noise(t, 3.5, 500, 0.5, 0.06); noise(t + 1, 2.5, 900, 0.8, 0.04); },
+    dice: (t) => { for (let i = 0; i < 6; i++) { noise(t + i * 0.09 + Math.random() * 0.03, 0.03, 2200, 3, 0.3); tone(t + i * 0.09, 700, 500, 0.03, 0.06); } },
+    beep: (t) => { tone(t, 1320, 1320, 0.12, 0.12, "square"); },
     rattle: (t) => { for (let i = 0; i < 8; i++) noise(t + i * 0.55, 0.08, 500, 1.5, 0.08); },
   };
 

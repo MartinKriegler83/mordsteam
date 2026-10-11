@@ -73,6 +73,8 @@ design/                  Designentwürfe (nicht ausgeliefert)
 
 Rückblende (Solo, seit 11.10.2026): Nach Spielende zeigt der Solo-Client zuerst „Was ist wirklich passiert?“ mit Knopf „▶ Rückblende ansehen“ (oder „Direkt zur Auflösung“), danach Zusammenfassung und Urkunde; auf der Ergebnisseite lässt sie sich erneut abspielen. Ablauf: `GET /api/solo/rueckblende` (erst nach Spielende, sonst 409) → `lib/rueckblende.js` holt die Rundendaten → Szenen aus `lib/art/rb_solo001.js`, `rb_solo002.js`, `rb_soloplus.js` (je 6 SVG-Szenen, Untertitel, Geräusch-Zeitpunkte) → Player `site/spiel/rueckblende.js` (16:9, CSS-Animationen `rb-*`, Musik `site/assets/audio/rueckblende-solo.m4a` aus dem Solo-Teaser, Geräusche per WebAudio, Überspringen/Ton aus, Esc). Gesehen wird je Durchgang im Browser gemerkt (`ms_rb_<code>_<start>`).
 
+Rückblende (Friends, seit 11.10.2026): Erst nach der gemeinsamen Auflösung (`friends_groups.status = revealed`, vorher 409) zeigt der Friends-Client „Was ist wirklich passiert?“, danach Auflösung und Rangliste; auf der Auflösungsseite lässt sie sich erneut abspielen. `GET /api/friends/rueckblende` → `friendsRueckblende` in `lib/rueckblende.js` (Täter, Würfeln/Balkon, Uhrzeiten der Zeitvariante, Versteck, alle Spielernamen roh aus `friends_groups.data`) → `lib/art/rb_friends.js` (Spieler als Silhouetten ohne Gesicht mit Namensschild) → Player mit Musik `site/assets/audio/rueckblende-friends.m4a` (aus dem Friends-Teaser). Gesehen-Merker je Spieler: `ms_rb_f_<token[0:12]>`.
+
 
 ## Wie die Produkte technisch funktionieren
 
@@ -132,7 +134,7 @@ Alle Routen liefern JSON. Fehlermeldungen kommen in der Spielsprache bzw., wenn 
 
 **`/api/solo/…`** (Admin-Testticket: `admin/ticket` mit `case`, `lang`, `name`): `start`, `begin`, `state`, `answer`, `hint`, `verhoer`, `aufgeben`, `ticket`, `feedback`, `test/vorspulen`, `admin/list`, `admin/ticket`. **Geschenk-Codes (Werbung):** `POST admin/geschenk` (`case`, `lang`, `n` 1–20, `note`, `promo` {`type` eur|pct, `value`, `until`} oder null) legt echte Solo-Tickets ohne Kauf an (`solo_tickets.gift=1`, `gift_note`) und je Code optional einen Teams-Gutschein in Stripe (`TEAMS-XXXXXX`, Gutschein `TEAMS-EUR-<n>`/`TEAMS-PCT-<n>`, einmal einlösbar, `expires_at`, Mindestbestellwert 89 € / £89 / $99 = nur Teams; `promo`, `promo_label`, `promo_until`). Solche Tickets bekommen keinen 5-€-Gutschein; das Spielende zeigt den Teams-Gutschein. `GET admin/geschenke` (Liste mit Notiz, gespielt, Zeit, Gutschein eingelöst laut `orders.promo_code`, plus alle Solo-Fälle aus `SOLO_CASES`). Öffentlich `GET geschenk?c=` (nur für `gift=1`) für die Geschenkkarte `/geschenk.html?c=<Code>&l=de|en`. Aktenzeichen auf jeder Geschenkkarte = Spielcode (Solo) bzw. Kurzcode der Organisator-Seite (Friends)
 
-**`/api/friends/…`** (Admin-Testgruppe: `admin/group` mit `n`, `lang`, `plus`, `mode`): `claim`, `begin`, `state`, `answer`, `hint`, `verhoer`, `aufgeben`, `invite`, `org`, `org/start`, `org/reveal`, `feedback`, `admin/list`, `admin/group`
+**`/api/friends/…`** (Admin-Testgruppe: `admin/group` mit `n`, `lang`, `plus`, `mode`): `claim`, `begin`, `state`, `answer`, `hint`, `verhoer`, `aufgeben`, `rueckblende`, `invite`, `org`, `org/start`, `org/reveal`, `feedback`, `admin/list`, `admin/group`
 
 **`/api/shop/…`**: siehe Abschnitt Shop.
 

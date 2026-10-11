@@ -70,7 +70,7 @@
   function render() {
     tick();
     if (S.reveal || S.ended) $("fallname").textContent = "Mordsteam Friends · " + S.title;
-    if (S.reveal) { every(0); plain(); return revealView(); }
+    if (S.reveal) { every(0); plain(); return MS.get(rbKey()) ? revealView() : rbIntro(); }
     if (S.ended) { plain(); every(20000, () => refresh()); return waitRevealView(); }
     if (!S.begun && !S.can_begin) { plain(); every(3000, () => { if (!document.hidden) refresh(); }); return waitStartView(); }
     every(0);
@@ -345,12 +345,33 @@
     return `<table class="grid fr-rank"><tr><th>${t("Platz", "Place")}</th><th>${t("Ermittler", "Detective")}</th><th>${t("Endzeit", "Final time")}</th><th>${t("Auszeichnung", "Award")}</th></tr>
       ${r.ranking.map((x) => `<tr class="${x.idx === me ? "me" : ""}${x.culprit ? " culprit" : ""}"><td>${x.place ? (MS.lang === "en" ? ord(x.place) : x.place) : "–"}</td><td><b>${x.name}</b>${x.culprit ? `<br><span class="small">${t("war's – und hat gegen sich selbst ermittelt", "did it – and investigated themselves")}</span>` : ""}</td><td class="mono">${x.solved ? MS.dur(x.score_ms) + (x.penalty ? `<br><span class="small">${t(`inkl. ${x.penalty} Strafmin.`, `incl. ${x.penalty} penalty min`)}</span>` : "") : x.played ? t("nicht gelöst", "not solved") : t("nicht gespielt", "didn’t play")}</td><td>${esc(x.award)}</td></tr>`).join("")}</table>`;
   }
+  // ---------- Rückblende (animiertes Finale, 11.10.2026): nach der Auflösung, vor Rangliste ----------
+  const rbKey = () => "ms_rb_f_" + token.slice(0, 12);
+  async function playRb(after) {
+    try {
+      if (!window.Rueckblende) await new Promise((ok, no) => { const s = document.createElement("script"); s.src = "/spiel/rueckblende.js"; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+      const d = await api("GET", "rueckblende");
+      window.Rueckblende.play(d, { en: MS.lang === "en", onEnd: after });
+    } catch { after(); }
+  }
+  function rbIntro() {
+    const done = () => { MS.set(rbKey(), "1"); revealView(); scrollTo(0, 0); };
+    root.innerHTML = `<section class="report paper so-result" style="text-align:center">
+      <div class="solved"><div class="bigstamp"><div><small>MORDSTEAM FRIENDS</small><strong>${t("AUFLÖSUNG", "THE REVEAL")}</strong><small>${esc(String(S.title).toUpperCase())}</small></div></div></div>
+      <h3 style="margin-top:18px">${t("Was ist wirklich passiert?", "What really happened?")}</h3>
+      <p>${t("Die Rückblende zeigt die Tat Schritt für Schritt – rund 40 Sekunden, am besten mit Ton. Danach kommen Auflösung und Rangliste.", "The flashback shows the crime step by step – about 40 seconds, best with sound on. Then come the solution and the leaderboard.")}</p>
+      <div class="actions-row" style="justify-content:center;margin-top:18px"><button type="button" class="btn btn-red" id="rbgo">▶ ${t("Rückblende ansehen", "Watch the flashback")}</button></div>
+      <p style="margin-top:12px"><button type="button" class="linkbtn" id="rbskip">${t("Direkt zur Auflösung", "Skip to the solution")}</button></p></section>`;
+    $("rbgo").onclick = () => playRb(done);
+    $("rbskip").onclick = done;
+  }
   function revealView() {
     const r = S.reveal, win = r.ranking.find((x) => x.place === 1), mine = r.ranking.find((x) => x.idx === S.me);
     root.innerHTML = `<section class="report paper so-result">
       <div class="solved"><div class="bigstamp"><div><small>MORDSTEAM FRIENDS · ${t("AUFLÖSUNG", "SOLUTION")}</small><strong>${t("ES WAR", "IT WAS")} ${String(r.culprit).toUpperCase()}</strong><small>${esc(String(S.title).toUpperCase())}</small></div></div></div>
       ${r.ranking[0] && r.ranking[0].idx === S.me && mine.solved ? `<p class="so-pct"><b>${t("Du hast gewonnen!", "You won!")}</b></p>` : mine && mine.place ? `<p class="so-pct">${t(`Du bist auf <b>Platz ${mine.place}</b>.`, `You came <b>${ord(mine.place)}</b>.`)}</p>` : ""}
       <h3>${t("Was in der Nacht geschah", "What happened that night")}</h3>
+      <p><button type="button" class="btn btn-line" id="rbagain">▶ ${t("Rückblende ansehen", "Watch the flashback")}</button></p>
       <p>${r.text}</p>
       <p><b>${t("Versteck der Speicherkarte:", "Where the memory card was hidden:")}</b> ${r.item}</p>
       <h3>${t("Rangliste", "Leaderboard")}</h3>${rankTable(r, S.me)}
@@ -358,6 +379,7 @@
       <p class="small" style="margin-top:18px">${t("Lust auf mehr? Weitere Fälle – allein, mit Freunden oder im Team:", "Fancy more? Further cases – solo, with friends or as a team:")} <a href="/${MS.lang === "en" ? "en/" : ""}">mordsteam.com</a></p>
     </section>
     ${S.feedback_done ? "" : fbHtml()}`;
+    if ($("rbagain")) $("rbagain").onclick = () => playRb(() => {});
     bindFeedback();
   }
 
