@@ -4,7 +4,7 @@
 (function () {
   const CSS = `
 .rb-ov{position:fixed;inset:0;z-index:9999;background:#07080B;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px}
-.rb-stage{position:relative;width:min(100%,calc((100vh - 150px)*16/9));aspect-ratio:16/9;background:#101830;overflow:hidden;border:2px solid #2A2E3A;border-radius:6px}
+.rb-stage{position:relative;flex-shrink:0;width:min(100%,calc((100vh - 150px)*16/9));aspect-ratio:16/9;background:#101830;overflow:hidden;border:2px solid #2A2E3A;border-radius:6px}
 .rb-stage svg{position:absolute;inset:0;width:100%;height:100%;display:block}
 .rb-scene{position:absolute;inset:0;animation:rbIn .6s ease both}
 .rb-scene.out{animation:rbOut .5s ease both}
@@ -78,9 +78,9 @@
   function play(data, { en = false, onEnd } = {}) {
     if (!document.getElementById("rb-css")) { const st = document.createElement("style"); st.id = "rb-css"; st.textContent = CSS; document.head.appendChild(st); }
     const L = (d, e) => (en ? e : d);
-    const ov = document.createElement("div"); ov.className = "rb-ov"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-label", L("Rückblende", "Flashback"));
+    const ov = document.createElement("div"); ov.className = "rb-ov"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-label", L("Rückblende", "Flashback"));
     ov.innerHTML = `<div class="rb-stage"></div><div class="rb-sub" aria-live="polite"></div><div class="rb-bar"><button class="rb-btn" data-a="mute" type="button">${L("Ton aus", "Sound off")}</button><div class="rb-prog"><i></i></div><button class="rb-btn" data-a="skip" type="button">${L("Überspringen", "Skip")}</button></div>`;
-    document.body.appendChild(ov); document.body.style.overflow = "hidden";
+    document.body.appendChild(ov); document.body.style.overflow = "hidden"; const prevFocus = document.activeElement; setTimeout(() => { const b = ov.querySelector('[data-a="skip"]'); if (b) b.focus(); }, 50);
     const stage = ov.querySelector(".rb-stage"), subEl = ov.querySelector(".rb-sub"), bar = ov.querySelector(".rb-prog i");
     let muted = false, timers = [], done = false;
     const audio = data.music ? new Audio(data.music) : null;
@@ -91,7 +91,7 @@
     if (audio) { audio.volume = 0.55; audio.setAttribute("playsinline", ""); audio.play().catch(() => { muted = true; const b = muteBtn(); if (b) b.textContent = L("🔊 Ton einschalten", "🔊 Turn sound on"); }); }
     const total = data.scenes.reduce((a, s) => a + s.dur, 0), t0 = performance.now();
     const tick = () => { if (done) return; bar.style.width = Math.min(100, ((performance.now() - t0) / 1000 / total) * 100) + "%"; requestAnimationFrame(tick); }; tick();
-    const end = () => { if (done) return; done = true; timers.forEach(clearTimeout); if (audio) { const a = audio; let v = a.volume; const f = setInterval(() => { v -= 0.05; if (v <= 0) { a.pause(); clearInterval(f); } else a.volume = v; }, 40); } ov.remove(); document.body.style.overflow = ""; if (onEnd) onEnd(); };
+    const end = (soft) => { if (done) return; done = true; timers.forEach(clearTimeout); if (audio) { const a = audio; let v = a.volume; const f = setInterval(() => { v -= soft === true ? 0.012 : 0.05; if (v <= 0) { a.pause(); clearInterval(f); } else a.volume = v; }, 40); } ov.remove(); document.body.style.overflow = ""; try { if (prevFocus && prevFocus.focus) prevFocus.focus(); } catch {} if (onEnd) onEnd(); };
     ov.addEventListener("click", (e) => { const a = e.target.dataset && e.target.dataset.a; if (a === "skip") end(); if (a === "mute") { muted = !muted; unlock(); if (audio) { audio.muted = muted; if (!muted && audio.paused) { audio.currentTime = (performance.now() - t0) / 1000; audio.play().catch(() => {}); } } e.target.textContent = muted ? L("Ton an", "Sound on") : L("Ton aus", "Sound off"); } });
     document.addEventListener("keydown", function k(e) { if (e.key === "Escape") { document.removeEventListener("keydown", k); end(); } });
     let at = 0;
@@ -104,7 +104,7 @@
       }, at * 1000));
       at += sc.dur;
     });
-    timers.push(setTimeout(end, at * 1000 + 400));
+    timers.push(setTimeout(() => end(true), at * 1000 + 400));
   }
   window.Rueckblende = { play };
 })();

@@ -29,26 +29,33 @@
 .gk-tabrow{display:flex;gap:1.2cqw;padding:0 6cqw;margin-top:-.2cqw}
 .gk-tab{background:var(--folder);font-family:'IBM Plex Mono',monospace;font-size:1.55cqw;letter-spacing:.2em;text-transform:uppercase;padding:1cqw 2.2cqw 1.1cqw;border-radius:0 0 1cqw 1cqw}
 .gk-tab.red{background:var(--red);color:#fff}
-.gk-body{flex:1;padding:4.4cqw 6cqw 0;display:flex;flex-direction:column;gap:2.5cqw;position:relative}
+.gk-body{flex:1;padding:3.4cqw 6cqw 0;display:flex;flex-direction:column;gap:1.7cqw;position:relative}
 .gk-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:1.8cqw;letter-spacing:.3em;text-transform:uppercase;color:var(--red)}
-.gk-title{font-family:'Fraunces',serif;font-weight:900;font-size:7.6cqw;line-height:.98;margin:1cqw 0 0;max-width:66cqw;text-wrap:balance}
+.gk-title{font-family:'Fraunces',serif;font-weight:900;font-size:7cqw;line-height:.98;margin:1cqw 0 0;max-width:66cqw;text-wrap:balance}
 .gk-sub{font-size:2.05cqw;color:var(--ink-2);margin:1.2cqw 0 0;max-width:86cqw}
 /* Gummistempel */
 .gk-stamp{position:absolute;right:5cqw;top:3.6cqw;transform:rotate(-11deg);border:.7cqw double var(--red);color:var(--red);border-radius:1.2cqw;
   padding:1.4cqw 2.6cqw;text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:500;opacity:.9}
 .gk-top.has-cover{display:grid;grid-template-columns:minmax(0,1fr) 21cqw;gap:3cqw;align-items:start}
 .gk-top.has-cover .gk-title{font-size:6.8cqw}
-.gk-cover{width:100%;height:auto;display:block;transform:rotate(3deg);box-shadow:0 1.2cqw 2.4cqw rgba(21,23,28,.3);margin-top:3.5cqw}
+.gk-cover{width:100%;height:auto;display:block;transform:rotate(3deg);box-shadow:0 1.2cqw 2.4cqw rgba(21,23,28,.3);margin-top:2cqw}
 .gk:has(.gk-cover) .gk-stamp{display:none} /* Titelbild trägt schon den Stempel; „Geschenk“ steht im Reiter */
 .gk.has-promo .gk-top.has-cover{grid-template-columns:minmax(0,1fr) 17cqw}
 .gk.has-promo .gk-cover{margin-top:1.5cqw}
+.gk.has-promo .gk-body{gap:1.2cqw}
+.gk.has-promo .gk-title{font-size:6.4cqw}
+.gk.has-promo .gk-tag{padding:1.5cqw 3cqw 1.5cqw 9cqw}
+.gk.has-promo .gk-code{font-size:5.2cqw}
+.gk.has-promo .gk-qr{padding:1.1cqw}
+.gk.has-promo .gk-promo{padding:1.3cqw 3cqw}
+.gk.has-promo .gk-steps li{font-size:1.7cqw;padding-top:.9cqw}
 .gk-stamp b{display:block;font-size:4.2cqw;letter-spacing:.18em;line-height:1}
 .gk-stamp span{display:block;font-size:1.35cqw;letter-spacing:.25em;margin-top:.8cqw}
 /* Widmung: „Für“ und „Von“ wie ein Formular, dazwischen eine angeheftete Karteikarte */
 .gk-field{display:grid;grid-template-columns:15cqw 1fr;align-items:end;gap:2cqw}
 .gk-field label{font-family:'IBM Plex Mono',monospace;font-size:1.6cqw;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2);padding-bottom:.8cqw}
 .gk-field input{-webkit-appearance:none;appearance:none;font-family:'Fraunces',serif;font-weight:700;font-size:4cqw;color:var(--ink);background:var(--paper);border:0;border-bottom:.25cqw solid var(--ink);padding:.4cqw .2cqw;width:100%;min-width:0;border-radius:0}
-.gk-card{position:relative;background:#FFFDF8;margin:.6cqw 3cqw .6cqw 17cqw;padding:3.6cqw 4cqw 2cqw;transform:rotate(-1.2deg);box-shadow:0 .6cqw 1.6cqw rgba(21,23,28,.14)}
+.gk-card{position:relative;background:#FFFDF8;margin:.6cqw 3cqw .6cqw 17cqw;padding:3cqw 4cqw 1.6cqw;transform:rotate(-1.2deg);box-shadow:0 .6cqw 1.6cqw rgba(21,23,28,.14)}
 .gk-card::before{content:"";position:absolute;left:0;right:0;top:2.4cqw;border-top:.18cqw solid var(--red)}
 .gk-card::after{content:"";position:absolute;top:-1.6cqw;left:50%;width:14cqw;height:3.4cqw;transform:translateX(-50%) rotate(2deg);background:rgba(214,194,155,.7)}
 .gk-card textarea{display:block;width:100%;box-sizing:border-box;border:0;background:transparent;resize:none;font-family:'Fraunces',serif;font-style:italic;font-size:2.9cqw;line-height:4.4cqw;color:var(--ink);height:13.2cqw;padding:0;overflow:hidden;-webkit-appearance:none;appearance:none;border-radius:0;
@@ -81,8 +88,8 @@
 .gk.has-promo .gk-steps{margin-bottom:0}
 .gk.has-promo .gk-card textarea{height:8.8cqw}
 /* Einsatzbefehl */
-.gk-steps{list-style:none;margin:0 0 2.4cqw;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:3cqw;counter-reset:s}
-.gk-steps li{counter-increment:s;font-size:1.95cqw;line-height:1.45;border-top:.25cqw solid var(--ink);padding-top:1.6cqw}
+.gk-steps{list-style:none;margin:0 0 1.6cqw;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:3cqw;counter-reset:s}
+.gk-steps li{counter-increment:s;font-size:1.85cqw;line-height:1.4;border-top:.25cqw solid var(--ink);padding-top:1.2cqw}
 .gk-steps li::before{content:counter(s,decimal-leading-zero);display:block;font-family:'IBM Plex Mono',monospace;font-size:1.6cqw;letter-spacing:.2em;color:var(--red);margin-bottom:.8cqw}
 .gk-steps .mono{font-family:'IBM Plex Mono',monospace;font-size:.9em;word-break:break-all}
 .gk-foot{margin-top:auto;display:flex;justify-content:space-between;gap:3cqw;align-items:center;padding:2.6cqw 6cqw;border-top:.25cqw dashed var(--ink-2);font-family:'IBM Plex Mono',monospace;font-size:1.55cqw;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}

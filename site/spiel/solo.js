@@ -10,7 +10,8 @@
   // Feste Oberflächentexte zweisprachig: L(deutsch, englisch) – die Spielsprache der Runde (S.lang) gewinnt
 // Go-live-Test 5 (M17): Euro-Gutscheine auf Englisch in allen drei Kassenwährungen (wie die Stripe-Gutscheinvorlage: £ gleich, $ ≈ × 1,15)
 const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ? `€${m[1]} / £${m[1]} / $${Math.round(m[1] * 1.15)}` : l; };
-  const dmy = (d) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(d || "")); return m ? `${Number(m[3])}.${Number(m[2])}.${m[1]}` : String(d || ""); };
+  const MON = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const dmy = (d) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(d || "")); return !m ? String(d || "") : MS.lang === "en" ? `${Number(m[3])} ${MON[Number(m[2]) - 1]} ${m[1]}` : `${Number(m[3])}.${Number(m[2])}.${m[1]}`; };   // EN: „31 January 2027“ (Plattform-Test 11.10.2026)
   const L = (de, en) => MS.t(de, en);
   const EN = () => MS.lang === "en";
   const loc = () => (EN() ? "en-GB" : "de-AT");

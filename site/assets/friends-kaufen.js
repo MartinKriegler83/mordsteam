@@ -105,8 +105,7 @@
       const r = await fetch("/api/shop/friends", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: EN ? "en" : "de", lang: form.lang.value === "en" ? "en" : "de", variant: isPlus() ? "plus" : "basis", players: list.map((p) => ({ name: p.name, quirk: p.quirk })), mode: form.mode.value, days: Number(form.days.value), earlybird: !!(M.earlybird && form.earlybird.checked), contact, consent, nl: new URLSearchParams(location.search).get("nl") || "", src: window.msSrc || "" }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.redirect) throw Object.assign(new Error(d.error || T("Das hat nicht geklappt.", "That didn't work.")), { field: d.field });
-      try { localStorage.removeItem(draftKey); } catch {}
-      location.href = d.redirect;
+      location.href = d.redirect;   // Entwurf bleibt, falls die Zahlung abgebrochen wird – gelöscht auf der Bestätigungsseite (Plattform-Test 11.10.2026)
     } catch (e) { fail(e.message, e.field && form.elements[e.field]); btn.disabled = !open; btn.innerHTML = label; }
   });
 })();

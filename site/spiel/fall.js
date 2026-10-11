@@ -297,7 +297,8 @@
       ${A ? `<section class="paper reveal">
         <div class="eyebrow">${t("Die Auflösung", "The solution")}</div><h2 class="h2p">${t("Was wirklich geschah", "What really happened")}</h2>
         <div id="revealbox"><p class="muted">${t("Wartet mit dem Aufdecken, bis euer Organisator so weit ist.", "Wait with the reveal until your organiser is ready.")}</p>
-        <div class="actions-row"><button type="button" class="btn btn-ink btn-big" id="reveal">${t("Umschlag öffnen", "Open the envelope")}</button><button type="button" class="btn btn-line" id="rbteam">▶ ${t("Rückblende ansehen", "Watch the flashback")}</button></div></div>
+        <button type="button" class="btn btn-ink btn-big" id="reveal">${t("Umschlag öffnen", "Open the envelope")}</button></div>
+        <p style="margin-top:14px"><button type="button" class="btn btn-line" id="rbteam">▶ ${t("Rückblende ansehen", "Watch the flashback")}</button></p>
       </section>` : ""}
       ${playerFb()}
       ${thanks()}

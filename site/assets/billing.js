@@ -60,6 +60,8 @@
     else uidHint.textContent = T("Erscheint auf der Rechnung.", "Shown on the invoice.");
     // Go-live-Test 5 (N7f): außerhalb der EU (ohne GB) heißt das Feld Steuernummer
     const lbl = box.querySelector("#uidlbl"); if (lbl) lbl.textContent = l && !EU.includes(l) && l !== "GB" ? T("Steuernummer", "Tax ID") : l === "GB" ? T("VAT-Nummer", "VAT number") : T("UID-Nummer", "VAT ID");
+    // Beispiel passend zum Land (Plattform-Test 11.10.2026)
+    uid.placeholder = l === "GB" ? T("z. B. GB123456789", "e.g. GB123456789") : l && !EU.includes(l) ? T("Steuernummer laut Rechnung", "as on your tax records") : T(`z. B. ${l && l !== "GR" ? l : "DE"}123456789`, `e.g. ${l && l !== "GR" ? l : "DE"}123456789`);
     if (l === "GB" && !b2b) {
       n = uk && uk.on
         ? T("Im Vereinigten Königreich zahlt ihr in Pfund, der Preis enthält die britische Umsatzsteuer. Verkäufer ist dort Link, der Bezahldienst von Stripe; die Rechnung kommt per E-Mail von Link.",
@@ -72,7 +74,7 @@
     vatEls.forEach(([el, html]) => { el.innerHTML = vat ? html.replace(VAT_RE, vat) : html; });
     const ph0 = vat ? payhint0.replace(VAT_RE, vat) : payhint0;
     if (payhint) payhint.innerHTML = viaMor
-      ? T("Bezahlt wird in Pfund über Link (Stripe), inkl. britischer Umsatzsteuer – Link ist für Privatkunden im Vereinigten Königreich Verkäufer und schickt die Rechnung. Spielcode und Links seht ihr direkt danach.", "You pay in pounds via Link (Stripe), including UK VAT – Link is the seller for private customers in the United Kingdom and sends the invoice. You'll see your code and links right afterwards.")
+      ? T("Bezahlt wird in Pfund über Link (Stripe), inkl. britischer Umsatzsteuer – Link ist für Privatkunden im Vereinigten Königreich Verkäufer und schickt die Rechnung. " + (/solo/.test(location.pathname) ? "Spielcode und Links siehst du direkt danach." : "Spielcode und Links seht ihr direkt danach."), "You pay in pounds via Link (Stripe), including UK VAT – Link is the seller for private customers in the United Kingdom and sends the invoice. You'll see your code and links right afterwards.")
       : MSCur_cur() !== "EUR" ? ph0.replace(/Prices in euros\.|Preise in Euro\./, "") + " " + T(`Bezahlt wird in ${MSCur_cur() === "GBP" ? "Pfund" : "US-Dollar"}.`, `You pay in ${MSCur_cur() === "GBP" ? "pounds" : "US dollars"}.`) : ph0;
   }
   // Steuerhinweis je Rechnungsart; null = Kleinunternehmer (Text bleibt wie im HTML)

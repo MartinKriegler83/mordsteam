@@ -347,10 +347,10 @@
   }
   // ---------- Rückblende (animiertes Finale, 11.10.2026): nach der Auflösung, vor Rangliste ----------
   const rbKey = () => "ms_rb_f_" + token.slice(0, 12);
-  async function playRb(after) {
+  async function playRb(after, get) {
     try {
       if (!window.Rueckblende) await new Promise((ok, no) => { const s = document.createElement("script"); s.src = "/spiel/rueckblende.js"; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
-      const d = await api("GET", "rueckblende");
+      const d = get ? await get() : await api("GET", "rueckblende");
       window.Rueckblende.play(d, { en: MS.lang === "en", onEnd: after });
     } catch { after(); }
   }
@@ -446,7 +446,7 @@
       ${g.status === "running" && g.mode === "live" && g.started_at > g.now ? `<p class="muted"><b>${t("Der Countdown läuft – in wenigen Sekunden startet der Fall auf allen Geräten gleichzeitig.", "The countdown is running – in a few seconds the case starts on every device at the same time.")}</b></p>` : ""}
       ${g.status === "running" ? `<p class="muted">${t(`Auflösung sobald alle fertig sind, spätestens ${fmtDate(g.deadline)}.`, `Solution as soon as everyone has finished, at the latest on ${fmtDate(g.deadline)}.`)}${g.mode === "live" ? "" : t(" Du bekommst dann eine E-Mail mit dem Link für eure Gruppe.", " You’ll then get an email with the link for your group.")}</p>
         ${g.can_reveal ? `<button type="button" class="btn btn-red" id="reveal">${t("Auflösung jetzt zeigen", "Show the solution now")}${g.test && done < n ? " (Test)" : ""}</button>` : ""}` : ""}
-      ${g.reveal ? `<h3 style="margin-top:22px">${t("Es war", "It was")} ${g.reveal.culprit}</h3><p>${g.reveal.text}</p>${rankTable(g.reveal, -1)}` : ""}
+      ${g.reveal ? `<p style="margin-top:18px"><button type="button" class="btn btn-line" id="rborg">▶ ${t("Rückblende ansehen", "Watch the flashback")}</button></p><h3 style="margin-top:22px">${t("Es war", "It was")} ${g.reveal.culprit}</h3><p>${g.reveal.text}</p>${rankTable(g.reveal, -1)}` : ""}
       ${msg ? `<p class="err">${esc(msg)}</p>` : ""}
     </section>`;
     $("share").onclick = async () => { try { if (navigator.share) await navigator.share({ title: "Mordsteam Friends", text: t("Einer von uns war's. Such dir deinen Namen aus:", "One of us did it. Pick your name:"), url: link }); else { await navigator.clipboard.writeText(link); $("share").textContent = t("Kopiert ✓", "Copied ✓"); } } catch {} };
@@ -468,6 +468,7 @@
     confirmFirst("reveal", done < n
       ? t(`Achtung: Erst ${done} von ${n} sind fertig. Die Auflösung beendet den Fall für alle – wer noch spielt, kann nicht mehr weitermachen.`, `Careful: only ${done} of ${n} have finished. Showing the solution ends the case for everyone – anyone still playing can’t continue.`)
       : "", t("Trotzdem auflösen", "Show the solution anyway"), "org/reveal");
+    if ($("rborg")) $("rborg").onclick = () => playRb(() => {}, async () => { const r = await (await fetch("/api/friends/org/rueckblende?o=" + encodeURIComponent(orgTok), { headers: { "x-lang": MS.lang } })).json(); if (r.error) throw new Error(r.error); return r; });
     every(g.status === "revealed" ? 0 : 15000, () => orgView());
   }
 

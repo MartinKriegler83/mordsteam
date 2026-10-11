@@ -320,7 +320,9 @@ button.btn-big{margin-top:14px}
 @media (max-width:420px){.desk .clock .clk-time{font-size:24px}.desk .clock.late .clk-time{font-size:18px}.desk .clock .clk-over{font-size:14px}.clk-label{font-size:9px}.desk .tabs button{padding:10px 12px;font-size:14px}}
 @media print{body.desk{background:#fff;color:#000}body.desk::before{display:none}.toast{display:none!important}}
 /* Abschluss: Siegerehrung, Auflösung, Danke */
-.final{max-width:900px;margin:0 auto;display:grid;gap:24px}
+.final{max-width:900px;margin:0 auto;display:grid;gap:24px;grid-template-columns:minmax(0,1fr)}
+.final>section{min-width:0;overflow-x:auto}
+.stack>.panel{min-width:0;overflow-x:auto}   /* Handy: breite Ranglisten wischen statt Seite verbreitern (Plattform-Test 11.10.2026) */
 .final-head{text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
 .final-head h1{font-family:var(--serif);font-weight:900;font-size:clamp(30px,7vw,48px);line-height:1.05}
 .final-head .lead{max-width:560px}

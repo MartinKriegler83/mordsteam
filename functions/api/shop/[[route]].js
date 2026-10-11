@@ -216,7 +216,7 @@ const MP_TAX_CODE = "txcd_10201003";
 // (sonst nimmt Stripe das Land aus IP/Sprache, z. B. Österreich bei einer Bestellung aus Großbritannien). Fehler → nur E-Mail.
 async function stripeCustomer(env, contact, site) {
   if (!contact.bill_land || contact.bill_land === "XX") return null;
-  const data = { name: (contact.kunde === "b2b" && contact.rechnung_firma) || contact.name, address: { country: contact.bill_land }, preferred_locales: [site === "en" ? "en-GB" : "de-AT"] };
+  const data = { name: (contact.kunde === "b2b" && contact.rechnung_firma) || contact.name, address: { country: contact.bill_land }, preferred_locales: [site === "en" ? (["US", "CA"].includes(contact.bill_land) ? "en-US" : "en-GB") : "de-AT"] };
   // Bestehenden Stripe-Kunden mit dieser Adresse wiederverwenden statt bei jedem Versuch neu anlegen (Go-live-Test 5, N8e)
   try {
     const f = await stripe(env, "GET", `customers?email=${encodeURIComponent(contact.email)}&limit=1`);

@@ -70,7 +70,7 @@
       var r=x[0], d=x[1];
       if(!r.ok){show('<h1>'+T("Bestellung nicht gefunden","Order not found")+'</h1><p class="lead">'+esc(d.error||"")+' '+T("Schreibt uns an ","Write to us at ")+MAIL+'.</p>');return;}
       if(d.produkt==="solo"&&d.status==="fulfilled"&&d.solo_code) return soloDone(d);
-      if(d.produkt==="friends"&&d.status==="fulfilled"&&d.invite) return friendsDone(d);
+      if(d.produkt==="friends"&&d.status==="fulfilled"&&d.invite){ try{localStorage.removeItem("ms_friends_draft");}catch(e){} return friendsDone(d); }
       if(d.status==="fulfilled"&&d.join_code) return done(d);
       if(++tries>40){show('<div class="eyebrow">'+T("Bestellung","Order")+'</div><h1>'+T("Zahlung wird noch bestätigt","Payment is still being confirmed")+'</h1><p class="lead">'+T("Das dauert ungewöhnlich lange. Ladet die Seite in ein paar Minuten neu – oder schreibt uns an "+MAIL+". Ihr bezahlt sicher nicht doppelt.","This is taking unusually long. Reload the page in a few minutes – or write to us at "+MAIL+". You definitely won't be charged twice.")+'</p>');return;}
       setTimeout(poll,tries<10?1500:4000);
