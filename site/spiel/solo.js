@@ -428,7 +428,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
     const r = S.result || {};
     const solved = S.solved;
     const pctLine = !S.first_play ? L("Wiederholung – zählt nicht für die Wertung.", "Replay – doesn’t count towards the ranking.")
-      : !solved ? "" : r.pct === null || r.pct === undefined ? L("Du bist unter den ersten Ermittlern dieses Falls – der Vergleich startet mit den nächsten Spielen.", "You’re among the first detectives on this case – the comparison starts with the next games.")
+      : !solved ? "" : r.pct === null || r.pct === undefined || (r.pct_n || 0) < 5 ? L("Du bist unter den ersten Ermittlern dieses Falls – der Vergleich startet mit den nächsten Spielen.", "You’re among the first detectives on this case – the comparison starts with the next games.")
       : L(`Du warst schneller als <b>${r.pct} %</b> aller Ermittler${r.pct_n < 20 ? ` <span class="small">(bisher ${r.pct_n} Vergleichsspiele)</span>` : ""}.`, `You were faster than <b>${r.pct}%</b> of all detectives${r.pct_n < 20 ? ` <span class="small">(${r.pct_n} game${r.pct_n === 1 ? "" : "s"} to compare so far)</span>` : ""}.`);
     const rp = S.replay || { left: 0 };
     const until = rp.until ? new Intl.DateTimeFormat(loc(), { dateStyle: "long" }).format(new Date(rp.until)) : "";
