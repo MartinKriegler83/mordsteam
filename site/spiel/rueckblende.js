@@ -6,8 +6,33 @@
 .rb-ov{position:fixed;inset:0;z-index:9999;background:#07080B;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px}
 .rb-stage{position:relative;flex-shrink:0;width:min(100%,calc((100vh - 150px)*16/9));aspect-ratio:16/9;background:#101830;overflow:hidden;border:2px solid #2A2E3A;border-radius:6px}
 .rb-stage svg{position:absolute;inset:0;width:100%;height:100%;display:block}
-.rb-scene{position:absolute;inset:0;animation:rbIn .6s ease both}
-.rb-scene.out{animation:rbOut .5s ease both}
+.rb-scene{position:absolute;inset:0;animation:rbIn .9s ease both}
+.rb-scene.out{animation:rbOut .9s ease both}
+/* Kino-Look (11.10.2026): langsame Kamerafahrt je Szene, Vignette, Filmkorn, Kinobalken */
+/* Kamera als eigene Ebene: wird als Ganzes skaliert statt jedes Bild neu zu rastern – sonst springen Buchstaben pixelweise („wackeln“) */
+.rb-cam{position:absolute;inset:0;transform-origin:50% 50%;animation:var(--cam,rbCamIn) var(--dur,6s) linear both;will-change:transform;backface-visibility:hidden}
+.rb-stage{-webkit-font-smoothing:antialiased}.rb-stage svg text{text-rendering:geometricPrecision}
+@keyframes rbCamIn{from{transform:scale(1.0)}to{transform:scale(1.075)}}
+@keyframes rbCamOut{from{transform:scale(1.08)}to{transform:scale(1.0)}}
+@keyframes rbCamL{from{transform:scale(1.07) translateX(1.8%)}to{transform:scale(1.07) translateX(-1.8%)}}
+@keyframes rbCamR{from{transform:scale(1.07) translateX(-1.8%)}to{transform:scale(1.07) translateX(1.8%)}}
+@keyframes rbCamUp{from{transform:scale(1.07) translateY(2%)}to{transform:scale(1.07) translateY(-1.5%)}}
+@keyframes rbCamNone{from{transform:none}to{transform:none}}
+.rb-fx{position:absolute;inset:0;pointer-events:none;z-index:3}
+.rb-vig{background:radial-gradient(ellipse at 50% 50%,rgba(0,0,0,0) 55%,rgba(0,0,0,.5) 100%)}
+.rb-grain{opacity:.09;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");animation:rbGrain .5s steps(4) infinite}
+@keyframes rbGrain{0%{background-position:0 0}25%{background-position:-40px 30px}50%{background-position:30px -50px}75%{background-position:-60px -20px}100%{background-position:0 0}}
+.rb-lb{background:linear-gradient(#000 0,#000 4.5%,transparent 4.5%,transparent 95.5%,#000 95.5%)}
+.rb-drift{animation:rbDrift 9s ease-in-out infinite alternate} @keyframes rbDrift{from{transform:translateX(-30px)}to{transform:translateX(30px)}}
+.rb-dust{animation:rbDust 5s ease-in-out infinite alternate;animation-delay:var(--d,0s)} @keyframes rbDust{from{transform:translate(0,0);opacity:.15}to{transform:translate(10px,-18px);opacity:.7}}
+.rb-flicker{animation:rbFlick 2.2s ease-in-out infinite;animation-delay:var(--d,0s)} @keyframes rbFlick{0%,100%{opacity:1}30%{opacity:.82}55%{opacity:.95}75%{opacity:.78}}
+.rb-snowF{animation:rbSnowF 3.2s linear infinite;animation-delay:calc(var(--d,0s) * -1)} @keyframes rbSnowF{from{transform:translate(0,-40px)}to{transform:translate(-60px,420px)}}
+.rb-snowB{animation:rbSnowB 8s linear infinite;animation-delay:calc(var(--d,0s) * -2)} @keyframes rbSnowB{from{transform:translate(0,-40px)}to{transform:translate(-25px,400px)}}
+.rb-breathe{transform-box:fill-box;transform-origin:center bottom;animation:rbBreathe 3.4s ease-in-out infinite alternate} @keyframes rbBreathe{to{transform:scale(1.012,1.02)}}
+.rb-walkin{animation:rbWalkIn var(--wd,2.4s) ease-out both;animation-delay:var(--d,0s)} @keyframes rbWalkIn{from{transform:translateX(var(--from,-300px))}to{transform:none}}
+.rb-walkout{animation:rbWalkOut var(--wd,2.4s) ease-in both;animation-delay:var(--d,0s)} @keyframes rbWalkOut{to{transform:translateX(var(--to,300px));opacity:0}}
+.rb-bob{animation:rbBob .55s ease-in-out infinite alternate;animation-delay:var(--d,0s)} @keyframes rbBob{to{transform:translateY(-3px)}}
+.rb-fadeout{animation:rbOut .8s ease forwards;animation-delay:var(--d,0s)}
 .rb-sub{min-height:3.2em;max-width:min(100%,900px);margin:14px auto 0;color:#F1EADB;font:500 clamp(15px,2.4vw,20px)/1.4 'IBM Plex Sans',system-ui,sans-serif;text-align:center;padding:0 8px}
 .rb-bar{display:flex;gap:10px;align-items:center;margin-top:10px;width:min(100%,900px)}
 .rb-prog{flex:1;height:4px;background:#2A2E3A;border-radius:2px;overflow:hidden}.rb-prog i{display:block;height:100%;width:0;background:#C8342A}
@@ -81,6 +106,7 @@
     const ov = document.createElement("div"); ov.className = "rb-ov"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-label", L("Rückblende", "Flashback"));
     ov.innerHTML = `<div class="rb-stage"></div><div class="rb-sub" aria-live="polite"></div><div class="rb-bar"><button class="rb-btn" data-a="mute" type="button">${L("Ton aus", "Sound off")}</button><div class="rb-prog"><i></i></div><button class="rb-btn" data-a="skip" type="button">${L("Überspringen", "Skip")}</button></div>`;
     document.body.appendChild(ov); document.body.style.overflow = "hidden"; const prevFocus = document.activeElement; setTimeout(() => { const b = ov.querySelector('[data-a="skip"]'); if (b) b.focus(); }, 50);
+    ov.querySelector(".rb-stage").insertAdjacentHTML("beforeend", '<div class="rb-fx rb-vig"></div><div class="rb-fx rb-grain"></div><div class="rb-fx rb-lb"></div>');
     const stage = ov.querySelector(".rb-stage"), subEl = ov.querySelector(".rb-sub"), bar = ov.querySelector(".rb-prog i");
     let muted = false, timers = [], done = false;
     const audio = data.music ? new Audio(data.music) : null;
@@ -97,8 +123,10 @@
     let at = 0;
     data.scenes.forEach((sc, i) => {
       timers.push(setTimeout(() => {
-        const old = stage.querySelector(".rb-scene"); if (old) { old.classList.add("out"); setTimeout(() => old.remove(), 500); }
-        const el = document.createElement("div"); el.className = "rb-scene"; el.innerHTML = sc.svg; stage.appendChild(el);
+        const old = stage.querySelector(".rb-scene"); if (old) { old.classList.add("out"); setTimeout(() => old.remove(), 900); }
+        const el = document.createElement("div"); el.className = "rb-scene";
+        const cams = { in: "rbCamIn", out: "rbCamOut", left: "rbCamL", right: "rbCamR", up: "rbCamUp", none: "rbCamNone" }, ck = sc.cam || ["in", "left", "out", "right"][i % 4];
+        el.innerHTML = `<div class="rb-cam" style="--cam:${cams[ck] || "rbCamIn"};--dur:${sc.dur + 1}s">${sc.svg}</div>`; stage.insertBefore(el, stage.querySelector(".rb-fx"));
         subEl.textContent = sc.sub || "";
         try { const a = ctx(), now = a.currentTime; (sc.sfx || []).forEach(([t, k]) => { if (!muted && SFX[k]) SFX[k](now + t); }); } catch {}
       }, at * 1000));
