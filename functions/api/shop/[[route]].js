@@ -19,7 +19,7 @@ import { COUNTRIES, COUNTRY_ORDER, randomCast, castToEnglish } from "../../../li
 import { runFeedbackMails, feedbackInfo, saveFeedback, publicReviews } from "../../../lib/feedback.js";
 import { handleContact } from "../../../lib/contact.js";
 import { handleWithdraw, orderNo } from "../../../lib/withdraw.js";
-import { sendMail as opsMail } from "../../../lib/ops.js";
+import { sendMail as opsMail, logError } from "../../../lib/ops.js";
 import { enrichPayment, migrateAccounting } from "../../../lib/accounting.js";
 import { taxContext, TaxInputError, invoiceFooter, invoiceFields } from "../../../lib/tax.js";
 import { PRICE_TABLE, curOfLand, convPrice } from "../../../lib/prices.js";
@@ -538,7 +538,11 @@ async function geschenkPdf(request, env) {
   const html = await giftPdfHtml(env, origin, { kind, data, lang, form });
   if (env.PDF_HTML_TEST === "1" && b.html) return new Response(html, { headers: { "content-type": "text/html; charset=utf-8" } }); // nur lokaler Test
   const r = await giftPdfRender(env, html);
-  if (r.error) return json({ error: T("Das PDF konnte gerade nicht erstellt werden.", "The PDF could not be created right now."), fallback: "print", reason: r.error }, 503);
+  if (r.error) {
+    // Grund im Admin unter „Kapazität & System“ sichtbar (Cloudflare-Fehlermeldung, nie der Token)
+    await logError(env, "geschenk-pdf", r.status || 503, `${r.error}${r.status ? " " + r.status : ""}: ${r.detail || (r.error === "off" ? "BR_API_TOKEN/BR_ACCOUNT_ID fehlen" : "")}`);
+    return json({ error: T("Das PDF konnte gerade nicht erstellt werden.", "The PDF could not be created right now."), fallback: "print", reason: r.error }, 503);
+  }
   const name = `Mordsteam-${T("Geschenkkarte", "Gift-card")}-${String(data.solo_code || data.code || data.org_short || data.nr || "").replace(/[^A-Za-z0-9-]/g, "")}.pdf`;
   return new Response(r.pdf, { headers: { "content-type": "application/pdf", "content-disposition": `attachment; filename="${name}"`, "cache-control": "no-store" } });
 }
