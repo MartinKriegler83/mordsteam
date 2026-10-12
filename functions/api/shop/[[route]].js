@@ -534,6 +534,7 @@ async function geschenkPdf(request, env) {
   else { kind = "o"; data = await (await status(new Request(`${origin}/api/shop/status?o=${encodeURIComponent(b.o || "")}&k=${encodeURIComponent(b.k || "")}&l=${lang}`), env)).json(); }
   if (data.error) return fail(data.error, 404);
   if (kind === "o" && data.status !== "fulfilled") return fail(T("Die Bestellung ist noch nicht abgeschlossen.", "The order isn't complete yet."), 409);
+  if (kind === "o" && !((data.produkt === "solo" && data.solo_code) || (data.produkt === "friends" && data.org_token))) return fail(T("Für diese Bestellung gibt es keine Geschenkkarte.", "There is no gift card for this order."), 404);
   const form = { fuer: cut(b.fuer, 40), von: cut(b.von, 40), text: cut(b.text, 180).split("\n").slice(0, 3).join("\n") };
   const html = await giftPdfHtml(env, origin, { kind, data, lang, form });
   if (env.PDF_HTML_TEST === "1" && b.html) return new Response(html, { headers: { "content-type": "text/html; charset=utf-8" } }); // nur lokaler Test

@@ -21,7 +21,7 @@
   hint.textContent = HINT;
   btn.textContent = T("Drucken", "Print");
   btn.onclick = () => window.print();
-  const msg = (t) => { root.innerHTML = `<p class="gk-msg">${esc(t)}</p>`; };
+  const msg = (t) => { root.innerHTML = `<p class="gk-msg">${esc(t)}</p>`; hint.textContent = ""; };   // ohne Karte kein „Als PDF speichern“-Hinweis
 
   const o = q.get("o"), k = q.get("k"), gc = PRE ? (PRE.kind === "c" ? "x" : "") : q.get("c");
   pbtn.textContent = T("Als PDF speichern", "Save as PDF");
