@@ -127,7 +127,7 @@
         const el = document.createElement("div"); el.className = "rb-scene";
         const cams = { in: "rbCamIn", out: "rbCamOut", left: "rbCamL", right: "rbCamR", up: "rbCamUp", none: "rbCamNone" }, ck = sc.cam || ["in", "left", "out", "right"][i % 4];
         el.innerHTML = `<div class="rb-cam" style="--cam:${cams[ck] || "rbCamIn"};--dur:${sc.dur + 1}s">${sc.svg}</div>`; stage.insertBefore(el, stage.querySelector(".rb-fx"));
-        subEl.textContent = sc.sub || "";
+        subEl.textContent = sc.sub || ""; subEl.style.visibility = sc.sub ? "visible" : "hidden";   // Abspann: Bild spricht für sich (Martin 12.10.2026)
         try { const a = ctx(), now = a.currentTime; (sc.sfx || []).forEach(([t, k]) => { if (!muted && SFX[k]) SFX[k](now + t); }); } catch {}
       }, at * 1000));
       at += sc.dur;
