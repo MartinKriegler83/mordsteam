@@ -66,6 +66,8 @@
 .gk-tag{position:relative;background:#FFFDF8;border:.25cqw solid var(--ink);padding:2.4cqw 3.2cqw 2.4cqw 9cqw;clip-path:polygon(5cqw 0,100% 0,100% 100%,5cqw 100%,0 50%);min-width:0}
 .gk-tag::before{content:"";position:absolute;left:4.2cqw;top:50%;width:2.4cqw;height:2.4cqw;margin-top:-1.2cqw;border-radius:50%;border:.25cqw solid var(--ink);background:var(--paper)}
 .gk-tag small{display:block;font-family:'IBM Plex Mono',monospace;font-size:1.55cqw;letter-spacing:.24em;text-transform:uppercase;color:var(--red)}
+.gk-btns{display:flex;flex-wrap:wrap;gap:10px}
+a.gk-code{display:block;color:inherit;text-decoration:none}
 .gk-code{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:6cqw;letter-spacing:.14em;margin-top:.8cqw;white-space:nowrap}
 .gk-tag p{margin:.8cqw 0 0;font-size:1.9cqw;color:var(--ink-2)}
 .gk-link{display:block;margin-top:.8cqw;font-family:'IBM Plex Mono',monospace;font-size:2.2cqw;font-weight:500;color:var(--red);text-decoration:none;overflow-wrap:anywhere}
@@ -111,13 +113,16 @@
   .gk input::placeholder,.gk textarea::placeholder{color:transparent;-webkit-text-fill-color:transparent}
   .gk input,.gk input:-webkit-autofill{-webkit-box-shadow:0 0 0 100cqw var(--paper) inset;box-shadow:0 0 0 100cqw var(--paper) inset;-webkit-text-fill-color:var(--ink)}
   .gk input:focus-visible,.gk textarea:focus-visible{outline:none}
+  /* echtes PDF vom Server (lib/geschenkpdf.js): Blatt genau A4, ohne Ränder */
+  .gk-pdf .gk-sheet{width:210mm;margin:0}
+  .gk-pdf .gk{width:210mm;height:297mm;aspect-ratio:auto}
 }
 </style>
 </head>
 <body>
 <div class="gk-bar noprint">
 <p id="gk-hint">Trag eine Widmung ein und drück auf „Drucken / als PDF“. Im Druckdialog kannst du „Als PDF sichern“ wählen und die Karte per E-Mail verschicken.</p>
-<button class="btn btn-red" type="button" id="gk-print" hidden>Drucken / als PDF</button>
+<span class="gk-btns"><button class="btn btn-red" type="button" id="gk-pdf" hidden>Als PDF speichern</button><button class="btn btn-line" type="button" id="gk-print" hidden>Drucken</button></span>
 </div>
 <div class="gk-wrap" id="gk-root"><p class="gk-msg">Geschenkkarte wird geladen …</p></div>
 <script src="/spiel/qrcode.js"></script>

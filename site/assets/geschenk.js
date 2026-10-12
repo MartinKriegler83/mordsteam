@@ -2,9 +2,11 @@
 // Aufruf: /geschenk.html?o=<Bestellung>&k=<Schlüssel>&l=de|en – nur für bezahlte Solo- und Friends-Bestellungen.
 // Oder: /geschenk.html?c=<Solo-Code>&l=de|en – für Geschenk-Codes, die im Admin angelegt wurden (Werbung, ohne Kauf).
 // Solo: Code + Link zum Fall. Friends: Link zur Organisator-Seite (dort gibt es den Einladungslink für die Gäste).
+// PDF (12.10.2026, lib/geschenkpdf.js): Der Server bettet die Seite ein und setzt window.__GK (Daten, Herkunft, Bilder, Widmung).
 (function () {
+  const PRE = window.__GK || null;
   const q = new URLSearchParams(location.search);
-  const EN = q.get("l") === "en";
+  const EN = PRE ? PRE.lang === "en" : q.get("l") === "en";
   const T = (de, en) => (EN ? en : de);
   // Go-live-Test 5 (M17): Euro-Bonus auf Englisch in allen drei Kassenwährungen (wie die Stripe-Gutscheinvorlage)
   const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ? `€${m[1]} / £${m[1]} / $${Math.round(m[1] * 1.15)}` : l; };
@@ -13,17 +15,39 @@
   const root = document.getElementById("gk-root"), btn = document.getElementById("gk-print");
   const dmy = (x) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(x || "")); if (!m) return ""; return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString(EN ? "en-GB" : "de-AT", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }); };
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
-  document.getElementById("gk-hint").textContent = T(
-    "Trag eine Widmung ein und drück auf „Drucken / als PDF“. Im Druckdialog kannst du „Als PDF sichern“ wählen und die Karte per E-Mail verschicken.",
-    "Add a dedication and press “Print / save as PDF”. In the print dialog you can choose “Save as PDF” and send the card by email.");
-  btn.textContent = T("Drucken / als PDF", "Print / save as PDF");
+  const hint = document.getElementById("gk-hint"), pbtn = document.getElementById("gk-pdf");
+  const HINT = T("Trag eine Widmung ein und drück auf „Als PDF speichern“ – das PDF kannst du per E-Mail oder Messenger verschicken. Für Papier: „Drucken“.",
+    "Add a dedication and press “Save as PDF” – you can send the PDF by email or messenger. For paper: “Print”.");
+  hint.textContent = HINT;
+  btn.textContent = T("Drucken", "Print");
   btn.onclick = () => window.print();
   const msg = (t) => { root.innerHTML = `<p class="gk-msg">${esc(t)}</p>`; };
 
-  const o = q.get("o"), k = q.get("k"), gc = q.get("c");
-  if (!gc && (!o || !k)) return msg(T("Dieser Link ist unvollständig. Öffne die Geschenkkarte bitte über deine Bestellbestätigung.", "This link is incomplete. Please open the gift card from your order confirmation."));
+  const o = q.get("o"), k = q.get("k"), gc = PRE ? (PRE.kind === "c" ? "x" : "") : q.get("c");
+  pbtn.textContent = T("Als PDF speichern", "Save as PDF");
+  pbtn.onclick = async () => {
+    const v = (id) => (document.getElementById(id) || {}).value || "";
+    pbtn.disabled = true; pbtn.textContent = T("PDF wird erstellt …", "Creating PDF …");
+    try {
+      const r = await fetch("/api/shop/geschenk-pdf", { method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ o, k, c: q.get("c") || "", l: EN ? "en" : "de", fuer: v("gk-for"), von: v("gk-from"), text: v("gk-ded") }) });
+      if (!r.ok || !/pdf/.test(r.headers.get("content-type") || "")) throw new Error("pdf");
+      const name = (/filename="([^"]+)"/.exec(r.headers.get("content-disposition") || "") || [])[1] || "Mordsteam.pdf";
+      const url = URL.createObjectURL(await r.blob()), a = document.createElement("a");
+      a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+      hint.textContent = HINT;
+    } catch {
+      hint.textContent = T("Das PDF ging gerade nicht. Bitte „Drucken“ nutzen und dort „Als PDF sichern“ wählen – oder es später noch einmal versuchen.",
+        "The PDF didn’t work just now. Please use “Print” and choose “Save as PDF” there – or try again later.");
+    }
+    pbtn.disabled = false; pbtn.textContent = T("Als PDF speichern", "Save as PDF");
+  };
+  if (!PRE && !gc && (!o || !k)) return msg(T("Dieser Link ist unvollständig. Öffne die Geschenkkarte bitte über deine Bestellbestätigung.", "This link is incomplete. Please open the gift card from your order confirmation."));
   // Geschenk-Code aus dem Admin: Angaben in die Form einer bezahlten Solo-Bestellung bringen
-  const load = gc
+  const load = PRE ? Promise.resolve(PRE.kind === "c" ? PRE.data : null).then((g) => g === null ? PRE.data : g.error ? { error: "x" } : ({
+        status: "fulfilled", produkt: "solo", solo_code: g.code, solo_title: g.title, solo_title_en: g.title_en, solo_min: g.min, gift: true,
+        event_date: new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Vienna" }).format(new Date(g.created_at)), promo: g.promo, promo_label: g.promo_label, promo_until: g.promo_until }))
+    : gc
     ? fetch(`/api/solo/geschenk?c=${encodeURIComponent(gc)}`).then((r) => r.json()).then((g) => g.error ? { error: T("Diese Geschenkkarte gibt es nicht. Bitte den Link prüfen.", "This gift card does not exist. Please check the link.") } : ({
         status: "fulfilled", produkt: "solo", solo_code: g.code, solo_title: g.title, solo_title_en: g.title_en, solo_min: g.min, gift: true,
         event_date: new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Vienna" }).format(new Date(g.created_at)), promo: g.promo, promo_label: g.promo_label, promo_until: g.promo_until }))
@@ -31,7 +55,7 @@
   load.then((d) => {
     if (d.error) return msg(d.error);
     if (d.status !== "fulfilled") return msg(T("Die Bestellung ist noch nicht abgeschlossen. Bitte in ein paar Sekunden neu laden.", "The order isn't complete yet. Please reload in a few seconds."));
-    const origin = location.origin;
+    const origin = PRE ? PRE.origin : location.origin;
     const until = (() => {
       const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(d.event_date || ""));
       if (!m) return "";
@@ -40,7 +64,8 @@
     })();
     // Titelbild des Falls (site/assets/cover, tools/cover_bilder.mjs) – Zuordnung über den Titel
     const COVER = { "Nachtzug nach Venedig": "solo001", "Night Train to Venice": "solo001", "Applaus für einen Toten": "solo002", "Applause for a Dead Man": "solo002", "Der letzte Jahrgang": "soloplus", "The Last Vintage": "soloplus" };
-    const coverImg = (key) => key ? `<img class="gk-cover" src="/assets/cover/${key}-${EN ? "en" : "de"}.webp" alt="" width="600" height="750">` : "";
+    const coverSrc = (key) => { const p = `/assets/cover/${key}-${EN ? "en" : "de"}.webp`; return PRE ? PRE.img[p] || "" : p; };
+    const coverImg = (key) => key && coverSrc(key) ? `<img class="gk-cover" src="${coverSrc(key)}" alt="" width="600" height="750">` : "";
     let card;
     if (d.produkt === "solo" && d.solo_code) {
       // Kurzlink /s/<Code> (functions/s/[code].js) – zum Antippen, Fotografieren (QR) oder Abtippen
@@ -96,7 +121,7 @@
         <div class="gk-card"><textarea id="gk-ded" autocomplete="off" rows="3" maxlength="180" aria-label="${esc(T("Widmung", "Dedication"))}" placeholder="${esc(T("Deine Widmung, z. B. „Alles Gute zum Geburtstag – löst du ihn schneller als ich?“", "Your dedication, e.g. “Happy birthday – can you crack it faster than me?”"))}"></textarea></div>
         <div class="gk-field"><label for="gk-from">${esc(T("Von", "From"))}</label><input id="gk-from" name="gk-widmung-von" autocomplete="off" data-lpignore="true" data-1p-ignore maxlength="40" placeholder="${esc(T("Dein Name", "Your name"))}"></div>
         <div class="gk-evid">
-          <div class="gk-tag"><small>${esc(card.tagLabel)}</small>${card.code ? `<div class="gk-code">${esc(card.code)}</div>` : ""}<a class="gk-link${card.code ? "" : " big"}" href="${esc(card.link)}">${esc(card.link.replace(/^https?:\/\//, ""))}</a><p>${esc(card.tagText)}</p></div>
+          <div class="gk-tag"><small>${esc(card.tagLabel)}</small>${card.code ? `<a class="gk-code" href="${esc(card.link)}">${esc(card.code)}</a>` : ""}<a class="gk-link${card.code ? "" : " big"}" href="${esc(card.link)}">${esc(card.link.replace(/^https?:\/\//, ""))}</a><p>${esc(card.tagText)}</p></div>
           <div class="gk-qrbox"><a class="gk-qr" id="gk-qr" href="${esc(card.link)}" aria-label="${esc(T("QR-Code zum Spiel – antippen öffnet den Link", "QR code for the game – tap to open the link"))}"></a><span>${esc(T("Scannen oder antippen", "Scan or tap"))}</span></div>
         </div>
         <ol class="gk-steps">${card.steps.map((x) => `<li>${x}</li>`).join("")}</ol>
@@ -110,6 +135,7 @@
     try { const qr = qrcode(0, "M"); qr.addData(card.link); qr.make(); document.getElementById("gk-qr").innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true }); }
     catch { document.getElementById("gk-qr").remove(); }
     if (d.gift) document.getElementById("gk-from").value = "Mordsteam";
-    btn.hidden = false;
+    if (PRE) { document.getElementById("gk-for").value = PRE.form.fuer || ""; document.getElementById("gk-from").value = PRE.form.von || ""; ta.value = PRE.form.text || ""; return; }
+    btn.hidden = false; pbtn.hidden = false;
   }).catch(() => msg(T("Die Geschenkkarte konnte nicht geladen werden. Bitte später noch einmal versuchen.", "The gift card could not be loaded. Please try again later.")));
 })();

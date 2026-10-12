@@ -24,7 +24,8 @@ import { enrichPayment, migrateAccounting } from "../../../lib/accounting.js";
 import { taxContext, TaxInputError, invoiceFooter, invoiceFields } from "../../../lib/tax.js";
 import { PRICE_TABLE, curOfLand, convPrice } from "../../../lib/prices.js";
 import { nlSignup, nlConfirm, nlUnsubscribe, nlVisit, srcVisit, nlAfterOrder, nlTag, migrateNewsletter } from "../../../lib/newsletter.js";
-import { createSoloTicket, migrateSolo } from "../../../lib/solo.js";
+import { createSoloTicket, migrateSolo, soloGiftInfo } from "../../../lib/solo.js";
+import { giftPdfHtml, giftPdfRender, giftPdfLimit } from "../../../lib/geschenkpdf.js";
 import { createFriendsGroup, friendsGroupOfOrder, ensureShortCode, friendsPrice, FRIENDS_PRICE, FRIENDS_PRICE_PLUS, FRIENDS_CASES, friendsCase, friendsCron } from "../../../lib/friends.js";
 
 // Sprache der Webseite (Fehlermeldungen, Stripe, Mail) – getrennt von der Spielsprache
@@ -69,6 +70,7 @@ export async function onRequest({ request, env, params }) {
     if (route === "geo" && method === "GET") { const h = request.headers.get("cf-ipcountry"), c = String((env.GEO_TEST && h) || (request.cf && request.cf.country) || h || "").toUpperCase(); /* GEO_TEST nur im lokalen Test */ return json({ country: /^[A-Z]{2}$/.test(c) ? c : "", currency: curOfLand(c), table: PRICE_TABLE }); }
     if (route === "uk-config" && method === "GET") return json({ on: mpOn(env) });
     if (route === "status" && method === "GET") return await status(request, env);
+    if (route === "geschenk-pdf" && method === "POST") return await geschenkPdf(request, env);
     if (route === "bestellung" && method === "POST") return (await orderLimit(request, env)) || await bestellung(request, env);
     if (route === "solo" && method === "POST") return (await orderLimit(request, env)) || await soloBestellung(request, env);
     if (route === "friends" && method === "POST") return (await orderLimit(request, env)) || await friendsBestellung(request, env);
@@ -522,6 +524,24 @@ async function friendsBestellung(request, env) {
 }
 
 // ---------- Status für die Bestätigungsseite ----------
+// Geschenkkarte als PDF (12.10.2026, lib/geschenkpdf.js): Daten wie die Seite selbst holen, Widmung aus dem Formular
+async function geschenkPdf(request, env) {
+  const b = await request.json().catch(() => ({})), lang = b.l === "en" ? "en" : "de", T = (de, en) => (lang === "en" ? en : de);
+  if (await giftPdfLimit(request, env)) return fail(T("Zu viele PDFs – bitte in ein paar Minuten noch einmal.", "Too many PDFs – please try again in a few minutes."), 429);
+  const origin = new URL(request.url).origin, cut = (x, n) => String(x || "").slice(0, n);
+  let kind, data;
+  if (b.c) { kind = "c"; data = await (await soloGiftInfo(env, new URL(`${origin}/api/solo/geschenk?c=${encodeURIComponent(b.c)}`))).json(); }
+  else { kind = "o"; data = await (await status(new Request(`${origin}/api/shop/status?o=${encodeURIComponent(b.o || "")}&k=${encodeURIComponent(b.k || "")}&l=${lang}`), env)).json(); }
+  if (data.error) return fail(data.error, 404);
+  if (kind === "o" && data.status !== "fulfilled") return fail(T("Die Bestellung ist noch nicht abgeschlossen.", "The order isn't complete yet."), 409);
+  const form = { fuer: cut(b.fuer, 40), von: cut(b.von, 40), text: cut(b.text, 180).split("\n").slice(0, 3).join("\n") };
+  const html = await giftPdfHtml(env, origin, { kind, data, lang, form });
+  if (env.PDF_HTML_TEST === "1" && b.html) return new Response(html, { headers: { "content-type": "text/html; charset=utf-8" } }); // nur lokaler Test
+  const r = await giftPdfRender(env, html);
+  if (r.error) return json({ error: T("Das PDF konnte gerade nicht erstellt werden.", "The PDF could not be created right now."), fallback: "print", reason: r.error }, 503);
+  const name = `Mordsteam-${T("Geschenkkarte", "Gift-card")}-${String(data.solo_code || data.code || data.org_short || data.nr || "").replace(/[^A-Za-z0-9-]/g, "")}.pdf`;
+  return new Response(r.pdf, { headers: { "content-type": "application/pdf", "content-disposition": `attachment; filename="${name}"`, "cache-control": "no-store" } });
+}
 async function status(request, env) {
   const u = new URL(request.url);
   const o = await env.DB.prepare("SELECT * FROM orders WHERE id=?").bind(u.searchParams.get("o") || "").first();
