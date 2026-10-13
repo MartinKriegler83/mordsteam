@@ -117,7 +117,8 @@ export async function onRequest(ctx) {
     }
     return fail(L(hLang(request), "Nicht gefunden.", "Not found."), 404);
   } catch (e) {
-    return fail(L(hLang(request), "Serverfehler: ", "Server error: ") + e.message, 500);
+    // verständliche Meldung, technischer Text nur in „detail“ (→ Fehlerlog über die Middleware), Go-live-Check 13.10.2026
+    return json({ error: L(hLang(request), "Gerade überlastet – bitte in ein paar Sekunden noch einmal versuchen.", "Busy right now – please try again in a few seconds."), detail: String(e && e.message ? e.message : e) }, 500);
   }
 }
 

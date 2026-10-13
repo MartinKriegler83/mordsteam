@@ -9,7 +9,7 @@
   const EN = PRE ? PRE.lang === "en" : q.get("l") === "en";
   const T = (de, en) => (EN ? en : de);
   // Go-live-Test 5 (M17): Euro-Bonus auf Englisch in allen drei Kassenwährungen (wie die Stripe-Gutscheinvorlage)
-  const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ? `€${m[1]} / £${m[1]} / $${Math.round(m[1] * 1.15)}` : l; };
+  const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ? `€${m[1]} / £${m[1]} / $${Math.round(m[1] * 1.15)}` : String(l || "").replace(/^(\d+) %$/, "$1%"); };   /* EN: „10%“ ohne Leerzeichen (Go-live-Check 13.10.2026) */
   document.documentElement.lang = EN ? "en" : "de";
   document.title = T("Geschenkkarte – Mordsteam", "Gift card – Mordsteam");
   const root = document.getElementById("gk-root"), btn = document.getElementById("gk-print");
@@ -31,13 +31,15 @@
     try {
       const r = await fetch("/api/shop/geschenk-pdf", { method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ o, k, c: q.get("c") || "", l: EN ? "en" : "de", fuer: v("gk-for"), von: v("gk-from"), text: v("gk-ded") }) });
+      if (r.status === 429) { const e = await r.json().catch(() => ({})); throw Object.assign(new Error("limit"), { text: e.error }); }
       if (!r.ok || !/pdf/.test(r.headers.get("content-type") || "")) throw new Error("pdf");
       const name = (/filename="([^"]+)"/.exec(r.headers.get("content-disposition") || "") || [])[1] || "Mordsteam.pdf";
       const url = URL.createObjectURL(await r.blob()), a = document.createElement("a");
       a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
-      hint.textContent = HINT;
-    } catch {
-      hint.textContent = T("Das PDF ging gerade nicht. Bitte „Drucken“ nutzen und dort „Als PDF sichern“ wählen – oder es später noch einmal versuchen.",
+      hint.textContent = HINT; hint.classList.remove("gk-warn");
+    } catch (e) {
+      hint.classList.add("gk-warn");
+      hint.textContent = e && e.text ? e.text : T("Das PDF ging gerade nicht. Bitte „Drucken“ nutzen und dort „Als PDF sichern“ wählen – oder es später noch einmal versuchen.",
         "The PDF didn’t work just now. Please use “Print” and choose “Save as PDF” there – or try again later.");
     }
     pbtn.disabled = false; pbtn.textContent = T("Als PDF speichern", "Save as PDF");
@@ -131,7 +133,13 @@
     </article></div>`;
     // Widmung: höchstens 3 Zeilen auf der Karteikarte
     const ta = document.getElementById("gk-ded");
-    ta.addEventListener("input", () => { const lines = ta.value.split("\n"); if (lines.length > 3) ta.value = lines.slice(0, 3).join("\n"); });
+    // … und nichts, was unsichtbar über den Rand läuft: lange Zeilen ohne Umbruch wurden in Karte und PDF still abgeschnitten (Go-live-Check 13.10.2026)
+    ta.addEventListener("input", () => {
+      const lines = ta.value.split("\n"); if (lines.length > 3) ta.value = lines.slice(0, 3).join("\n");
+      let cut = false; while (ta.value && ta.scrollHeight > ta.clientHeight + 2) { ta.value = ta.value.slice(0, -1); cut = true; }
+      hint.classList.toggle("gk-warn", cut);
+      hint.textContent = cut ? T("Mehr Text passt nicht auf die Karte.", "That’s all the text that fits on the card.") : HINT;
+    });
     try { const qr = qrcode(0, "M"); qr.addData(card.link); qr.make(); document.getElementById("gk-qr").innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true }); }
     catch { document.getElementById("gk-qr").remove(); }
     if (d.gift) document.getElementById("gk-from").value = "Mordsteam";

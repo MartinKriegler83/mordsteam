@@ -93,7 +93,8 @@
   let statTests = true;
   let fb = null, fbMsg = "";
   let friendsMsg = "", friendsList = null;
-  let soloMsg = "", soloList = null, giftList = null, giftMsg = "", ops = null, last = [[], [], {}];
+  let soloMsg = "", soloList = null, giftList = null, giftMsg = "", giftForm = null,   /* giftForm: Eingaben bleiben nach Fehlermeldung stehen (Go-live-Check 13.10.2026) */
+    ops = null, last = [[], [], {}];
   let kosten = null, kostenEdit = null, kostenMsg = "";
   let led = null, ledYear = new Date().getFullYear(), ledEdit = null, ledMsg = "", ledAll = false;
   let kunden = null, nlData = null, nlMsg = "", nlSyncMsg = "", nlPrev = "", nlForm = { lang: "de" }, kundenAll = false;
@@ -137,7 +138,7 @@
         <p class="small">Limits: Mails ${L.mail_day || "∞"}/Tag, ${L.mail_month || "∞"}/Monat · Aufrufe ${L.req_day ? n0(L.req_day) + "/Tag" : "ohne Tageslimit"} · KI-Budget ${L.ai_budget} $/Monat. Warnmail an office@ ab 70 %.</p></div>
       <div class="panel"><div class="eyebrow">Letzte Warnungen</div>${ops.alerts.length ? `<ul class="list small">${ops.alerts.slice(0, 6).map((a) => `<li>${new Date(a.at).toLocaleString("de-AT")} · ${WARNTXT(a.key)}</li>`).join("")}</ul>` : `<p class="muted">Keine Warnungen.</p>`}</div>
       </div>
-      <div class="panel"><div class="eyebrow">Letzte Bestellungen</div>${orders.length ? `<table class="grid small"><tr><th>Zeit</th><th>Kunde</th><th>Produkt</th><th>Betrag</th><th>Status</th></tr>${orders.slice(0, 5).map((o) => `<tr><td>${new Date(o.created_at).toLocaleString("de-AT")}</td><td>${MS.esc((o.contact || {}).name || "")}</td><td>${o.paket === "solo" ? "Solo" : o.paket === "friends" || o.paket === "friends-plus" ? `Friends${o.paket === "friends-plus" ? " Plus" : ""} · ${o.teams} Personen` : `${({ basis: "Basic", premium: "Premium", plus: "Premium Plus" })[o.paket] || o.paket} · ${o.teams} Teams`}</td><td>${eur(o.amount_cents)}</td><td>${o.status}</td></tr>`).join("")}</table>` : `<p class="muted">Noch keine Bestellungen.</p>`}</div>`;
+      <div class="panel"><div class="eyebrow">Letzte Bestellungen</div>${orders.length ? `<table class="grid small"><tr><th>Zeit</th><th>Kunde</th><th>Produkt</th><th>Betrag</th><th>Status</th></tr>${orders.slice(0, 5).map((o) => `<tr><td>${new Date(o.created_at).toLocaleString("de-AT")}</td><td>${MS.esc((o.contact || {}).name || "")}</td><td>${o.paket === "solo" ? "Solo" : o.paket === "friends" || o.paket === "friends-plus" ? `Friends${o.paket === "friends-plus" ? " Plus" : ""} · ${o.teams} Personen` : `${({ basis: "Basic", premium: "Premium", plus: "Premium Plus" })[o.paket] || o.paket} · ${o.teams} Teams`}</td><td>${eur(o.amount_cents)}</td><td>${({ pending: "offen", paid: "bezahlt", fulfilling: "in Arbeit", fulfilled: "bezahlt · angelegt", withdrawn: "widerrufen", refunded: "erstattet" })[o.status] || MS.esc(o.status)}</td></tr>`).join("")}</table>` : `<p class="muted">Noch keine Bestellungen.</p>`}</div>`;
   }
   // Balken für die letzten 30 Tage
   function bars(rows, key, fmt = n0) {
@@ -226,7 +227,7 @@
     return `<div class="panel"><div class="eyebrow">Kunden · kommen sie wieder?</div>
       <div class="tiles" style="margin-top:10px">
         ${tile("Kunden (E-Mail-Adressen)", k.customers, 0, `${n0(k.orders)} bezahlte Bestellungen`)}
-        ${tile("Umsatz gesamt", k.cents, 0, `Ø ${eur(k.customers ? k.cents / k.customers : 0)} pro Kunde${k.open ? ` · + ${k.open} in £/$ offen (bis zur Auszahlung)` : ""}`, eur)}
+        ${tile("Kunden zahlten gesamt (inkl. Steuer)", k.cents, 0, `Ø ${eur(k.customers ? k.cents / k.customers : 0)} pro Kunde${k.open ? ` · + ${k.open} in £/$ offen (bis zur Auszahlung)` : ""}`, eur)}
         ${tile("Wiederkäufer", k.repeat, 0, `${pct(k.repeat_rate)} der Kunden haben mehr als einmal gekauft`)}
         ${tile("Tage bis zum 2. Kauf", k.days_to_second == null ? 0 : Math.round(k.days_to_second), 0, k.days_to_second == null ? "noch keine Wiederkäufe" : "Median")}
         ${tile("Solo → Gruppe", k.solo_up, 0, `von ${n0(k.solo_first)} Kunden, die mit Solo angefangen haben`)}
@@ -531,19 +532,19 @@
         const cases = (giftList && giftList.cases) || [];
         const dIn = (m) => { const d = new Date(); d.setMonth(d.getMonth() + m); return d.toISOString().slice(0, 10); };
         const dm = (x) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(x || "")); return m ? `${+m[3]}.${+m[2]}.${m[1]}` : "–"; };
-        const g = (giftList && giftList.gifts) || [];
+        const g = (giftList && giftList.gifts) || [], F = giftForm || {}, sel = (a, b) => (a === b ? "selected" : "");
         return `<div class="panel" id="giftpanel"><div class="eyebrow">Geschenk-Codes · Werbung</div>
         <p style="margin:8px 0 14px">Echte Solo-Codes ohne Kauf zum Verschenken, z. B. an mögliche Teams-Kunden. Jeder Code bekommt eine Geschenkkarte (Ausdruck oder PDF) und auf Wunsch einen eigenen Teams-Gutschein. Kein Umsatz, keine Buchung.</p>
         <div class="actions-row" style="flex-wrap:wrap;gap:10px 14px">
-          <label class="small">Fall <select id="gcase">${cases.map((c) => `<option value="${c.id}" ${c.id === "solo-plus-001" ? "selected" : ""}>${MS.esc(c.no)} · ${MS.esc(c.title)}${c.plus ? " (KI, ab 18)" : ""}</option>`).join("")}</select></label>
-          <label class="small">Sprache <select id="glang"><option value="de">Deutsch</option><option value="en">Englisch</option></select></label>
-          <label class="small">Anzahl <input id="gn" type="number" min="1" max="20" value="1" style="width:5em"></label>
-          <label class="small" style="flex:1;min-width:220px">Für wen (nur für dich, nicht auf der Karte) <input id="gnote" maxlength="80" placeholder="z. B. HR, Firma X, Messe Wien" style="width:100%"></label>
+          <label class="small">Fall <select id="gcase">${cases.map((c) => `<option value="${c.id}" ${sel(c.id, F.gcase || "solo-plus-001")}>${MS.esc(c.no)} · ${MS.esc(c.title)}${c.plus ? " (KI, ab 18)" : ""}</option>`).join("")}</select></label>
+          <label class="small">Sprache <select id="glang"><option value="de">Deutsch</option><option value="en" ${sel(F.glang, "en")}>Englisch</option></select></label>
+          <label class="small">Anzahl <input id="gn" type="number" min="1" max="20" value="${MS.esc(F.gn || "1")}" style="width:5em"></label>
+          <label class="small" style="flex:1;min-width:220px">Für wen (nur für dich, nicht auf der Karte) <input id="gnote" maxlength="80" value="${MS.esc(F.gnote || "")}" placeholder="z. B. HR, Firma X, Messe Wien" style="width:100%"></label>
         </div>
         <div class="actions-row" style="flex-wrap:wrap;gap:10px 14px;margin-top:10px">
-          <label class="small">Teams-Gutschein <select id="gptype"><option value="eur" selected>Betrag in €</option><option value="pct">Prozent</option><option value="none">keiner</option></select></label>
-          <label class="small">Wert <input id="gpval" type="number" min="1" max="149" value="20" style="width:5em"></label>
-          <label class="small">gültig bis <input id="gpuntil" type="date" value="${dIn(6)}"></label>
+          <label class="small">Teams-Gutschein <select id="gptype"><option value="eur" ${sel(F.gptype || "eur", "eur")}>Betrag in €</option><option value="pct" ${sel(F.gptype, "pct")}>Prozent</option><option value="none" ${sel(F.gptype, "none")}>keiner</option></select></label>
+          <label class="small">Wert <input id="gpval" type="number" min="1" max="149" value="${MS.esc(F.gpval || "20")}" style="width:5em"></label>
+          <label class="small">gültig bis <input id="gpuntil" type="date" value="${MS.esc(F.gpuntil || dIn(6))}"></label>
           <button class="btn btn-red" id="gnew" type="button">Geschenk-Codes anlegen</button>
         </div>
         <p class="small" style="margin-top:6px">Der Teams-Gutschein gilt einmal, nur für Teams (ab 89 € / £89 / $99 Bestellwert) und nicht zusammen mit Early Bird. Er steht auf der Geschenkkarte und am Ende des Spiels. Ohne Teams-Gutschein gibt es nach dem Spiel den normalen 5-€-Gutschein.</p>
@@ -638,6 +639,7 @@
       gt.onchange = sync; sync();
       gnew.onclick = async () => {
         gnew.disabled = true;
+        giftForm = Object.fromEntries(["gcase", "glang", "gn", "gnote", "gptype", "gpval", "gpuntil"].map((id) => [id, document.getElementById(id).value]));
         const lang = document.getElementById("glang").value;
         const note = document.getElementById("gnote").value.trim();
         try {
@@ -926,6 +928,9 @@
       };
       nlf.onsubmit = async (ev) => {
         ev.preventDefault(); grab();
+        // erst prüfen, dann fragen (Go-live-Check 13.10.2026) – gleiche Regeln wie lib/newsletter.js
+        const miss = !String(nlForm.subject || "").trim() ? "Bitte einen Betreff angeben." : String(nlForm.text || "").trim().length < 20 ? "Bitte einen Text schreiben." : "";
+        if (miss) { nlMsg = miss; render(...last); return; }
         if (!confirm(`Entwurf „${nlForm.subject}“ (${nlForm.lang === "en" ? "Englisch" : "Deutsch"}) an Resend schicken? Verschickt wird erst, wenn du ihn in Resend absendest.`)) return;
         try { const d = await MS.api("POST", "admin/newsletter/entwurf", nlForm, H()); nlPrev = d.html; nlMsg = `Entwurf liegt jetzt in Resend unter Broadcasts. Dort an dich selbst testen und dann senden.${d.ecg_removed ? ` ECG-Abgleich davor: ${d.ecg_removed} Kunden gesperrt und aus Resend entfernt.` : ""}`; } catch (e2) { nlMsg = e2.message; }
         load();

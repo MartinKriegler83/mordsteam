@@ -27,6 +27,7 @@ export async function onRequest({ request, env, params }) {
     }
     return fail("Nicht gefunden.", 404);
   } catch (e) {
-    return json({ error: "Interner Fehler: " + (e && e.message ? e.message : e) }, 500);
+    // Spieler sehen eine verständliche Meldung; der technische Text steht in „detail“ und landet über die Middleware im Fehlerlog (Go-live-Check 13.10.2026)
+    return json({ error: (request.headers.get("x-lang") || "").toLowerCase() === "en" ? "Busy right now – please try again in a few seconds." : "Gerade überlastet – bitte in ein paar Sekunden noch einmal versuchen.", detail: String(e && e.message ? e.message : e) }, 500);
   }
 }

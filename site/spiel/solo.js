@@ -9,7 +9,7 @@
   let seen = new Set(JSON.parse(MS.get("ms_solo_seen") || "[]"));
   // Feste Oberflächentexte zweisprachig: L(deutsch, englisch) – die Spielsprache der Runde (S.lang) gewinnt
 // Go-live-Test 5 (M17): Euro-Gutscheine auf Englisch in allen drei Kassenwährungen (wie die Stripe-Gutscheinvorlage: £ gleich, $ ≈ × 1,15)
-const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ? `€${m[1]} / £${m[1]} / $${Math.round(m[1] * 1.15)}` : l; };
+const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ? `€${m[1]} / £${m[1]} / $${Math.round(m[1] * 1.15)}` : String(l || "").replace(/^(\d+) %$/, "$1%"); };   /* EN: „10%“ ohne Leerzeichen (Go-live-Check 13.10.2026) */
   const MON = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const dmy = (d) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(d || "")); return !m ? String(d || "") : MS.lang === "en" ? `${Number(m[3])} ${MON[Number(m[2]) - 1]} ${m[1]}` : `${Number(m[3])}.${Number(m[2])}.${m[1]}`; };   // EN: „31 January 2027“ (Plattform-Test 11.10.2026)
   const L = (de, en) => MS.t(de, en);
@@ -485,7 +485,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
     fit(U().cert, `400 SIZE ${sans}`, 52, W - 420); g.fillText(U().cert, W / 2, 875);
     // Ergebnis: Spalten nach ihrer echten Breite, damit sich nichts überlappt
     const date = new Intl.DateTimeFormat(loc(), { dateStyle: "long" }).format(new Date(S.started_at + (r.played_ms || 0)));
-    const cols = [[L("ENDZEIT", "FINAL TIME"), MS.dur(r.score_ms)], ...(r.pct !== null && r.pct !== undefined ? [[L("SCHNELLER ALS", "FASTER THAN"), r.pct + L(" %", "%")]] : []), [L("DATUM", "DATE"), date]];
+    const cols = [[L("ENDZEIT", "FINAL TIME"), MS.dur(r.score_ms)], ...(r.pct !== null && r.pct !== undefined && (r.pct_n || 0) >= 5 ? [[L("SCHNELLER ALS", "FASTER THAN"), r.pct + L(" %", "%")]] : []), [L("DATUM", "DATE"), date]];
     const fL = `600 30px ${mono}`, fV = `700 56px ${mono}`;
     const ws = cols.map(([l, v]) => { g.font = fL; const a = g.measureText(spaced(l)).width; g.font = fV; return Math.max(a, g.measureText(v).width) + 140; });
     let cx = W / 2 - ws.reduce((a, b) => a + b, 0) / 2;
