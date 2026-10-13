@@ -2,6 +2,7 @@
 // Das häufige Nachfragen der Spielgeräte (alle paar Sekunden) wird nur stichprobenartig gezählt (1 von 10, ×10),
 // damit die Zählung selbst kaum Datenbank-Schreibzugriffe kostet.
 import { countHit, logError } from "../../lib/ops.js";
+import { withRetry } from "../../lib/dbretry.js";
 
 function areaOf(path) {
   const p = path.replace(/^\/api\//, "");
@@ -18,6 +19,8 @@ function areaOf(path) {
 
 export async function onRequest(ctx) {
   const { request, env } = ctx;
+  // kurzzeitige Datenbank-Überlast einmal automatisch wiederholen (lib/dbretry.js, 13.10.2026)
+  if (env.DB) env.DB = withRetry(env.DB);
   const path = new URL(request.url).pathname;
   const [area, w] = areaOf(path);
   const count = () => { if (env.DB && (w === 1 || Math.random() < 1 / w)) ctx.waitUntil(countHit(env, area, w)); };
