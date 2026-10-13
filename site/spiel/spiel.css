@@ -505,6 +505,7 @@ button.btn-big{margin-top:14px}
 .tipbtn.on{background:#DDF1E3;border-color:#1F6B3A;color:#1F6B3A}
 .so-time{font-family:var(--mono);font-size:22px;letter-spacing:3px;max-width:150px}
 .so-time + .small{display:block;margin-top:6px}
+.so-time.so-word{max-width:260px;text-transform:uppercase}
 /* ---------- Friends ---------- */
 .fr-names{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:18px 0}
 .fr-name{display:flex;flex-direction:column;gap:4px;padding:14px;border:2px solid var(--ink);border-radius:6px;background:#FBF8F0;text-align:left;font:inherit;cursor:pointer}

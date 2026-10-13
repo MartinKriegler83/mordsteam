@@ -165,7 +165,7 @@
   }
   function soloStatsPanel() {
     if (!soloList) return "";
-    const CN = { "solo-001": "001 Nachtzug", "solo-002": "002 Applaus", "solo-plus-001": "Plus Jahrgang" };
+    const CN = { "solo-001": "001 Nachtzug", "solo-002": "002 Applaus", "solo-plus-001": "Plus Jahrgang", "special-001": "Special Halloween" };
     const row = (z) => `<tr><td>${CN[z.case_id] || z.case_id} · ${z.test_mode ? "Test" : "Echt"}</td><td>${z.n}</td><td class="mono">${MS.dur(z.avg)}</td><td>${Number(z.hints).toFixed(1)}</td><td>${Number(z.wrong).toFixed(1)}</td></tr>`;
     return `<div class="panel"><div class="eyebrow">Mordsteam Solo (erste Durchgänge)</div>
       <table class="grid small"><tr><th>Fall · Art</th><th>Gelöst</th><th>Ø Endzeit</th><th>Ø Hinweise</th><th>Ø Fehlversuche</th></tr>${soloList.scores.map(row).join("") || `<tr><td colspan="5" class="muted">Noch keine Wertungen.</td></tr>`}</table>
@@ -555,7 +555,7 @@
       })()}
       <div class="panel"><div class="eyebrow">Mordsteam Solo · Testcode</div>
         <p style="margin:8px 0 14px">Legt einen Solo-Code im Testmodus an (eigene Wertung, getrennt von echten Spielen; mit „+5 Min.“-Knopf).</p>
-        <div class="actions-row"><label class="small">Fall <select id="solocase"><option value="solo-001">001 · Nachtzug nach Venedig</option><option value="solo-002">002 · Applaus für einen Toten</option><option value="solo-plus-001">Plus · Der letzte Jahrgang (KI)</option></select></label><label class="small">Sprache <select id="solol"><option value="de">Deutsch</option><option value="en">Englisch</option></select></label><button class="btn btn-red" id="solonew" data-test="1">Solo-Testcode anlegen</button><button class="btn btn-line" id="solonew2" data-test="0">Solo-Code für Tester (ohne Vorspulen)</button></div>
+        <div class="actions-row"><label class="small">Fall <select id="solocase"><option value="solo-001">001 · Nachtzug nach Venedig</option><option value="solo-002">002 · Applaus für einen Toten</option><option value="solo-plus-001">Plus · Der letzte Jahrgang (KI)</option><option value="special-001">Special · Süßes oder Saures (Halloween)</option></select></label><label class="small">Sprache <select id="solol"><option value="de">Deutsch</option><option value="en">Englisch</option></select></label><button class="btn btn-red" id="solonew" data-test="1">Solo-Testcode anlegen</button><button class="btn btn-line" id="solonew2" data-test="0">Solo-Code für Tester (ohne Vorspulen)</button></div>
         <p class="small" style="margin-top:6px">Tester-Codes verhalten sich wie gekaufte Codes: kein „+5 Min.“, sie zählen in der echten Wertung und ihr Gutschein ist ein echter Stripe-Code.</p>
         ${soloMsg ? `<div style="margin-top:12px">${soloMsg}</div>` : ""}
         ${soloList && soloList.tickets.length ? `<details style="margin-top:12px"><summary>Letzte Solo-Codes (${soloList.tickets.length})</summary><table class="grid" style="margin-top:8px"><tr><th>Code</th><th>Fall</th><th>Name</th><th>Test</th><th>Durchgänge</th><th>Erste Zeit</th><th>Gutschein</th></tr>

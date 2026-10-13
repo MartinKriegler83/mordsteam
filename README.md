@@ -7,6 +7,7 @@ Website, Shop und Spielplattform von **mordsteam.com**. Mordsteam verkauft digit
 | **Teams** | Firmen-Teamevent, mehrere Teams treten gegeneinander an, Spielleitung über eigenes Dashboard | `fall-001` „Die rote Mappe“ in drei Paketen: Basic, Premium (2. Akt), Premium Plus (Finale mit KI-Assistenz ARIA) |
 | **Friends** | Krimiabend für 4–8 Personen, jede Person am eigenen Handy, gleichzeitig oder zeitversetzt über mehrere Tage | `friends-001` „Letzte Runde auf der Hütte“, Basic und Plus (mit KI-Verhörraum) |
 | **Solo** | Einzelspiel am Handy oder Laptop | `solo-001` „Nachtzug nach Venedig“, `solo-002` „Applaus für einen Toten“, `solo-plus-001` „Der letzte Jahrgang“ (mit KI-Verhörraum) |
+| **Specials** | Saison-Fälle im Solo-Format | `special-001` „Süßes oder Saures“ / „Trick or Treat“ (Halloween, ohne KI, 4 Fragen, 50 Min., US-Kleinstadt; Frage 4 mit Antworttyp `word`) |
 
 > **Repository privat halten.** In `lib/` stehen alle Falllösungen. Ausgeliefert wird nur, was `build.sh` nach `dist/` kopiert.
 
@@ -39,6 +40,7 @@ lib/                     Spiellogik – wird nie ausgeliefert, nur von functions
   cases/                   Die Fälle (Texte, Beweisstücke, Lösungen, Hinweise, KI-Prompts)
     fall-001.js / fall-001-en.js   Teams-Fall, deutsch und englische Textschicht
     friends-001.js, solo-001.js, solo-002.js, solo-plus-001.js   Friends- und Solo-Fälle (deutsch, mit der Logik)
+    special-001.js (+ -en)   Halloween-Special, läuft über die Solo-Logik (SOLO_CASES); Bilder in lib/art/special001.js
     *-en.js                  englische Textschicht je Fall: exportiert nur die Exporte mit sichtbarem Text, gleiche Namen und Struktur
   art/                     Bilder in den Akten (SVG, Graphic-Novel-Stil), je Runde aus den Falldaten gezeichnet
     gn.js                    Baukasten: Farben, Figuren (fig/roster/face), defs(), pic() = <figure class="gn-pic"> (antippen = groß, spiel/common.js)
@@ -241,6 +243,7 @@ Voraussetzung: Node.js. Wrangler wird per `npx` geladen.
    node tools/check_teams002.mjs
    node tools/check_solo001.mjs
    node tools/check_solo002.mjs
+   node tools/check_special001.mjs && node tools/check_special001.mjs en
    node tools/check_soloplus.mjs
    node tools/check_friends.mjs
    for f in tools/check_*_en.mjs; do node $f; done

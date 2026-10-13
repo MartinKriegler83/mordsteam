@@ -241,6 +241,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
     else if (q) field = q.type === "select"
       ? `<select id="ans" class="so-select"><option value="">${L("Bitte wählen …", "Please choose …")}</option>${q.options.map((o) => `<option value="${esc(o[0])}">${esc(o[1])}</option>`).join("")}</select>`
       : q.type === "code" ? `<input id="ans" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" spellcheck="false" placeholder="0000" maxlength="4" class="so-time">`
+      : q.type === "word" ? `<input id="ans" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${L("WORT", "WORD")}" maxlength="24" class="so-time so-word">`
       : `<input id="ans" type="text" inputmode="numeric" pattern="[0-9:]*" autocomplete="off" spellcheck="false" placeholder="hh:mm" maxlength="5" class="so-time"><span class="small">${L("Nur die vier Ziffern tippen – der Doppelpunkt kommt von selbst.", "Just type the four digits – the colon appears by itself.")}</span>`;
     const cost = q && q.next_hint_cost;
     root.innerHTML = `<section class="report paper">
@@ -259,6 +260,10 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
     </section>`;
     bindBlatt();
     const inp = $("ans");
+    if (inp && q.type === "word") {
+      inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("check").click(); } });
+      inp.addEventListener("input", () => { inp.value = inp.value.toUpperCase(); });
+    }
     if (inp && q.type === "code") {
       inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("check").click(); } });
       inp.addEventListener("input", () => { inp.value = inp.value.replace(/[^0-9]/g, "").slice(0, 4); });
@@ -314,7 +319,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
 
   async function answer(q, value) {
     if (busy) return;
-    if (!String(value || "").trim()) { verdict = { cls: "warn", html: q.type === "select2" ? L("Bitte in beiden Feldern eine Antwort auswählen.", "Please choose an answer in both fields.") : q.type === "select" ? L("Bitte eine Antwort auswählen.", "Please choose an answer.") : q.type === "code" ? L("Bitte den Code eingeben.", "Please enter the code.") : L("Bitte eine Uhrzeit eingeben.", "Please enter a time.") }; return fragenView(); }
+    if (!String(value || "").trim()) { verdict = { cls: "warn", html: q.type === "select2" ? L("Bitte in beiden Feldern eine Antwort auswählen.", "Please choose an answer in both fields.") : q.type === "select" ? L("Bitte eine Antwort auswählen.", "Please choose an answer.") : q.type === "code" ? L("Bitte den Code eingeben.", "Please enter the code.") : q.type === "word" ? L("Bitte das Wort eingeben.", "Please enter the word.") : L("Bitte eine Uhrzeit eingeben.", "Please enter a time.") }; return fragenView(); }
     if (q.type === "code" && String(value).replace(/[^0-9]/g, "").length !== 4) {
       verdict = { cls: "warn", html: L("Bitte alle vier Ziffern eingeben.", "Please enter all four digits.") }; fragenView();
       const i = $("ans"); if (i) { i.value = String(value); i.focus(); } return;
