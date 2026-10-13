@@ -119,7 +119,7 @@
           <h1 class="gk-title">${esc(card.title)}</h1>
           <p class="gk-sub">${esc(card.sub)}</p>
         </div>${coverImg(card.cover)}</div>
-        <div class="gk-field"><label for="gk-for">${esc(T("Für", "For"))}</label><input id="gk-for" name="gk-widmung-fuer" autocomplete="off" data-lpignore="true" data-1p-ignore maxlength="40" placeholder="${esc(T("Name der Ermittlerin / des Ermittlers", "Name of the investigator"))}"></div>
+        <div class="gk-field"><label for="gk-for">${esc(T("Für", "For"))}</label><input id="gk-for" name="gk-widmung-fuer" autocomplete="off" data-lpignore="true" data-1p-ignore maxlength="40" placeholder="${esc(T("Wer ermittelt?", "Who’s investigating?"))}"></div>
         <div class="gk-card"><textarea id="gk-ded" autocomplete="off" rows="3" maxlength="180" aria-label="${esc(T("Widmung", "Dedication"))}" placeholder="${esc(T("Deine Widmung, z. B. „Alles Gute zum Geburtstag – löst du ihn schneller als ich?“", "Your dedication, e.g. “Happy birthday – can you crack it faster than me?”"))}"></textarea></div>
         <div class="gk-field"><label for="gk-from">${esc(T("Von", "From"))}</label><input id="gk-from" name="gk-widmung-von" autocomplete="off" data-lpignore="true" data-1p-ignore maxlength="40" placeholder="${esc(T("Dein Name", "Your name"))}"></div>
         <div class="gk-evid">
@@ -135,8 +135,8 @@
     const ta = document.getElementById("gk-ded");
     // … und nichts, was unsichtbar über den Rand läuft: lange Zeilen ohne Umbruch wurden in Karte und PDF still abgeschnitten (Go-live-Check 13.10.2026)
     ta.addEventListener("input", () => {
-      const lines = ta.value.split("\n"); if (lines.length > 3) ta.value = lines.slice(0, 3).join("\n");
-      let cut = false; while (ta.value && ta.scrollHeight > ta.clientHeight + 2) { ta.value = ta.value.slice(0, -1); cut = true; }
+      const lines = ta.value.split("\n"); let cut = false;
+      if (lines.length > 3) { ta.value = lines.slice(0, 3).join("\n"); cut = true; } while (ta.value && ta.scrollHeight > ta.clientHeight + 2) { ta.value = ta.value.slice(0, -1); cut = true; }
       hint.classList.toggle("gk-warn", cut);
       hint.textContent = cut ? T("Mehr Text passt nicht auf die Karte.", "That’s all the text that fits on the card.") : HINT;
     });

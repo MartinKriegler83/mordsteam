@@ -352,7 +352,7 @@ async function firmaLogin({ request, env, team, session }) {
   const c = caseOf(session), lg = langOf(session);
   const b = await body(request);
   const ok = [c.FIRMA_WEB.login.user, ...(c.FIRMA_WEB.login.alt || [])].includes(String(b.user || "").trim().toLowerCase()) &&
-    String(b.password || "").trim().toLowerCase().replace(/\s+/g, "") === partnerPassword(session);
+    ((pw, t) => t === pw || t === pw.replace(/^hektor/, "hector"))(partnerPassword(session), String(b.password || "").trim().toLowerCase().replace(/\s+/g, ""));   // „Hector“ gilt auch (englische Schreibweise, Nachtest 13.10.2026)
   if (!ok) {
     // Wer oft scheitert, bekommt vom „Helpdesk“ schrittweise mehr Hilfe – starke Teams merken davon nichts.
     const n = (team.login_fails || 0) + 1;

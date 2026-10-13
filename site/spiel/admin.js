@@ -635,8 +635,9 @@
     const gnew = document.getElementById("gnew");
     if (gnew) {
       const gt = document.getElementById("gptype"), gv = document.getElementById("gpval"), gu = document.getElementById("gpuntil");
-      const sync = () => { const none = gt.value === "none"; gv.disabled = gu.disabled = none; gv.max = gt.value === "pct" ? 50 : 149; if (gt.value === "pct" && Number(gv.value) > 50) gv.value = 10; };
-      gt.onchange = sync; sync();
+      const sync = () => { const none = gt.value === "none"; gv.disabled = gu.disabled = none; gv.max = gt.value === "pct" ? 50 : 149; };
+      // Wert nur beim Wechsel auf Prozent anpassen – nach einer Fehlermeldung bleibt die Eingabe sichtbar stehen (Nachtest 13.10.2026)
+      gt.onchange = () => { sync(); if (gt.value === "pct" && Number(gv.value) > 50) gv.value = 10; }; sync();
       gnew.onclick = async () => {
         gnew.disabled = true;
         giftForm = Object.fromEntries(["gcase", "glang", "gn", "gnote", "gptype", "gpval", "gpuntil"].map((id) => [id, document.getElementById(id).value]));
@@ -929,7 +930,8 @@
       nlf.onsubmit = async (ev) => {
         ev.preventDefault(); grab();
         // erst prüfen, dann fragen (Go-live-Check 13.10.2026) – gleiche Regeln wie lib/newsletter.js
-        const miss = !String(nlForm.subject || "").trim() ? "Bitte einen Betreff angeben." : String(nlForm.text || "").trim().length < 20 ? "Bitte einen Text schreiben." : "";
+        const miss = !/^[a-z0-9][a-z0-9-]{0,39}$/.test(String(nlForm.tag || "").trim().toLowerCase()) ? "Bitte ein Kürzel angeben (z. B. 2026-12): Kleinbuchstaben, Ziffern, Bindestrich."
+          : !String(nlForm.subject || "").trim() ? "Bitte einen Betreff angeben." : String(nlForm.text || "").trim().length < 20 ? "Bitte einen Text schreiben." : "";
         if (miss) { nlMsg = miss; render(...last); return; }
         if (!confirm(`Entwurf „${nlForm.subject}“ (${nlForm.lang === "en" ? "Englisch" : "Deutsch"}) an Resend schicken? Verschickt wird erst, wenn du ihn in Resend absendest.`)) return;
         try { const d = await MS.api("POST", "admin/newsletter/entwurf", nlForm, H()); nlPrev = d.html; nlMsg = `Entwurf liegt jetzt in Resend unter Broadcasts. Dort an dich selbst testen und dann senden.${d.ecg_removed ? ` ECG-Abgleich davor: ${d.ecg_removed} Kunden gesperrt und aus Resend entfernt.` : ""}`; } catch (e2) { nlMsg = e2.message; }
