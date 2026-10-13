@@ -46,6 +46,7 @@ export const SOLO_PRICE = 890;                                        // Mordste
 export const SOLO_OFFERS = {
   "solo-001": { price: 890, no: "Solo 001", de: "Nachtzug nach Venedig", en: "Night Train to Venice", min: 40, head: ["Der Nachtzug wartet.", "The night train is waiting."], goal: ["bis Udine", "until Udine"] },
   "solo-002": { price: 890, no: "Solo 002", de: "Applaus für einen Toten", en: "Applause for a Dead Man", min: 35, head: ["Der Vorhang ist gefallen.", "The curtain has fallen."], goal: ["bis die Polizei im Theater ist", "until the police reach the theatre"] },
+  "special-001": { price: 1190, no: "Special", de: "Süßes oder Saures", en: "Trick or Treat", min: 50, head: ["Die Hollow Lane wartet.", "Hollow Lane is waiting."], goal: ["bis der Sheriff kommt", "until the sheriff arrives"] },
   "solo-plus-001": { price: 1590, no: "Solo Plus", de: "Der letzte Jahrgang", en: "The Last Vintage", min: 45, plus: true, head: ["Das Weinfest wartet.", "The wine festival is waiting."], goal: ["bis die Polizei aus Krems kommt", "until the police arrive from Krems"] },
 };
 const soloOffer = (id) => SOLO_OFFERS[id] || SOLO_OFFERS["solo-001"];

@@ -65,7 +65,7 @@
       return dt.toLocaleDateString(EN ? "en-GB" : "de-AT", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
     })();
     // Titelbild des Falls (site/assets/cover, tools/cover_bilder.mjs) – Zuordnung über den Titel
-    const COVER = { "Nachtzug nach Venedig": "solo001", "Night Train to Venice": "solo001", "Applaus für einen Toten": "solo002", "Applause for a Dead Man": "solo002", "Der letzte Jahrgang": "soloplus", "The Last Vintage": "soloplus" };
+    const COVER = { "Nachtzug nach Venedig": "solo001", "Night Train to Venice": "solo001", "Applaus für einen Toten": "solo002", "Applause for a Dead Man": "solo002", "Der letzte Jahrgang": "soloplus", "The Last Vintage": "soloplus", "Süßes oder Saures": "special001", "Trick or Treat": "special001" };
     const coverSrc = (key) => { const p = `/assets/cover/${key}-${EN ? "en" : "de"}.webp`; return PRE ? PRE.img[p] || "" : p; };
     const coverImg = (key) => key && coverSrc(key) ? `<img class="gk-cover" src="${coverSrc(key)}" alt="" width="600" height="750">` : "";
     let card;

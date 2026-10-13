@@ -4,7 +4,7 @@
 # - Seiten mit rotem Schlussaufruf bekommen davor nichts, danach das Signet (Lupe + MORDSTEAM + „Könnt ihr den Fall knacken?“).
 # Aufruf für die deutschen Seiten: python3 tools/zebra.py   (en_pages.py nutzt dieselben Funktionen)
 import os, re, glob
-SKIP = re.compile(r'\b(facts|cta|sig|bh|tvid-sec)\b')
+SKIP = re.compile(r'\b(facts|cta|sig|bh|tvid-sec|sp-home)\b')
 SIG = {"de": ("Könnt ihr den Fall knacken?", "Mordsteam"), "en": ("Can you crack the case?", "Mordsteam")}
 LUPE = '<svg class="sig-lupe" viewBox="3 3 28 28" aria-hidden="true"><g fill="none" stroke="#15171C" stroke-width="3"><circle cx="14" cy="14" r="9"/><line x1="20.5" y1="20.5" x2="29" y2="29" stroke-linecap="round"/></g><circle class="dot" cx="14" cy="14" r="3.5" fill="#B3261E"/></svg>'
 

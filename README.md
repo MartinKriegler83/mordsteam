@@ -55,6 +55,8 @@ lib/                     Spiellogik – wird nie ausgeliefert, nur von functions
 site/                    Öffentliche Website (deutsch) + site/en/ (englisch, generiert)
   spiel/                   Spielplattform „Fallzentrale“: Oberflächen für Teams, Leitung, Solo, Friends, Admin, Urkunde
   assets/                  CSS, Seiten-Skripte, Schriften
+  specials.html            Specials-Seite (Halloween „Süßes oder Saures“, frühere Specials, FAQ); Startseite mit Abschnitt #specials, Navigation „Specials“ auf allen Seiten; Kauf über solo-kaufen.html?fall=halloween (11,90 €)
+  assets/video/            Teaser-Videos der Bereichsseiten <name>-169/-916.mp4 + .jpg (Poster), geladen von assets/teaser.js über data-video; Halloween: special-halloween(-en)
   _headers                 Sicherheits-Header, noindex für /spiel/ und Bestellseiten
 teaser/                  Platzhalter-Startseite und Impressum für den Teaser-Modus, englisch unter teaser/en/ (index = Coming soon, imprint, angebot), paddle-root.html (Angebotsseite für /, nur mit ANGEBOT_SEITE=1)
 tools/                   Prüf- und Hilfsskripte (siehe „Lokal testen“)

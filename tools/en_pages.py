@@ -4,7 +4,7 @@ import os, html, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from zebra import finish
 ROOT = os.path.join(os.path.dirname(__file__), "..", "site")
-MAP = {"index": "index", "teams": "teams", "friends": "friends", "solo": "solo", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "contact": "kontakt", "early-bird": "earlybird", "feedback": "feedback", "withdraw": "widerruf", "solo-buy": "solo-kaufen", "friends-buy": "friends-kaufen", "newsletter": "newsletter"}
+MAP = {"index": "index", "teams": "teams", "friends": "friends", "solo": "solo", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "contact": "kontakt", "early-bird": "earlybird", "feedback": "feedback", "withdraw": "widerruf", "solo-buy": "solo-kaufen", "friends-buy": "friends-kaufen", "newsletter": "newsletter", "specials": "specials"}
 LOGO = '<svg width="30" height="30" viewBox="0 0 34 34" fill="none" stroke="#15171C" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg>'
 
 
@@ -14,11 +14,12 @@ EBBAR = """<div class="promo" id="ebbar"><div class="wrap"><span class="tag">EAR
 def page(name, title, desc, body, robots=None, scripts="", home=False, promo=False):
     de = MAP[name]
     # „Play now“: auf Teams/Solo zu den eigenen Optionen, sonst zur Spielauswahl auf der Startseite
-    play = {"index": "#games", "teams": "#packages", "solo": "#price", "solo-buy": "#solo", "friends": "#price", "friends-buy": "#friends"}.get(name, "index.html#games")
+    play = {"index": "#games", "teams": "#packages", "solo": "#price", "specials": "#halloween", "solo-buy": "#solo", "friends": "#price", "friends-buy": "#friends"}.get(name, "index.html#games")
     cur = lambda k: ' aria-current="page"' if k == name else ''
     nav = f'''<a href="teams.html"{cur("teams")}>Teams</a>
 <a href="friends.html"{cur("friends")}>Friends</a>
-<a href="solo.html"{cur("solo")}>Solo</a>'''
+<a href="solo.html"{cur("solo")}>Solo</a>
+<a href="specials.html"{cur("specials")}>Specials</a>'''
     return f'''<!doctype html>
 <html lang="en">
 <head>
@@ -27,7 +28,7 @@ def page(name, title, desc, body, robots=None, scripts="", home=False, promo=Fal
 <title>{title}</title>
 <meta name="description" content="{html.escape(desc)}">
 {f'<meta name="robots" content="{robots}">' if robots else ''}
-{f'<link rel="canonical" href="https://mordsteam.com/en/{"" if name == "index" else name + ".html"}">' + chr(10) if name in ("index", "teams", "friends", "solo") else ''}<link rel="alternate" hreflang="de" href="https://mordsteam.com/{'' if de == 'index' else de + '.html'}">
+{f'<link rel="canonical" href="https://mordsteam.com/en/{"" if name == "index" else name + ".html"}">' + chr(10) if name in ("index", "teams", "friends", "solo", "specials") else ''}<link rel="alternate" hreflang="de" href="https://mordsteam.com/{'' if de == 'index' else de + '.html'}">
 <link rel="alternate" hreflang="en" href="https://mordsteam.com/en/{'' if name == 'index' else name + '.html'}">
 <link rel="alternate" hreflang="x-default" href="https://mordsteam.com/{'' if de == 'index' else de + '.html'}">
 <link rel="stylesheet" href="/assets/style.css">
@@ -295,6 +296,20 @@ P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=Tru
 <p class="small" style="margin:0 0 10px">Also a great gift: after buying you get a gift card to print or save as PDF.</p>
 <a class="btn btn-red" href="solo.html">Go to Mordsteam Solo</a>
 </article>
+</div>
+</div></section>
+
+<section id="specials" class="section sp-home"><div class="wrap">
+<div class="sp-box">
+<img class="sp-cover" src="/assets/cover/special001-en.webp" alt="Case cover: Trick or Treat" width="600" height="750" loading="lazy" decoding="async">
+<div class="stack">
+<div class="eyebrow">Specials · New for Halloween</div>
+<h2 class="h2">Trick or Treat</h2>
+<p class="purpose">One skeleton too many.</p>
+<p>Halloween in a small American town: a neighbor is locked in his own prop coffin, the prize money is gone – and on the porch camera there's a skeleton that isn't made of plastic. The big Halloween mystery just for you.</p>
+<p class="meta">1 INVESTIGATOR · 4 QUESTIONS · 50 MIN · €11.90</p>
+<div class="actions"><a class="btn btn-red" href="specials.html">Go to the Halloween Special</a></div>
+</div>
 </div>
 </div></section>
 
@@ -743,6 +758,7 @@ P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy
 <label class="check"><input type="radio" name="fall" value="solo-001" checked><span><b>Night Train to Venice</b> · Solo 001 · 40-minute countdown · €8.90</span></label>
 <label class="check"><input type="radio" name="fall" value="solo-002"><span><b>Applause for a Dead Man</b> · Solo 002 · 35-minute countdown · €8.90</span></label>
 <label class="check"><input type="radio" name="fall" value="solo-plus-001"><span><b>The Last Vintage</b> · Solo Plus · 45-minute countdown · €15.90 – with AI interrogation room, ages 18+</span></label>
+<label class="check"><input type="radio" name="fall" value="special-001"><span><b>Trick or Treat</b> · Halloween Special · 50-minute countdown · €11.90</span></label>
 <div class="field"><label for="lang">Game language *</label>
 <select id="lang" name="lang"><option value="en">English</option><option value="de">German</option></select>
 <span class="hint">The language of the case, the questions and the certificate – independent of this website.</span></div>
@@ -1104,6 +1120,101 @@ P["withdraw"] = dict(title="Withdraw from contract – Mordsteam", desc="Withdra
 </form>
 </div></main>''')
 
+
+P["specials"] = dict(title="Mordsteam Specials – Halloween mystery “Trick or Treat”", scripts='<script src="/assets/aktion.js"></script>',
+ desc="The Halloween Special: a murder mystery for one person in a small American town. One skeleton too many, four questions, 50 minutes – on phone, tablet or laptop, €11.90.",
+ body='''<nav class="subnav" aria-label="Mordsteam Specials"><div class="wrap">
+<b><span>Mordsteam</span> Specials</b>
+<a href="#halloween">Halloween</a><a href="#ablauf">How it works</a><a href="#frueher">Past Specials</a><a href="#faq">FAQ</a>
+<a class="btn btn-red" href="solo-buy.html?fall=halloween">Buy</a>
+</div></nav>
+<main id="top">
+<section class="hero bg-a sp-hero"><div class="wrap hero-grid">
+<div class="stack">
+<div class="eyebrow">Mordsteam Specials · Halloween</div>
+<h1>One skeleton too many.</h1>
+<p class="lead">Halloween in a small American town: a neighbor lies locked in his own prop coffin, the prize money is gone – and the kids swear a skeleton stood up. A murder mystery for one person, nothing supernatural, but plenty of goosebumps. On phone, tablet or laptop.</p>
+<div class="actions">
+<a class="btn btn-red" href="solo-buy.html?fall=halloween">Buy the case – €11.90</a>
+<a class="btn-text" href="#halloween">See the case</a>
+</div>
+</div>
+<div class="file" aria-hidden="true">
+<div class="folder"></div>
+<div class="sheet">
+<div class="mast"><span>MAPLE HOLLOW GAZETTE · OHIO</span><span>OCTOBER 31</span></div>
+<div class="headline">Halloween fan found in his own coffin</div>
+<p>Hollow Lane, 21:40. Lid bolted shut, full of fog, a 5,000-dollar prize gone. Five neighbors in costume – and on the porch camera a skeleton that isn't plastic.</p>
+<div class="chips"><span>5 suspects</span><span>4 questions</span><span>Candy Code</span><span>1 investigator: you</span></div>
+</div>
+<div class="stamp"><div><small>MORDSTEAM · SPECIAL</small><strong>UNSOLVED</strong><small>SHERIFF IN 50 MIN</small></div></div>
+</div>
+</div></section>
+<section class="tvid-sec" aria-label="Teaser video"><div class="wrap">
+<div class="tvid" data-video="special-halloween-en"><video muted loop playsinline preload="none" aria-label="Teaser video Halloween Special"></video><button class="tvid-sound" type="button" aria-pressed="false" data-on="Sound on" data-off="Sound off">Sound on</button></div>
+</div></section>
+<script src="/assets/teaser.js?v=2" defer></script>
+
+<section class="facts" aria-label="Key facts"><div class="wrap">
+<div><b>1 investigator</b><span>just you, on your own device</span></div>
+<div><b><svg class="ico-cd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="14" r="8"/><path d="M12 14v-4M9 2h6M12 2v4M19 7l1.5-1.5"/></svg>50 min</b><span>countdown – that's how long the sheriff needs</span></div>
+<div><b>4 questions</b><span>more puzzles than a regular Solo case</span></div>
+<div><b>Different every time</b><span>culprit, time and hiding place drawn anew</span></div>
+</div></section>
+
+<section id="halloween" class="section case bg-b sp-case"><div class="wrap case-grid">
+<div class="stack">
+<div class="eyebrow">Special · Halloween · Trick or Treat</div>
+<h2 class="h2">“One of the skeletons stood up.”</h2>
+<p class="lead">Maple Hollow, Ohio, October 31. At 22:00 Hollow Lane hands out the prize for the scariest yard. But Frank Doyle, the street's Halloween fanatic, lies unconscious in his own prop coffin – bolted shut, full of fog. He survives, barely, but the envelope with 5,000 dollars is gone. The sheriff needs 50 minutes. Until then you have the spook app, the neighbors' doorbell cameras, a photo from the costume contest – and Frank's last note, written in Candy Code.</p>
+<p><b>Five neighbors in costume:</b></p>
+<div class="objects"><span>the witch</span><span>the grim reaper</span><span>the werewolf</span><span>the vampire</span><span>the pumpkin head</span></div>
+</div>
+<div class="clues" aria-label="Examples from the case file">
+</div>
+<ul class="list case-points">
+<li>Four questions: when was the coffin shut, who was in the skeleton suit, where's the money – and what was Frank going to announce?</li>
+<li>Picture puzzles: cameras, a height chart, a yard plan – and a secret code made of candy</li>
+<li>Culprit, time and hiding place are drawn anew each time – play up to three times</li>
+<li>Spooky, not gory: nothing supernatural, and the victim survives</li>
+<li>At the end: flashback, certificate and a €5 voucher for Friends or Teams</li>
+</ul>
+<div class="actions case-buy"><a class="btn btn-red" href="solo-buy.html?fall=halloween">Buy the case – €11.90</a></div>
+</div></section>
+
+<section id="ablauf" class="section bg-a"><div class="wrap stack">
+<div class="eyebrow">How it works</div>
+<h2 class="h2">Three steps from purchase to certificate</h2>
+<div class="steps">
+<div class="step"><span class="num">1</span><div><h3>Get your code</h3><p>After paying you get your game code on screen and by email. Start right away or any time in the next 12 months – after Halloween too, and as a gift.</p></div></div>
+<div class="step"><span class="num">2</span><div><h3>Investigate</h3><p>The clock runs from the start. Every correct answer unlocks new evidence. Stuck? Hints at the push of a button – for penalty minutes.</p></div></div>
+<div class="step"><span class="num">3</span><div><h3>Unmask</h3><p>Once you've solved all four questions, the flashback shows you what really happened – plus your final time and your certificate.</p></div></div>
+</div>
+</div></section>
+
+<section id="frueher" class="section bg-b"><div class="wrap stack">
+<div class="eyebrow">Specials</div>
+<h2 class="h2">Seasonal cases – playable long after the season</h2>
+<p class="lead">For special occasions Mordsteam releases a case of its own. When the season is over, it stays here under “Past Specials” – you can play it any time. We announce the next Special in our <a href="newsletter.html">newsletter</a>.</p>
+</div></section>
+
+<section id="faq" class="section faq bg-a"><div class="wrap faq-grid">
+<div class="stack"><div class="eyebrow">FAQ</div><h2 class="h2">Questions?</h2></div>
+<div>
+<details><summary>Is the Special scary?</summary><p>A little – with fog, pumpkins and skeletons. But there's nothing supernatural and no blood: every spook has an explanation, and the victim survives.</p></details>
+<details><summary>How is it different from the Solo cases?</summary><p>It's bigger: four questions instead of three, a 50-minute countdown and new kinds of puzzles like the candy code. Otherwise it plays like Mordsteam Solo – on your own, without AI, on any device.</p></details>
+<details><summary>Can I play it after Halloween?</summary><p>Yes. The code is valid for 12 months, and the case stays available after the season.</p></details>
+<details><summary>Can I pause?</summary><p>No. The clock starts when you open the file and keeps running. Until then you can take as long as you like.</p></details>
+<details><summary>Can I give the case as a gift?</summary><p>Yes. After buying you get a gift card to print or save as PDF. The name is only entered when playing.</p></details>
+</div>
+</div></section>
+
+<section class="cta"><div class="wrap">
+<h2>At 22:45 the sheriff arrives.</h2>
+<p>By then you'll know who was in the skeleton suit.</p>
+<a class="btn btn-ink" href="solo-buy.html?fall=halloween">Buy the case – €11.90</a>
+</div></section>
+</main>''')
 
 P["newsletter"] = dict(title="Newsletter – Mordsteam", desc="Be the first to hear about new Mordsteam cases: the Mordsteam newsletter.", scripts='<script src="/assets/newsletter.js"></script>',
  body='''<main class="page"><div class="wrap prose">

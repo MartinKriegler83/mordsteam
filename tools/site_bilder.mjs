@@ -13,6 +13,8 @@ import * as F from "../lib/cases/friends-001.js";
 import * as FE from "../lib/cases/friends-001-en.js";
 import { feuerwerk } from "../lib/art/soloplus.js";
 import { COVERS } from "../lib/art/covers.js";
+import * as SH from "../lib/cases/special-001.js";
+import * as SHE from "../lib/cases/special-001-en.js";
 import { CASES, caseOf, buildVars, render, RULES } from "../lib/game.js";
 import { normalizeVars } from "../lib/create.js";
 import { randomCast } from "../lib/countries.js";
@@ -23,6 +25,7 @@ const seeded = (seed) => () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let 
 const figs = (h) => h.match(/<figure class="gn-pic[\s\S]*?<\/figure>/g) || [];
 const one = (h, what) => { const f = figs(h); if (!f.length) throw new Error("Kein Bild gefunden: " + what); return f; };
 
+function special001(en) { const M = en ? { ...SH, ...SHE } : SH; return one(M.docs("tyler", en ? "Alex" : "Martin", 2).find((d) => d.id === "verandakamera").html, "special001")[0]; }
 function solo001(en) { return one((en ? S1E : S1).docs("jonas", en ? "Alex" : "Martin", 0).find((d) => d.id === "kamera").html, "solo001")[0]; }
 function solo002(en) { return one((en ? S2E : S2).docs("paul", en ? "Alex" : "Martin", 2).find((d) => d.id === "spuren").html, "solo002")[0]; }
 function soloplus(en) {
@@ -71,6 +74,8 @@ const CARDS = [
     de: ["AUS DER AKTE · TAXIQUITTUNG UND LAUF-APP", "Wer war wann wo unterwegs?"], en: ["FROM THE FILE · TAXI RECEIPT AND RUNNING APP", "Who was where – and when?"] },
   { key: "t002", page: "teams.html", sec: "fall002", pageEn: "en/teams.html", secEn: "case002", make: t002,
     de: ["AUS DER AKTE · FOTOS VOM FEST", "Wer trägt welches Bändchen?"], en: ["FROM THE FILE · PHOTOS FROM THE FÊTE", "Who wears which wristband?"] },
+  { key: "special001", page: "specials.html", sec: "halloween", pageEn: "en/specials.html", secEn: "halloween", make: special001,
+    de: ["AUS DER AKTE · FRANKS VERANDAKAMERA", "Welches Skelett ist kein Skelett?"], en: ["FROM THE FILE · FRANK’S PORCH CAMERA", "Which skeleton isn’t a skeleton?"] },
 ];
 
 // Website: kein Vergrößern – Figur ohne Knopf-Rolle; IDs je Karte eindeutig machen

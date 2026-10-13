@@ -630,3 +630,13 @@ a.inlink:hover{color:var(--red)}
   .cover-m{display:none}
   .clues .cover-d{display:block;grid-column:1/-1;width:min(100%,330px);justify-self:center;margin:0 0 26px;box-shadow:none}
 }
+
+/* ---------- Specials (Halloween, 13.10.2026) ---------- */
+.sp-home{background:#1B1626;color:#F3EFE6;border-top:6px solid #E8792B}
+.sp-home .eyebrow{color:#F2A65A}.sp-home .h2{color:#F3EFE6}
+.sp-home .purpose{font-family:var(--serif);font-weight:900;font-size:22px;color:#E8792B;margin:0}
+.sp-home .meta{font-family:var(--mono);font-size:12px;letter-spacing:1px;color:#C9C4D8}
+.sp-box{display:grid;gap:26px;align-items:center}
+.sp-cover{width:100%;max-width:340px;height:auto;display:block;margin:0 auto;box-shadow:0 18px 40px rgba(0,0,0,.45);transform:rotate(-2deg)}
+@media(min-width:820px){.sp-box{grid-template-columns:320px 1fr;gap:48px}.sp-cover{margin:0}}
+.sp-hero .stamp strong{color:#E8792B}
