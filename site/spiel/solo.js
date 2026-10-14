@@ -18,7 +18,8 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
   const minU = () => L("Min.", "min");
   // Produktname für Kopfzeilen und Stempel: Specials (Halloween …) heißen nicht „Solo“ (Nachttest 14.10.)
   // Kopfzeile: oben klein der Fall, darunter groß der Name (vorher stand zweimal „Mordsteam Solo“, Martins Test 14.10.)
-  const head = (big, small) => { $("pname").textContent = big; $("fallname").textContent = small; };
+  // ohne Uhr rechts darf die Kopfzeile die ganze Breite nutzen (sonst „Mordsteam Spec…“, Martins Test 14.10.)
+  const head = (big, small) => { $("pname").textContent = big; $("fallname").textContent = small; $("pname").style.maxWidth = $("fallname").style.maxWidth = "75vw"; };
   const prodName = (x) => (x && String(x.case_id || "").startsWith("special-") ? "Special" : "Solo");
   const showSw = (on) => { const b = $("langsw"); if (b) b.hidden = !on; };
   // Texte je Fall – ohne Angabe gelten die von Solo 001 (Nachtzug)
@@ -115,7 +116,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
     // Spielsprache der Runde gewinnt; Umschalter verschwindet, solange eine Runde geladen ist
     if (S.lang && S.lang !== MS.lang) { MS.setLang(S.lang); V = null; }
     showSw(false);
-    $("pname").textContent = S.name || S.title;
+    $("pname").textContent = S.name || S.title; $("pname").style.maxWidth = $("fallname").style.maxWidth = "";
     document.title = "Mordsteam Solo – " + S.title;
     $("fallname").textContent = prodName(S) + " · " + S.title;
     $("testbar").hidden = !S.test || S.ended;
