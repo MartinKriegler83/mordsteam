@@ -107,6 +107,7 @@
   const money = (o) => { const v = ((o.amount_cents || 0) / 100).toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); return v + (o.currency === "GBP" ? " £" : o.currency === "USD" ? " $" : " €"); };
   const SOLO_LBL = { "solo-001": "Solo 001 Nachtzug", "solo-002": "Solo 002 Applaus", "solo-plus-001": "Solo Plus Jahrgang", "special-001": "Special Halloween" };
   const soloName = (o) => { const p = (o.contact || {}).produkt || "solo-001"; return SOLO_LBL[p] || p; };
+  const usd3 = (x) => (x || 0).toLocaleString("de-AT", { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + " $";
   const usd = (x) => (x || 0).toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " $";
   const n0 = (x) => (x || 0).toLocaleString("de-AT");
   // Ampel: grün unter 70 %, gelb bis 90 %, rot darüber
@@ -137,7 +138,7 @@
       </div></div>
       <div class="two-col">
       <div class="panel"><div class="eyebrow">Einrichtung dieser Umgebung</div><ul class="checks">
-        ${chk(C.mail, "Mailversand (Resend)")}${chk(C.ai, "Claude-API für ARIA")}${chk(C.stripe, C.stripe_live ? "Stripe LIVE" : "Stripe (Testmodus)")}
+        ${chk(C.mail, "Mailversand (Resend)")}${chk(C.ai, "Claude-API (KI-Verhöre)")}${chk(C.stripe, C.stripe_live ? "Stripe LIVE" : "Stripe (Testmodus)")}
         ${chk(C.shop_open, "Shop offen (SHOP_OPEN)")}${C.fake_pay ? chk(false, "ORDER_FAKE_PAY ist AN – nie in Produktion!", true) : ""}</ul>
         <p class="small">Limits: Mails ${L.mail_day || "∞"}/Tag, ${L.mail_month || "∞"}/Monat · Aufrufe ${L.req_day ? n0(L.req_day) + "/Tag" : "ohne Tageslimit"} · KI-Budget ${L.ai_budget} $/Monat. Warnmail an office@ ab 70 %.</p></div>
       <div class="panel"><div class="eyebrow">Letzte Warnungen</div>${ops.alerts.length ? `<ul class="list small">${ops.alerts.slice(0, 6).map((a) => `<li>${new Date(a.at).toLocaleString("de-AT")} · ${WARNTXT(a.key)}</li>`).join("")}</ul>` : `<p class="muted">Keine Warnungen.</p>`}</div>
@@ -159,8 +160,9 @@
     return `<div class="panel"><div class="eyebrow">Mails · letzte 30 Tage</div>${bars(ops.mail.days, "n")}
       <table class="grid small" style="margin-top:12px"><tr><th>Art (dieser Monat)</th><th>Versuche</th><th>Zugestellt</th></tr>${ops.mail.kinds.filter((k) => k.kind !== "warnung").map((k) => `<tr><td>${K[k.kind] || k.kind}</td><td>${k.n}</td><td>${k.ok}${k.ok < k.n ? ` <b style="color:var(--red)">(${k.n - k.ok} fehlgeschlagen)</b>` : ""}</td></tr>`).join("") || `<tr><td colspan="3" class="muted">Noch keine Mails.</td></tr>`}</table>
       <p class="small"><a href="https://resend.com/emails" target="_blank" rel="noopener">Resend öffnen</a> · Tarif ändern: Resend → Settings → Billing</p></div>
-    <div class="panel"><div class="eyebrow">Claude-API (ARIA) · letzte 30 Tage, Kosten in $</div>${bars(ops.ai.days, "cost_usd", usd)}
+    <div class="panel"><div class="eyebrow">Claude-API · letzte 30 Tage, Kosten in $</div>${bars(ops.ai.days, "cost_usd", usd)}
       <p style="margin-top:12px">Dieser Monat: <b>${n0(ops.ai.month_calls)}</b> Antworten · <b>${usd(ops.ai.month_cost)}</b> · ${n0(ops.ai.month_input)} Eingabe- / ${n0(ops.ai.month_output)} Ausgabe-Token${ops.ai.month_errors ? ` · <b style="color:var(--red)">${ops.ai.month_errors} Fehler</b>` : ""}</p>
+      <table class="grid small" style="margin-top:12px"><tr><th>KI-Kosten pro Spiel (letzte 30 Tage)</th><th>Spiele</th><th>Ø Antworten</th><th>Ø pro Spiel</th><th>teuerstes</th></tr>${(ops.ai.games || []).map((g) => `<tr><td>${({ "solo-plus": "Solo Plus (Verhörraum)", "friends-plus": "Friends Plus (Verhörraum, je Gruppe)", teams: "Teams Premium Plus (ARIA + Sonderauftrag, je Runde)" })[g.kind] || MS.esc(g.kind)}</td><td>${n0(g.games)}</td><td>${n0(Math.round(g.calls / g.games))}</td><td><b>${usd3(g.cost / g.games)}</b></td><td>${usd3(g.max)}</td></tr>`).join("") || `<tr><td colspan="5" class="muted">Noch keine Spiele mit KI erfasst (Zählung pro Spiel seit 14.10.2026).</td></tr>`}</table>
       <p class="small">Kosten berechnet mit ${ops.price.input} $ / ${ops.price.output} $ je Million Eingabe-/Ausgabe-Token (Haiku 4.5). Guthaben nachsehen: <a href="https://platform.claude.com/settings/billing" target="_blank" rel="noopener">Claude Console → Billing</a>.</p></div>
     <div class="panel"><div class="eyebrow">Server-Aufrufe · letzte 30 Tage</div>${bars(ops.hits.days, "n")}
       <table class="grid small" style="margin-top:12px"><tr><th>Bereich (dieser Monat)</th><th>Aufrufe</th></tr>${ops.hits.areas.map((a) => `<tr><td>${A[a.area] || a.area}</td><td>${n0(a.n)}</td></tr>`).join("") || `<tr><td colspan="2" class="muted">Noch keine Daten.</td></tr>`}</table>

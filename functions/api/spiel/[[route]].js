@@ -512,7 +512,7 @@ async function ariaChat({ request, env, team, session }) {
     });
     const d = await r.json();
     logged = true;
-    await logAI(env, d.usage, r.ok);
+    await logAI(env, d.usage, r.ok, { kind: "teams", id: session.id });
     if (!r.ok) throw new Error(d.error?.message || String(r.status));
     reply = ps.show((d.content || []).filter((p) => p.type === "text").map((p) => p.text).join("").trim()).slice(0, 1200);
     if (noSz(x)) reply = reply.replace(/ß/g, "ss");
@@ -990,7 +990,7 @@ async function sonderChat({ request, env, team, session }) {
     });
     const d = await r.json();
     logged = true;
-    await logAI(env, d.usage, r.ok);
+    await logAI(env, d.usage, r.ok, { kind: "teams", id: session.id });
     if (!r.ok) throw new Error(d.error?.message || String(r.status));
     reply = ps.show((d.content || []).filter((p) => p.type === "text").map((p) => p.text).join("").trim()).slice(0, 800);
     if (noSz(x)) reply = reply.replace(/ß/g, "ss");
