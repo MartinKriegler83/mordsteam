@@ -19,7 +19,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
   // Produktname für Kopfzeilen und Stempel: Specials (Halloween …) heißen nicht „Solo“ (Nachttest 14.10.)
   // Kopfzeile: oben klein der Fall, darunter groß der Name (vorher stand zweimal „Mordsteam Solo“, Martins Test 14.10.)
   // ohne Uhr rechts darf die Kopfzeile die ganze Breite nutzen (sonst „Mordsteam Spec…“, Martins Test 14.10.)
-  const head = (big, small) => { $("pname").textContent = big; $("fallname").textContent = small; $("pname").style.maxWidth = $("fallname").style.maxWidth = "75vw"; };
+  const head = (big, small, w = "75vw") => { $("pname").textContent = big; $("fallname").textContent = small; $("pname").style.maxWidth = $("fallname").style.maxWidth = w; };
   const prodName = (x) => (x && String(x.case_id || "").startsWith("special-") ? "Special" : "Solo");
   const showSw = (on) => { const b = $("langsw"); if (b) b.hidden = !on; };
   // Texte je Fall – ohne Angabe gelten die von Solo 001 (Nachtzug)
@@ -44,7 +44,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
   // ---------- Einstieg: Code ----------
   function codeView(err) {
     tabs.hidden = true; clock.innerHTML = ""; showSw(true);
-    head("Mordsteam Solo", L("Ein Fall für dich allein", "A case just for you"));
+    head("Mordsteam Solo", L("Ein Fall für dich allein", "A case just for you"), "");   // hier steht rechts der Sprachknopf
     root.innerHTML = `<div class="joinhero"><div class="eyebrow">Mordsteam Solo</div><h1>${L("Dein Fall wartet.", "Your case is waiting.")}</h1><p>${L("Gib den Code aus deiner Bestätigungsmail ein.", "Enter the code from your confirmation email.")}</p></div>
       <div class="panel center"><form id="cf" class="form"><div class="field"><label for="code">${L("Solo-Code", "Solo code")}</label>
       <input id="code" required maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${esc(code)}" style="text-transform:uppercase;font-family:var(--mono);font-size:24px;letter-spacing:5px"></div>
