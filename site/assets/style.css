@@ -145,6 +145,8 @@ p{margin:0}
 .footer a{color:var(--muted)}
 .footer nav{display:flex;flex-wrap:wrap;gap:20px}
 .footer .social a{color:var(--paper)}
+.footer .climate{margin:0;font-size:13px;line-height:1.5}
+.footer .climate a{text-decoration:underline}
 .footer .brand{font-family:var(--serif);font-weight:900;font-size:20px;color:var(--paper)}
 
 /* ---------- Tablet / Desktop ---------- */
