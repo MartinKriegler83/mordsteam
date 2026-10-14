@@ -3,6 +3,7 @@
   "use strict";
   const EN = document.documentElement.lang === "en";
   const T = (de, en) => (EN ? en : de);
+  { const st = document.createElement("style"); st.textContent = ".w-cul{display:none}.is-special .w-cul{display:inline}.is-special .w-kill{display:none}"; document.head.appendChild(st); }
   const form = document.getElementById("solo"), err = document.getElementById("err"), btn = document.getElementById("submit");
   const q = new URLSearchParams(location.search);
   if (q.get("abgebrochen")) document.getElementById("cancelled").hidden = false;
@@ -20,6 +21,7 @@
     document.getElementById("sofortbox").hidden = form.kunde.value !== "b2c";
     const C = CASES[form.fall.value] || CASES["solo-001"];
     document.getElementById("ab18box").hidden = !C.plus;
+    document.body.classList.toggle("is-special", form.fall.value.startsWith("special-"));   // Halloween: kein Mord → „culprit“ statt „killer“ (Klasse statt Text, weil billing.js den Absatz neu schreibt)
     const en = form.lang.value === "en";
     document.getElementById("sumtxt").textContent = (EN ? C.en : C.de) + T(` · Spielsprache ${en ? "Englisch" : "Deutsch"}`, ` · game language ${en ? "English" : "German"}`);
     const B = window.MSBill, p = B ? B.price(C.p) : C.p, f = B ? B.fmt : eur;   // Währung nach Rechnungsland

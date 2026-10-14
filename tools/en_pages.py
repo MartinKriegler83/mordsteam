@@ -776,7 +776,7 @@ P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy
 <div id="billbox"></div>
 </fieldset>
 <fieldset class="step"><legend><span>3</span> Review and pay</legend>
-<div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Solo 001 “Night Train to Venice” · 40-minute countdown · game language German</span><b id="sumprice">€8.90</b></div><p class="small">Final price. Code valid for 12 months. After your first playthrough, replayable up to three times within 30 days with a different killer. Plus a €5 voucher for Mordsteam Friends or Teams. VAT exempt (small business scheme).</p></div>
+<div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Solo 001 “Night Train to Venice” · 40-minute countdown · game language German</span><b id="sumprice">€8.90</b></div><p class="small">Final price. Code valid for 12 months. After your first playthrough, replayable up to three times within 30 days with a different <span class="w-kill">killer</span><span class="w-cul">culprit</span>. Plus a €5 voucher for Mordsteam Friends or Teams. VAT exempt (small business scheme).</p></div>
 <label class="check" id="sofortbox" hidden><input type="checkbox" name="sofort"><span>I expressly request that you provide my code right after payment – I can still play whenever I like. I am aware that as a private individual I thereby lose my right of withdrawal (at the latest once the case has been played). *</span></label>
 <label class="check" id="ab18box" hidden><input type="checkbox" name="ab18"><span>I am at least 18 years old and agree that an AI plays the suspects in the interrogation room. My name is not sent to the AI provider. *</span></label>
 <label class="check"><input type="checkbox" name="no_news"><span>No news by email, please. Otherwise we'll occasionally tell you about new Mordsteam cases – you can unsubscribe in every email with one click.</span></label>
@@ -1267,7 +1267,7 @@ PROD = f'''<!doctype html>
 <h1>Mordsteam – products, prices and policies</h1>
 <p><b>Mordsteam e.U.</b> (sole proprietor: Martin Kriegler) · Sportplatzgasse 16, 7152 Pamhagen, Austria · Company register FN 689638z · <a href="mailto:office@mordsteam.com">office@mordsteam.com</a></p>
 <p>Mordsteam sells <b>digital murder-mystery games that are played in the web browser</b> on a phone, tablet or laptop – no download, no physical goods. The players solve a case with evidence, interrogations and puzzles; in some games their own names appear in the case file, and the Plus versions include AI characters that players can question. Games are available in German and English.</p>
-<p><b>Delivery:</b> immediately after payment, by email and on the confirmation page (game code, links and instructions). Each purchase can be played once within 12 months (Solo cases: up to three replays within 30 days of the first playthrough).</p>
+<p><b>Delivery:</b> immediately after payment, by email and on the confirmation page (game code, links and instructions). Each purchase can be played once within 12 months (Solo cases and Specials: up to three replays within 30 days of the first playthrough).</p>
 
 <h2 id="products">Products and prices</h2>
 <p>Prices are final prices. Customers in the USA, Canada and Mexico pay in US dollars, customers in the EU and the rest of the world in euros, both via Stripe (no VAT charged – Austrian small business scheme; reverse charge for EU businesses with a VAT ID). <b>Businesses in the United Kingdom pay in pounds via Stripe</b> (reverse charge). <b>Private customers in the United Kingdom pay in pounds via Link</b> (Stripe), which is the merchant of record for these orders; their prices include UK VAT.</p>
@@ -1279,6 +1279,7 @@ PROD = f'''<!doctype html>
 <tr><td><b>Mordsteam Friends – mystery night</b></td><td>Murder-mystery night for 4–8 friends, everyone plays on their own phone, 50-minute countdown</td><td>€29 for 4 people, +€5 per additional person</td><td>£29 for 4 people, +£5 per additional person</td><td>$33 for 4 people, +$6 per additional person</td></tr>
 <tr><td><b>Mordsteam Friends – mystery night Plus</b></td><td>As above with AI interrogation room and five instead of three questions, 75-minute countdown</td><td>€49 for 4 people, +€8 per additional person</td><td>£49 for 4 people, +£8 per additional person</td><td>$56 for 4 people, +$9 per additional person</td></tr>
 <tr><td><b>Mordsteam Solo 001 / 002</b></td><td>A case for one person, 35–40-minute countdown</td><td>€8.90</td><td>£8.99</td><td>$9.99</td></tr>
+<tr><td><b>Mordsteam Special “Trick or Treat”</b></td><td>Halloween case for one person, 50-minute countdown</td><td>€11.90</td><td>£11.99</td><td>$13.99</td></tr>
 <tr><td><b>Mordsteam Solo Plus</b></td><td>A case for one person with AI interrogation room, 45-minute countdown</td><td>€15.90</td><td>£15.99</td><td>$17.99</td></tr>
 </table></div>
 <p class="small">Introductory offer until 30 November 2026: 25% off the first Teams or Friends game in exchange for honest feedback.</p>
