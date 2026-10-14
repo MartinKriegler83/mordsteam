@@ -13,8 +13,7 @@ import * as F from "../lib/cases/friends-001.js";
 import * as FE from "../lib/cases/friends-001-en.js";
 import { feuerwerk } from "../lib/art/soloplus.js";
 import { COVERS } from "../lib/art/covers.js";
-import * as SH from "../lib/cases/special-001.js";
-import * as SHE from "../lib/cases/special-001-en.js";
+import { porchCam } from "../lib/art/special001.js";
 import { CASES, caseOf, buildVars, render, RULES } from "../lib/game.js";
 import { normalizeVars } from "../lib/create.js";
 import { randomCast } from "../lib/countries.js";
@@ -25,7 +24,8 @@ const seeded = (seed) => () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let 
 const figs = (h) => h.match(/<figure class="gn-pic[\s\S]*?<\/figure>/g) || [];
 const one = (h, what) => { const f = figs(h); if (!f.length) throw new Error("Kein Bild gefunden: " + what); return f; };
 
-function special001(en) { const M = en ? { ...SH, ...SHE } : SH; return one(M.docs("tyler", en ? "Alex" : "Martin", 2).find((d) => d.id === "verandakamera").html, "special001")[0]; }
+// Werbebild: Figur passt zu keinem Verdächtigen (66 Zoll, schwarze Sneaker), damit die Seite in keiner Runde etwas verrät (Nachttest 14.10.)
+function special001(en) { return one(porchCam(en, 66, "schwarz", "21:19:07"), "special001")[0]; }
 function solo001(en) { return one((en ? S1E : S1).docs("jonas", en ? "Alex" : "Martin", 0).find((d) => d.id === "kamera").html, "solo001")[0]; }
 function solo002(en) { return one((en ? S2E : S2).docs("paul", en ? "Alex" : "Martin", 2).find((d) => d.id === "spuren").html, "solo002")[0]; }
 function soloplus(en) {

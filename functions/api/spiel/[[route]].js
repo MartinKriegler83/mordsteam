@@ -812,7 +812,8 @@ async function adminExport(request, env) {
     const c = JSON.parse(o.contact || "{}");
     const firma = c.rechnung_firma || (c.fiktiv ? "" : (JSON.parse(o.vars || "{}").FIRMA || ""));
     const kind = c.kunde === "b2b" || (!o.tax_regime && o.tax_id) ? "Unternehmen" : "Privat";
-    const prod = o.paket === "solo" ? `Solo ${String(c.produkt || "solo-001").replace("solo-", "")}` : P[o.paket] || o.paket;
+    const sp = String(c.produkt || "solo-001");
+    const prod = o.paket === "solo" ? (sp.startsWith("special-") ? `Special ${sp.slice(-3)}` : sp.startsWith("solo-plus") ? "Solo Plus" : `Solo ${sp.replace("solo-", "")}`) : P[o.paket] || o.paket;   // Nachttest 14.10.: kein „Solo special-001“
     // Go-live-Test 5 (M19): £/$ ohne Euro-Betrag → €-Spalten leer (Originalbetrag steht in eigener Spalte)
     const miss = !!o.currency && o.currency !== "EUR" && !o.eur_ok, eE = (c) => (miss ? "" : e(c));
     lines.push([d(o.paid_at), o.invoice_no || "", o.id.slice(0, 8), [c.name, firma].filter(Boolean).join(" / "), prod, o.teams,

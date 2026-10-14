@@ -72,6 +72,7 @@
     const viaMor = l === "GB" && !b2b && uk && uk.on;
     const vat = vatText(l, b2b);
     vatEls.forEach(([el, html]) => { el.innerHTML = vat ? html.replace(VAT_RE, vat) : html; });
+    if (window.MSCur && MSCur.apply) MSCur.apply();   // sonst stand der Gutschein wieder als „€5“ da (Nachttest 14.10.)
     const ph0 = vat ? payhint0.replace(VAT_RE, vat) : payhint0;
     if (payhint) payhint.innerHTML = viaMor
       ? T("Bezahlt wird in Pfund über Link (Stripe), inkl. britischer Umsatzsteuer – Link ist für Privatkunden im Vereinigten Königreich Verkäufer und schickt die Rechnung. " + (/solo/.test(location.pathname) ? "Spielcode und Links siehst du direkt danach." : "Spielcode und Links seht ihr direkt danach."), "You pay in pounds via Link (Stripe), including UK VAT – Link is the seller for private customers in the United Kingdom and sends the invoice. You'll see your code and links right afterwards.")

@@ -49,7 +49,9 @@ export const SOLO_OFFERS = {
   "special-001": { price: 1190, no: "Special", de: "Süßes oder Saures", en: "Trick or Treat", min: 50, head: ["Die Hollow Lane wartet.", "Hollow Lane is waiting."], goal: ["bis der Sheriff kommt", "until the sheriff arrives"] },
   "solo-plus-001": { price: 1590, no: "Solo Plus", de: "Der letzte Jahrgang", en: "The Last Vintage", min: 45, plus: true, head: ["Das Weinfest wartet.", "The wine festival is waiting."], goal: ["bis die Polizei aus Krems kommt", "until the police arrive from Krems"] },
 };
-const soloOffer = (id) => SOLO_OFFERS[id] || SOLO_OFFERS["solo-001"];
+// nur eigene Schlüssel (sonst ergab „__proto__“ einen 500er, Nachttest 14.10.)
+const own = (o, k) => typeof k === "string" && Object.prototype.hasOwnProperty.call(o, k);
+const soloOffer = (id) => (own(SOLO_OFFERS, id) ? SOLO_OFFERS[id] : SOLO_OFFERS["solo-001"]);
 const TIER = { basis: 0, premium: 1, plus: 2 };
 const NAMES = { basis: "Basic (50 Min.)", premium: "Premium (70 Min.)", plus: "Premium Plus (90 Min.)" };
 const NAMES_EN = { basis: "Basic (50 min)", premium: "Premium (70 min)", plus: "Premium Plus (90 min)" };
@@ -261,7 +263,7 @@ async function bestellung(request, env) {
   const site = b.site === "en" ? "en" : "de";                 // Sprache der Bestellseite
   const lang = b.lang === "en" ? "en" : b.lang === "de" ? "de" : site; // Sprache des Spiels
   if (!shopOpen(env)) return fail(L(site, "Bestellungen sind derzeit noch nicht möglich.", "Orders are not possible yet."), 403);
-  const paket = TIER[b.paket] != null ? b.paket : "basis";
+  const paket = own(TIER, b.paket) ? b.paket : "basis";
   const premium = TIER[paket] >= 1;
   const teams = Math.round(Number(b.teams));
   if (!(teams >= 1 && teams <= 15)) throw new InputError(L(site, "Bitte 1 bis 15 Teams wählen.", "Please choose 1 to 15 teams."));
@@ -380,7 +382,7 @@ async function soloBestellung(request, env) {
   if (!shopOpen(env)) return fail(L(site, "Bestellungen sind derzeit noch nicht möglich.", "Orders are not possible yet."), 403);
   const k = b.contact || {};
   const s = (x, max = 120) => String(x ?? "").trim().slice(0, max);
-  const fall = SOLO_OFFERS[b.fall] ? b.fall : "solo-001", F = SOLO_OFFERS[fall];
+  const fall = own(SOLO_OFFERS, b.fall) ? b.fall : "solo-001", F = SOLO_OFFERS[fall];
   const contact = { name: s(k.name), email: s(k.email, 160).toLowerCase(), lang: b.lang === "en" ? "en" : "de", site, produkt: fall };
   const GL = contact.lang === "en" ? L(site, "Englisch", "English") : L(site, "Deutsch", "German");
   if (!["b2b", "b2c"].includes(k.kunde)) throw new InputError(L(site, "Bitte angeben, ob du als Privatperson oder für ein Unternehmen bestellst.", "Please tell us whether you are ordering as a private individual or for a company."));

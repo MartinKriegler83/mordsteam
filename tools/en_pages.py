@@ -727,7 +727,7 @@ P["solo"] = dict(title="Mordsteam Solo – murder mysteries just for you", scrip
 <details><summary>Can I pause?</summary><p>No. The clock starts as soon as you open the case file and keeps running. Until then, take as long as you like: the code is valid for 12 months. If you close the window during the game, your code takes you back – but the clock will have kept running.</p></details>
 <details><summary>How do the hints work?</summary><p>Each question has three hints, from a gentle nudge to almost the answer. They cost 1, 2 and 3 penalty minutes. A wrong answer costs 3 minutes, and you can try again straight away.</p></details>
 <details><summary>What does “faster than X %” mean?</summary><p>Your final time (time played plus penalty minutes) is compared with all other investigators who solved the case for the first time. There is no public leaderboard, nobody sees your name.</p></details>
-<details><summary>Can I play the case again?</summary><p>Yes, for all three cases: up to three times within 30 days of your first playthrough. A different killer is drawn for each playthrough, and the matching evidence changes too. Only your first playthrough counts for the comparison.</p></details>
+<details><summary>Can I play the case again?</summary><p>Yes, for all Solo cases and the <a href="specials.html">Halloween Special</a>: up to three times within 30 days of your first playthrough. A different killer is drawn for each playthrough, and the matching evidence changes too. Only your first playthrough counts for the comparison.</p></details>
 <details><summary>Can I give Mordsteam Solo as a gift?</summary><p>Yes. After buying you get a gift card on the confirmation page and in the order email to print or save as PDF – with your dedication, the code and a QR code. The name that appears in the story and on the certificate is only entered by whoever plays.</p></details>
 <details><summary>What is the €5 voucher?</summary><p>Every Solo case gives you a €5 voucher code after your first playthrough – solved or not. Redeem it in the payment step when ordering Mordsteam Friends or Teams. One voucher per order; it can't be combined with the early bird or other offers and can't be exchanged for cash.</p></details>
 <details><summary>Do I need an app or an account?</summary><p>No. Mordsteam Solo runs right in the browser on phone, tablet or laptop. All you need is your code.</p></details>
@@ -1175,7 +1175,7 @@ P["specials"] = dict(title="Mordsteam Specials – Halloween mystery “Trick or
 <ul class="list case-points">
 <li>Four questions: when was the coffin shut, who was in the skeleton suit, where's the money – and what was Frank going to announce?</li>
 <li>Picture puzzles: cameras, a height chart, a yard plan – and a secret code made of candy</li>
-<li>Culprit, time and hiding place are drawn anew each time – play up to three times</li>
+<li>Culprit, time and hiding place are drawn anew each time – replay up to three times within 30 days</li>
 <li>Spooky, not gory: nothing supernatural, and the victim survives</li>
 <li>At the end: flashback, certificate and a €5 voucher for Friends or Teams</li>
 </ul>
@@ -1205,6 +1205,8 @@ P["specials"] = dict(title="Mordsteam Specials – Halloween mystery “Trick or
 <details><summary>How is it different from the Solo cases?</summary><p>It's bigger: four questions instead of three, a 50-minute countdown and new kinds of puzzles like the candy code. Otherwise it plays like Mordsteam Solo – on your own, without AI, on any device.</p></details>
 <details><summary>Can I play it after Halloween?</summary><p>Yes. The code is valid for 12 months, and the case stays available after the season.</p></details>
 <details><summary>Can I pause?</summary><p>No. The clock starts when you open the file and keeps running. Until then you can take as long as you like.</p></details>
+<details><summary>Can I play the case again?</summary><p>Yes: up to three times within 30 days of your first playthrough. Each time the culprit, the time and the hiding place are drawn anew, and the matching evidence changes too. Only your first playthrough counts for the comparison.</p></details>
+<details><summary>What is the €5 voucher?</summary><p>After your first playthrough you get a €5 voucher code – solved or not. Redeem it in the payment step when ordering Mordsteam Friends or Teams. One voucher per order; it can't be combined with the early bird or other offers and can't be exchanged for cash.</p></details>
 <details><summary>Can I give the case as a gift?</summary><p>Yes. After buying you get a gift card to print or save as PDF. The name is only entered when playing.</p></details>
 </div>
 </div></section>

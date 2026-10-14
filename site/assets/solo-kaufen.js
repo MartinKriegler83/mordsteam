@@ -12,7 +12,8 @@
     "special-001": { p: 1190, de: "Mordsteam Special „Süßes oder Saures“ · Halloween · Countdown 50 Min.", en: "Mordsteam Special “Trick or Treat” · Halloween · 50-minute countdown" },
     "solo-plus-001": { p: 1590, plus: true, de: "Mordsteam Solo Plus „Der letzte Jahrgang“ · Countdown 45 Min. · mit KI-Verhörraum", en: "Mordsteam Solo Plus “The Last Vintage” · 45-minute countdown · with AI interrogation room" },
   };
-  const want = { "002": "solo-002", plus: "solo-plus-001", "001": "solo-001", halloween: "special-001" }[q.get("fall") || ""];
+  const fq = (q.get("fall") || "").toLowerCase().trim();
+  const want = CASES[fq] ? fq : { "002": "solo-002", plus: "solo-plus-001", "001": "solo-001", halloween: "special-001", special: "special-001" }[fq];
   if (want) form.querySelector(`input[name=fall][value="${want}"]`).checked = true;
   const eur = (c) => (EN ? "€" + (c / 100).toFixed(2) : (c / 100).toFixed(2).replace(".", ",") + " €");
   const paint = () => {

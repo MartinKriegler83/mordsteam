@@ -61,6 +61,7 @@
     has: (eur, cur) => cur === "EUR" || conv(eur, cur) != null,
     country: () => country,
     ready: () => !!table,
+    apply,   // billing.js: nach dem Neuschreiben der Steuerzeilen Preise wieder umrechnen (Nachttest 14.10.)
     onReady: (fn) => (table && document.readyState !== "loading" ? fn() : listeners.push(fn)),
   };
 })();

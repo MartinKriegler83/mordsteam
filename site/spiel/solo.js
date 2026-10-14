@@ -16,6 +16,8 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
   const EN = () => MS.lang === "en";
   const loc = () => (EN() ? "en-GB" : "de-AT");
   const minU = () => L("Min.", "min");
+  // Produktname für Kopfzeilen und Stempel: Specials (Halloween …) heißen nicht „Solo“ (Nachttest 14.10.)
+  const prodName = (x) => (x && String(x.case_id || "").startsWith("special-") ? "Special" : "Solo");
   const showSw = (on) => { const b = $("langsw"); if (b) b.hidden = !on; };
   // Texte je Fall – ohne Angabe gelten die von Solo 001 (Nachtzug)
   const U = () => Object.assign(EN()
@@ -64,7 +66,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
     tabs.hidden = true; clock.innerHTML = ""; showSw(false);
     const b = t.briefing, needName = !t.name;
     root.innerHTML = `<section class="brief"><div class="paper">
-      <div class="brief-top"><span class="eyebrow">${esc(b.eyebrow)}</span><span class="conf">Solo · ${t.limit_min} ${minU()}</span></div>
+      <div class="brief-top"><span class="eyebrow">${esc(b.eyebrow)}</span><span class="conf">${prodName(t)} · ${t.limit_min} ${minU()}</span></div>
       <h1>${b.title}</h1>
       <form id="sf" class="form" style="margin-top:22px">
       ${needName ? `<div class="field"><label for="nm">${L("Dein Ermittlername", "Your detective name")}</label><input id="nm" required maxlength="40" autocomplete="nickname" placeholder="${L("z. B. Martina Huber", "e.g. Jane Smith")}"><span class="small">${L("Steht in der Geschichte und auf deiner Urkunde.", "It appears in the story and on your certificate.")}</span></div>` : ""}
@@ -90,7 +92,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
   function einsatzView() {
     const b = S.briefing;
     root.innerHTML = `<section class="brief"><div class="paper">
-      <div class="brief-top"><span class="eyebrow">${esc(b.eyebrow)}</span><span class="conf">Solo · ${S.limit_min} ${minU()}</span></div>
+      <div class="brief-top"><span class="eyebrow">${esc(b.eyebrow)}</span><span class="conf">${prodName(S)} · ${S.limit_min} ${minU()}</span></div>
       <h1>${b.title}</h1><p class="sub">${b.text}${S.begun ? L(" Die Uhr oben läuft bereits.", " The clock at the top is already running.") : ""}</p>
       <ol class="steps">${b.steps.map((x, i) => `<li><span class="n">${i + 1}</span><div><b>${esc(x[0])}</b><span>${esc(x[1])}</span></div></li>`).join("")}</ol>
       <h2 class="qhead">${L(`Deine ${["", "eine", "zwei", "drei", "vier", "fünf"][S.questions.length] || S.questions.length} Fragen`, `Your ${["", "one", "two", "three", "four", "five"][S.questions.length] || S.questions.length} question${S.questions.length === 1 ? "" : "s"}`)}</h2>
@@ -111,7 +113,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
     showSw(false);
     $("pname").textContent = S.name || S.title;
     document.title = "Mordsteam Solo – " + S.title;
-    $("fallname").textContent = "Solo · " + S.title;
+    $("fallname").textContent = prodName(S) + " · " + S.title;
     $("testbar").hidden = !S.test || S.ended;
     render();
   }
@@ -185,7 +187,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
     $("newbadge").hidden = !unseen; $("newbadge").textContent = unseen;
     const prev = openDoc > 0 ? openDoc - 1 : null, next = openDoc < S.docs.length - 1 ? openDoc + 1 : null;
     const pb = (i, dir) => `<button type="button" data-go="${i}" class="${dir}"><small>${dir === "prev" ? "← " + L("Nr. ", "No. ") + pad(i + 1) : L("Nr. ", "No. ") + pad(i + 1) + " →"}</small>${esc(S.docs[i].title)}</button>`;
-    const wm = ("MORDSTEAM SOLO · " + (S.name || "") + "   ").repeat(40);
+    const wm = ("MORDSTEAM " + prodName(S).toUpperCase() + " · " + (S.name || "") + "   ").repeat(40);
     root.innerHTML = `<div class="docbar"><button type="button" class="back" id="back">${L("← Alle Beweisstücke", "← All evidence")}</button><span class="docpos">${L("Nr.", "No.")} ${pad(openDoc + 1)} / ${S.docs.length} · ${esc(d.kind)}</span></div>
       <article class="doc" data-wm="${esc(wm)}"><div class="doc-inner">${d.html}</div></article>
       <div class="pager three">${prev !== null ? pb(prev, "prev") : "<span></span>"}<div class="cur"><small>${L("Nr. ", "No. ") + pad(openDoc + 1)}</small>${esc(d.title)}</div>${next !== null ? pb(next, "next") : `<button type="button" class="next" id="toQ2"><small>${L("Weiter →", "Next →")}</small>${L("Zu den Fragen", "To the questions")}</button>`}</div>`;
@@ -421,7 +423,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
   function rbIntro() {
     const done = () => { MS.set(rbKey(), "1"); resultView(); scrollTo(0, 0); };
     root.innerHTML = `<section class="report paper so-result" style="text-align:center">
-      <div class="solved"><div class="bigstamp ${S.solved ? "" : "grey"}"><div><small>MORDSTEAM SOLO · ${esc(U().stamp)}</small><strong>${S.solved ? L("FALL GELÖST", "CASE SOLVED") : L("AKTE GESCHLOSSEN", "FILE CLOSED")}</strong><small>${esc((S.name || "").toUpperCase())}</small></div></div></div>
+      <div class="solved"><div class="bigstamp ${S.solved ? "" : "grey"}"><div><small>MORDSTEAM ${prodName(S).toUpperCase()} · ${esc(U().stamp)}</small><strong>${S.solved ? L("FALL GELÖST", "CASE SOLVED") : L("AKTE GESCHLOSSEN", "FILE CLOSED")}</strong><small>${esc((S.name || "").toUpperCase())}</small></div></div></div>
       <h3 style="margin-top:18px">${L("Was ist wirklich passiert?", "What really happened?")}</h3>
       <p>${L("Die Rückblende zeigt die Tat Schritt für Schritt – rund 40 Sekunden, am besten mit Ton.", "The flashback shows the crime step by step – about 40 seconds, best with sound on.")}</p>
       <div class="actions-row" style="justify-content:center;margin-top:18px"><button type="button" class="btn btn-red" id="rbgo">▶ ${L("Rückblende ansehen", "Watch the flashback")}</button></div>
@@ -438,7 +440,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
     const rp = S.replay || { left: 0 };
     const until = rp.until ? new Intl.DateTimeFormat(loc(), { dateStyle: "long" }).format(new Date(rp.until)) : "";
     root.innerHTML = `<section class="report paper so-result">
-      <div class="solved"><div class="bigstamp ${solved ? "" : "grey"}"><div><small>MORDSTEAM SOLO · ${esc(U().stamp)}</small><strong>${solved ? L("FALL GELÖST", "CASE SOLVED") : L("AKTE GESCHLOSSEN", "FILE CLOSED")}</strong><small>${esc((S.name || "").toUpperCase())}</small></div></div></div>
+      <div class="solved"><div class="bigstamp ${solved ? "" : "grey"}"><div><small>MORDSTEAM ${prodName(S).toUpperCase()} · ${esc(U().stamp)}</small><strong>${solved ? L("FALL GELÖST", "CASE SOLVED") : L("AKTE GESCHLOSSEN", "FILE CLOSED")}</strong><small>${esc((S.name || "").toUpperCase())}</small></div></div></div>
       ${solved ? `<div class="so-score"><div><small>${L("Endzeit", "Final time")}</small><b>${MS.dur(r.score_ms)}</b></div><div><small>${L("Gespielt", "Played")}</small><b>${MS.dur(r.played_ms)}</b></div><div><small>${L("Strafminuten", "Penalty minutes")}</small><b>${S.penalty_min}</b></div></div>
         <p class="so-pct">${pctLine}</p>` : `<p class="so-pct">${S.first_play ? L("Diesmal hat es nicht gereicht – hier ist die Auflösung.", "Not this time – here’s the solution.") : L("Hier ist die Auflösung.", "Here’s the solution.")}</p>`}
       <h3>${L("Die Auflösung", "The solution")}</h3>

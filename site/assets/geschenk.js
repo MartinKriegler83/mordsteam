@@ -73,10 +73,11 @@
       // Kurzlink /s/<Code> (functions/s/[code].js) – zum Antippen, Fotografieren (QR) oder Abtippen
       const link = `${origin}/s/${encodeURIComponent(d.solo_code)}`;
       const title = EN ? d.solo_title_en : d.solo_title;
+      const ck = COVER[d.solo_title] || COVER[d.solo_title_en] || "", sp = ck.startsWith("special");
       card = {
         eyebrow: T("Ein Krimi für dich", "A mystery for you"),
-        title, sub: T(`Solo-Krimi · ${d.solo_min} Minuten Countdown · im Browser am Handy, Tablet oder Laptop`, `Solo mystery · ${d.solo_min}-minute countdown · in the browser on phone, tablet or laptop`),
-        kind: "Solo", cover: COVER[d.solo_title] || COVER[d.solo_title_en] || "", tagLabel: T("Beweisstück 1 · Dein Code", "Exhibit 1 · Your code"), code: d.solo_code, link,
+        title, sub: sp ? T(`Halloween-Special · ${d.solo_min} Minuten Countdown · im Browser am Handy, Tablet oder Laptop`, `Halloween Special · ${d.solo_min}-minute countdown · in the browser on phone, tablet or laptop`) : T(`Solo-Krimi · ${d.solo_min} Minuten Countdown · im Browser am Handy, Tablet oder Laptop`, `Solo mystery · ${d.solo_min}-minute countdown · in the browser on phone, tablet or laptop`),
+        kind: sp ? "Special" : "Solo", cover: ck, tagLabel: T("Beweisstück 1 · Dein Code", "Exhibit 1 · Your code"), code: d.solo_code, link,
         tagText: T("Einmal einlösbar · nach dem ersten Durchgang 30 Tage lang bis zu dreimal wiederholbar", "Redeem once · replay up to three times within 30 days of your first run"),
         steps: [
           T("QR-Code scannen, antippen oder den Link oben eingeben – der Code ist schon eingetragen", "Scan or tap the QR code, or type the link above – the code is already filled in"),
