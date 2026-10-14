@@ -19,6 +19,8 @@
     const c = codeIn.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
     // Solo-Codes (8 Zeichen, beginnen mit S) gehören zu Mordsteam Solo
     if (/^S[A-Z2-9]{7}$/.test(c)) { location.href = "/spiel/solo.html?c=" + c; return; }
+    // Friends-Kurzcodes (8 Zeichen, beginnen mit F, stehen als Aktenzeichen auf der Geschenkkarte) → Organisator-Seite (14.10.2026)
+    if (/^F[A-Z2-9]{7}$/.test(c)) { location.href = "/f/" + c; return; }
     if (c.length < 6 || c === looked) return;
     looked = c;
     try { const d = await MS.api("GET", "code?code=" + encodeURIComponent(c)); if (d.found) { MS.setLang(d.lang); paintBack(); const b = document.getElementById("langsw"); if (b) b.textContent = MS.lang === "en" ? "DE" : "EN"; } } catch {}
