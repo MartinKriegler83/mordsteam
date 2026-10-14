@@ -41,13 +41,19 @@ for (let v = 0; v < DE.VARIANTS; v++) for (const c of DE.CULPRITS) {
   const same = Object.keys(DE.ITEM_NAMES).filter((k) => zonesOf(Number(k)) === Z);
   if (same.length !== 1 || same[0] !== sol.versteck) fail(`${tag} Versteck nicht eindeutig: ${same}`);
   const bw = docs.find((d) => d.id === "bewegungen").html;
-  const bueck = ["A", "B", "C"].filter((cam) => new RegExp(`(Kamera|Camera) ${cam}</p><table[^]*?(bückt sich|bends down)`).test(bw.split(/<p class="q">/).find((x) => x.startsWith((EN ? "Camera " : "Kamera ") + cam)) ? `<p class="q">` + bw.split(/<p class="q">/).find((x) => x.startsWith((EN ? "Camera " : "Kamera ") + cam)) : ""));
+  const bueck = ["A", "B", "C"].filter((cam) => new RegExp(`(Kamera|Camera) ${cam}</p><table[^]*?(Skelett-Anzug bückt sich|skeleton suit bends down)`).test(bw.split(/<p class="q">/).find((x) => x.startsWith((EN ? "Camera " : "Kamera ") + cam)) ? `<p class="q">` + bw.split(/<p class="q">/).find((x) => x.startsWith((EN ? "Camera " : "Kamera ") + cam)) : ""));
   if (bueck.join("") !== Z) fail(`${tag} Bewegungen ${bueck.join("")} ≠ ${Z}`);
   // Frage 4: Wort ohne J, im Code darstellbar, Notiz enthält so viele Paare wie Buchstaben
   const w = sol.wort;
   if (/J/.test(w) || codeOf(w).some(([r, cc]) => r < 0 || GRID[r][cc] !== w[codeOf(w).indexOf([r, cc])] && false)) fail(`${tag} Wort`);
   const nt = docs.find((d) => d.id === "notiz").html;
-  if ((nt.match(/stroke-dasharray="3 3"/g) || []).length !== w.length) fail(`${tag} Notiz-Paare`);
+  if ((nt.match(/stroke-dasharray="3 3"/g) || []).length !== w.length + C.DECOY_WORD.length) fail(`${tag} Notiz-Paare`);
+  if (Object.values(C.WORD).includes(C.DECOY_WORD) || C.DECOY_WORD === w) fail(`${tag} Täuschungswort gleich einer Lösung`);
+  // Lösungskarte: das Beispielwort deckt alle fünf Spalten ab, sonst ist die Spaltenfolge nicht ableitbar
+  if (new Set(codeOf(C.KID_WORD).map(([, cc]) => cc)).size !== 5) fail(`${tag} Lösungskarte deckt nicht alle Spalten ab`);
+  if (!docs.some((d) => d.id === "karte")) fail(`${tag} Lösungskarte fehlt`);
+  // Ablenkungen in Akte 11: genau eine Kamera ohne Lösung hat das Kind mit dem Bonbon
+  if ((bw.match(/(Bonbon|piece of candy)/g) || []).length !== 1) fail(`${tag} Kind mit Bonbon`);
   // Lösung in den Hinweisen nicht vor der Frage verraten: Täternamen tauchen in Stufe 1 nicht als Täter auf
   // gleich lange Beweisstücke (Stufen 1–3; Stufe 4 hängt am Wort und kommt erst nach der Täterfrage)
   for (const d of docs) if (d.stage <= 3) { const k = (d.html.match(/<tr>/g) || []).length + "/" + (d.html.replace(/<svg[\s\S]*?<\/svg>/g, "").match(/<p[\s>]/g) || []).length; (lens[d.id] ||= new Set()).add(k); }
