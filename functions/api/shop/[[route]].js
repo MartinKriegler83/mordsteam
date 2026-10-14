@@ -71,7 +71,7 @@ export async function onRequest({ request, env, params }) {
     if (route === "meta" && method === "GET") return await meta(env, request);
     if (route === "stripe-webhook" && method === "POST") return await webhook(request, env);
     if (route === "geo" && method === "GET") { const h = request.headers.get("cf-ipcountry"), c = String((env.GEO_TEST && h) || (request.cf && request.cf.country) || h || "").toUpperCase(); /* GEO_TEST nur im lokalen Test */ return json({ country: /^[A-Z]{2}$/.test(c) ? c : "", currency: curOfLand(c), table: PRICE_TABLE }); }
-    if (route === "uk-config" && method === "GET") return json({ on: mpOn(env) });
+    if (route === "uk-config" && method === "GET") return json({ on: mpOn(env), rc: !!env.UID_NR });   // rc: Bestellungen mit EU-UID (Reverse Charge) erst mit eigener UID
     if (route === "status" && method === "GET") return await status(request, env);
     if (route === "geschenk-pdf" && method === "POST") return await geschenkPdf(request, env);
     if (route === "bestellung" && method === "POST") return (await orderLimit(request, env)) || await bestellung(request, env);
@@ -754,7 +754,7 @@ ${T("Preis", "Price")}: ${priceTxt(o)} ${vatNote(c, T)}<br>
 ${T("Es gelten unsere AGB", "Our terms apply")}: <a href="${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}">${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}</a><br>
 ${c.kunde === "b2b" ? T("Für Bestellungen als Unternehmen besteht kein gesetzliches Rücktrittsrecht.", "Orders placed as a company have no statutory right of withdrawal.") : T("Du hast ausdrücklich verlangt, dass wir deinen Code gleich nach dem Bezahlen bereitstellen, und bestätigt, dass du als Privatperson dadurch dein Rücktrittsrecht verlierst. Es erlischt mit dieser Bestätigung und der Bereitstellung des Codes (§ 18 Abs. 1 Z 11 FAGG), spätestens aber, sobald der Fall gespielt und beendet ist (§ 18 Abs. 1 Z 1 FAGG).", "You expressly requested that we provide your code right after payment and confirmed that as a private individual you thereby lose your right of withdrawal. It expires with this confirmation and the provision of the code (§ 18 (1) no. 11 FAGG), but at the latest once the case has been played and ended (§ 18 (1) no. 1 FAGG).")}${c.kunde !== "b2b" ? `<br>${T("Widerruf (nur Privatpersonen, solange das Rücktrittsrecht besteht)", "Withdrawal (private individuals only, while the right of withdrawal exists)")}: <a href="${origin}${site === "en" ? "/en/withdraw.html" : "/widerruf.html"}?nr=${orderNo(o.id)}">${T("Vertrag widerrufen", "Withdraw from contract")}</a>` : ""}
 </div></div>`;
-  await opsMail(env, "solo", { to: [c.email], reply_to: "office@mordsteam.com", subject: T(`Dein Mordsteam-Solo-Fall: ${F.de}`, `Your Mordsteam Solo case: ${F.en}`), html });
+  await opsMail(env, "solo", { to: [c.email], reply_to: "office@mordsteam.com", subject: String(c.produkt || "").startsWith("special-") ? T(`Dein Mordsteam Special: ${F.de}`, `Your Mordsteam Special: ${F.en}`) : T(`Dein Mordsteam-Solo-Fall: ${F.de}`, `Your Mordsteam Solo case: ${F.en}`), html });
 }
 
 // ---------- Friends: Mail mit Organisator- und Einladungslink ----------

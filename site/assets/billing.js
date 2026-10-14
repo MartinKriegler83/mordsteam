@@ -55,7 +55,8 @@
     uidF.hidden = !b2b || !l;
     if (rfF) rfF.hidden = !b2b;   // Firmenname für die Rechnung (Solo/Friends; Teams hat c_firma) – M15
     let n = "";
-    if (b2b && EU.includes(l) && l !== "AT") uidHint.textContent = T("Mit gültiger UID (geprüft über das EU-System VIES) stellen wir ohne österreichische USt aus – Reverse Charge, die Steuer zahlt ihr in eurem Land.", "With a valid VAT ID (checked via the EU VIES system) we invoice without Austrian VAT – reverse charge, you account for VAT in your country.");
+    if (b2b && EU.includes(l) && l !== "AT" && uk && uk.rc === false) uidHint.textContent = T("Bestellungen mit UID aus einem anderen EU-Land sind in wenigen Tagen möglich – bitte das Feld vorerst leer lassen (Rechnung mit Kleinunternehmer-Hinweis).", "Orders with an EU VAT ID will be possible in a few days – please leave this field empty for now (invoice with the Austrian small business note).");
+    else if (b2b && EU.includes(l) && l !== "AT") uidHint.textContent = T("Mit gültiger UID (geprüft über das EU-System VIES) stellen wir ohne österreichische USt aus – Reverse Charge, die Steuer zahlt ihr in eurem Land.", "With a valid VAT ID (checked via the EU VIES system) we invoice without Austrian VAT – reverse charge, you account for VAT in your country.");
     else if (b2b && l === "GB") uidHint.textContent = T("Optional, erscheint auf der Rechnung. Ihr zahlt in Pfund ohne Umsatzsteuer – Reverse Charge, die britische USt meldet ihr selbst.", "Optional, shown on the invoice. You pay in pounds without VAT – reverse charge, you account for UK VAT yourselves.");
     else uidHint.textContent = T("Erscheint auf der Rechnung.", "Shown on the invoice.");
     // Go-live-Test 5 (N7f): außerhalb der EU (ohne GB) heißt das Feld Steuernummer
