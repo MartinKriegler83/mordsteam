@@ -57,6 +57,7 @@ site/                    Öffentliche Website (deutsch) + site/en/ (englisch, ge
   assets/                  CSS, Seiten-Skripte, Schriften
   specials.html            Specials-Seite (Halloween „Süßes oder Saures“, frühere Specials, FAQ); Startseite mit Abschnitt #specials, Navigation „Specials“ auf allen Seiten; Kauf über solo-kaufen.html?fall=halloween (11,90 €)
   assets/video/            Teaser-Videos der Bereichsseiten <name>-169/-916.mp4 + .jpg (Poster), geladen von assets/teaser.js über data-video; Halloween: special-halloween(-en)
+  404.html                 Fehlerseite für unbekannte Adressen (DE und EN, auf /en/… Englisch zuerst über assets/notfound.js; ohne sie liefert Cloudflare die Startseite mit Status 200)
   _headers                 Sicherheits-Header, noindex für /spiel/ und Bestellseiten
 teaser/                  Platzhalter-Startseite und Impressum für den Teaser-Modus, englisch unter teaser/en/ (index = Coming soon, imprint, angebot), paddle-root.html (Angebotsseite für /, nur mit ANGEBOT_SEITE=1)
 tools/                   Prüf- und Hilfsskripte (siehe „Lokal testen“)
@@ -69,6 +70,9 @@ tools/                   Prüf- und Hilfsskripte (siehe „Lokal testen“)
   check_*.mjs              Prüfskripte je Fall (Eindeutigkeit der Lösung über alle Varianten); check_*_en.mjs prüft die englische Fassung gegen die deutsche
   placeholder_guard.mjs    rendert Teams-Akten und meldet offene Platzhalter wie {TORTE} (läuft in check_teams/check_teams002)
   picture_guard.mjs        prüft die Teams-Bildrätsel in gerenderten Runden: Archivregal (Fall 001) und Strichliste (Fall 002)
+  og_tags.py               Vorschau beim Teilen: og:/twitter:-Tags in alle öffentlichen Seiten (Block <!--og-->…<!--/og-->,
+                           idempotent; Specials → assets/og/special-<lang>.jpg, sonst home-<lang>.jpg); nach en_pages.py erneut ausführen
+  og_live.mjs              erzeugt die Vorschaubilder site/assets/og/home-*.jpg und special-*.jpg (1200 × 630; Playwright + Pillow)
   teaser_pages.py          erzeugt teaser/newsletter.html, teaser/datenschutz.html, teaser/en/newsletter.html und teaser/en/privacy.html aus den Seiten der vollen Website (Inhalt gleich, ohne Navigation zum Angebot); nach Änderungen an Newsletter- oder Datenschutzseite erneut ausführen
   github-workflow-feedback-mails.yml   Vorlage der GitHub-Action (Kopie von .github/workflows/feedback-mails.yml)
 .github/workflows/feedback-mails.yml   stündlicher Aufruf von /api/shop/cron
@@ -254,7 +258,7 @@ Voraussetzung: Node.js. Wrangler wird per `npx` geladen.
    for f in tools/check_*_en.mjs; do node $f; done
    ```
    Alle müssen ohne „FEHLER“ enden. `check_teams.mjs` und `check_teams002.mjs` rufen zusätzlich zwei Wächter auf: `tools/regio_guard.mjs` (keine österreichischen Wörter in DE/CH/LI-Runden) und `tools/answer_guard.mjs` (die richtigen Antworten jeder Stufe zählen über `checkAnswers` als richtig, falsche und Vornamen anderer Personen als falsch – in allen Paketen, Sprachen und Ländern).
-2. **Englische Seiten neu erzeugen** nach Änderungen an deutschen Seiten mit englischem Gegenstück: `python3 tools/en_pages.py`
+2. **Englische Seiten neu erzeugen** nach Änderungen an deutschen Seiten mit englischem Gegenstück: `python3 tools/en_pages.py`, danach `python3 tools/og_tags.py` (Vorschau-Tags).
 3. **Lokaler Server mit Datenbank**: Im Projektordner eine `wrangler.toml` und eine `.dev.vars` anlegen (beide stehen in `.gitignore` und dürfen nie committet werden – eine `wrangler.toml` im Repo würde die Einstellungen des Cloudflare-Projekts überschreiben):
    ```toml
    # wrangler.toml (nur lokal)

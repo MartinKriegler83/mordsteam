@@ -18,7 +18,8 @@
   const fmt = (cents, cur, en = EN) => {
     const v = cents / 100, dec = !Number.isInteger(v);
     if (cur === "GBP") return "£" + (dec ? v.toFixed(2) : v);
-    if (cur === "USD") return "$" + (dec ? v.toFixed(2) : v);
+    // Kanada/Mexiko zahlen in US-Dollar – „$“ allein läse sich dort als Landeswährung (Nachttest 15.10.2026)
+    if (cur === "USD") { const l = (billSel() && billSel().value) || country; return (l === "CA" || l === "MX" ? "US$" : "$") + (dec ? v.toFixed(2) : v); }
     return en ? "€" + (dec ? v.toFixed(2) : v) : (dec ? v.toFixed(2).replace(".", ",") : v) + " €";
   };
   let saved = null; try { saved = localStorage.getItem(KEY); } catch {}

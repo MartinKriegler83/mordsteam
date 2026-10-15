@@ -1123,7 +1123,7 @@ P["withdraw"] = dict(title="Withdraw from contract – Mordsteam", desc="Withdra
 
 
 P["specials"] = dict(title="Mordsteam Specials – Halloween mystery “Trick or Treat”", scripts='<script src="/assets/aktion.js"></script>',
- desc="The Halloween Special: a murder mystery for one person in a small American town. One skeleton too many, four questions, 50 minutes – on phone, tablet or laptop, €11.90.",
+ desc="The Halloween Special: a murder mystery for one person in a small American town. One skeleton too many, four questions, 50 minutes – on phone, tablet or laptop.",
  body='''<nav class="subnav" aria-label="Mordsteam Specials"><div class="wrap">
 <b><span>Mordsteam</span> Specials</b>
 <a href="#halloween">Halloween</a><a href="#ablauf">How it works</a><a href="#frueher">Past Specials</a><a href="#faq">FAQ</a>

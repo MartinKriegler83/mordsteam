@@ -48,6 +48,7 @@ for src, dst, lang, other in PAGES:
     base = "/en/" if lang == "en" else "/"
     s = s.replace('href="datenschutz.html', 'href="/datenschutz.html').replace('href="privacy.html', f'href="{base}privacy.html')
     s = re.sub(r'<link rel="(alternate|manifest)"[^>]*>\n?', "", s)
+    s = re.sub(r"<!--og-->.*?<!--/og-->\n?", "", s, flags=re.S)   # og-Block der Live-Seiten (tools/og_tags.py) nicht übernehmen
     # Vorschaubild beim Teilen (Facebook, WhatsApp …), seit 10.10.2026 – Bilder aus tools/og_bilder.mjs
     url = "https://mordsteam.com" + ("/en/newsletter.html" if lang == "en" else "/newsletter.html")
     if "newsletter" in dst:
