@@ -23,7 +23,8 @@ document.querySelectorAll("details.menu").forEach((m) => m.addEventListener("cli
   if (!src) src = q.has("gclid") || q.has("gbraid") || q.has("wbraid") ? "gads" : q.has("fbclid") ? "meta" : q.has("li_fat_id") ? "linkedin" : q.has("msclkid") ? "bing" : "";
   if (!/^[a-z0-9][a-z0-9-]{0,39}$/.test(src)) return;
   window.msSrc = src;
-  if (!/[?&]src=/.test(document.referrer || "")) fetch("/api/shop/src-besuch?src=" + encodeURIComponent(src)).catch(() => {});
+  // nicht zählen: interner Seitenwechsel (Referrer trägt src) oder Rückkehr nach abgebrochener Zahlung (Nachttest 15.10.2026)
+  if (!/[?&]src=/.test(document.referrer || "") && !q.has("abgebrochen")) fetch("/api/shop/src-besuch?src=" + encodeURIComponent(src)).catch(() => {});
   document.querySelectorAll("a[href]").forEach((a) => {
     const h = a.getAttribute("href");
     if (!h || /^(mailto:|tel:|#|https?:\/\/(?!mordsteam\.com|www\.mordsteam\.com))/i.test(h)) return;

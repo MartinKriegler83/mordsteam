@@ -1,10 +1,11 @@
 // Cloudflare Pages Function: /api/friends/* – Mordsteam Friends (Krimiabend für 4–8 Freunde)
-import { json, fail } from "../../../lib/game.js";
+import { json, fail, badBody } from "../../../lib/game.js";
 import { adminDenied } from "../../../lib/adminauth.js";
 import { friendsInvite, friendsClaim, friendsState, friendsBegin, friendsHint, friendsAnswer, friendsGiveUp, friendsOrg, friendsOrgStart, friendsOrgReveal, friendsAdmin, friendsFeedback, friendsVerhoerGet, friendsVerhoerAsk, friendsRueckblendeGet, friendsOrgRueckblende } from "../../../lib/friends.js";
 
 export async function onRequest({ request, env, params }) {
   if (!env.DB) return fail("Datenbank nicht eingerichtet.", 500);
+  { const bad = await badBody(request); if (bad) return bad; }
   const route = (params.route || []).join("/");
   const m = request.method, url = new URL(request.url);
   try {

@@ -6,8 +6,7 @@ import { accountingSummary, viennaMidnight, viennaDayEnd, migrateAccounting, reg
 import {
   CASES, caseOf, langOf, RULES, json, fail, randInt, randomToken, randomCode, esc, viennaDate,
   buildVars, render, checkAnswers, norm, same, hintLabel, namesToLetters, lettersToName, hintTimes, hardEnd, refreshStatus, finishIfAllSolved, recordStats, expired, purgeSession, ranking, teamScore,
-  isPremium, isPlus, tierOf, TIER_NAMES, stageOf, stageQuestions,
-} from "../../../lib/game.js";
+  isPremium, isPlus, tierOf, TIER_NAMES, stageOf, stageQuestions, badBody } from "../../../lib/game.js";
 
 import { migrate, createGameSession, InputError } from "../../../lib/create.js";
 import { teamsRueckblende } from "../../../lib/rueckblende.js";
@@ -27,6 +26,7 @@ const hLang = (request) => ((request.headers.get("x-lang") || "").toLowerCase() 
 export async function onRequest(ctx) {
   const { request, env, params } = ctx;
   if (!env.DB) return fail("Datenbank nicht eingerichtet (D1-Binding DB fehlt).", 500);
+  { const bad = await badBody(request); if (bad) return bad; }
   const route = (params.route || []).join("/");
   const method = request.method;
   try {

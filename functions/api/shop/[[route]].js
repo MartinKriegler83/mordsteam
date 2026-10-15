@@ -13,7 +13,7 @@
 //   UID_NR                      eigene UID (z. B. ATU12345678) – erscheint auf allen Rechnungen, sobald gesetzt
 //   MANAGED_PAYMENTS=true       Privatkunden in Großbritannien über Stripe Managed Payments (Link als Merchant of Record)
 // Umsatzsteuer je Bestellung (Rechnungsland, UID, Fußzeile): lib/tax.js
-import { CASES, json, fail, randomToken, viennaDate, randInt } from "../../../lib/game.js";
+import { CASES, json, fail, randomToken, viennaDate, randInt, badBody } from "../../../lib/game.js";
 import { migrate, createGameSession, normalizeVars, InputError } from "../../../lib/create.js";
 import { COUNTRIES, COUNTRY_ORDER, randomCast, castToEnglish } from "../../../lib/countries.js";
 import { runFeedbackMails, feedbackInfo, saveFeedback, publicReviews } from "../../../lib/feedback.js";
@@ -51,6 +51,8 @@ export const SOLO_OFFERS = {
 };
 // nur eigene Schlüssel (sonst ergab „__proto__“ einen 500er, Nachttest 14.10.)
 const own = (o, k) => typeof k === "string" && Object.prototype.hasOwnProperty.call(o, k);
+// Rücksprung nach abgebrochener Zahlung: Auswahl (Fall/Variante) und Herkunft (src/nl) bleiben erhalten (Nachttest 15.10.2026)
+const cancelQ = (contact, extra = "") => "?abgebrochen=1" + extra + (contact.src ? "&src=" + encodeURIComponent(contact.src) : "") + (contact.nl ? "&nl=" + encodeURIComponent(contact.nl) : "");
 const soloOffer = (id) => (own(SOLO_OFFERS, id) ? SOLO_OFFERS[id] : SOLO_OFFERS["solo-001"]);
 const TIER = { basis: 0, premium: 1, plus: 2 };
 const NAMES = { basis: "Basic (50 Min.)", premium: "Premium (70 Min.)", plus: "Premium Plus (90 Min.)" };
@@ -64,6 +66,7 @@ const caseNr = (id) => id.slice(-3);
 
 export async function onRequest({ request, env, params }) {
   if (!env.DB) return fail("Datenbank nicht eingerichtet.", 500);
+  { const bad = await badBody(request); if (bad) return bad; }
   const route = (params.route || []).join("/");
   const method = request.method;
   try {
@@ -346,7 +349,7 @@ async function bestellung(request, env) {
       customer_email: contact.email,
       client_reference_id: id,
       success_url: done,
-      cancel_url: `${origin}${pre}/${site === "en" ? "order" : "bestellen"}.html?abgebrochen=1`,
+      cancel_url: `${origin}${pre}/${site === "en" ? "order" : "bestellen"}.html${cancelQ(contact)}`,
       billing_address_collection: "required",
       line_items: [{
         quantity: teams,
@@ -382,6 +385,7 @@ async function soloBestellung(request, env) {
   if (!shopOpen(env)) return fail(L(site, "Bestellungen sind derzeit noch nicht möglich.", "Orders are not possible yet."), 403);
   const k = b.contact || {};
   const s = (x, max = 120) => String(x ?? "").trim().slice(0, max);
+  if (b.fall && !own(SOLO_OFFERS, b.fall)) throw new InputError(L(site, "Diesen Fall gibt es nicht – bitte im Formular einen Fall auswählen.", "This case doesn’t exist – please choose a case in the form."));
   const fall = own(SOLO_OFFERS, b.fall) ? b.fall : "solo-001", F = SOLO_OFFERS[fall];
   const contact = { name: s(k.name), email: s(k.email, 160).toLowerCase(), lang: b.lang === "en" ? "en" : "de", site, produkt: fall };
   const GL = contact.lang === "en" ? L(site, "Englisch", "English") : L(site, "Deutsch", "German");
@@ -418,7 +422,7 @@ async function soloBestellung(request, env) {
   if (env.STRIPE_SECRET_KEY) {
     const cs = await stripe(env, "POST", "checkout/sessions", await checkoutParams(env, {
       mode: "payment", locale: site, customer_email: contact.email, client_reference_id: id,
-      success_url: done, cancel_url: `${origin}${pre}/${site === "en" ? "solo-buy" : "solo-kaufen"}.html?abgebrochen=1`,
+      success_url: done, cancel_url: `${origin}${pre}/${site === "en" ? "solo-buy" : "solo-kaufen"}.html${cancelQ(contact, "&fall=" + fall)}`,
       billing_address_collection: contact.kunde === "b2b" ? "required" : "auto",   // Firmen: volle Anschrift auf der Rechnung (M15)
       line_items: [{ quantity: 1, price_data: { currency: cur.toLowerCase(), unit_amount: price,
         product_data: { name: L(site, `Mordsteam ${F.no} „${F.de}“`, `Mordsteam ${F.no} “${F.en}”`),
@@ -504,7 +508,7 @@ async function friendsBestellung(request, env) {
     const cs = await stripe(env, "POST", "checkout/sessions", await checkoutParams(env, {
       mode: "payment", locale: site, customer_email: contact.email, client_reference_id: id,
       ...(eb ? { discounts: [{ coupon: await ebCoupon(env, eb.prozent) }] } : { allow_promotion_codes: true }),
-      success_url: done, cancel_url: `${origin}${pre}/${site === "en" ? "friends-buy" : "friends-kaufen"}.html?abgebrochen=1`,
+      success_url: done, cancel_url: `${origin}${pre}/${site === "en" ? "friends-buy" : "friends-kaufen"}.html${cancelQ(contact, plus ? "&v=plus" : "")}`,
       billing_address_collection: contact.kunde === "b2b" ? "required" : "auto",   // Firmen: volle Anschrift auf der Rechnung (M15)
       line_items: [{ quantity: 1, price_data: { currency: cur.toLowerCase(), unit_amount: full,
         product_data: { name: L(site, `Mordsteam Friends 001 „${C.TITLE}“ – ${vName} für ${n} Personen`, `Mordsteam Friends 001 “Last Round at the Chalet” – ${vName} for ${n} people`),

@@ -1,10 +1,11 @@
 // Cloudflare Pages Function: /api/solo/* – Mordsteam Solo (Einzelfälle)
-import { json, fail } from "../../../lib/game.js";
+import { json, fail, badBody } from "../../../lib/game.js";
 import { adminDenied } from "../../../lib/adminauth.js";
 import { soloTicketInfo, soloStart, soloState, soloHint, soloAnswer, soloGiveUp, soloBegin, soloForward, soloAdmin, soloFeedback, soloVerhoerGet, soloVerhoerAsk, soloGiftInfo, soloRueckblendeGet } from "../../../lib/solo.js";
 
 export async function onRequest({ request, env, params }) {
   if (!env.DB) return fail("Datenbank nicht eingerichtet.", 500);
+  { const bad = await badBody(request); if (bad) return bad; }
   const route = (params.route || []).join("/");
   const m = request.method;
   try {
