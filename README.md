@@ -229,6 +229,8 @@ Die Functions (`functions/`) laufen in beiden Modi.
 
 Zum Schluss setzt `build.sh` die UID aus `UID_NR` ins Impressum ein (nur gültiges Format `ATU12345678`, sonst bleiben die unsichtbaren Platzhalter).
 
+**Adressen für Suchmaschinen (seit 16.10.2026):** Cloudflare Pages leitet `/x.html` per 308 auf `/x` um. Deshalb verwenden `site/sitemap.xml`, `canonical`, `hreflang` und `og:url` die Adressen **ohne** `.html` (z. B. `https://mordsteam.com/teams`, `https://mordsteam.com/en/`). `tools/en_pages.py`, `tools/seo_pages.py` und `tools/og_tags.py` erzeugen sie so. Interne Links (`href="/teams.html"`) dürfen `.html` behalten, sie laufen über die Weiterleitung. Neue Seite → Eintrag in `site/sitemap.xml` ohne `.html`. Google Search Console: Domain-Property `mordsteam.com`, Sitemap `sitemap.xml`.
+
 ## Deploy
 
 - **Production:** Push auf `main` → Cloudflare baut und veröffentlicht mordsteam.com.

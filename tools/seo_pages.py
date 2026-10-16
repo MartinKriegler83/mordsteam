@@ -28,8 +28,9 @@ def faq_ld(faq):
 def page(p, lang):
     T = L[lang]
     head_tpl, foot_tpl = templates(lang)
-    de_url = f"{BASE}{p['slug'] if lang == 'de' else p['pair']}.html"
-    en_url = f"{BASE}en/{p['pair'] if lang == 'de' else p['slug']}.html"
+    # saubere Adressen ohne .html: Cloudflare Pages leitet /x.html per 308 auf /x um (seit 16.10.2026)
+    de_url = f"{BASE}{p['slug'] if lang == 'de' else p['pair']}"
+    en_url = f"{BASE}en/{p['pair'] if lang == 'de' else p['slug']}"
     other = f"/en/{p['pair']}.html" if lang == "de" else f"/{p['pair']}.html"
     h = head_tpl
     h = re.sub(r"<title>.*?</title>", f"<title>{html.escape(p['title'])}</title>", h, flags=re.S)

@@ -28,9 +28,9 @@ def page(name, title, desc, body, robots=None, scripts="", home=False, promo=Fal
 <title>{title}</title>
 <meta name="description" content="{html.escape(desc)}">
 {f'<meta name="robots" content="{robots}">' if robots else ''}
-{f'<link rel="canonical" href="https://mordsteam.com/en/{"" if name == "index" else name + ".html"}">' + chr(10) if name in ("index", "teams", "friends", "solo", "specials") else ''}<link rel="alternate" hreflang="de" href="https://mordsteam.com/{'' if de == 'index' else de + '.html'}">
-<link rel="alternate" hreflang="en" href="https://mordsteam.com/en/{'' if name == 'index' else name + '.html'}">
-<link rel="alternate" hreflang="x-default" href="https://mordsteam.com/{'' if de == 'index' else de + '.html'}">
+{f'<link rel="canonical" href="https://mordsteam.com/en/{"" if name == "index" else name}">' + chr(10) if name in ("index", "teams", "friends", "solo", "specials") else ''}<link rel="alternate" hreflang="de" href="https://mordsteam.com/{'' if de == 'index' else de}">
+<link rel="alternate" hreflang="en" href="https://mordsteam.com/en/{'' if name == 'index' else name}">
+<link rel="alternate" hreflang="x-default" href="https://mordsteam.com/{'' if de == 'index' else de}">
 <link rel="stylesheet" href="/assets/style.css">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
