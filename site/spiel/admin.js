@@ -100,7 +100,7 @@
   let kunden = null, nlData = null, nlMsg = "", nlSyncMsg = "", nlPrev = "", nlForm = { lang: "de" }, kundenAll = false;
   let tab = "uebersicht";
   try { tab = sessionStorage.getItem("ms_admtab") || "uebersicht"; } catch {}
-  const TABS = [["uebersicht", "Übersicht"], ["bestellungen", "Bestellungen"], ["finanzen", "Finanzen"], ["steuer", "Steuer"], ["runden", "Spielrunden & Tests"], ["statistik", "Spielstatistik"], ["system", "Kapazität & System"], ["feedback", "Feedback"], ["kunden", "Kunden & Newsletter"]];
+  const TABS = [["uebersicht", "Übersicht"], ["bestellungen", "Bestellungen"], ["finanzen", "Finanzen"], ["steuer", "Steuer & Abgaben"], ["runden", "Spielrunden & Tests"], ["statistik", "Spielstatistik"], ["system", "Kapazität & System"], ["feedback", "Feedback"], ["kunden", "Kunden & Newsletter"]];
   const tabBar = () => `<nav class="admtabs" role="tablist">${TABS.map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${l}${k === "system" && ops && (ops.errors.today || ops.alerts.some((a) => Date.now() - a.at < 86400000)) ? ' <span class="dot"></span>' : ""}</button>`).join("")}<button type="button" id="adm-logout" style="margin-left:auto;background:none;border:0;color:var(--ink-2);text-decoration:underline;cursor:pointer;font:inherit;font-size:14px">Abmelden</button></nav>`;
   const eur = (c) => (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
   // Betrag in der Währung der Bestellung (Nachttest 14.10.: £/$ standen mit €-Zeichen da)
@@ -355,7 +355,8 @@
     const payBtn = (d) => d.kind === "rc"
       ? (d.done ? `<button class="btn btn-line" type="button" data-rcpaid="${e(d.key.slice(3))}" data-undo="1">zurück</button>`
         : `<input type="date" class="rcdate" data-q="${e(d.key.slice(3))}" value="${led.today}" style="width:9.5em"> <button class="btn btn-line" type="button" data-rcpaid="${e(d.key.slice(3))}">${d.paid_cents ? "Nachzahlung bezahlt" : "bezahlt"}</button>`)
-      : d.kind === "cost" ? (d.done ? "" : `<button class="btn btn-line" type="button" data-dutybook="${idx(d)}">buchen</button>`)
+      : d.kind === "cost" ? (d.done ? (d.skipped ? `<button class="btn btn-line" type="button" data-dutyskip="${idx(d)}" data-undo="1">zurück</button>` : "")
+        : `<input type="date" class="costdate" data-i="${idx(d)}" value="${led.today}" style="width:9.5em"> <button class="btn btn-line" type="button" data-costpay="${idx(d)}" title="bucht die Zahlung als Ausgabe (Tab Finanzen) und hakt die Frist ab">bezahlt</button> <button class="btn btn-line" type="button" data-dutybook="${idx(d)}" title="Formular im Tab Finanzen öffnen, z. B. bei abweichendem Betrag">anpassen</button> <button class="btn btn-line" type="button" data-dutyskip="${idx(d)}">überspringen</button>`)
       : `<button class="btn btn-line" type="button" data-duty="${e(d.key)}" ${d.done ? 'data-undo="1">zurück' : ">erledigt"}</button>`;
     const vz = (t) => t ? `<span class="mono">${e(t)}</span> <button class="btn btn-line" type="button" data-copy="${e(t)}" title="kopieren" style="padding:2px 8px">⧉</button>` : "";
     const zrows = S.zahlungen.map((d) => `<tr><td><b>${e(d.title)}</b><br><span class="small">${e(d.detail)}</span></td><td class="mono" style="white-space:nowrap">${m(d.cents)}</td><td>${dd(d.due)}</td><td style="white-space:nowrap">${vz(d.verwendungszweck)}</td><td>${stCell(d)}</td><td style="white-space:nowrap">${payBtn(d)}</td></tr>`).join("");
@@ -375,6 +376,8 @@
       ${warn}
       <div class="eyebrow" style="margin-top:14px">Zahlungen ${Y}</div>
       ${S.zahlungen.length ? `<div style="overflow-x:auto"><table class="grid small"><tr><th>Was</th><th>Betrag</th><th>fällig</th><th>Verwendungszweck</th><th>Status</th><th></th></tr>${zrows}</table></div>` : `<p class="small">Für ${Y} ist nichts zu zahlen.</p>`}
+      <div class="actions-row small" style="margin:8px 0;align-items:end;flex-wrap:wrap;gap:8px"><label class="small">Einkommensteuer-Vorauszahlung ${Y} laut Bescheid, je Quartal (€) <input id="estvz" inputmode="decimal" value="${led.est_vz ? (led.est_vz / 100).toFixed(2).replace(".", ",") : ""}" placeholder="leer = kein Bescheid" style="width:9em"></label><button class="btn btn-line" type="button" id="estvzsave">speichern</button></div>
+      <p class="small"><b>bezahlt</b> bucht die Zahlung gleich als Ausgabe im Tab Finanzen (Datum = bezahlt am) und hakt die Frist ab. Reverse-Charge-USt zählt nach „bezahlt“ automatisch als Betriebsausgabe in der E/A-Rechnung. SVS, WKO und andere Zahlungen laut Vorschreibung erscheinen hier, wenn die Vorlage unter „Laufende Kosten“ (Tab Finanzen) einen Betrag, „Seit“ und das Häkchen „in Fristen anzeigen“ hat. Die Einkommensteuer-Vorauszahlung ist privat und keine Betriebsausgabe – „erledigt“ hakt sie nur ab.</p>
       <p class="small">Überweisung aufs Abgabenkonto des Finanzamts (IBAN steht auf jedem Bescheid). Verwendungszweck: <b>Steuernummer</b> + Abgabe und Zeitraum wie oben, z. B. „U 07-09/2026“. Die Steuernummer steht bewusst nicht im Admin.</p>
       <div class="eyebrow" style="margin-top:18px">Meldungen ${Y}</div>
       ${S.meldungen.length ? `<div style="overflow-x:auto"><table class="grid small"><tr><th>Was</th><th>Betrag</th><th>fällig</th><th>Status</th><th></th></tr>${mrows}</table></div>` : `<p class="small">Für ${Y} ist noch nichts zu melden.</p>`}
@@ -457,11 +460,7 @@
         <div style="overflow-x:auto"><table class="grid small"><tr><th>Ausgaben nach Kategorie</th><th>${Y}</th></tr>${krows || `<tr><td colspan="2">noch keine</td></tr>`}</table>
           <p class="small" style="margin-top:8px"><b>Kleinunternehmergrenze:</b> ${m(th.ku.cents)} von ${m(th.ku.limit)} (${Math.round(th.ku.cents / th.ku.limit * 100)} %)<br><b>EU-Privatkunden:</b> ${m(th.eu_b2c.cents)} von ${m(th.eu_b2c.limit)} (${Math.round(th.eu_b2c.cents / th.eu_b2c.limit * 100)} %)</p></div>
       </div>
-      <div class="eyebrow" style="margin-top:18px">Fristen und Meldungen ${Y}</div>
-      ${led.duties.length ? `<div style="overflow-x:auto"><table class="grid small"><tr><th>Was</th><th>Betrag</th><th>fällig</th><th>Status</th><th></th></tr>${drows}</table></div>` : `<p class="small">Für ${Y} ist noch nichts zu melden oder zu zahlen.</p>`}
-      <div class="actions-row small" style="margin:8px 0;align-items:end;flex-wrap:wrap;gap:8px"><label class="small">Einkommensteuer-Vorauszahlung ${Y} laut Bescheid, je Quartal (€) <input id="estvz" inputmode="decimal" value="${led.est_vz ? (led.est_vz / 100).toFixed(2).replace(".", ",") : ""}" placeholder="leer = kein Bescheid" style="width:9em"></label><button class="btn btn-line" type="button" id="estvzsave">speichern</button></div>
-      <p class="small">SVS, WKO und andere Zahlungen laut Vorschreibung erscheinen hier, wenn die Vorlage unter „Laufende Kosten“ einen Betrag, „Seit“ und das Häkchen „in Fristen anzeigen“ hat (Fälligkeit = „Abbuchung am“). Die Einkommensteuer-Vorauszahlung ist privat und keine Betriebsausgabe – sie steht nur als Frist hier.</p>
-      <p class="small">Reverse Charge: Für Leistungen ausländischer Anbieter (Anthropic, Cloudflare, Resend, Google, Meta, Stripe …) schuldest du ${led.rate} % österreichische USt, ohne Vorsteuerabzug. Je Quartal bis zum 15. des zweitfolgenden Monats aufs Abgabenkonto überweisen (Verwendungszweck „U“ + Quartal); eine Voranmeldung nur, wenn das Finanzamt sie verlangt. Die bezahlte Steuer zählt selbst als Betriebsausgabe.</p>
+      <p class="small" style="margin-top:14px"><b>Fristen, Zahlungen und Meldungen</b> (Reverse Charge, SVS, WKO, Einkommensteuer, UVA, ZM, U1, E1) stehen seit 16.10.2026 im Tab <a href="#" data-tab="steuer">Steuer &amp; Abgaben</a>. Was dort als bezahlt markiert wird, erscheint hier automatisch als Ausgabe.</p>
 
       <form id="ledform" class="form" style="margin-top:16px;border-top:1px solid var(--line,#ddd);padding-top:12px">
         <div class="eyebrow">${f.id ? "Ausgabe ändern" : "Ausgabe erfassen"}</div>
@@ -777,6 +776,19 @@
     const ledReload = async () => { led = await MS.api("GET", "admin/ausgaben?jahr=" + ledYear, null, H()).catch(() => led); render(...last); };
     const toLedForm = () => { const f = document.getElementById("ledform"); if (f) f.scrollIntoView({ behavior: "smooth", block: "start" }); };
     const sy = document.getElementById("styear"); if (sy) sy.onchange = () => { ledYear = Number(sy.value); ledEdit = null; ledAll = false; ledReload(); };
+    root.querySelectorAll("[data-costpay]").forEach((b) => (b.onclick = async () => {
+      const d = led.duties[+b.dataset.costpay], x = d.prefill, dt = root.querySelector(`.costdate[data-i="${b.dataset.costpay}"]`);
+      const nm = x.anbieter + " " + x.name;
+      const body = { cost_id: d.cost_id, datum: x.datum, bezahlt_am: dt && dt.value ? dt.value : led.today, anbieter: x.anbieter || x.name, beschreibung: `${x.name} – ${x.period}`, waehrung: x.waehrung || "EUR",
+        rechnung: (x.betrag_cents / 100).toFixed(2).replace(".", ","), betrag: (x.betrag_cents / 100).toFixed(2).replace(".", ","), anteil: x.anteil ?? 100,
+        steuerart: /svs|kammer|wko|finanzamt|bank|gemeinde|behörde/i.test(nm) ? "ohne" : "at_ust",
+        kategorie: /svs/i.test(nm) ? "Sozialversicherung (SVS)" : /wko|kammer|behörde/i.test(nm) ? "Gebühren / Behörden" : /bank|konto/i.test(nm) ? "Bankspesen" : "Sonstiges" };
+      if (x.waehrung && x.waehrung !== "EUR") { alert("Fremdwährung – bitte über „anpassen“ mit dem abgebuchten Euro-Betrag buchen."); return; }
+      if (!confirm(`${d.title}: ${body.betrag} € als bezahlt am ${body.bezahlt_am.split("-").reverse().join(".")} buchen?`)) return;
+      b.disabled = true;
+      try { await MS.api("POST", "admin/ausgaben", body, H()); } catch (e2) { alert(e2.message); }
+      ledReload();
+    }));
     const exst = document.getElementById("exsteuer"); if (exst) exst.onclick = async () => { const r = await fetch(`/api/spiel/admin/export/steuer?jahr=${ledYear}`, { headers: H() }); if (!r.ok) { alert("Export fehlgeschlagen."); return; } const a2 = document.createElement("a"); a2.href = URL.createObjectURL(await r.blob()); a2.download = `mordsteam-umsatzsteuer-${ledYear}.csv`; document.body.append(a2); a2.click(); a2.remove(); };
     const stpr = document.getElementById("stprint"); if (stpr) stpr.onclick = () => window.print();
     root.querySelectorAll("[data-copy]").forEach((b) => (b.onclick = async () => { try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "✓"; setTimeout(() => (b.textContent = "⧉"), 1500); } catch { prompt("Kopieren:", b.dataset.copy); } }));
