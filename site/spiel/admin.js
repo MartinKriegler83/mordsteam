@@ -100,7 +100,7 @@
   let kunden = null, nlData = null, nlMsg = "", nlSyncMsg = "", nlPrev = "", nlForm = { lang: "de" }, kundenAll = false;
   let tab = "uebersicht";
   try { tab = sessionStorage.getItem("ms_admtab") || "uebersicht"; } catch {}
-  const TABS = [["uebersicht", "Übersicht"], ["bestellungen", "Bestellungen"], ["finanzen", "Finanzen"], ["runden", "Spielrunden & Tests"], ["statistik", "Spielstatistik"], ["system", "Kapazität & System"], ["feedback", "Feedback"], ["kunden", "Kunden & Newsletter"]];
+  const TABS = [["uebersicht", "Übersicht"], ["bestellungen", "Bestellungen"], ["finanzen", "Finanzen"], ["steuer", "Steuer"], ["runden", "Spielrunden & Tests"], ["statistik", "Spielstatistik"], ["system", "Kapazität & System"], ["feedback", "Feedback"], ["kunden", "Kunden & Newsletter"]];
   const tabBar = () => `<nav class="admtabs" role="tablist">${TABS.map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${l}${k === "system" && ops && (ops.errors.today || ops.alerts.some((a) => Date.now() - a.at < 86400000)) ? ' <span class="dot"></span>' : ""}</button>`).join("")}<button type="button" id="adm-logout" style="margin-left:auto;background:none;border:0;color:var(--ink-2);text-decoration:underline;cursor:pointer;font:inherit;font-size:14px">Abmelden</button></nav>`;
   const eur = (c) => (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
   // Betrag in der Währung der Bestellung (Nachttest 14.10.: £/$ standen mit €-Zeichen da)
@@ -341,6 +341,60 @@
     const csize = central.reduce((a, p) => a + p.length, 0), e = new DataView(new ArrayBuffer(22));
     [[0, 0x06054b50, 4], [4, 0, 2], [6, 0, 2], [8, files.length, 2], [10, files.length, 2], [12, csize, 4], [16, off, 4], [20, 0, 2]].forEach(([o, v, s]) => (s === 4 ? e.setUint32(o, v, true) : e.setUint16(o, v, true)));
     return new Blob([...parts, ...central, new Uint8Array(e.buffer)], { type: "application/zip" });
+  }
+
+  // ---------- Steuer (16.10.2026): Zahlungen, Meldungen, U30 je Quartal, U1-Vorschau (lib/ledger.js steuerUebersicht) ----------
+  function steuerPanel() {
+    if (!led || !led.steuer) return `<div class="panel"><div class="eyebrow">Steuer</div><p class="small">Konnte nicht geladen werden.</p></div>`;
+    const S = led.steuer, e = MS.esc, Y = led.year, now = new Date().getFullYear();
+    const m = (c) => (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+    const dd = (iso) => (iso ? iso.split("-").reverse().join(".") : "");
+    const years = [now, now - 1, now - 2].filter((y) => y >= 2026).map((y) => `<option ${y === Y ? "selected" : ""}>${y}</option>`).join("");
+    const stCell = (d) => d.status === "erledigt" ? `<span style="color:var(--green,#2d7a3e)">✓ ${d.kind === "cost" ? (d.skipped ? "übersprungen" : "gebucht") : "erledigt"}${d.done && d.done > 1 ? " " + new Date(d.done).toLocaleDateString("de-AT") : ""}</span>` : d.status === "überfällig" ? `<b style="color:var(--red)">überfällig</b>` : d.kind === "rc" && d.paid_cents ? `<b style="color:var(--red)">Nachzahlung offen</b>` : "offen";
+    const idx = (d) => led.duties.findIndex((x) => x.key === d.key);
+    const payBtn = (d) => d.kind === "rc"
+      ? (d.done ? `<button class="btn btn-line" type="button" data-rcpaid="${e(d.key.slice(3))}" data-undo="1">zurück</button>`
+        : `<input type="date" class="rcdate" data-q="${e(d.key.slice(3))}" value="${led.today}" style="width:9.5em"> <button class="btn btn-line" type="button" data-rcpaid="${e(d.key.slice(3))}">${d.paid_cents ? "Nachzahlung bezahlt" : "bezahlt"}</button>`)
+      : d.kind === "cost" ? (d.done ? "" : `<button class="btn btn-line" type="button" data-dutybook="${idx(d)}">buchen</button>`)
+      : `<button class="btn btn-line" type="button" data-duty="${e(d.key)}" ${d.done ? 'data-undo="1">zurück' : ">erledigt"}</button>`;
+    const vz = (t) => t ? `<span class="mono">${e(t)}</span> <button class="btn btn-line" type="button" data-copy="${e(t)}" title="kopieren" style="padding:2px 8px">⧉</button>` : "";
+    const zrows = S.zahlungen.map((d) => `<tr><td><b>${e(d.title)}</b><br><span class="small">${e(d.detail)}</span></td><td class="mono" style="white-space:nowrap">${m(d.cents)}</td><td>${dd(d.due)}</td><td style="white-space:nowrap">${vz(d.verwendungszweck)}</td><td>${stCell(d)}</td><td style="white-space:nowrap">${payBtn(d)}</td></tr>`).join("");
+    const mrows = S.meldungen.map((d) => `<tr><td><b>${e(d.title)}</b><br><span class="small">${e(d.detail)}</span></td><td class="mono" style="white-space:nowrap">${d.kind === "e1" ? (d.cents < 0 ? "Verlust " + m(-d.cents) : "Gewinn " + m(d.cents)) : m(d.cents)}</td><td>${dd(d.due)}</td><td>${d.kind === "uva" && !d.pflicht ? (d.status === "erledigt" ? `<span style="color:var(--green,#2d7a3e)">✓ nicht einzureichen</span>` : d.status === "überfällig" ? `<b style="color:var(--red)">überfällig</b>` : "nur zahlen") : stCell(d)}</td><td style="white-space:nowrap">${d.kind === "uva" && !d.pflicht ? "" : `<button class="btn btn-line" type="button" data-duty="${e(d.key)}" ${d.done ? 'data-undo="1">zurück' : ">erledigt"}</button>`}</td></tr>`).join("");
+    const kzRow = (label, k) => `<tr><td>${label}</td>${S.u30.map((x) => `<td class="mono">${m(x.kz[k])}</td>`).join("")}<td class="mono"><b>${m(S.u1[k])}</b></td></tr>`;
+    const nsRow = (label, k) => `<tr><td class="small">${label}</td>${S.u30.map((x) => `<td class="mono small">${m(x.nicht_steuerbar[k])}</td>`).join("")}<td class="mono small">${m(S.u1.nicht_steuerbar[k])}</td></tr>`;
+    const warn = S.warnungen.map((w) => `<div class="warnbox"${w.rot ? ' style="border-color:var(--red)"' : ""}>${w.rot ? "<b>Achtung:</b> " : ""}${e(w.text)}</div>`).join("");
+    return `<div class="panel" id="steuer"><div class="eyebrow">Steuer · Umsatzsteuer und Fristen</div>
+      <div class="actions-row" style="margin:8px 0;align-items:end;flex-wrap:wrap;gap:8px">
+        <label class="small">Jahr <select id="styear">${years}</select></label>
+        <button class="btn btn-line" type="button" id="exsteuer">U30/U1-Aufstellung ${Y} (CSV)</button>
+        <button class="btn btn-line" type="button" id="stprint">Drucken</button></div>
+      <div class="two" style="gap:18px;align-items:stretch;margin:6px 0 14px">
+        <div class="warnbox" style="margin:0"><div class="small">Nächste Zahlung</div>${S.naechste ? `<b>${m(S.naechste.cents)}</b> bis ${dd(S.naechste.due)}<br><span class="small">${e(S.naechste.title)}${S.naechste.verwendungszweck ? " · " + e(S.naechste.verwendungszweck) : ""}</span>` : "<b>keine offen</b>"}</div>
+        <div class="warnbox" style="margin:0"><div class="small">In den nächsten 31 Tagen fällig</div><b>${m(S.faellig_30_tage)}</b><br><span class="small">UVA: ${S.uva_pflicht ? "<b>einreichen</b> (Vorjahresumsatz ab 55.000 €)" : "befreit, solange pünktlich bezahlt"} · Zeitraum: ${e(S.zeitraum)}</span></div>
+      </div>
+      ${warn}
+      <div class="eyebrow" style="margin-top:14px">Zahlungen ${Y}</div>
+      ${S.zahlungen.length ? `<div style="overflow-x:auto"><table class="grid small"><tr><th>Was</th><th>Betrag</th><th>fällig</th><th>Verwendungszweck</th><th>Status</th><th></th></tr>${zrows}</table></div>` : `<p class="small">Für ${Y} ist nichts zu zahlen.</p>`}
+      <p class="small">Überweisung aufs Abgabenkonto des Finanzamts (IBAN steht auf jedem Bescheid). Verwendungszweck: <b>Steuernummer</b> + Abgabe und Zeitraum wie oben, z. B. „U 07-09/2026“. Die Steuernummer steht bewusst nicht im Admin.</p>
+      <div class="eyebrow" style="margin-top:18px">Meldungen ${Y}</div>
+      ${S.meldungen.length ? `<div style="overflow-x:auto"><table class="grid small"><tr><th>Was</th><th>Betrag</th><th>fällig</th><th>Status</th><th></th></tr>${mrows}</table></div>` : `<p class="small">Für ${Y} ist noch nichts zu melden.</p>`}
+      <div class="eyebrow" style="margin-top:18px">Umsatzsteuer je Quartal – Aufstellung nach Formular U30</div>
+      <div style="overflow-x:auto"><table class="grid small"><tr><th>Kennzahl</th>${S.u30.map((x) => `<th>${e(x.zeitraum)}${x.laufend ? "<br><span class='small'>laufend</span>" : ""}</th>`).join("")}<th>Jahr (U1)</th></tr>
+        ${kzRow("KZ 000 Gesamtbetrag der Lieferungen und Leistungen", "000")}
+        ${kzRow("KZ 016 davon steuerfrei, Kleinunternehmer (§ 6 Abs. 1 Z 27)", "016")}
+        ${kzRow("KZ 057 Steuerschuld Reverse Charge (§ 19 Abs. 1 zweiter Satz)", "057")}
+        ${kzRow("KZ 060 Vorsteuern", "060")}
+        ${kzRow("KZ 066 Vorsteuern aus Reverse Charge", "066")}
+        <tr><td><b>KZ 095 Zahllast</b></td>${S.u30.map((x) => `<td class="mono"><b>${m(x.kz["095"])}</b></td>`).join("")}<td class="mono"><b>${m(S.u1["057"])}</b></td></tr>
+        <tr><td>bezahlt</td>${S.u30.map((x) => `<td class="mono">${m(x.bezahlt_cents)}</td>`).join("")}<td class="mono">${m(S.u1.vorauszahlungen)}</td></tr>
+        <tr><td>UVA</td>${S.u30.map((x) => `<td class="small" style="${x.uva_kind === "rot" ? "color:var(--red);font-weight:700" : x.uva_kind === "ok" ? "color:var(--green,#2d7a3e)" : ""}">${e(x.uva_status)}</td>`).join("")}<td class="small">${S.u1.rest > 0 ? "Restschuld " + m(S.u1.rest) : S.u1.rest < 0 ? "Gutschrift " + m(-S.u1.rest) : "ausgeglichen"}</td></tr>
+        <tr><th colspan="${S.u30.length + 2}" class="small" style="text-align:left">Nicht steuerbar in Österreich (nicht in KZ 000, nur zur Kontrolle)</th></tr>
+        ${nsRow("EU-Firmen mit UID – Reverse Charge beim Kunden (→ Zusammenfassende Meldung)", "rc_eu")}
+        ${nsRow("Kunden außerhalb der EU", "drittland")}
+        ${nsRow("UK-Privat über Link (Stripe Managed Payments)", "uk_mor")}
+      </table></div>
+      <p class="small">Als Kleinunternehmer sind deine Umsätze steuerfrei (KZ 016), Vorsteuer gibt es keine (KZ 060/066 = 0). Zahllast ist allein die Reverse-Charge-Steuer auf Leistungen ausländischer Anbieter. Solange der Vorjahresumsatz unter 55.000 € liegt und die Zahllast bis zum 15. des zweitfolgenden Monats bezahlt ist, musst du keine UVA einreichen – diese Aufstellung ist dann deine Aufzeichnung (aufbewahren: CSV oben). Die U1 ist Pflicht, sobald im Jahr Reverse-Charge-Steuer angefallen ist; die Jahresspalte sind die Werte dafür. Umsätze nach Zahlungstag, Reverse Charge nach Rechnungsdatum. Bitte von WKO/Steuerberatung bestätigen lassen.</p>
+    </div>`;
   }
 
   // ---------- Buchhaltung: Ausgabenbuch, E/A-Rechnung, Fristen (lib/ledger.js, 6.10.2026) ----------
@@ -601,6 +655,7 @@
       ${tab === "uebersicht" ? overviewPanel(orders) : ""}
       ${tab === "bestellungen" ? ordersPanel(orders) : ""}
       ${tab === "finanzen" ? ledgerPanel() + costsPanel() : ""}
+      ${tab === "steuer" ? steuerPanel() : ""}
       ${tab === "statistik" ? statsPanel(stats) + soloStatsPanel() : ""}
       ${tab === "system" ? systemPanel() : ""}
       ${tab === "feedback" ? feedbackPanel() : ""}
@@ -721,6 +776,10 @@
     // Buchhaltung: Ausgabenbuch
     const ledReload = async () => { led = await MS.api("GET", "admin/ausgaben?jahr=" + ledYear, null, H()).catch(() => led); render(...last); };
     const toLedForm = () => { const f = document.getElementById("ledform"); if (f) f.scrollIntoView({ behavior: "smooth", block: "start" }); };
+    const sy = document.getElementById("styear"); if (sy) sy.onchange = () => { ledYear = Number(sy.value); ledEdit = null; ledAll = false; ledReload(); };
+    const exst = document.getElementById("exsteuer"); if (exst) exst.onclick = async () => { const r = await fetch(`/api/spiel/admin/export/steuer?jahr=${ledYear}`, { headers: H() }); if (!r.ok) { alert("Export fehlgeschlagen."); return; } const a2 = document.createElement("a"); a2.href = URL.createObjectURL(await r.blob()); a2.download = `mordsteam-umsatzsteuer-${ledYear}.csv`; document.body.append(a2); a2.click(); a2.remove(); };
+    const stpr = document.getElementById("stprint"); if (stpr) stpr.onclick = () => window.print();
+    root.querySelectorAll("[data-copy]").forEach((b) => (b.onclick = async () => { try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "✓"; setTimeout(() => (b.textContent = "⧉"), 1500); } catch { prompt("Kopieren:", b.dataset.copy); } }));
     const ly = document.getElementById("ledyear"); if (ly) ly.onchange = () => { ledYear = Number(ly.value); ledEdit = null; ledAll = false; ledReload(); };
     const lf = document.getElementById("ledform");
     if (lf) {
@@ -831,6 +890,7 @@
     }));
     root.querySelectorAll("[data-dutybook]").forEach((b) => (b.onclick = () => {
       const d = led.duties[+b.dataset.dutybook], x = d.prefill;
+      if (tab === "steuer") { tab = "finanzen"; try { sessionStorage.setItem("ms_admtab", tab); } catch {} }
       const sa = /svs|kammer|wko|finanzamt|bank|post/i.test(x.anbieter + " " + x.name) ? "ohne" : "";
       ledEdit = { cost_id: d.cost_id, datum: x.datum, anbieter: x.anbieter, beschreibung: `${x.name} – ${x.period}`, waehrung: x.waehrung, rechnung_cents: x.betrag_cents, betrag_cents: x.waehrung === "EUR" ? x.betrag_cents : null, anteil: x.anteil, steuerart: sa,
         kategorie: /svs/i.test(x.name) ? "Sozialversicherung (SVS)" : /wko|kammer/i.test(x.name) ? "Gebühren / Behörden" : "Sonstiges" };

@@ -1,6 +1,6 @@
 // Cloudflare Pages Function: /api/spiel/*
 // Benötigt: D1-Binding "DB" und die geheime Umgebungsvariable "ADMIN_KEY".
-import { ledgerYear, expenseSave, expenseDelete, expenseDupOk, rcMarkPaid, dutyDone, expensesCsv, earCsv, viennaYmd, belegUpload, belegGet, belegDelete, costSkip, expenseLink, setEstVz } from "../../../lib/ledger.js";
+import { ledgerYear, expenseSave, expenseDelete, expenseDupOk, rcMarkPaid, dutyDone, expensesCsv, earCsv, viennaYmd, belegUpload, belegGet, belegDelete, costSkip, expenseLink, setEstVz, steuerCsv } from "../../../lib/ledger.js";
 import { adminDenied } from "../../../lib/adminauth.js";
 import { accountingSummary, viennaMidnight, viennaDayEnd, migrateAccounting, region, REGION_LABEL, costList, costSave, costDelete, setEuroAmount, setLandOk, recordRefund } from "../../../lib/accounting.js";
 import {
@@ -92,6 +92,10 @@ export async function onRequest(ctx) {
         const ea = route === "admin/export/ea", text = ea ? await earCsv(env, jahr) : await expensesCsv(env, von, bis);
         return new Response(text, { headers: { "content-type": "text/csv; charset=utf-8", "cache-control": "no-store",
           "content-disposition": `attachment; filename="${ea ? `mordsteam-ea-rechnung-${jahr}` : `mordsteam-ausgaben-${von}-bis-${bis}`}.csv"` } });
+      }
+      if (route === "admin/export/steuer" && method === "GET") {
+        const jahr = Number(new URL(request.url).searchParams.get("jahr")) || Number(viennaYmd(Date.now()).slice(0, 4));
+        return new Response(await steuerCsv(env, jahr), { headers: { "content-type": "text/csv; charset=utf-8", "cache-control": "no-store", "content-disposition": `attachment; filename="mordsteam-umsatzsteuer-${jahr}.csv"` } });
       }
       if (route === "admin/kosten" && method === "POST") { try { return json(await costSave(env, await request.json().catch(() => ({})))); } catch (e) { if (e.status) return fail(e.message, e.status); throw e; } }
       if (route === "admin/kosten/loeschen" && method === "POST") { const b = await request.json().catch(() => ({})); return json(await costDelete(env, b.id)); }
