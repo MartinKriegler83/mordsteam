@@ -1175,7 +1175,7 @@ P["specials"] = dict(title="Mordsteam Specials – Halloween mystery “Trick or
 <div class="clues" aria-label="Examples from the case file">
 </div>
 <ul class="list case-points">
-<li>Four questions: when was the coffin shut, who was in the skeleton suit, where's the money – and what was Frank going to announce?</li>
+<li>Four questions: when was Frank locked in the coffin, who was in the skeleton suit, where's the money – and what was Frank going to announce?</li>
 <li>Picture puzzles: cameras, a height chart, a yard plan – and a secret code made of candy</li>
 <li>Culprit, time and hiding place are drawn anew each time – replay up to three times within 30 days</li>
 <li>Spooky, not gory: nothing supernatural, and the victim survives</li>
