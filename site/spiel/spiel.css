@@ -11,7 +11,7 @@ body.app{background:var(--paper);min-height:100vh}
 .tabs{display:flex;gap:4px;background:var(--paper-2);border-bottom:1px solid var(--line);overflow-x:auto;position:sticky;top:58px;z-index:15}
 .tabs button{font:inherit;font-weight:600;font-size:15px;background:none;border:0;padding:14px 16px;cursor:pointer;color:var(--ink-2);border-bottom:3px solid transparent;white-space:nowrap;min-height:48px}
 .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--red)}
-.view{padding:24px 0 80px}
+.view{padding:24px 0 80px;overflow-x:clip} /* schräges Papier (.brief::before) darf am Handy nicht seitlich überstehen */
 .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px}
 .center{max-width:560px;margin:0 auto}
 .muted{color:#5A5D66}
