@@ -10,7 +10,7 @@
   const CASES = {
     "solo-001": { p: 890, de: "Mordsteam Solo 001 „Nachtzug nach Venedig“ · Countdown 40 Min.", en: "Mordsteam Solo 001 “Night Train to Venice” · 40-minute countdown" },
     "solo-002": { p: 890, de: "Mordsteam Solo 002 „Applaus für einen Toten“ · Countdown 35 Min.", en: "Mordsteam Solo 002 “Applause for a Dead Man” · 35-minute countdown" },
-    "special-001": { p: 1190, de: "Mordsteam Special „Süßes oder Saures“ · Halloween · Countdown 50 Min.", en: "Mordsteam Special “Trick or Treat” · Halloween · 50-minute countdown" },
+    "special-001": { p: 890, de: "Mordsteam Special „Süßes oder Saures“ · Halloween · Countdown 50 Min.", en: "Mordsteam Special “Trick or Treat” · Halloween · 50-minute countdown" },
     "solo-plus-001": { p: 1590, plus: true, de: "Mordsteam Solo Plus „Der letzte Jahrgang“ · Countdown 45 Min. · mit KI-Verhörraum", en: "Mordsteam Solo Plus “The Last Vintage” · 45-minute countdown · with AI interrogation room" },
   };
   const fq = (q.get("fall") || "").toLowerCase().trim();

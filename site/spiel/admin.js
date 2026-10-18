@@ -8,6 +8,20 @@
   let meta = null, created = null, err = "";
   const H = () => ({ "x-admin": key });
 
+  // Trichter der Specials-Seite (18.10.2026): Seite → gescrollt → Kaufklick, dazu Gratis-Probe
+  function funnelPanel(F) {
+    if (!F || !F.pages) return "";
+    const rows = [["view", "Seite geladen"], ["s50", "halb gescrollt"], ["video", "Teaser im Bild"], ["ton", "Ton eingeschaltet"], ["s90", "bis unten gescrollt"],
+      ["probe", "Klick „Erste Frage gratis“"], ["probe_start", "Probe gestartet"], ["probe_q1", "Probe: Frage 1 gelöst"], ["probe_buy", "Probe → Kaufklick"], ["buy", "Kaufklick auf der Seite"]];
+    const P = F.pages, de = P["specials-de"] || {}, en = P["specials-en"] || {};
+    const pct = (x, b) => (b ? Math.round((x / b) * 100) + " %" : "–");
+    const cell = (o, base) => `${(o.n30 || 0).toLocaleString("de-AT")}<br><span class="small">${pct(o.n30 || 0, base)}</span>`;
+    return `<div class="panel"><div class="eyebrow">Specials-Seite · wo steigen Besucher aus?</div>
+      <div style="overflow-x:auto;margin-top:10px"><table class="grid small"><tr><th>Schritt (letzte 30 Tage)</th><th>Deutsch</th><th>Englisch</th></tr>
+      ${rows.map(([k, l]) => `<tr><td>${l}</td><td class="mono">${cell(de[k] || {}, (de.view || {}).n30)}</td><td class="mono">${cell(en[k] || {}, (en.view || {}).n30)}</td></tr>`).join("")}</table></div>
+      <p class="small">Prozent = Anteil der geladenen Seiten. Gezählt wird nur Seite und Ereignis, ohne Cookies und ohne Personendaten${F.since ? `, seit ${new Date(F.since).toLocaleDateString("de-AT")}` : ""}. Käufe stehen oben unter „Werbung“ und in den Bestellungen.</p></div>`;
+  }
+
   function keyView(e) {
     root.innerHTML = `<div class="panel center"><h1 style="font-family:var(--serif);font-size:30px;margin-bottom:10px">Admin</h1>
       <form id="kf" class="form" method="post" action="#">
@@ -250,7 +264,8 @@
           <td><input class="srccost" data-i="${i}" inputmode="decimal" placeholder="z. B. 500" style="width:90px"> €</td><td class="mono" id="srccpo${i}">–</td><td class="mono" id="srcroas${i}">–</td></tr>`).join("")}</table></div>
         <p class="small">Werbekosten der letzten 30 Tage aus dem Werbekonto abschreiben (Google Ads: Kampagnen → Kosten, Zeitraum „Letzte 30 Tage“); sie werden nicht gespeichert. Rechnet sich Werbung, ist der Umsatz je € Werbung über 1,20 (wegen 20 % Reverse Charge).</p>`
         : `<p class="small" style="margin-top:10px">Noch keine Besuche über Werbung. Im Google-Ads-Konto unter <b>Verwaltung → Kontoeinstellungen → Tracking → Suffix der finalen URL</b> <span class="mono">src=gads</span> eintragen. Klicks mit Google-Kennung (gclid) werden auch ohne Suffix als <span class="mono">gads</span> gezählt.</p>`}
-    </div>`;
+    </div>
+    ${funnelPanel(kunden.funnel)}`;
   }
 
   // Anmeldungen über die Website (auch ohne Kauf), neueste zuerst

@@ -1,7 +1,7 @@
 // Cloudflare Pages Function: /api/solo/* – Mordsteam Solo (Einzelfälle)
 import { json, fail, badBody } from "../../../lib/game.js";
 import { adminDenied } from "../../../lib/adminauth.js";
-import { soloTicketInfo, soloStart, soloState, soloHint, soloAnswer, soloGiveUp, soloBegin, soloForward, soloAdmin, soloFeedback, soloVerhoerGet, soloVerhoerAsk, soloGiftInfo, soloRueckblendeGet } from "../../../lib/solo.js";
+import { soloTicketInfo, soloStart, soloState, soloHint, soloAnswer, soloGiveUp, soloBegin, soloForward, soloAdmin, soloFeedback, soloVerhoerGet, soloVerhoerAsk, soloGiftInfo, soloRueckblendeGet, soloProbe, soloProbeBuy } from "../../../lib/solo.js";
 
 export async function onRequest({ request, env, params }) {
   if (!env.DB) return fail("Datenbank nicht eingerichtet.", 500);
@@ -11,6 +11,9 @@ export async function onRequest({ request, env, params }) {
   try {
     if (route === "geschenk" && m === "GET") return await soloGiftInfo(env, new URL(request.url));
     if (route === "ticket" && m === "GET") return await soloTicketInfo(env, new URL(request.url), request);
+    // Gratis-Probe (18.10.2026): Frage 1 ohne Kauf
+    if (route === "probe" && m === "POST") return await soloProbe(request, env);
+    if (route === "probe/kauf" && m === "POST") return await soloProbeBuy(request, env);
     if (route === "start" && m === "POST") return await soloStart(request, env);
     if (route === "state" && m === "GET") return await soloState(request, env);
     if (route === "rueckblende" && m === "GET") return await soloRueckblendeGet(request, env);

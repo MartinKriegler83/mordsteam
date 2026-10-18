@@ -308,7 +308,7 @@ P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=Tru
 <h2 class="h2">Trick or Treat</h2>
 <p class="purpose">One skeleton too many.</p>
 <p>Halloween in a small American town: a neighbor is locked in his own prop coffin, the prize money is gone – and on the porch camera there's a skeleton that isn't made of plastic. The big Halloween mystery just for you.</p>
-<p class="meta">1 INVESTIGATOR · 4 QUESTIONS · 50 MIN · €11.90</p>
+<p class="meta">1 INVESTIGATOR · 4 QUESTIONS · 50 MIN · €8.90</p>
 <div class="actions"><a class="btn btn-red" href="specials.html">Go to the Halloween Special</a></div>
 </div>
 </div>
@@ -759,7 +759,7 @@ P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy
 <label class="check"><input type="radio" name="fall" value="solo-001" checked><span><b>Night Train to Venice</b> · Solo 001 · 40-minute countdown · €8.90</span></label>
 <label class="check"><input type="radio" name="fall" value="solo-002"><span><b>Applause for a Dead Man</b> · Solo 002 · 35-minute countdown · €8.90</span></label>
 <label class="check"><input type="radio" name="fall" value="solo-plus-001"><span><b>The Last Vintage</b> · Solo Plus · 45-minute countdown · €15.90 – with AI interrogation room, ages 18+</span></label>
-<label class="check"><input type="radio" name="fall" value="special-001"><span><b>Trick or Treat</b> · Halloween Special · 50-minute countdown · €11.90</span></label>
+<label class="check"><input type="radio" name="fall" value="special-001"><span><b>Trick or Treat</b> · Halloween Special · 50-minute countdown · €8.90</span></label>
 <div class="field"><label for="lang">Game language *</label>
 <select id="lang" name="lang"><option value="en">English</option><option value="de">German</option></select>
 <span class="hint">The language of the case, the questions and the certificate – independent of this website.</span></div>
@@ -1122,7 +1122,7 @@ P["withdraw"] = dict(title="Withdraw from contract – Mordsteam", desc="Withdra
 </div></main>''')
 
 
-P["specials"] = dict(title="Mordsteam Specials – Halloween mystery “Trick or Treat”", scripts='<script src="/assets/aktion.js"></script>',
+P["specials"] = dict(title="Mordsteam Specials – Halloween mystery “Trick or Treat”", scripts='<script src="/assets/aktion.js"></script>\n<script src="/assets/funnel.js?v=1" data-page="specials-en" defer></script>',
  desc="The Halloween Special: a murder mystery for one person in a small American town. One skeleton too many, four questions, 50 minutes – on phone, tablet or laptop.",
  body='''<nav class="subnav" aria-label="Mordsteam Specials"><div class="wrap">
 <b><span>Mordsteam</span> Specials</b>
@@ -1136,9 +1136,10 @@ P["specials"] = dict(title="Mordsteam Specials – Halloween mystery “Trick or
 <h1>One skeleton too many.</h1>
 <p class="lead">Halloween in a small American town: a neighbor lies locked in his own prop coffin, the prize money is gone – and the kids swear a skeleton stood up. A murder mystery for one person, nothing supernatural, but plenty of goosebumps. On phone, tablet or laptop.</p>
 <div class="actions">
-<a class="btn btn-red" href="solo-buy.html?fall=halloween">Buy the case – €11.90</a>
-<a class="btn-text" href="#halloween">See the case</a>
+<a class="btn btn-red" href="solo-buy.html?fall=halloween" data-fn="buy">Buy the case – €8.90</a>
+<a class="btn btn-line" href="/spiel/solo.html?probe=special-001&amp;lang=en" data-fn="probe">Play the first question free</a>
 </div>
+<p class="small sp-probe-note">Free preview: no sign-up, no purchase. Play question 1 with the real case file and the clock running.</p>
 </div>
 <div class="file" aria-hidden="true">
 <div class="folder"></div>
@@ -1180,7 +1181,7 @@ P["specials"] = dict(title="Mordsteam Specials – Halloween mystery “Trick or
 <li>Spooky, not gory: nothing supernatural, and the victim survives</li>
 <li>At the end: flashback, certificate and a €5 voucher for Friends or Teams</li>
 </ul>
-<div class="actions case-buy"><a class="btn btn-red" href="solo-buy.html?fall=halloween">Buy the case – €11.90</a></div>
+<div class="actions case-buy"><a class="btn btn-red" href="solo-buy.html?fall=halloween" data-fn="buy">Buy the case – €8.90</a><a class="btn btn-line" href="/spiel/solo.html?probe=special-001&amp;lang=en" data-fn="probe">Play the first question free</a></div>
 </div></section>
 
 <section id="ablauf" class="section bg-a"><div class="wrap stack">
@@ -1215,7 +1216,7 @@ P["specials"] = dict(title="Mordsteam Specials – Halloween mystery “Trick or
 <section class="cta"><div class="wrap">
 <h2>At 22:45 the sheriff arrives.</h2>
 <p>By then you'll know who was in the skeleton suit.</p>
-<a class="btn btn-ink" href="solo-buy.html?fall=halloween">Buy the case – €11.90</a>
+<div class="actions" style="justify-content:center"><a class="btn btn-ink" href="solo-buy.html?fall=halloween" data-fn="buy">Buy the case – €8.90</a><a class="btn btn-line" href="/spiel/solo.html?probe=special-001&amp;lang=en" data-fn="probe">Try it free first</a></div>
 </div></section>
 </main>''')
 
@@ -1280,7 +1281,7 @@ PROD = f'''<!doctype html>
 <tr><td><b>Mordsteam Friends – mystery night</b></td><td>Murder-mystery night for 4–8 friends, everyone plays on their own phone, 50-minute countdown</td><td>€29 for 4 people, +€5 per additional person</td><td>£29 for 4 people, +£5 per additional person</td><td>$33 for 4 people, +$6 per additional person</td></tr>
 <tr><td><b>Mordsteam Friends – mystery night Plus</b></td><td>As above with AI interrogation room and five instead of three questions, 75-minute countdown</td><td>€49 for 4 people, +€8 per additional person</td><td>£49 for 4 people, +£8 per additional person</td><td>$56 for 4 people, +$9 per additional person</td></tr>
 <tr><td><b>Mordsteam Solo 001 / 002</b></td><td>A case for one person, 35–40-minute countdown</td><td>€8.90</td><td>£8.99</td><td>$9.99</td></tr>
-<tr><td><b>Mordsteam Special “Trick or Treat”</b></td><td>Halloween case for one person, 50-minute countdown</td><td>€11.90</td><td>£11.99</td><td>$13.99</td></tr>
+<tr><td><b>Mordsteam Special “Trick or Treat”</b></td><td>Halloween case for one person, 50-minute countdown</td><td>€8.90</td><td>£8.99</td><td>$9.99</td></tr>
 <tr><td><b>Mordsteam Solo Plus</b></td><td>A case for one person with AI interrogation room, 45-minute countdown</td><td>€15.90</td><td>£15.99</td><td>$17.99</td></tr>
 </table></div>
 <p class="small">Introductory offer until 30 November 2026: 25% off the first Teams or Friends game in exchange for honest feedback.</p>

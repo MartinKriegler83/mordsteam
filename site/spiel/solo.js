@@ -57,7 +57,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
     let t;
     try { t = await api("GET", "ticket?code=" + encodeURIComponent(code)); }
     catch (e) { return codeView(e.message); }
-    MS.set("ms_solo_code", code);
+    if (!t.probe) MS.set("ms_solo_code", code);   // Gratis-Probe überschreibt nie einen gekauften Code
     // Die Sprache des Tickets gilt ab jetzt (fest gebucht)
     if (t.lang) MS.setLang(t.lang);
     showSw(false);
@@ -73,6 +73,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
     root.innerHTML = `<section class="brief"><div class="paper">
       <div class="brief-top"><span class="eyebrow">${esc(b.eyebrow)}</span><span class="conf">${prodName(t)} · ${t.limit_min} ${minU()}</span></div>
       <h1>${b.title}</h1>
+      ${t.probe ? probeNote() : ""}
       <form id="sf" class="form" style="margin-top:22px">
       ${needName ? `<div class="field"><label for="nm">${L("Dein Ermittlername", "Your detective name")}</label><input id="nm" required maxlength="40" autocomplete="nickname" placeholder="${L("z. B. Martina Huber", "e.g. Jane Smith")}"><span class="small">${L("Steht in der Geschichte und auf deiner Urkunde.", "It appears in the story and on your certificate.")}</span></div>` : ""}
       <p class="small">${L("Du kannst auf jedem Gerät ermitteln – Handy, Tablet oder Laptop. Mit deinem Code kannst du auch mitten im Fall auf ein anderes Gerät wechseln und dort weitermachen.", "You can investigate on any device – phone, tablet or laptop. With your code you can even switch to another device mid-case and carry on there.")}</p>
@@ -98,7 +99,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
     const b = S.briefing;
     root.innerHTML = `<section class="brief"><div class="paper">
       <div class="brief-top"><span class="eyebrow">${esc(b.eyebrow)}</span><span class="conf">${prodName(S)} · ${S.limit_min} ${minU()}</span></div>
-      <h1>${b.title}</h1><p class="sub">${b.text}${S.begun ? L(" Die Uhr oben läuft bereits.", " The clock at the top is already running.") : ""}</p>
+      <h1>${b.title}</h1>${S.probe ? probeNote() : ""}<p class="sub">${b.text}${S.begun ? L(" Die Uhr oben läuft bereits.", " The clock at the top is already running.") : ""}</p>
       <ol class="steps">${b.steps.map((x, i) => `<li><span class="n">${i + 1}</span><div><b>${esc(x[0])}</b><span>${esc(x[1])}</span></div></li>`).join("")}</ol>
       <h2 class="qhead">${L(`Deine ${["", "eine", "zwei", "drei", "vier", "fünf"][S.questions.length] || S.questions.length} Fragen`, `Your ${["", "one", "two", "three", "four", "five"][S.questions.length] || S.questions.length} question${S.questions.length === 1 ? "" : "s"}`)}</h2>
       <div class="qcards">${S.questions.map((q) => `<div><i>${pad(q.nr)}</i><span>${esc(q.label)}</span></div>`).join("")}</div>
@@ -124,6 +125,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
   }
   function render() {
     tick();
+    if (S.ended && S.probe) { tabs.hidden = true; return probeEndView(); }
     if (S.ended) { tabs.hidden = true; return MS.get(rbKey()) ? resultView() : rbIntro(); }
     tabs.hidden = false;
     tabs.querySelectorAll("[data-tab]").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === tab));
@@ -261,9 +263,9 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
       <button type="button" class="btn btn-red btn-big" id="check">${L("Antwort prüfen", "Check answer")}</button>
       <div class="ctip"><div><b>${L("Hinweis nehmen", "Take a hint")}</b><p>${cost ? L(`Hinweis ${q.hints.length + 1} von 3 für diese Frage. Kostet ${cost} ${cost === 1 ? "Strafminute" : "Strafminuten"}.`, `Hint ${q.hints.length + 1} of 3 for this question. Costs ${cost} penalty ${cost === 1 ? "minute" : "minutes"}.`) : L("Für diese Frage hast du alle Hinweise.", "You’ve had all the hints for this question.")}</p></div>
         ${cost ? `<button type="button" class="btn ${armed ? "btn-ink" : "btn-line"}" id="hint">${armed ? L(`Ja, Hinweis nehmen (+${cost} Min.)`, `Yes, take the hint (+${cost} min)`) : L("Hinweis anzeigen", "Show hint")}</button>${armed ? `<button type="button" class="linkbtn" id="hintno">${L("Abbrechen", "Cancel")}</button>` : ""}` : ""}</div>` : ""}
-      ${locked.map((x) => `<div class="qrow so-locked"><span class="qn">${x.nr}</span><div class="qf"><label>${esc(x.label)}</label><span class="hint">${L(`Wird frei, sobald du Frage ${x.nr - 1} gelöst hast.`, `Unlocks once you’ve solved question ${x.nr - 1}.`)}</span></div></div>`).join("")}
+      ${locked.map((x) => `<div class="qrow so-locked"><span class="qn">${x.nr}</span><div class="qf"><label>${esc(x.label)}</label><span class="hint">${S.probe ? L("🔒 Im ganzen Fall", "🔒 In the full case") : L(`Wird frei, sobald du Frage ${x.nr - 1} gelöst hast.`, `Unlocks once you’ve solved question ${x.nr - 1}.`)}</span></div></div>`).join("")}
       ${blattHtml()}
-      <p style="margin-top:26px;text-align:right">${giveArmed ? `<span class="small">${L(`Wirklich aufgeben? Du siehst dann die Auflösung${S.first_play ? " und kommst nicht in die Wertung" : ""}.`, `Really give up? You’ll see the solution${S.first_play ? " and won’t be ranked" : ""}.`)}</span> <button type="button" class="btn btn-ink" id="give">${L("Ja, Auflösung zeigen", "Yes, show the solution")}</button> <button type="button" class="linkbtn" id="giveno">${L("Weiter ermitteln", "Keep investigating")}</button>` : `<button type="button" class="linkbtn" id="give">${L("Aufgeben und Auflösung ansehen", "Give up and see the solution")}</button>`}</p>
+      ${S.probe ? "" : `<p style="margin-top:26px;text-align:right">${giveArmed ? `<span class="small">${L(`Wirklich aufgeben? Du siehst dann die Auflösung${S.first_play ? " und kommst nicht in die Wertung" : ""}.`, `Really give up? You’ll see the solution${S.first_play ? " and won’t be ranked" : ""}.`)}</span> <button type="button" class="btn btn-ink" id="give">${L("Ja, Auflösung zeigen", "Yes, show the solution")}</button> <button type="button" class="linkbtn" id="giveno">${L("Weiter ermitteln", "Keep investigating")}</button>` : `<button type="button" class="linkbtn" id="give">${L("Aufgeben und Auflösung ansehen", "Give up and see the solution")}</button>`}</p>`}
     </section>`;
     bindBlatt();
     const inp = $("ans");
@@ -291,7 +293,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
       try { await refresh(await api("POST", "hint")); } catch (e) { verdict = { cls: "warn", html: esc(e.message) }; fragenView(); }
     };
     if ($("hintno")) $("hintno").onclick = () => { armed = false; fragenView(); };
-    $("give").onclick = async () => {
+    if ($("give")) $("give").onclick = async () => {
       if (!giveArmed) { giveArmed = true; return fragenView(); }
       giveArmed = false;
       try { await refresh(await api("POST", "aufgeben")); scrollTo(0, 0); } catch (e) { verdict = { cls: "warn", html: esc(e.message) }; fragenView(); }
@@ -548,5 +550,43 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
   document.addEventListener("ms-lang", () => { if (!S && !token && $("cf")) codeView(); });
 
   $("ff5").onclick = async () => { try { await refresh(await api("POST", "test/vorspulen")); } catch {} };
-  loadTicket();
+
+  // ---------- Gratis-Probe (18.10.2026): Frage 1 ohne Kauf, danach zum Kauf ----------
+  // Aufruf von der Specials-Seite: /spiel/solo.html?probe=special-001&lang=de|en (&src=… für die Herkunft)
+  const probeSrc = (MS.qs("src") || "").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 40);
+  function probeNote() {
+    return `<div class="note" style="margin:14px 0"><b>${L("Gratis-Probe", "Free preview")}</b> · ${L("Du spielst Frage 1 von 4 – mit echter Akte und laufender Uhr. Danach kannst du den ganzen Fall kaufen; Täter, Tatzeit und Versteck werden dann neu ausgelost.", "You’re playing question 1 of 4 – with the real case file and the clock running. Afterwards you can buy the full case; culprit, time and hiding place are then drawn anew.")}</div>`;
+  }
+  function buyUrl() {
+    const u = EN() ? "/en/solo-buy.html?fall=halloween" : "/solo-kaufen.html?fall=halloween";
+    return u + (probeSrc ? "&src=" + probeSrc : "") ;
+  }
+  function probeEndView() {
+    const r = S.probe_result || {}, ok = !!r.q1;
+    clock.innerHTML = "";
+    root.innerHTML = `<section class="report paper so-result" style="text-align:center">
+      <div class="solved"><div class="bigstamp ${ok ? "" : "grey"}"><div><small>MORDSTEAM SPECIAL · ${L("GRATIS-PROBE", "FREE PREVIEW")}</small><strong>${ok ? L("FRAGE 1 GELÖST", "QUESTION 1 SOLVED") : L("ZEIT ABGELAUFEN", "TIME’S UP")}</strong><small>${esc((S.name || "").toUpperCase())}</small></div></div></div>
+      <h2 style="margin-top:18px">${ok ? L("Stark ermittelt.", "Nice detective work.") : L("Diesmal hat es nicht gereicht.", "Not this time.")}</h2>
+      <p>${ok ? L(`Du hast die Tatzeit in ${MS.dur(r.played_ms)} gefunden${r.penalty_min ? ` (plus ${r.penalty_min} Strafminuten)` : ""}. Aber wer steckte im Skelett-Anzug, wo ist das Geld – und was wollte Frank verkünden?`, `You found the time in ${MS.dur(r.played_ms)}${r.penalty_min ? ` (plus ${r.penalty_min} penalty minutes)` : ""}. But who was in the skeleton suit, where’s the money – and what was Frank going to announce?`) : L("Im ganzen Fall helfen dir Hinweise weiter, und es warten noch drei Fragen.", "In the full case, hints help you along – and three more questions are waiting.")}</p>
+      <div class="qcards" style="text-align:left;margin:18px 0">${S.questions.slice(1).map((q) => `<div><i>${pad(q.nr)}</i><span>${esc(q.label)}</span></div>`).join("")}</div>
+      <p class="small">${L("Im ganzen Fall werden Täter, Tatzeit und Versteck neu ausgelost – du ermittelst also von vorn, mit neuen Spuren. Am Ende: Rückblende, Urkunde und ein 5-€-Gutschein für Friends oder Teams.", "In the full case, culprit, time and hiding place are drawn anew – so you start fresh, with new clues. At the end: flashback, certificate and a €5 voucher for Friends or Teams.")}</p>
+      <div class="actions-row" style="justify-content:center;margin-top:18px"><a class="btn btn-red btn-big" id="probebuy" href="${buyUrl()}">${L("Ganzen Fall kaufen – 8,90 €", "Get the full case")}</a></div>
+      <p style="margin-top:12px"><a class="linkbtn" href="${EN() ? "/en/specials.html" : "/specials.html"}${probeSrc ? "?src=" + probeSrc : ""}">${L("Zurück zum Halloween-Special", "Back to the Halloween Special")}</a></p>
+    </section>`;
+    $("probebuy").addEventListener("click", () => { try { fetch("/api/solo/probe/kauf", { method: "POST", keepalive: true, headers: { "x-solo": token || "" } }).catch(() => {}); } catch {} });
+  }
+  async function startProbe(caseId) {
+    try {
+      const d = await api("POST", "probe", { case: caseId, lang: MS.lang });
+      code = d.code;
+      // Adresse auf den Probe-Code umstellen: Neu laden setzt die Probe fort statt eine neue anzulegen
+      history.replaceState(null, "", "/spiel/solo.html?c=" + code + (probeSrc ? "&src=" + probeSrc : ""));
+      loadTicket();
+    } catch (e) {
+      head("Mordsteam Special", L("Gratis-Probe", "Free preview"), "");
+      root.innerHTML = `<section class="report paper" style="text-align:center"><p class="err">${esc(e.message)}</p><p><a class="btn btn-red" href="${buyUrl()}">${L("Zum ganzen Fall", "To the full case")}</a></p></section>`;
+    }
+  }
+  const probeCase = MS.qs("probe");
+  if (probeCase) startProbe(probeCase); else loadTicket();
 })();
