@@ -1,4 +1,4 @@
-// Mordsteam-Admin, Tab „Brightpage“ (19.10.2026): Rechnungen, Kunden, Pflege-Abos, Einstellungen.
+// Mordsteam-Admin, Tab „Brightpage“ (19.10.2026): Rechnungen, Kunden, Abos (Service, Werbe-Betreuung, KI-Betrieb), Einstellungen.
 // Server: /api/bp/admin/* (functions/api/bp/[[route]].js, lib/brightpage.js). Bezahlte Rechnungen landen automatisch in Finanzen und Steuer.
 // Rechnung ansehen/drucken: eigenes Fenster mit A4-Layout und QR-Code „Zahlen mit Code“ (EPC/GiroCode) → „Drucken → Als PDF sichern“.
 (function () {
@@ -8,24 +8,36 @@
   const dat = (ymd) => (ymd ? ymd.split("-").reverse().join(".") : "–");
   const STATUS = { entwurf: ["Entwurf", ""], offen: ["offen", "open"], bezahlt: ["bezahlt", "fin"], storniert: ["storniert", ""] };
   const TYP = { rechnung: "Rechnung", anzahlung: "Anzahlung", schluss: "Schlussrechnung", storno: "Storno" };
-  // Preisliste von brightpage.net (Stand 19.10.2026) als Schnellauswahl – Preise im Formular frei änderbar
+  // Preisliste von brightpage.net (Stand 20.10.2026, siehe brightpage.net/preise) als Schnellauswahl – Preise im Formular frei änderbar
   const VORLAGEN = [
-    ["Web Start – One-Pager mit bis zu 6 Abschnitten, Kontaktformular, Suchmaschinen-Grundlagen", 990, "pauschal"],
+    ["Web Start – One-Pager mit bis zu 6 Abschnitten, Kontaktformular, für Google vorbereitet", 990, "pauschal"],
     ["Web Premium – Firmenwebsite mit bis zu 8 Seiten und Online-Editor", 2490, "pauschal"],
     ["Zusätzliche Seite (Web Premium)", 150, "Seite"],
+    ["Online-Editor für Web Start", 190, "pauschal"],
     ["Shop Start – bis zu 15 Produkte, Kartenzahlung über Stripe", 2490, "pauschal"],
     ["Shop Premium – bis zu 30 Produkte, Gutscheine, Rechnungen, Produktverwaltung", 3900, "pauschal"],
     ["Zusätzliches Produkt (Shop)", 15, "Stück"],
     ["Paket „Gefunden werden“ (Google-Profil, Apple Maps, Bing, Verzeichnisse, Bewertungs-QR)", 290, "pauschal"],
     ["Paket „Gefunden werden“ zusammen mit neuer Website", 150, "pauschal"],
-    ["KI-Helfer – Einrichtung", 490, "pauschal"],
+    ["Online-Werbung starten – eine Plattform, eine Kampagne, Auswertung nach 30 Tagen", 390, "pauschal"],
+    ["Online-Werbung – zweite Plattform", 190, "pauschal"],
+    ["Newsletter-Paket – Anmeldung, Tool, Vorlage, Einschulung", 490, "pauschal"],
+    ["Newsletter – Anbindung an den Shop", 190, "pauschal"],
+    ["Fotos vom Betrieb – vor Ort bis 2 Stunden, 15 bearbeitete Bilder", 190, "pauschal"],
+    ["Anfahrt (amtliches Kilometergeld)", 0.5, "km"],
+    ["KI-Helfer Einrichtung – Bewertungs-Antworthelfer", 390, "pauschal"],
+    ["KI-Helfer Einrichtung – FAQ-Assistent", 490, "pauschal"],
+    ["KI-Helfer Einrichtung – Anfrage-Sortierer", 690, "pauschal"],
+    ["KI-Helfer Einrichtung – Angebotsgenerator", 890, "pauschal"],
+    ["KI-Helfer Einrichtung – alle vier zusammen", 1990, "pauschal"],
     ["Texte schreiben – One-Pager", 190, "pauschal"],
     ["Texte schreiben", 90, "Seite"],
     ["Arbeitszeit (Extras, Sonderwünsche)", 85, "Std."],
-    ["Arbeitszeit mit Pflegevertrag", 75, "Std."],
+    ["Arbeitszeit mit Service-Plan", 75, "Std."],
     ["Kleine Änderung (bis 15 Minuten)", 35, "pauschal"],
   ];
-  const ABO_VORLAGEN = [["Website-Pflege Basis", 29], ["Website-Pflege", 59], ["Website-Pflege Plus", 119], ["KI-Helfer Betrieb", 29]];
+  const ABO_VORLAGEN = [["Service Basis", 29], ["Service Komfort", 59], ["Service Plus", 119], ["Werbe-Betreuung", 79],
+    ["KI-Helfer Betrieb bis 1.000 Vorgänge", 29], ["KI-Helfer Betrieb bis 2.500 Vorgänge", 59], ["KI-Helfer Betrieb bis 5.000 Vorgänge", 89], ["KI-Helfer Betrieb bis 10.000 Vorgänge", 159]];
 
   let el = null, H = null, D = null, sub = "rechnungen", edit = null, msg = "", errMsg = "", editKunde = null, editAbo = null;
   try { sub = sessionStorage.getItem("bp_sub") || "rechnungen"; } catch {}
@@ -47,13 +59,13 @@
       <div class="kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px">
         <div><div class="small">Bezahlt ${S.jahr}</div><b class="mono">${eur(S.bezahlt)}</b></div>
         <div><div class="small">Offen (${S.offen_n})</div><b class="mono" ${S.ueberfaellig_n ? 'style="color:var(--red)"' : ""}>${eur(S.offen)}</b>${S.ueberfaellig_n ? `<div class="small" style="color:var(--red)">${S.ueberfaellig_n} überfällig</div>` : ""}</div>
-        <div><div class="small">Pflege-Abos je Monat</div><b class="mono">${eur(S.abo_monat)}</b></div>
+        <div><div class="small">Abos je Monat</div><b class="mono">${eur(S.abo_monat)}</b></div>
         <div><div class="small">Entwürfe</div><b class="mono">${S.entwuerfe_n}</b></div>
       </div>
       ${D.fehlt.length ? `<p class="err" style="margin-top:10px">Vor der ersten Rechnung unter „Einstellungen“ eintragen: ${D.fehlt.map(esc).join(", ")}.</p>` : ""}
       ${S.abo_offen ? `<p class="small" style="margin-top:8px"><b>${S.abo_offen} Abo-Rechnung(en) fällig.</b> <button class="tipbtn" id="bp-abo-gen">Als Entwürfe anlegen</button></p>` : ""}
       <p class="small" style="margin-top:8px">Bezahlte Brightpage-Rechnungen zählen automatisch zu den Einnahmen (Finanzen), zur Kleinunternehmergrenze und zur U30/ZM (Steuer &amp; Abgaben). Ausgaben für Brightpage im Ausgabenbuch wie gewohnt erfassen.</p>
-      <nav class="admtabs" role="tablist" style="margin-top:12px">${[["rechnungen", "Rechnungen"], ["neu", edit && edit.id ? "Entwurf bearbeiten" : "Neue Rechnung"], ["kunden", "Kunden"], ["abos", "Pflege-Abos"], ["einstellungen", "Einstellungen"]]
+      <nav class="admtabs" role="tablist" style="margin-top:12px">${[["rechnungen", "Rechnungen"], ["neu", edit && edit.id ? "Entwurf bearbeiten" : "Neue Rechnung"], ["kunden", "Kunden"], ["abos", "Abos"], ["einstellungen", "Einstellungen"]]
         .map(([k, l]) => `<button type="button" role="tab" data-bpsub="${k}" aria-selected="${k === sub}">${l}</button>`).join("")}</nav>
       ${msg ? `<p class="note" role="status" style="margin-top:10px">${esc(msg)}</p>` : ""}${errMsg ? `<p class="err" style="margin-top:10px">${esc(errMsg)}</p>` : ""}</div>`;
   }
@@ -114,7 +126,7 @@
         <div id="bp-anz" ${e.typ === "schluss" ? "" : "hidden"}><div class="small" style="font-weight:600;margin-top:8px">Bezahlte Anzahlungen abziehen</div>
           ${anz.length ? anz.map((a) => `<label class="check"><input type="checkbox" name="anz" value="${a.id}" ${e.abzuege.some((x) => x.id === a.id) ? "checked" : ""} ${used.has(a.id) ? "disabled" : ""}><span>${esc(a.nr)} vom ${dat(a.datum)} – ${eur(a.bezahlt_cents)}${used.has(a.id) ? " (schon in einer anderen Rechnung abgezogen)" : ""}</span></label>`).join("") : `<p class="small muted">Für diesen Kunden gibt es keine bezahlte Anzahlung.</p>`}</div>
         <p class="small" id="bp-sum" style="font-weight:600"></p>
-        <div class="field"><label for="bp-u">Text unter der Rechnung (optional)</label><textarea id="bp-u" name="text_unten" rows="2" maxlength="1000" placeholder="z. B. Pflege ab November laut Pflegevertrag.">${esc(e.text_unten || "")}</textarea></div>
+        <div class="field"><label for="bp-u">Text unter der Rechnung (optional)</label><textarea id="bp-u" name="text_unten" rows="2" maxlength="1000" placeholder="z. B. Service ab November laut Servicevertrag.">${esc(e.text_unten || "")}</textarea></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ink" type="submit">Entwurf speichern</button>${e.id ? `<button class="btn btn-line" type="button" id="bp-cancel">Abbrechen</button>` : ""}</div>
         <p class="small">Gespeichert wird als Entwurf ohne Nummer. In der Liste: „Vorschau“ prüfen, dann „Ausstellen“ – erst dann bekommt die Rechnung ihre Nummer.</p>
       </form></div>`;
@@ -157,11 +169,11 @@
           <td style="white-space:nowrap"><button class="tipbtn" data-bpkedit="${x.id}">Bearbeiten</button><button class="tipbtn" data-bpknew="${x.id}">Rechnung</button><button class="tipbtn" data-bpkdel="${x.id}">Löschen</button></td></tr>`; }).join("")}</table></div>` : `<p class="muted">Noch keine Kunden.</p>`}</div>`;
   }
 
-  // ---------- Pflege-Abos ----------
+  // ---------- Abos (Service, Werbe-Betreuung, KI-Betrieb) ----------
   function abosPanel() {
     const a = editAbo || { rhythmus: "monat", start: D.today.slice(0, 7) };
     if (!D.kunden.length) return `<div class="panel"><p>Zuerst einen Kunden anlegen: <a href="#" data-bpsub="kunden">Kunden</a>.</p></div>`;
-    return `<div class="panel"><div class="eyebrow">${a.id ? "Abo bearbeiten" : "Neues Pflege-Abo"}</div>
+    return `<div class="panel"><div class="eyebrow">${a.id ? "Abo bearbeiten" : "Neues Abo"}</div>
       <form id="bp-af" class="form" style="margin-top:10px">
         <div class="two"><div class="field"><label>Kunde</label><select name="kunde_id">${D.kunden.map((k) => `<option value="${k.id}" ${k.id === a.kunde_id ? "selected" : ""}>${esc(kName(k))}</option>`).join("")}</select></div>
           <div class="field"><label>Vorlage</label><select id="bp-av"><option value="">–</option>${ABO_VORLAGEN.map((v, i) => `<option value="${i}">${esc(v[0])} · ${v[1]} €</option>`).join("")}</select></div></div>
@@ -174,7 +186,7 @@
         <div style="display:flex;gap:8px"><button class="btn btn-ink" type="submit">${a.id ? "Speichern" : "Abo anlegen"}</button>${a.id ? `<button type="button" class="btn btn-line" id="bp-acancel">Abbrechen</button>` : ""}</div>
         <p class="small">Für jeden begonnenen Zeitraum ohne Rechnung erscheint oben „Abo-Rechnung fällig“. Daraus werden Entwürfe, die du prüfst und ausstellst.</p>
       </form></div>
-      <div class="panel"><div class="eyebrow">Pflege-Abos</div>${D.abos.length ? `<div style="overflow-x:auto;margin-top:10px"><table class="grid small"><tr><th>Kunde</th><th>Abo</th><th>Preis</th><th>seit</th><th>Status</th><th></th></tr>
+      <div class="panel"><div class="eyebrow">Abos (Service, Werbe-Betreuung, KI-Betrieb)</div>${D.abos.length ? `<div style="overflow-x:auto;margin-top:10px"><table class="grid small"><tr><th>Kunde</th><th>Abo</th><th>Preis</th><th>seit</th><th>Status</th><th></th></tr>
         ${D.abos.map((x) => `<tr><td>${esc(kName(D.kunden.find((k) => k.id === x.kunde_id)))}</td><td>${esc(x.titel)}</td><td class="mono">${eur(x.preis_cents)} / ${({ monat: "Monat", quartal: "Quartal", jahr: "Jahr" })[x.rhythmus]}</td>
           <td>${esc(x.start)}${x.ende ? " – " + esc(x.ende) : ""}</td><td>${x.aktiv ? (x.offen ? `<b>${x.offen} fällig</b>` : "aktuell") : "beendet"}</td><td><button class="tipbtn" data-bpaedit="${x.id}">Bearbeiten</button></td></tr>`).join("")}</table></div>` : `<p class="muted">Noch keine Abos.</p>`}</div>`;
   }
@@ -302,7 +314,7 @@ ${r.text_unten ? `<p style="margin-top:6mm">${esc(r.text_unten).replace(/\n/g, "
       wirePos();
       $("#bp-v").onchange = (e) => { const v = VORLAGEN[e.target.value]; if (!v) return;
         const empty = [...f.querySelectorAll(".bp-pos")].find((r) => !r.querySelector('[name="text"]').value.trim());
-        const html = posRow({ text: v[0], menge: 1, einheit: v[2], preis_cents: v[1] * 100 });
+        const html = posRow({ text: v[0], menge: 1, einheit: v[2], preis_cents: Math.round(v[1] * 100) });
         if (empty) empty.outerHTML = html; else $("#bp-pos").insertAdjacentHTML("beforeend", html);
         e.target.value = ""; wirePos(); sum(); };
       $("#bp-t").onchange = () => { $("#bp-anz").hidden = $("#bp-t").value !== "schluss"; sum(); };
