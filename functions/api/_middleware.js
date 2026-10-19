@@ -7,7 +7,7 @@ import { withRetry } from "../../lib/dbretry.js";
 function areaOf(path) {
   const p = path.replace(/^\/api\//, "");
   if (/^spiel\/(state|leitung\/state|aria)$/.test(p) || /^(solo|friends)\/(state|org)$/.test(p)) return ["spiel-abfrage", 10];
-  if (p.startsWith("spiel/admin/") || p.startsWith("solo/admin/") || p.startsWith("friends/admin/")) return ["admin", 1];
+  if (p.startsWith("spiel/admin/") || p.startsWith("solo/admin/") || p.startsWith("friends/admin/") || p.startsWith("bp/admin/")) return ["admin", 1];
   if (p === "spiel/aria/chat") return ["aria", 1];
   if (p.startsWith("spiel/")) return ["spiel", 1];
   if (p.startsWith("solo/")) return ["solo", 1];
