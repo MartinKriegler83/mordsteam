@@ -106,7 +106,7 @@ const TX = {
     c1: "<b>Bonus-Rätsel 2:</b> Mia (8) hat Hank eine Nachricht hinterlassen – im Candy-Code der Hollow-Lane-Kids. Die erste Süßigkeit eines Paars nennt die Zeile, die zweite die Spalte. <b>Tipp die drei Buchstaben der Reihe nach an.</b>",
     yours: "Deine Lösung:", del: "Löschen", wrong2: "Das ergibt kein Wort aus Mias Zettel – nochmal von vorne.",
     right2: "<b>„BUH!“</b> – richtig. Im echten Fall ist die Tafel zerrissen, die Regel verwaschen und Franks Notiz viel länger. Schaffst du das in 50 Minuten?",
-    buy: "Ganzen Fall kaufen – 8,90&nbsp;€", probe: "Erste Frage des echten Falls gratis", buyHref: "solo-kaufen.html?fall=halloween", probeHref: "/spiel/solo.html?probe=special-001&amp;lang=de",
+    buy: "Ganzen Fall kaufen – 8,90&nbsp;€", probe: "oder die erste Frage des echten Falls gratis spielen", buyHref: "solo-kaufen.html?fall=halloween", probeHref: "/spiel/solo.html?probe=special-001&amp;lang=de",
     hero: "Oder zuerst: Gratis-Rätsel in 2 Minuten ↓",
   },
   en: {
@@ -122,7 +122,7 @@ const TX = {
     c1: "<b>Bonus puzzle 2:</b> Mia (8) left Hank a message – in the Hollow Lane kids’ Candy Code. The first candy of a pair gives the row, the second the column. <b>Tap the three letters in order.</b>",
     yours: "Your answer:", del: "Clear", wrong2: "That doesn’t spell Mia’s message – start again.",
     right2: "<b>“BOO!”</b> – correct. In the real case the key is torn, the rule washed out and Frank’s note much longer. Can you crack it in 50 minutes?",
-    buy: 'Buy the full case – <span data-eur="890">€8.90</span>', probe: "Play the real case’s first question free", buyHref: "solo-buy.html?fall=halloween", probeHref: "/spiel/solo.html?probe=special-001&amp;lang=en",
+    buy: 'Buy the full case – <span data-eur="890">€8.90</span>', probe: "or play the real case’s first question free", buyHref: "solo-buy.html?fall=halloween", probeHref: "/spiel/solo.html?probe=special-001&amp;lang=en",
     hero: "Or first: a free 2-minute puzzle ↓",
   },
 };
@@ -136,12 +136,12 @@ function block(en) {
 <div class="bz-step" data-step="1"><p>${X.s1}</p><div class="bz-pic">${porch(en)}</div><p class="bz-msg" aria-live="polite" data-wrong="${esc(X.s1wrong)}" data-right="${esc(X.s1right)}"></p></div>
 <div class="bz-step" data-step="2" hidden><p>${X.s2}</p><div class="bz-pic">${party(en)}</div><p class="bz-msg" aria-live="polite" data-shoe="${esc(X.shoeWrong)}" data-height="${esc(X.heightWrong)}"></p></div>
 <div class="bz-done" data-done="1" hidden><p class="bz-ok">${X.right1}</p>
-<div class="actions"><a class="btn btn-red" href="${X.buyHref}" data-fn="buy">${X.buy}</a><a class="btn btn-line" href="${X.probeHref}" data-fn="probe">${X.probe}</a></div>
+<div class="actions"><a class="btn btn-red" href="${X.buyHref}" data-fn="buy">${X.buy}</a></div><p class="small bz-probe"><a href="${X.probeHref}" data-fn="probe">${X.probe}</a></p>
 <p><button type="button" class="bz-more">${X.more}</button></p></div>
 <div class="bz-step" data-step="3" hidden><p>${X.c1}</p><div class="bz-candy"><div class="bz-pic">${note(en)}</div><div class="bz-pic">${board(en)}</div></div>
 <p class="bz-ans"><span>${X.yours}</span> <b class="bz-word" aria-live="polite">_ _ _</b> <button type="button" class="bz-del">${X.del}</button></p><p class="bz-msg" aria-live="polite" data-wrong="${esc(X.wrong2)}"></p></div>
 <div class="bz-done" data-done="2" hidden><p class="bz-ok">${X.right2}</p>
-<div class="actions"><a class="btn btn-red" href="${X.buyHref}" data-fn="buy">${X.buy}</a><a class="btn btn-line" href="${X.probeHref}" data-fn="probe">${X.probe}</a></div></div>
+<div class="actions"><a class="btn btn-red" href="${X.buyHref}" data-fn="buy">${X.buy}</a></div><p class="small bz-probe"><a href="${X.probeHref}" data-fn="probe">${X.probe}</a></p></div>
 </div></section><!-- /bonus -->
 `;
 }
