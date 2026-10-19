@@ -12,7 +12,7 @@
   function funnelPanel(F) {
     if (!F || !F.pages) return "";
     const rows = [["view", "Seite geladen"], ["s50", "halb gescrollt"], ["video", "Teaser im Bild"], ["ton", "Ton eingeschaltet"], ["s90", "bis unten gescrollt"],
-      ["probe", "Klick „Erste Frage gratis“"], ["probe_start", "Probe gestartet"], ["probe_q1", "Probe: Frage 1 gelöst"], ["probe_buy", "Probe → Kaufklick"], ["buy", "Kaufklick auf der Seite"]];
+      ["bz0", "Gratis-Rätsel angefangen"], ["bz1", "Gratis-Rätsel: Skelett gefunden"], ["bz2", "Gratis-Rätsel 1 gelöst"], ["bz3", "Gratis-Rätsel 2 (Candy-Code) gelöst"], ["probe", "Klick „Erste Frage gratis“"], ["probe_start", "Probe gestartet"], ["probe_q1", "Probe: Frage 1 gelöst"], ["probe_buy", "Probe → Kaufklick"], ["buy", "Kaufklick auf der Seite"]];
     const P = F.pages, de = P["specials-de"] || {}, en = P["specials-en"] || {};
     const pct = (x, b) => (b ? Math.round((x / b) * 100) + " %" : "–");
     const cell = (o, base) => `${(o.n30 || 0).toLocaleString("de-AT")}<br><span class="small">${pct(o.n30 || 0, base)}</span>`;

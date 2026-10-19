@@ -1343,3 +1343,4 @@ print("ok", len(P))
 # Fotokarten auf den Fallseiten (DE und EN) wieder einsetzen – die englischen Seiten wurden gerade neu geschrieben
 import subprocess
 subprocess.run(["node", os.path.join(os.path.dirname(os.path.abspath(__file__)), "site_bilder.mjs")], check=True)
+subprocess.run(["node", os.path.join(os.path.dirname(os.path.abspath(__file__)), "bonus_raetsel.mjs")], check=True)   # Gratis-Bonus-Rätsel Specials (19.10.2026)
