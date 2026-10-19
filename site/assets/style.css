@@ -664,5 +664,3 @@ a.inlink:hover{color:var(--red)}
 .bz-del{background:none;border:1px solid #9D93B3;color:#D9D3E6;border-radius:6px;padding:4px 10px;font:inherit;font-size:14px;cursor:pointer}
 .bz-hero a{color:inherit;font-weight:600}
 @media(min-width:820px){.bz-candy{grid-template-columns:1fr 1fr;align-items:start}}
-.bz-two{display:grid;gap:12px}.bz-two .bz-pic{margin-top:0}.bz-crop{max-width:190px}
-@media(min-width:620px){.bz-two{grid-template-columns:170px 1fr;align-items:end}.bz-crop{max-width:none}}

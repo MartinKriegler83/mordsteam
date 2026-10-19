@@ -31,15 +31,16 @@ function porch(en, crop = false) {
   const lab = (k) => (en ? `Skeleton ${"ABCD"["abcd".indexOf(k)]}` : `Skelett ${"ABCD"["abcd".indexOf(k)]}`);
   if (crop) fig.splice(0, fig.length, fig[2]);
   return `<svg viewBox="${crop ? "372 128 150 232" : `0 0 ${W} ${Hh}`}" role="img" aria-label="${esc(crop ? (en ? "Close-up: the skeleton suit next to the measuring post" : "Ausschnitt: der Skelett-Anzug neben der Messlatte") : en ? "Hank's porch camera: four skeletons, one next to a measuring post" : "Hanks Verandakamera: vier Skelette, eines neben einem Messpfosten")}" style="width:100%;display:block;background:${NIGHT}">${D.svg.replace(/id="(\w+?)(\d+)"/g, 'id="bz-$1$2"').replace(/url\(#(\w+?)(\d+)\)/g, "url(#bz-$1$2)")}
-<rect width="${W}" height="${F}" fill="${VIOLET}"/><rect x="0" y="60" width="${W}" height="${F - 60}" fill="#3F3344" ${o(2)}/>${[...Array(9)].map((_, i) => `<path d="M0,${80 + i * 30} L${W},${80 + i * 30}" stroke="#2A2230" stroke-width="2"/>`).join("")}
-<rect x="300" y="110" width="90" height="${F - 110}" fill="#241A20" ${o(3)}/><rect x="312" y="124" width="66" height="56" fill="#E7B66B" opacity=".5" ${o(2)}/><circle cx="378" cy="238" r="4" fill="#E9B44C"/>
+<rect width="${W}" height="${F}" fill="#120E18"/><rect x="0" y="60" width="${W}" height="${F - 60}" fill="#0F0C12" ${o(2)}/>${[...Array(9)].map((_, i) => `<path d="M0,${80 + i * 30} L${W},${80 + i * 30}" stroke="#1C1722" stroke-width="2"/>`).join("")}
+<rect x="300" y="110" width="90" height="${F - 110}" fill="#0B090D" ${o(3)}/><rect x="312" y="124" width="66" height="56" fill="#E7B66B" opacity=".22" ${o(2)}/><circle cx="378" cy="238" r="4" fill="#E9B44C"/>
+<rect x="0" y="${F - 16}" width="${W}" height="16" fill="#8A776A" ${o(2)}/>
 <path d="M0,60 L${W},60 L${W},44 L0,44 Z" fill="#2A2026" ${o(2)}/>${[...Array(12)].map((_, i) => `<circle cx="${30 + i * 52}" cy="${52 + (i % 2) * 6}" r="5" fill="${i % 3 === 0 ? ORANGE : i % 3 === 1 ? "#9B6BD6" : "#7FD36B"}" ${o(1.2)}/>`).join("")}
 <rect x="${post - 9}" y="60" width="18" height="${F - 60}" fill="#E9E1CF" ${o(2.4)}/>${marks}
 <g transform="translate(${post + 30},${F - 262}) rotate(-3)"><rect width="92" height="44" fill="${ORANGE}" ${o(2)}/>${T(46, 19, "HANK'S", 12, 800)}${T(46, 36, "HAUNTED PORCH", 10, 800)}</g>
 ${fig.map(([k, x, svg]) => crop ? svg : `${hit(k, x - 48, 120, 96, F - 100, lab(k))}${svg}</g>`).join("\n")}
 ${pumpkin(180, F + 4, 16)}${pumpkin(520, F + 6, 14)}${pumpkin(30, F + 8, 16, false)}
-<rect x="0" y="${F}" width="${W}" height="${Hh - F}" fill="#352B2E"/><path d="M0,${F} L${W},${F}" ${o(3)}/>
-<rect width="${W}" height="${Hh}" fill="url(#bz-d${D.id})" opacity=".14" pointer-events="none"/>
+<rect x="0" y="${F}" width="${W}" height="${Hh - F}" fill="#8A776A"/><path d="M0,${F} L${W},${F}" ${o(3)}/>
+<rect width="${W}" height="${Hh}" fill="#0A0810" opacity=".38" pointer-events="none"/><rect width="${W}" height="${Hh}" fill="url(#bz-d${D.id})" opacity=".14" pointer-events="none"/>
 <rect x="12" y="12" width="280" height="24" fill="#000" opacity=".55"/>${T(20, 29, "HANK · PORCH CAM · 10/31/2026 20:52:10", 12, 600, "#F2F2F2", "start")}
 <circle cx="${W - 54}" cy="24" r="6" fill="${RED}"/>${T(W - 20, 29, "REC", 12, 700, "#F2F2F2", "end")}
 </svg>`;
@@ -96,11 +97,11 @@ const TX = {
     aria: "Gratis-Rätsel", eyebrow: "Gratis-Rätsel · 2 Minuten · ohne Anmeldung",
     h2: "Nebenan bei Hank: Wer steckt im Anzug?",
     lead: "Ein kleiner Bonus-Fall aus der Hollow Lane – nicht Teil des Spiels, aber genau diese Art Rätsel wartet im echten Fall. Hank aus Nr. 18 hat drei Deko-Skelette gekauft. Auf seiner Verandakamera stehen vier.",
-    s1: "<b>Schritt 1 von 2:</b> Hanks Deko-Skelette sind aus Kunststoff – ganz weiß, mit Knochenfüßen. <b>Tipp auf das Skelett, das keines ist.</b>",
+    s1: "<b>Schritt 1 von 2:</b> Es ist dunkel auf Hanks Veranda. Seine Deko-Skelette sind aus Kunststoff, mit Knochenfüßen. <b>Tipp auf das Skelett, das keines ist.</b>",
     s1wrong: "Das ist Kunststoff. Schau genau auf die Füße.", s1right: "Erwischt! Unter dem Anzug steckt ein Mensch – mit Turnschuhen.",
-    s2: "<b>Schritt 2 von 2:</b> Diese vier waren vorher auf Hanks Party. Die Schuhe hat niemand gewechselt, und die Messlatte neben dem Anzug zeigt die Größe. <b>Tipp an, wer es war.</b> Hut, Kapuze und Ohren zählen bei der Größe nicht.",
+    s2: "<b>Schritt 2 von 2:</b> Diese vier waren vorher auf Hanks Party. Die Schuhe hat niemand gewechselt, und die Messlatte auf der Verandakamera zeigt die Größe. <b>Tipp an, wer es war.</b> Hut, Kapuze und Ohren zählen bei der Größe nicht.",
     shoeWrong: "Andere Schuhe – das kann nicht sein.", heightWrong: "Die Schuhe passen. Aber ist die Person so groß wie an der Messlatte?",
-    right1: "Richtig: <b>Josh</b> – schwarze Sneaker, genau 6 Fuß. Im echten Fall ist es kniffliger: Dort brauchst du auch die Kameras der Nachbarn – und das ist erst Frage 2 von 4.",
+    right1: "Richtig: <b>Josh</b> – schwarze Sneaker, genau 6 Fuß. Genau solche Rätsel warten im echten Fall – nur kniffliger.",
     again: "Nochmal ansehen", more: "Noch eins? Mias Candy-Code knacken →",
     c1: "<b>Bonus-Rätsel 2:</b> Mia (8) hat Hank eine Nachricht hinterlassen – im Candy-Code der Hollow-Lane-Kids. Die erste Süßigkeit eines Paars nennt die Zeile, die zweite die Spalte. <b>Tipp die drei Buchstaben der Reihe nach an.</b>",
     yours: "Deine Lösung:", del: "Löschen", wrong2: "Das ergibt kein Wort aus Mias Zettel – nochmal von vorne.",
@@ -112,11 +113,11 @@ const TX = {
     aria: "Free puzzle", eyebrow: "Free puzzle · 2 minutes · no sign-up",
     h2: "Next door at Hank’s: who’s in the suit?",
     lead: "A little bonus mystery from Hollow Lane – not part of the game, but exactly the kind of puzzle waiting in the real case. Hank from no. 18 bought three decoration skeletons. His porch camera shows four.",
-    s1: "<b>Step 1 of 2:</b> Hank’s decoration skeletons are plastic – all white, with bone feet. <b>Tap the skeleton that isn’t one.</b>",
+    s1: "<b>Step 1 of 2:</b> It’s dark on Hank’s porch. His decoration skeletons are plastic, with bone feet. <b>Tap the skeleton that isn’t one.</b>",
     s1wrong: "That’s plastic. Look closely at the feet.", s1right: "Got you! There’s a person in that suit – wearing sneakers.",
-    s2: "<b>Step 2 of 2:</b> These four were at Hank’s party earlier. Nobody changed shoes, and the measuring post next to the suit shows the height. <b>Tap who it was.</b> Hats, hoods and ears don’t count towards height.",
+    s2: "<b>Step 2 of 2:</b> These four were at Hank’s party earlier. Nobody changed shoes, and the measuring post on the porch camera shows the height. <b>Tap who it was.</b> Hats, hoods and ears don’t count towards height.",
     shoeWrong: "Different shoes – can’t be.", heightWrong: "The shoes match. But is that person as tall as the measuring post shows?",
-    right1: "Correct: <b>Josh</b> – black sneakers, exactly 6 feet. The real case is trickier: there you’ll need the neighbours’ cameras too – and that’s only question 2 of 4.",
+    right1: "Correct: <b>Josh</b> – black sneakers, exactly 6 feet. That’s the kind of puzzle waiting in the real case – only trickier.",
     again: "Look again", more: "One more? Crack Mia’s Candy Code →",
     c1: "<b>Bonus puzzle 2:</b> Mia (8) left Hank a message – in the Hollow Lane kids’ Candy Code. The first candy of a pair gives the row, the second the column. <b>Tap the three letters in order.</b>",
     yours: "Your answer:", del: "Clear", wrong2: "That doesn’t spell Mia’s message – start again.",
@@ -133,7 +134,7 @@ function block(en) {
 <h2 class="h2">${X.h2}</h2>
 <p class="lead">${X.lead}</p>
 <div class="bz-step" data-step="1"><p>${X.s1}</p><div class="bz-pic">${porch(en)}</div><p class="bz-msg" aria-live="polite" data-wrong="${esc(X.s1wrong)}" data-right="${esc(X.s1right)}"></p></div>
-<div class="bz-step" data-step="2" hidden><p>${X.s2}</p><div class="bz-two"><div class="bz-pic bz-crop">${porch(en, true)}</div><div class="bz-pic">${party(en)}</div></div><p class="bz-msg" aria-live="polite" data-shoe="${esc(X.shoeWrong)}" data-height="${esc(X.heightWrong)}"></p></div>
+<div class="bz-step" data-step="2" hidden><p>${X.s2}</p><div class="bz-pic">${party(en)}</div><p class="bz-msg" aria-live="polite" data-shoe="${esc(X.shoeWrong)}" data-height="${esc(X.heightWrong)}"></p></div>
 <div class="bz-done" data-done="1" hidden><p class="bz-ok">${X.right1}</p>
 <div class="actions"><a class="btn btn-red" href="${X.buyHref}" data-fn="buy">${X.buy}</a><a class="btn btn-line" href="${X.probeHref}" data-fn="probe">${X.probe}</a></div>
 <p><button type="button" class="bz-more">${X.more}</button></p></div>
