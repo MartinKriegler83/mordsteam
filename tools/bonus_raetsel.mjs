@@ -65,7 +65,7 @@ ${PARTY.map((p, i) => `${hit(p.key, xs[i] - 62, 60, 124, Hh + 10, p.name)}${pers
 <rect x="0" y="${F}" width="${W}" height="${Hh - F}" fill="#5B5550" pointer-events="none"/><path d="M0,${F} L${W},${F}" ${o(3)}/>
 ${pumpkin(22, F + 34, 16)}${pumpkin(W - 22, F + 36, 18)}
 ${PARTY.map((p, i) => `<text x="${xs[i]}" y="${Hh + 36}" text-anchor="middle" ${HAND} font-size="28" fill="#2B2B6B" pointer-events="none">${esc(p.name)}</text>`).join("")}
-<text x="${W / 2}" y="${Hh + 62}" text-anchor="middle" ${HAND} font-size="20" fill="#2B2B6B" pointer-events="none">${esc(en ? "Hank's party, 20:00 – nobody changed shoes" : "Hanks Party, 20:00 – Schuhe hat niemand gewechselt")}</text>
+<text x="${W / 2}" y="${Hh + 62}" text-anchor="middle" ${HAND} font-size="20" fill="#2B2B6B" pointer-events="none">${esc(en ? "Hank's party, 20:00" : "Hanks Party, 20:00")}</text>
 </svg>`;
 }
 
@@ -97,9 +97,9 @@ const TX = {
     aria: "Gratis-Rätsel", eyebrow: "Gratis-Rätsel · 2 Minuten · ohne Anmeldung",
     h2: "Nebenan bei Hank: Wer steckt im Anzug?",
     lead: "Ein kleiner Bonus-Fall aus der Hollow Lane – nicht Teil des Spiels, aber genau diese Art Rätsel wartet im echten Fall. Hank aus Nr. 18 hat drei Deko-Skelette gekauft. Auf seiner Verandakamera stehen vier.",
-    s1: "<b>Schritt 1 von 2:</b> Es ist dunkel auf Hanks Veranda. Seine Deko-Skelette sind aus Kunststoff, mit Knochenfüßen. <b>Tipp auf das Skelett, das keines ist.</b>",
+    s1: "<b>Schritt 1 von 2:</b> Es ist dunkel auf Hanks Veranda. <b>Tipp auf das Skelett, das keines ist.</b>",
     s1wrong: "Das ist Kunststoff. Schau genau auf die Füße.", s1right: "Erwischt! Unter dem Anzug steckt ein Mensch – mit Turnschuhen.",
-    s2: "<b>Schritt 2 von 2:</b> Diese vier waren vorher auf Hanks Party. Die Schuhe hat niemand gewechselt, und die Messlatte auf der Verandakamera zeigt die Größe. <b>Tipp an, wer es war.</b> Hut, Kapuze und Ohren zählen bei der Größe nicht.",
+    s2: "<b>Schritt 2 von 2:</b> Diese vier waren vorher auf Hanks Party. <b>Tipp an, wer es war.</b>",
     shoeWrong: "Andere Schuhe – das kann nicht sein.", heightWrong: "Die Schuhe passen. Aber ist die Person so groß wie an der Messlatte?",
     right1: "Richtig: <b>Josh</b> – schwarze Sneaker, genau 6 Fuß. Genau solche Rätsel warten im echten Fall – nur kniffliger.",
     again: "Nochmal ansehen", more: "Noch eins? Mias Candy-Code knacken →",
@@ -113,9 +113,9 @@ const TX = {
     aria: "Free puzzle", eyebrow: "Free puzzle · 2 minutes · no sign-up",
     h2: "Next door at Hank’s: who’s in the suit?",
     lead: "A little bonus mystery from Hollow Lane – not part of the game, but exactly the kind of puzzle waiting in the real case. Hank from no. 18 bought three decoration skeletons. His porch camera shows four.",
-    s1: "<b>Step 1 of 2:</b> It’s dark on Hank’s porch. His decoration skeletons are plastic, with bone feet. <b>Tap the skeleton that isn’t one.</b>",
+    s1: "<b>Step 1 of 2:</b> It’s dark on Hank’s porch. <b>Tap the skeleton that isn’t one.</b>",
     s1wrong: "That’s plastic. Look closely at the feet.", s1right: "Got you! There’s a person in that suit – wearing sneakers.",
-    s2: "<b>Step 2 of 2:</b> These four were at Hank’s party earlier. Nobody changed shoes, and the measuring post on the porch camera shows the height. <b>Tap who it was.</b> Hats, hoods and ears don’t count towards height.",
+    s2: "<b>Step 2 of 2:</b> These four were at Hank’s party earlier. <b>Tap who it was.</b>",
     shoeWrong: "Different shoes – can’t be.", heightWrong: "The shoes match. But is that person as tall as the measuring post shows?",
     right1: "Correct: <b>Josh</b> – black sneakers, exactly 6 feet. That’s the kind of puzzle waiting in the real case – only trickier.",
     again: "Look again", more: "One more? Crack Mia’s Candy Code →",
