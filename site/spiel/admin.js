@@ -583,7 +583,7 @@
   function render(sessions, orders = [], stats = {}) {
     last = [sessions, orders, stats];
     const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Vienna" }).format(new Date());
-    root.innerHTML = `<div class="stack" style="gap:22px;max-width:980px">
+    root.innerHTML = `<div class="stack" style="gap:22px;max-width:${tab === "brightpage" ? "none" : "980px"}">
       ${tabBar()}
       ${tab === "runden" ? `${created ? `<div class="panel" style="border-color:var(--red)"><div class="eyebrow">Runde angelegt</div>
         <p style="margin:8px 0">Spielcode für Teams: <span class="bigcode" style="font-size:26px">${created.join_code}</span></p>

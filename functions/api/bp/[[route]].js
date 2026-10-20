@@ -4,6 +4,7 @@ import { json, fail, badBody } from "../../../lib/game.js";
 import { adminDenied } from "../../../lib/adminauth.js";
 import { auftragListe, auftragNeu, auftragSave, auftragStatus, auftragNotiz, auftragZeit, auftragLoeschen, anfrageEingang } from "../../../lib/bpauftrag.js";
 import { angeboteListe, angebotSave, angebotFreigeben, angebotStatus, angebotVorschau, rechnungLink, angebotWarnungen, rechnungAdminHtml, schlussAusAngebot, bpKeyOk, htmlPage, publicAngebot, publicAnnahme, publicRechnung } from "../../../lib/bpangebot.js";
+import { publicFormular, publicFormularPost, publicAnleitung, publicAV, publicUebergabe, publicUebergabePost, uebergabeSave, uebergabeVorlage, nachfassWarnungen, formAbschnitte, anleitungenFuer } from "../../../lib/bpkunde.js";
 import { bpOverview, bpConfigSave, kundeSave, kundeDelete, rechnungSave, rechnungAusstellen, rechnungBezahlt, rechnungStorno, aboSave, aboRechnungen } from "../../../lib/brightpage.js";
 
 export async function onRequest({ request, env, params }) {
@@ -22,6 +23,13 @@ export async function onRequest({ request, env, params }) {
     if (art === "angebot" && request.method === "GET") return publicAngebot(env, tok);
     if (art === "angebot" && request.method === "POST") { let f; try { f = await request.formData(); } catch { f = new FormData(); } return publicAnnahme(env, tok, f, request.headers.get("x-bp-ip") || ""); }
     if (art === "rechnung" && request.method === "GET") return publicRechnung(env, tok, new URL(request.url).searchParams.get("neu") === "1");
+    const form = async () => { try { return await request.formData(); } catch { return new FormData(); } }, ip = request.headers.get("x-bp-ip") || "";
+    if (art === "formular" && request.method === "GET") return publicFormular(env, tok, new URL(request.url));
+    if (art === "formular" && request.method === "POST") return publicFormularPost(env, tok, await form(), ip);
+    if (art === "uebergabe" && request.method === "GET") return publicUebergabe(env, tok);
+    if (art === "uebergabe" && request.method === "POST") return publicUebergabePost(env, tok, await form(), ip);
+    if (art === "anleitung" && request.method === "GET") return publicAnleitung(env, tok);
+    if (art === "av" && request.method === "GET") return publicAV(env);
     return htmlPage("Nicht gefunden.", 404);
   }
   if (!route.startsWith("admin/")) return fail("Nicht gefunden.", 404);
@@ -30,8 +38,10 @@ export async function onRequest({ request, env, params }) {
   const body = async () => { try { return await request.json(); } catch { return {}; } };
   try {
     if (route === "admin/daten" && m === "GET") return json(await bpOverview(env));
-    if (route === "admin/auftraege" && m === "GET") { const d = await auftragListe(env); d.warn = [...(await angebotWarnungen(env)), ...d.warn]; return json(d); }
-    if (route === "admin/angebote" && m === "GET") return json(await angeboteListe(env, new URL(request.url).searchParams.get("auftrag") || ""));
+    if (route === "admin/auftraege" && m === "GET") { const d = await auftragListe(env); d.warn = [...(await angebotWarnungen(env)), ...(await nachfassWarnungen(env)), ...d.warn]; return json(d); }
+    if (route === "admin/angebote" && m === "GET") { const id = new URL(request.url).searchParams.get("auftrag") || "", d = await angeboteListe(env, id);
+      const au = await env.DB.prepare("SELECT produkte FROM bp_auftraege WHERE id=?").bind(id).first(); const pr = au ? JSON.parse(au.produkte || "[]") : [];
+      return json({ ...d, formular_def: formAbschnitte(pr), anleitungen: anleitungenFuer(pr), uebergabe_vorlage: await uebergabeVorlage(env, id) }); }
     if (m !== "POST") return fail("Nicht gefunden.", 404);
     const b = await body();
     if (route === "admin/auftrag/neu") return json(await auftragNeu(env, b));
@@ -45,6 +55,7 @@ export async function onRequest({ request, env, params }) {
     if (route === "admin/angebot/status") return json(await angebotStatus(env, b));
     if (route === "admin/angebot/vorschau") return json(await angebotVorschau(env, b));
     if (route === "admin/rechnung/html") return json(await rechnungAdminHtml(env, b));
+    if (route === "admin/auftrag/uebergabe") return json(await uebergabeSave(env, b));
     if (route === "admin/auftrag/schluss") return json(await schlussAusAngebot(env, b));
     if (route === "admin/rechnung/link") return json(await rechnungLink(env, b));
     if (route === "admin/einstellungen") return json(await bpConfigSave(env, b));

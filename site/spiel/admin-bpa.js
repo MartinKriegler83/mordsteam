@@ -11,7 +11,7 @@
   const dt = (ms) => new Date(ms).toLocaleString("de-AT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
   const KLINK = "https://brightpage.net/k/";
   let el = null, H = null, D = null, open = null, filter = "offen", neu = false, msg = "", errMsg = "";
-  let AN = null, anFor = null, edit = null, aufSteps = new Set(), mailDlg = null, kontaktEdit = false, payFor = null;
+  let AN = null, anFor = null, edit = null, aufSteps = new Set(), mailDlg = null, kontaktEdit = false, payFor = null, curStep = 0, rStep = 0, zeigFormular = false;
 
   async function api(method, path, body) {
     const r = await fetch("/api/bp/admin/" + path, { method, headers: { "content-type": "application/json", ...H() }, body: body ? JSON.stringify(body) : undefined });
@@ -83,6 +83,14 @@
       (r && r.token ? P(en ? `Here is your advance invoice <b>${esc(r.nr)}</b> (${eur(r.summe_cents)}, due ${dat(r.faellig)}) – payable by bank transfer or QR code in your banking app:` : `Hier ist Ihre Anzahlungsrechnung <b>${esc(r.nr)}</b> (${eur(r.summe_cents)}, fällig am ${dat(r.faellig)}) – per Überweisung oder QR-Code in der Banking-App:`) + btn(en ? "View invoice" : "Rechnung ansehen", KLINK + "rechnung/" + r.token) : "") +
       P(en ? "Next step: you'll shortly receive our order form for your texts, pictures and access details. We start as soon as the advance payment and your material have arrived." : "Nächster Schritt: Sie bekommen in Kürze unser Auftragsformular für Texte, Bilder und Zugänge. Wir beginnen, sobald Anzahlung und Unterlagen da sind.") +
       P(`<a href="${KLINK}angebot/${esc(x.token)}">${en ? "Your accepted quote" : "Ihr angenommenes Angebot"} ${esc(x.nr)}</a>`) }; }
+    if (art === "formular") { const G = (AN && AN.anleitungen) || []; return { to, lang, subject: en ? "Your order form – Brightpage" : "Ihr Auftragsformular – Brightpage", body:
+      P(anrede(lang, name)) + P(en ? "to get started we need a few details: your business details for the imprint, your design wishes, content and domain. You can save in between and continue later." : "damit wir loslegen können, brauchen wir ein paar Angaben: Firmendaten fürs Impressum, Ihre Design-Wünsche, Inhalte und Domain. Sie können zwischendurch speichern und später weitermachen.") +
+      btn(en ? "Open order form" : "Auftragsformular öffnen", KLINK + "formular/" + a.token) +
+      (G.length ? P(en ? "A few short steps you do yourself (a few minutes each, never send us passwords):" : "Ein paar kurze Schritte machen Sie selbst – je ein paar Minuten, Passwörter bitte nie an uns schicken:") + UL(G.map((g) => `<a href="${KLINK}anleitung/${g.key}">${esc(g.titel)}</a>`)) : "") +
+      P(en ? "We start as soon as the form and the advance payment have arrived." : "Wir beginnen, sobald Formular und Anzahlung da sind.") }; }
+    if (art === "uebergabe") return { to, lang, subject: en ? "Your website is live – handover record" : "Ihre Website ist online – Übergabeprotokoll", body:
+      P(anrede(lang, name)) + P(en ? "your website is live! Here is the handover record with everything we set up and handed over. Please check it and confirm with one click." : "Ihre Website ist online! Hier ist das Übergabeprotokoll mit allem, was wir eingerichtet und übergeben haben. Bitte kurz durchsehen und mit einem Klick bestätigen.") +
+      btn(en ? "View and confirm" : "Protokoll ansehen und bestätigen", KLINK + "uebergabe/" + a.token) + P(en ? "After confirmation you'll receive the final invoice." : "Nach der Bestätigung bekommen Sie die Schlussrechnung.") };
     if (art === "vorschau") return { to, lang, subject: en ? "Your new website – preview" : "Ihre neue Website – Vorschau", body:
       P(anrede(lang, name)) + P(en ? "your new website is ready for a first look! Please take your time and collect all requests for changes in one e-mail – two rounds of corrections are included." : "Ihre neue Website ist bereit für einen ersten Blick! Nehmen Sie sich Zeit und sammeln Sie alle Änderungswünsche in einer Mail – zwei Korrekturrunden sind inklusive.") +
       btn(en ? "Open preview" : "Vorschau öffnen", "https://[vorschau-adresse]") + P(en ? "The preview is not visible to search engines." : "Die Vorschau ist für Suchmaschinen unsichtbar.") };
@@ -178,7 +186,8 @@
   }
 
   // ---------- Bausteine ----------
-  const nextBtn = (st, label, cls = "btn btn-ink") => `<button class="${cls}" type="button" data-bpanext="${st}">${label}</button>`;
+  // „weiter“-Knöpfe nur im aktuellen Schritt – ein erledigter Schritt setzt die Station nie zurück
+  const nextBtn = (st, label, cls = "btn btn-ink") => (rStep !== curStep ? "" : `<button class="${cls}" type="button" data-bpanext="${st}">${label}</button>`);
   const mailBtn = (art, id = "", label = "Mail vorbereiten") => `<button class="tipbtn" type="button" data-bpamail="${art}" data-x="${id}">✉ ${label}</button>`;
   const ckItem = (a, key, label) => `<div><label class="small"><input type="checkbox" data-bpack="${key}" ${a.checkliste[key] ? "checked" : ""}> ${esc(label)}${a.checkliste[key] ? ` <span class="muted">(${dat(a.checkliste[key])})</span>` : ""}</label></div>`;
   const basisLabel = (k) => (D.check.basis.find((c) => c[0] === k) || [k, k])[1];
@@ -236,6 +245,7 @@
             ${x.token ? ` <button class="tipbtn" data-bpacopy="${KLINK}angebot/${x.token}">Link kopieren</button>` : ""}${x.status === "gesendet" ? " " + mailBtn("angebot", x.id, "Angebots-Mail") : ""}
             ${["gesendet", "abgelaufen"].includes(x.status) ? ` <button class="tipbtn" data-bpaast="${x.id}:abgelehnt">Abgelehnt</button>` : ""}${x.status === "entwurf" ? ` <button class="tipbtn" data-bpaast="${x.id}:loeschen">Löschen</button>` : ""}</td></tr>`).join("")}</table></div>` : ""}
       ${edit ? editor(a, edit) : L.some((x) => x.status === "angenommen") ? "" : `<p style="margin-top:10px"><button class="btn btn-ink" type="button" id="bpa-anneu">${L.length ? "Weiteres Angebot" : "Angebot erstellen"}${a.produkte.length ? " (Positionen aus Schritt 2)" : ""}</button></p>`}
+      ${L.some((x) => x.status === "angenommen") ? `<div style="margin-top:12px">${nextBtn("auftrag", "Angebot angenommen → weiter zu 4 Auftrag und Anzahlung")}</div>` : `<div style="margin-top:12px">${nextBtn("auftrag", "Kunde hat anders zugesagt (z. B. per Mail) → weiter zu 4", "tipbtn")}</div>`}
       <ol class="small" style="margin:10px 0 0 18px;line-height:1.6"><li>Angebot erstellen, Positionen prüfen, <b>Vorschau</b></li><li><b>Freigeben</b> – Nummer, Kundenlink, 30 Tage gültig</li><li><b>Angebots-Mail</b> vorbereiten und selbst senden</li><li>Kunde nimmt online an → Schritt 4 öffnet sich automatisch</li></ol>`;
   }
   function posEdit(p, i) {
@@ -285,11 +295,38 @@
       ${K ? `<p class="small"><b>${esc(K.firma || K.name)}</b>${K.firma && K.name ? ", " + esc(K.name) : ""} · ${esc(K.strasse)}, ${esc(((K.plz || "") + " " + (K.ort || "")).trim() || K.plz_ort || "")} · ${esc(K.email || "")} <button class="tipbtn" type="button" data-bpkunde="${K.id}">In der Kundendatenbank öffnen</button></p>` : `<p class="small muted">Der Kunde wird bei der Online-Annahme automatisch in der Kundendatenbank angelegt.</p>`}
       <div class="eyebrow" style="margin-top:12px">b · Anzahlung</div>
       ${anz ? rechnungZeile(anz) : `<p class="small muted">${x && !x.rechnung_id ? "Ohne Anzahlung angenommen." : "Noch keine Anzahlungsrechnung."}</p>`}
-      ${x ? `<div style="margin-top:8px">${mailBtn("bestaetigung", x.id, "Auftragsbestätigung mit Rechnungslink")}</div>` : ""}
-      <div class="eyebrow" style="margin-top:12px">c · Unterlagen</div>
-      ${["anzahlung", "formular", "zustimmungen"].map((k) => ckItem(a, "basis:" + k, basisLabel(k))).join("")}
-      <p class="small muted">Das Auftragsformular per Link kommt mit dem nächsten Ausbau – bis dahin Texte, Bilder, Logo und Zugänge per Mail anfordern.</p>
+      ${x ? `<div style="margin-top:8px">${mailBtn("bestaetigung", x.id, anz ? "Auftragsbestätigung mit Rechnungslink" : "Auftragsbestätigung")}</div>` : ""}
+      <div class="eyebrow" style="margin-top:14px">c · Auftragsformular und Anleitungen</div>
+      ${formularBlock(a)}
+      <div style="margin-top:10px">${["anzahlung", "formular", "zustimmungen"].map((k) => ckItem(a, "basis:" + k, basisLabel(k))).join("")}</div>
       <div style="margin-top:12px">${nextBtn("bau", "Anzahlung und Unterlagen da → weiter zu 5 Bau")}</div>`;
+  }
+  function formularBlock(a) {
+    const F = a.formular || {}, link = KLINK + "formular/" + a.token, G = (AN && AN.anleitungen) || [];
+    const st = F.eingereicht_at ? `<span class="chip fin">eingereicht ${dt(F.eingereicht_at)}</span>` : F.gespeichert_at ? `<span class="chip open">zwischengespeichert ${dt(F.gespeichert_at)}</span>` : `<span class="chip">noch nicht ausgefüllt</span>`;
+    return `<p class="small" style="margin:6px 0">${st}</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${mailBtn("formular", "", "Formular-Mail mit Anleitungen")}<button class="tipbtn" type="button" data-bpacopy="${link}">Formular-Link kopieren</button>${F.gespeichert_at ? `<button class="tipbtn" type="button" id="bpa-fzeig">${zeigFormular ? "Antworten ausblenden" : "Antworten ansehen"}</button>` : ""}</div>
+      ${zeigFormular && F.daten ? formularAntworten(F) : ""}
+      ${G.length ? `<p class="small" style="margin:10px 0 4px"><b>Anleitungen für diesen Kunden</b> (stehen auch im Formular):</p>${G.map((g) => `<div class="small" style="display:flex;gap:8px;align-items:center;margin:3px 0">${esc(g.titel)} <button class="tipbtn" type="button" data-bpacopy="${KLINK}anleitung/${g.key}">Link</button></div>`).join("")}` : ""}`;
+  }
+  function formularAntworten(F) {
+    const d = F.daten || {}, Z = F.zustimmungen || {};
+    const val = (f) => { const v = d[f[0]]; return f[2] === "check" ? (v ? `✓ zugestimmt${Z[f[0]] ? " am " + dt(Z[f[0]].at) : ""}` : "–") : Array.isArray(v) ? v.join(", ") : v || "–"; };
+    return `<div style="margin-top:10px;border:1px solid var(--line,#ddd);border-radius:10px;padding:10px 12px;background:#faf7f0">${(AN.formular_def || []).map((x) => `<div style="margin:8px 0"><b class="small" style="color:#9A5C06">${esc(x.t)}</b>
+      <table class="grid small" style="margin-top:4px">${x.felder.map((f) => `<tr><td style="width:38%">${esc(f[1].replace(/\s*\(.*$/, "").slice(0, 70))}</td><td style="white-space:pre-wrap">${esc(val(f))}</td></tr>`).join("")}</table></div>`).join("")}</div>`;
+  }
+  function protokollBlock(a) {
+    const U = a.uebergabe || {}, V = (AN && AN.uebergabe_vorlage) || { punkte: [], hinweise: "" }, punkte = U.punkte && U.punkte.length ? U.punkte : V.punkte;
+    if (U.bestaetigt) return `<p><span class="chip fin">bestätigt</span> am ${dat(U.bestaetigt.datum)} um ${esc(U.bestaetigt.zeit)} von <b>${esc(U.bestaetigt.name)}</b> <button class="tipbtn" type="button" data-bpacopy="${KLINK}uebergabe/${a.token}">Link kopieren</button></p>`;
+    return `${U.freigegeben_at ? `<p class="small"><span class="chip open">freigegeben, wartet auf Bestätigung</span> ${mailBtn("uebergabe", "", "Protokoll-Mail")} <button class="tipbtn" type="button" data-bpacopy="${KLINK}uebergabe/${a.token}">Link kopieren</button></p>` : ""}
+      <form id="bpa-ueb" style="margin-top:6px">
+        <div class="two"><div class="field"><label>Website-Adresse</label><input name="website" value="${esc(U.website || a.website || "")}" placeholder="www.beispiel.at"></div><div class="field"><label>Einschulung am</label><input type="date" name="einschulung" value="${esc(U.einschulung || "")}"></div></div>
+        <div class="small" style="font-weight:600;margin:6px 0 2px">Übergeben und geprüft</div>
+        ${punkte.map((p, i) => `<div style="display:flex;gap:8px;align-items:center;margin:3px 0"><input type="checkbox" name="pok_${i}" ${p.ok ? "checked" : ""}><input name="pt_${i}" value="${esc(p.t)}" style="flex:1;min-width:0"></div>`).join("")}
+        <div style="display:flex;gap:8px;align-items:center;margin:3px 0"><input type="checkbox" name="pok_${punkte.length}" checked><input name="pt_${punkte.length}" placeholder="weiterer Punkt (optional)" style="flex:1;min-width:0"></div>
+        <div class="field"><label>Offene Punkte (optional)</label><textarea name="offen" rows="2">${esc(U.offen || "")}</textarea></div>
+        <div class="field"><label>Gut zu wissen (eine Zeile je Hinweis)</label><textarea name="hinweise" rows="4">${esc(U.hinweise ?? V.hinweise)}</textarea></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="tipbtn" type="submit" data-fr="0">Speichern</button><button class="btn btn-ink" type="submit" data-fr="1">${U.freigegeben_at ? "Speichern (Kunde sieht es sofort)" : "Speichern und zur Bestätigung freigeben"}</button></div></form>`;
   }
   function prodChecks(a, golive) {
     const groups = a.produkte.filter((p) => D.check[p]).map((p) => [p, prodName(p), D.check[p].filter(([k]) => GOLIVE.has(k) === golive)]).filter((g) => g[2].length);
@@ -304,8 +341,9 @@
   }
   function step6(a) {
     return `${prodChecks(a, true)}
+      <div class="eyebrow" style="margin-top:14px">Übergabeprotokoll</div>
+      ${protokollBlock(a)}
       <div style="margin-top:10px">${ckItem(a, "basis:uebergabe", basisLabel("uebergabe"))}</div>
-      <p class="small muted">Übergabeprotokoll mit Bestätigung per Klick kommt mit dem nächsten Ausbau – bis dahin die Einschulung kurz per Mail bestätigen lassen.</p>
       <div style="margin-top:12px">${nextBtn("schluss", "Übergeben → weiter zu 7 Schlussrechnung")}</div>`;
   }
   function step7(a) {
@@ -372,7 +410,7 @@
         ${a.status === "verloren" ? `<p class="err">Verloren${a.verloren_grund ? ": " + esc(a.verloren_grund) : ""}</p>` : `<div style="display:grid;grid-template-columns:repeat(8,1fr);gap:3px;margin-top:10px">${STEPS.map(([n, t]) => `<div title="${esc(t)}" style="height:6px;border-radius:3px;background:${n < cur ? "#2F7D4F" : n === cur ? "#D9820B" : "var(--line,#ddd)"}"></div>`).join("")}</div>`}
       </div>
       <div class="bpa-grid">
-        <div>${STEPS.map(([n, t]) => { const isOpen = n === cur || aufSteps.has(n), done = n < cur;
+        <div>${STEPS.map(([n, t]) => { const isOpen = (n === cur) !== aufSteps.has(n), done = n < cur; curStep = cur; rStep = n;
           return `<section class="panel" style="margin:0 0 10px;${n === cur ? "border-left:4px solid #D9820B" : ""}">
             <button type="button" data-bpastep="${n}" style="all:unset;cursor:pointer;display:flex;gap:12px;align-items:center;width:100%">
               <span style="flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;${done ? "background:#2F7D4F;color:#fff" : n === cur ? "background:#D9820B;color:#15171C" : "background:var(--line,#e5e2db);color:#555"}">${done ? "✓" : n}</span>
@@ -476,6 +514,12 @@
         const key = r && r.typ === "anzahlung" ? "basis:anzahlung" : r && r.typ === "schluss" ? "basis:bezahlt" : ""; if (key) await api("POST", "auftrag", { id: a.id, checkliste: { [key]: true } }); }, "Als bezahlt gebucht – zählt jetzt zu den Einnahmen."); }));
     $$("[data-bpaissue]").forEach((x) => (x.onclick = () => { if (confirm("Rechnung jetzt ausstellen? Sie bekommt die nächste Nummer und lässt sich danach nicht mehr ändern."))
       act(async () => { await api("POST", "rechnung/ausstellen", { id: x.dataset.bpaissue }); await api("POST", "rechnung/link", { id: x.dataset.bpaissue }); await api("POST", "auftrag", { id: a.id, checkliste: { "basis:schluss": true } }); }, "Ausgestellt – jetzt „Rechnungs-Mail“ vorbereiten."); }));
+    const fz = $("#bpa-fzeig"); if (fz) fz.onclick = () => { zeigFormular = !zeigFormular; paint(); };
+    const uf = $("#bpa-ueb");
+    if (uf) { let fr = "0"; uf.querySelectorAll("button[type=submit]").forEach((b) => b.addEventListener("click", () => (fr = b.dataset.fr)));
+      uf.onsubmit = (e) => { e.preventDefault(); const punkte = []; for (let i = 0; uf["pt_" + i]; i++) punkte.push({ t: uf["pt_" + i].value, ok: uf["pok_" + i].checked });
+        if (fr === "1" && !confirm("Protokoll zur Bestätigung freigeben? Danach „Protokoll-Mail“ vorbereiten und selbst senden.")) return;
+        act(() => api("POST", "auftrag/uebergabe", { id: a.id, website: uf.website.value, einschulung: uf.einschulung.value, punkte, offen: uf.offen.value, hinweise: uf.hinweise.value, freigeben: fr === "1" }), fr === "1" ? "Freigegeben – jetzt „Protokoll-Mail“ vorbereiten." : "Protokoll gespeichert."); }; }
     const sb = $("#bpa-schluss"); if (sb) sb.onclick = () => act(() => api("POST", "auftrag/schluss", { auftrag_id: a.id }), "Schlussrechnung als Entwurf angelegt – prüfen und ausstellen.");
     $$("[data-bpaabo]").forEach((x) => (x.onclick = () => { const [titel, cents] = x.dataset.bpaabo.split("|"); const d = new Date(D.today + "T12:00:00Z"); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() + 1);
       act(() => api("POST", "abo", { kunde_id: a.kunde_id, titel, preis: (Number(cents) / 100).toFixed(2).replace(".", ","), rhythmus: "monat", start: d.toISOString().slice(0, 7) }), "Abo angelegt – Rechnungen entstehen unter Brightpage → Abos."); }));
