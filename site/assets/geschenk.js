@@ -130,7 +130,7 @@
         <ol class="gk-steps">${card.steps.map((x) => `<li>${x}</li>`).join("")}</ol>
         ${d.promo ? `<div class="gk-promo"><small>${esc(T("Beweisstück 2 · Bonus für euer Team", "Exhibit 2 · Bonus for your team"))}</small><b>${esc(T(d.promo_label, enAmt(d.promo_label)))}</b><span>${esc(T("Rabatt auf euer erstes Mordsteam-Teams-Event, das Krimi-Teamevent für Firmen und Vereine. Code im Bezahlschritt eingeben:", "off your first Mordsteam Teams event, the murder mystery team event for companies and clubs. Enter the code at checkout:"))} <span class="mono">${esc(d.promo)}</span> · ${esc(T("gültig bis", "valid until"))} ${esc(dmy(d.promo_until))} · mordsteam.com/teams</span></div>` : ""}
       </div>
-      <footer class="gk-foot"><span>${until ? `${esc(T("Gültig bis", "Valid until"))} <b>${esc(until)}</b>` : ""}</span><span><b>mordsteam.com</b></span></footer>
+      <footer class="gk-foot"><span>${until ? `${esc(T("Spielbar bis", "Playable until"))} <b>${esc(until)}</b>${esc(T(" · danach Erstattung möglich", " · refundable afterwards"))}` : ""}</span><span><b>mordsteam.com</b></span></footer>
     </article></div>`;
     // Widmung: höchstens 3 Zeilen auf der Karteikarte
     const ta = document.getElementById("gk-ded");
