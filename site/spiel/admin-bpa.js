@@ -11,7 +11,7 @@
   const dt = (ms) => new Date(ms).toLocaleString("de-AT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
   const KLINK = "https://brightpage.net/k/";
   let el = null, H = null, D = null, open = null, filter = "offen", neu = false, msg = "", errMsg = "";
-  let AN = null, anFor = null, edit = null, aufSteps = new Set(), mailDlg = null, kontaktEdit = false, payFor = null, curStep = 0, rStep = 0, zeigFormular = false;
+  let AN = null, anFor = null, edit = null, aufSteps = new Set(), mailDlg = null, kontaktEdit = false, payFor = null, curStep = 0, rStep = 0, zeigFormular = false, prodVorschlag = null;
 
   async function api(method, path, body) {
     const r = await fetch("/api/bp/admin/" + path, { method, headers: { "content-type": "application/json", ...H() }, body: body ? JSON.stringify(body) : undefined });
@@ -48,7 +48,7 @@
   // Fließtext ohne feste Farbe, damit das Mailprogramm ihn im dunklen Modus selbst hell stellt.
   function mailHtml(lang, body) {
     const en = lang === "en";
-    return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;max-width:620px;width:100%">
+    return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%">
 <tr><td style="background:#15171C;padding:20px 26px;border-radius:12px 12px 0 0"><span style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:700;letter-spacing:1.5px;color:#D9820B">BRIGHT</span><span style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:700;letter-spacing:1.5px;color:#F3EFE6">PAGE</span>
 <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#B9BCC3;margin-top:4px">${en ? "Websites, shops and AI helpers for small businesses" : "Websites, Shops und KI-Helfer für Betriebe"}</div></td></tr>
 <tr><td style="height:4px;line-height:4px;font-size:0;background:#D9820B">&nbsp;</td></tr>
@@ -81,6 +81,7 @@
     if (art === "bestaetigung") { const r = R.find((y) => y.id === x.rechnung_id); return { to, lang, subject: en ? `Order confirmation ${x.nr} – Brightpage` : `Auftragsbestätigung ${x.nr} – Brightpage`, body:
       P(anrede(lang, name)) + P(en ? "thank you for your order – we're looking forward to working with you!" : "vielen Dank für Ihren Auftrag – wir freuen uns auf die Zusammenarbeit!") +
       (r && r.token ? P(en ? `Here is your advance invoice <b>${esc(r.nr)}</b> (${eur(r.summe_cents)}, due ${dat(r.faellig)}) – payable by bank transfer or QR code in your banking app:` : `Hier ist Ihre Anzahlungsrechnung <b>${esc(r.nr)}</b> (${eur(r.summe_cents)}, fällig am ${dat(r.faellig)}) – per Überweisung oder QR-Code in der Banking-App:`) + btn(en ? "View invoice" : "Rechnung ansehen", KLINK + "rechnung/" + r.token) : "") +
+      (x.annahme && x.annahme.fruehstart ? P(en ? "<b>Your request for an early start:</b> you asked us to begin before the 14-day withdrawal period ends. You know that if you withdraw you pay a proportionate amount for the work done, and that your right of withdrawal expires once the service has been fully performed." : "<b>Ihr Wunsch nach vorzeitigem Beginn:</b> Sie haben verlangt, dass wir schon vor Ende der 14-tägigen Widerrufsfrist beginnen. Ihnen ist bekannt, dass Sie bei einem Widerruf einen anteiligen Betrag für bereits erbrachte Leistungen zahlen und dass Ihr Widerrufsrecht bei vollständiger Erbringung erlischt.") : x.kunde && x.kunde.art === "b2c" ? P(en ? `You may withdraw within 14 days of acceptance (<a href="${KLINK}widerruf">model withdrawal form</a>); we start after the withdrawal period.` : `Sie können binnen 14 Tagen ab Annahme widerrufen (<a href="${KLINK}widerruf">Muster-Widerrufsformular</a>); wir beginnen nach Ablauf der Widerrufsfrist.`) : "") +
       P(en ? "Next step: you'll shortly receive our order form for your texts, pictures and access details. We start as soon as the advance payment and your material have arrived." : "Nächster Schritt: Sie bekommen in Kürze unser Auftragsformular für Texte, Bilder und Zugänge. Wir beginnen, sobald Anzahlung und Unterlagen da sind.") +
       P(`<a href="${KLINK}angebot/${esc(x.token)}">${en ? "Your accepted quote" : "Ihr angenommenes Angebot"} ${esc(x.nr)}</a>`) }; }
     if (art === "formular") { const G = (AN && AN.anleitungen) || []; return { to, lang, subject: en ? "Your order form – Brightpage" : "Ihr Auftragsformular – Brightpage", body:
@@ -185,6 +186,22 @@
       <div style="display:flex;gap:8px"><button class="btn btn-ink" type="submit">Anfrage anlegen</button><button class="tipbtn" type="button" id="bpa-nfx">Abbrechen</button></div></form>`;
   }
 
+  // Produkt-Vorauswahl aus dem Leitfaden: Schnellauswahl zuerst, sonst Stichworte in den Notizen
+  const STICH = [[/web\s*shop|online.?shop|\bshop\b/i, "shop-start"], [/newsletter/i, "newsletter"], [/google|maps|gefunden/i, "gefunden"], [/werbung|anzeige|\bads\b/i, "werbung"],
+    [/instagram|facebook|social/i, "social"], [/fotograf|fotos vor ort|fotoshooting/i, "fotos"], [/\bki\b|chatbot|faq.?assistent/i, "ki"], [/calendly|buchungssystem|online.?buchung/i, "termin-a"], [/texte schreiben|wir schreiben/i, "texte"]];
+  function vorschlagAusLeitfaden(lf) {
+    const set = new Set();
+    D.leitfaden.forEach(([k, , , w]) => { const v = lf[k] || {};
+      if (w && v.wahl && v.wahl.length) v.wahl.forEach((o) => { const p = (w.opts.find((x) => x[0] === o) || [])[1]; if (p) set.add(p); });
+      else if (v.text) STICH.forEach(([re, p]) => { if (re.test(v.text)) set.add(p); }); });
+    if (set.has("editor") && [...set].some((p) => ["web-premium", "shop-start", "shop-premium"].includes(p))) set.delete("editor");   // Editor ist dort inklusive
+    return set;
+  }
+  // Ausdrücklich abgewählt (z. B. „Kein Service-Plan“, „Nicht nötig“) → bisherige Auswahl nicht behalten
+  function abgewaehlt(lf, p) {
+    return D.leitfaden.some(([k, , , w]) => w && (lf[k] || {}).wahl && lf[k].wahl.length && w.opts.some((o) => o[1] === p) && !lf[k].wahl.some((o) => (w.opts.find((x) => x[0] === o) || [])[1] === p));
+  }
+
   // ---------- Bausteine ----------
   // „weiter“-Knöpfe nur im aktuellen Schritt – ein erledigter Schritt setzt die Station nie zurück
   const nextBtn = (st, label, cls = "btn btn-ink") => (rStep !== curStep ? "" : `<button class="${cls}" type="button" data-bpanext="${st}">${label}</button>`);
@@ -223,14 +240,17 @@
         <div class="field" style="margin:0"><label>Wie</label><select name="w"><option>Video</option><option>Telefon</option><option>vor Ort</option></select></div>
         <button class="btn btn-ink" type="submit">Termin speichern</button>${a.email ? mailBtn("termin", "", "Terminbestätigung") : ""}</form>
       <div class="eyebrow" style="margin-top:16px">b · Leitfaden fürs Gespräch · ${lfDone} von ${D.leitfaden.length}</div>
-      <form id="bpa-lf" style="margin-top:4px">${D.leitfaden.map(([k, l, hint]) => `<div style="border-top:1px solid var(--line,#ddd);padding:7px 0">
+      <form id="bpa-lf" style="margin-top:4px">${D.leitfaden.map(([k, l, hint, w]) => `<div style="border-top:1px solid var(--line,#ddd);padding:7px 0">
         <label><input type="checkbox" name="ok_${k}" ${lf[k] && lf[k].ok ? "checked" : ""}> <b>${esc(l)}</b></label> <span class="small muted">${esc(hint)}</span>
+        ${w ? `<div class="bpa-chips">${w.opts.map(([o]) => `<label><input type="${w.multi ? "checkbox" : "radio"}" name="w_${k}" value="${esc(o)}" ${lf[k] && (lf[k].wahl || []).includes(o) ? "checked" : ""}> ${esc(o)}</label>`).join("")}</div>` : ""}
         <textarea name="t_${k}" rows="1" maxlength="1000" style="width:100%;margin-top:4px" placeholder="Notiz">${esc(lf[k] ? lf[k].text : "")}</textarea></div>`).join("")}
-        <button class="btn btn-ink" type="submit">Leitfaden speichern</button></form>
+        <button class="btn btn-ink" type="submit">Leitfaden speichern</button> <span class="small muted">Beim Speichern entsteht unten eine Produkt-Vorauswahl.</span></form>
       <div class="eyebrow" style="margin-top:16px">c · Was braucht der Kunde?</div>
       <form id="bpa-prod" style="margin-top:6px">
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 12px">${D.produkte.map((p) => `<label class="small"><input type="checkbox" name="p" value="${p[0]}" ${a.produkte.includes(p[0]) ? "checked" : ""}> ${esc(p[1])}</label>`).join("")}</div>
-        <p class="small muted" style="margin:6px 0">Die Auswahl befüllt das Angebot in Schritt 3 und die Checklisten für den Bau.</p>
+        ${prodVorschlag ? `<p class="note" style="margin:0 0 8px">Vorauswahl aus dem Leitfaden${prodVorschlag.neu.length ? `: <b>${prodVorschlag.neu.map(prodName).map(esc).join(", ")}</b> dazu` : " – keine neuen Produkte"}. Prüfen, anpassen, dann „Produkte speichern“.</p>` : ""}
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 12px">${D.produkte.map((p) => { const vs = prodVorschlag && prodVorschlag.set.has(p[0]), on = vs || (!prodVorschlag && a.produkte.includes(p[0])) || (prodVorschlag && prodVorschlag.behalten.has(p[0]));
+          return `<label class="small" ${prodVorschlag && vs && !a.produkte.includes(p[0]) ? 'style="background:#FBEBD3;border-radius:6px;padding:0 4px"' : ""}><input type="checkbox" name="p" value="${p[0]}" ${on ? "checked" : ""}> ${esc(p[1])}</label>`; }).join("")}</div>
+        <p class="small muted" style="margin:6px 0">Die Auswahl befüllt das Angebot in Schritt 3 (in Standard-Reihenfolge) und die Checklisten für den Bau.</p>
         <button class="btn btn-ink" type="submit">Produkte speichern</button></form>
       <div style="margin-top:14px">${nextBtn("gespraech", "Erstgespräch geführt → weiter zu 3 Angebot")}</div>`;
   }
@@ -253,6 +273,7 @@
       <div><input name="text" maxlength="200" value="${esc(p.text)}" placeholder="Leistung" style="width:100%;font-weight:600"><textarea name="detail" rows="2" maxlength="600" style="width:100%;margin-top:4px" placeholder="Beschreibung (optional)">${esc(p.detail || "")}</textarea>
         <div class="small" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:2px;align-items:center"><select name="art"><option value="einmal" ${p.art !== "monat" ? "selected" : ""}>einmalig</option><option value="monat" ${p.art === "monat" ? "selected" : ""}>monatlich</option></select>
         <label><input type="checkbox" name="opt" ${p.opt ? "checked" : ""}> Option (Kunde wählt selbst)</label><input type="hidden" name="key" value="${esc(p.key || "")}">
+        <button type="button" class="tipbtn" data-bpapmv="${i}:-1" title="nach oben">↑</button><button type="button" class="tipbtn" data-bpapmv="${i}:1" title="nach unten">↓</button>
         <button type="button" class="tipbtn" data-bpapdel="${i}">entfernen</button></div></div>
       <div><label class="small">Menge</label><input name="menge" inputmode="decimal" value="${String(p.menge ?? 1).replace(".", ",")}" style="width:100%"></div>
       <div><label class="small">Einheit</label><input name="einheit" maxlength="20" value="${esc(p.einheit || "")}" style="width:100%"></div>
@@ -478,8 +499,12 @@
     const tf = $("#bpa-termin"); if (tf) tf.onsubmit = (e) => { e.preventDefault(); const d = tf.d.value, z = tf.z.value.trim(), w = tf.w.value;
       if (!d) { errMsg = "Bitte ein Datum wählen."; paint(); return; }
       act(async () => { await api("POST", "auftrag", { id: a.id, next_at: d, next_was: `Erstgespräch (${w}) ${dat(d)}${z ? " um " + z : ""}` }); await api("POST", "auftrag/notiz", { id: a.id, text: `Erstgespräch vereinbart: ${w}, ${dat(d)}${z ? " " + z : ""}` }); }, "Termin gespeichert."); };
-    const lff = $("#bpa-lf"); if (lff) lff.onsubmit = (e) => { e.preventDefault(); const lf = {}; D.leitfaden.forEach(([k]) => (lf[k] = { ok: lff["ok_" + k].checked, text: lff["t_" + k].value })); act(() => api("POST", "auftrag", { id: a.id, leitfaden: lf }), "Leitfaden gespeichert."); };
-    const pf = $("#bpa-prod"); if (pf) pf.onsubmit = (e) => { e.preventDefault(); act(() => api("POST", "auftrag", { id: a.id, produkte: [...pf.querySelectorAll('[name="p"]:checked')].map((x) => x.value) }), "Produkte gespeichert."); };
+    const lff = $("#bpa-lf"); if (lff) lff.onsubmit = (e) => { e.preventDefault(); const lf = {};
+      D.leitfaden.forEach(([k]) => (lf[k] = { ok: lff["ok_" + k].checked, text: lff["t_" + k].value, wahl: [...lff.querySelectorAll(`[name="w_${k}"]:checked`)].map((x) => x.value) }));
+      const set = vorschlagAusLeitfaden(lf);
+      act(async () => { await api("POST", "auftrag", { id: a.id, leitfaden: lf }); prodVorschlag = { set, neu: [...set].filter((p) => !a.produkte.includes(p)), behalten: new Set(a.produkte.filter((p) => !abgewaehlt(lf, p))) }; },
+        "Leitfaden gespeichert – Produkt-Vorauswahl unten prüfen."); };
+    const pf = $("#bpa-prod"); if (pf) pf.onsubmit = (e) => { e.preventDefault(); prodVorschlag = null; act(() => api("POST", "auftrag", { id: a.id, produkte: [...pf.querySelectorAll('[name="p"]:checked')].map((x) => x.value) }), "Produkte gespeichert."); };
     // Schritt 3: Angebote
     const an = $("#bpa-anneu"); if (an) an.onclick = () => act(async () => { const r = await api("POST", "angebot", { auftrag_id: a.id }); await loadAN(); edit = AN.list.find((x) => x.id === r.id) || null; }, "Angebot angelegt – Positionen prüfen.");
     $$("[data-bpaaed]").forEach((x) => (x.onclick = () => { edit = AN.list.find((y) => y.id === x.dataset.bpaaed); paint(); }));
@@ -493,7 +518,12 @@
       $("#bpa-edx").onclick = () => { edit = null; paint(); };
       const keep = () => { edit = { ...edit, ...readEditor(f) }; edit.positionen = edit.positionen.map((p) => ({ ...p, cents: Math.round((Number(String(p.menge).replace(",", ".")) || 0) * p.preis_cents) })); };
       $("#bpa-vl").onchange = (e) => { const v = AN.vorlagen.find((y) => y.key === e.target.value); if (!v) return; keep(); const l = edit.sprache === "en" ? "en" : "de";
-        edit.positionen.push({ key: v.key, text: v.text[l], detail: v.detail[l], menge: 1, einheit: v.einheit[l], preis_cents: v.preis_cents, art: v.art, opt: v.opt }); paint(); };
+        // an der Standard-Stelle einfügen (z. B. „Zusätzliche Seite“ gleich nach Web Premium), sonst ans Ende
+        const rang = (k) => { const i = AN.vorlagen.findIndex((y) => y.key === k); return i < 0 ? -1 : i; }, r = rang(v.key);
+        let at = 0; edit.positionen.forEach((p, i) => { const pr = rang(p.key); if (pr >= 0 && pr <= r) at = i + 1; if (pr < 0 && at === i) at = i + 1; });
+        edit.positionen.splice(at, 0, { key: v.key, text: v.text[l], detail: v.detail[l], menge: 1, einheit: v.einheit[l], preis_cents: v.preis_cents, art: v.art, opt: v.opt }); paint(); };
+      $$("[data-bpapmv]").forEach((x) => (x.onclick = () => { keep(); const [i, d] = x.dataset.bpapmv.split(":").map(Number), j = i + d; if (j < 0 || j >= edit.positionen.length) return;
+        [edit.positionen[i], edit.positionen[j]] = [edit.positionen[j], edit.positionen[i]]; paint(); }));
       $("#bpa-leer").onclick = () => { keep(); edit.positionen.push({ text: "", detail: "", menge: 1, einheit: "", preis_cents: 0, art: "einmal", opt: false }); paint(); };
       $$("[data-bpapdel]").forEach((x) => (x.onclick = () => { keep(); edit.positionen.splice(Number(x.dataset.bpapdel), 1); paint(); }));
       let then = "";
@@ -539,10 +569,12 @@
       aufSteps = new Set(); act(() => api("POST", "auftrag/status", { id: a.id, status: st, grund }), "Station gesetzt."); };
     $("#bpa-del").onclick = () => { if (confirm("Anfrage wirklich löschen?")) act(async () => { await api("POST", "auftrag/loeschen", { id: a.id }); open = null; }, "Gelöscht."); };
   }
-  function openAuftrag(id) { open = id; msg = errMsg = ""; kontaktEdit = false; payFor = null; aufSteps = new Set(); paint(); if (el) window.scrollTo(0, el.offsetTop); }
+  function openAuftrag(id) { open = id; prodVorschlag = null; msg = errMsg = ""; kontaktEdit = false; payFor = null; aufSteps = new Set(); paint(); if (el) window.scrollTo(0, el.offsetTop); }
 
   const css = document.createElement("style");
   css.textContent = `.bpa-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:12px;align-items:start;margin-top:12px}.bpa-grid aside{position:sticky;top:10px}
+    .bpa-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}.bpa-chips label{display:flex;gap:6px;align-items:center;border:1px solid var(--line,#ccc);border-radius:999px;padding:4px 10px;font-size:13px;cursor:pointer;background:#fff}
+    .bpa-chips label:has(input:checked){border-color:#D9820B;background:#FBEBD3}
     .bpa-grid aside input:not([type=checkbox]),.bpa-grid aside select{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line,#ccc);border-radius:8px;background:#fff;color:inherit;min-width:0;width:100%}
     .bpa-pos input,.bpa-pos textarea,.bpa-pos select{font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line,#ccc);border-radius:6px;background:#fff;color:inherit;min-width:0}
     @media(max-width:900px){.bpa-grid{grid-template-columns:1fr}.bpa-grid aside{position:static}.bpa-pos{grid-template-columns:1fr 1fr 1fr!important}.bpa-pos>div:first-child{grid-column:1/-1}}`;
