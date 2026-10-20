@@ -114,7 +114,7 @@
   let kunden = null, nlData = null, nlMsg = "", nlSyncMsg = "", nlPrev = "", nlForm = { lang: "de" }, kundenAll = false;
   let tab = "uebersicht";
   try { tab = sessionStorage.getItem("ms_admtab") || "uebersicht"; } catch {}
-  const TABS = [["uebersicht", "Übersicht"], ["bestellungen", "Bestellungen"], ["finanzen", "Finanzen"], ["steuer", "Steuer & Abgaben"], ["runden", "Spielrunden & Tests"], ["statistik", "Spielstatistik"], ["system", "Kapazität & System"], ["feedback", "Feedback"], ["kunden", "Kunden & Newsletter"], ["brightpage", "Brightpage"]];
+  const TABS = [["uebersicht", "Übersicht"], ["bestellungen", "Bestellungen"], ["finanzen", "Finanzen"], ["steuer", "Steuer & Abgaben"], ["runden", "Spielrunden & Tests"], ["statistik", "Spielstatistik"], ["system", "Kapazität & System"], ["feedback", "Feedback"], ["kunden", "Kunden & Newsletter"], ["brightpage", "Brightpage"], ["bpauftraege", "BP Aufträge"]];
   const tabBar = () => `<nav class="admtabs" role="tablist">${TABS.map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${l}${k === "system" && ops && (ops.errors.today || ops.alerts.some((a) => Date.now() - a.at < 86400000)) ? ' <span class="dot"></span>' : ""}</button>`).join("")}<button type="button" id="adm-logout" style="margin-left:auto;background:none;border:0;color:var(--ink-2);text-decoration:underline;cursor:pointer;font:inherit;font-size:14px">Abmelden</button></nav>`;
   const eur = (c) => (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
   // Betrag in der Währung der Bestellung (Nachttest 14.10.: £/$ standen mit €-Zeichen da)
@@ -675,6 +675,7 @@
       ${tab === "feedback" ? feedbackPanel() : ""}
       ${tab === "kunden" ? customersPanel() + newsletterPanel() : ""}
       ${tab === "brightpage" ? `<div id="bp-root"></div>` : ""}
+      ${tab === "bpauftraege" ? `<div id="bpa-root"></div>` : ""}
       ${tab === "runden" ? `<div class="panel"><div class="eyebrow">Alle Runden</div>
         <div class="list-sessions" style="margin-top:10px">${sessions.length ? sessions.map((s) => `<div class="sess">
           <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${MS.esc(s.label || s.id)}</b><span class="chip ${({ open: "open", running: "run", finished: "fin" })[s.status] || ""}">${s.status}</span></div>
@@ -682,7 +683,8 @@
           <div><button class="tipbtn" data-del="${s.id}">Löschen</button></div></div>`).join("") : `<p class="muted">Noch keine Runden.</p>`}</div></div>` : ""}
     </div>`;
     root.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => { tab = b.dataset.tab; try { sessionStorage.setItem("ms_admtab", tab); } catch {} render(...last); }));
-    { const bpEl = root.querySelector("#bp-root"); if (bpEl && window.BPAdmin) BPAdmin.mount(bpEl, H); }   // Tab Brightpage (site/spiel/admin-bp.js)
+    { const bpEl = root.querySelector("#bp-root"); if (bpEl && window.BPAdmin) BPAdmin.mount(bpEl, H); }
+    { const bpaEl = root.querySelector("#bpa-root"); if (bpaEl && window.BPAuftraege) BPAuftraege.mount(bpaEl, H); }   // Tab BP Aufträge (site/spiel/admin-bpa.js)   // Tab Brightpage (site/spiel/admin-bp.js)
     { const lo = root.querySelector("#adm-logout"); if (lo) lo.onclick = () => { forgetKey(); keyView(); }; }
     const nfEl = document.getElementById("nf");
     if (nfEl) nfEl.onsubmit = async (e) => {

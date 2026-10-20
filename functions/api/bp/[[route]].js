@@ -2,20 +2,49 @@
 // Logik und Buchhaltungs-Anbindung: lib/brightpage.js
 import { json, fail, badBody } from "../../../lib/game.js";
 import { adminDenied } from "../../../lib/adminauth.js";
+import { auftragListe, auftragNeu, auftragSave, auftragStatus, auftragNotiz, auftragZeit, auftragLoeschen, anfrageEingang } from "../../../lib/bpauftrag.js";
+import { angeboteListe, angebotSave, angebotFreigeben, angebotStatus, angebotVorschau, rechnungLink, angebotWarnungen, bpKeyOk, htmlPage, publicAngebot, publicAnnahme, publicRechnung } from "../../../lib/bpangebot.js";
 import { bpOverview, bpConfigSave, kundeSave, kundeDelete, rechnungSave, rechnungAusstellen, rechnungBezahlt, rechnungStorno, aboSave, aboRechnungen } from "../../../lib/brightpage.js";
 
 export async function onRequest({ request, env, params }) {
   if (!env.DB) return fail("Datenbank nicht eingerichtet.", 500);
   { const bad = await badBody(request); if (bad) return bad; }
   const route = (params.route || []).join("/");
+  // Eingang vom Kontaktformular auf brightpage.net (Server zu Server, Schlüssel BP_INBOX_KEY statt Admin-Schlüssel)
+  if (route === "public/anfrage" && request.method === "POST") {
+    try { let b = {}; try { b = await request.json(); } catch {} return json(await anfrageEingang(env, request, b)); }
+    catch (e) { if (e.status) return fail(e.message, e.status); throw e; }
+  }
+  // Kundenseiten brightpage.net/k/* (Durchreicher auf brightpage.net, gleicher Schlüssel): Angebot ansehen/annehmen, Rechnung ansehen
+  if (route.startsWith("public/k/")) {
+    if (!bpKeyOk(env, request)) return htmlPage("Nicht erlaubt.", 403);
+    const [, , art, tok = ""] = route.split("/");
+    if (art === "angebot" && request.method === "GET") return publicAngebot(env, tok);
+    if (art === "angebot" && request.method === "POST") { let f; try { f = await request.formData(); } catch { f = new FormData(); } return publicAnnahme(env, tok, f, request.headers.get("x-bp-ip") || ""); }
+    if (art === "rechnung" && request.method === "GET") return publicRechnung(env, tok, new URL(request.url).searchParams.get("neu") === "1");
+    return htmlPage("Nicht gefunden.", 404);
+  }
   if (!route.startsWith("admin/")) return fail("Nicht gefunden.", 404);
   { const denied = await adminDenied(request, env, fail); if (denied) return denied; }
   const m = request.method;
   const body = async () => { try { return await request.json(); } catch { return {}; } };
   try {
     if (route === "admin/daten" && m === "GET") return json(await bpOverview(env));
+    if (route === "admin/auftraege" && m === "GET") { const d = await auftragListe(env); d.warn = [...(await angebotWarnungen(env)), ...d.warn]; return json(d); }
+    if (route === "admin/angebote" && m === "GET") return json(await angeboteListe(env, new URL(request.url).searchParams.get("auftrag") || ""));
     if (m !== "POST") return fail("Nicht gefunden.", 404);
     const b = await body();
+    if (route === "admin/auftrag/neu") return json(await auftragNeu(env, b));
+    if (route === "admin/auftrag") return json(await auftragSave(env, b));
+    if (route === "admin/auftrag/status") return json(await auftragStatus(env, b));
+    if (route === "admin/auftrag/notiz") return json(await auftragNotiz(env, b));
+    if (route === "admin/auftrag/zeit") return json(await auftragZeit(env, b));
+    if (route === "admin/auftrag/loeschen") return json(await auftragLoeschen(env, String(b.id || "")));
+    if (route === "admin/angebot") return json(await angebotSave(env, b));
+    if (route === "admin/angebot/freigeben") return json(await angebotFreigeben(env, b));
+    if (route === "admin/angebot/status") return json(await angebotStatus(env, b));
+    if (route === "admin/angebot/vorschau") return json(await angebotVorschau(env, b));
+    if (route === "admin/rechnung/link") return json(await rechnungLink(env, b));
     if (route === "admin/einstellungen") return json(await bpConfigSave(env, b));
     if (route === "admin/kunde") return json(await kundeSave(env, b));
     if (route === "admin/kunde/loeschen") return json(await kundeDelete(env, String(b.id || "")));
