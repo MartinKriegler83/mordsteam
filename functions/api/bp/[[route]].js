@@ -3,7 +3,7 @@
 import { json, fail, badBody } from "../../../lib/game.js";
 import { adminDenied } from "../../../lib/adminauth.js";
 import { auftragListe, auftragNeu, auftragSave, auftragStatus, auftragNotiz, auftragZeit, auftragLoeschen, anfrageEingang } from "../../../lib/bpauftrag.js";
-import { angeboteListe, angebotSave, angebotFreigeben, angebotStatus, angebotVorschau, rechnungLink, angebotWarnungen, bpKeyOk, htmlPage, publicAngebot, publicAnnahme, publicRechnung } from "../../../lib/bpangebot.js";
+import { angeboteListe, angebotSave, angebotFreigeben, angebotStatus, angebotVorschau, rechnungLink, angebotWarnungen, rechnungAdminHtml, schlussAusAngebot, bpKeyOk, htmlPage, publicAngebot, publicAnnahme, publicRechnung } from "../../../lib/bpangebot.js";
 import { bpOverview, bpConfigSave, kundeSave, kundeDelete, rechnungSave, rechnungAusstellen, rechnungBezahlt, rechnungStorno, aboSave, aboRechnungen } from "../../../lib/brightpage.js";
 
 export async function onRequest({ request, env, params }) {
@@ -44,6 +44,8 @@ export async function onRequest({ request, env, params }) {
     if (route === "admin/angebot/freigeben") return json(await angebotFreigeben(env, b));
     if (route === "admin/angebot/status") return json(await angebotStatus(env, b));
     if (route === "admin/angebot/vorschau") return json(await angebotVorschau(env, b));
+    if (route === "admin/rechnung/html") return json(await rechnungAdminHtml(env, b));
+    if (route === "admin/auftrag/schluss") return json(await schlussAusAngebot(env, b));
     if (route === "admin/rechnung/link") return json(await rechnungLink(env, b));
     if (route === "admin/einstellungen") return json(await bpConfigSave(env, b));
     if (route === "admin/kunde") return json(await kundeSave(env, b));

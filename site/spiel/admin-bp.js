@@ -1,4 +1,6 @@
-// Mordsteam-Admin, Tab „Brightpage“ (19.10.2026): Rechnungen, Kunden, Abos (Service, Werbe-Betreuung, KI-Betrieb), Einstellungen.
+// Mordsteam-Admin, Tab „Brightpage“ (19.10.2026, Umbau 21.10.2026): ein Bereich mit Untertabs in Ablauf-Reihenfolge
+// Aufträge (site/spiel/admin-bpa.js) · Kunden (eigene Brightpage-Kundendatenbank) · Rechnungen · Abos · Einnahmen · Einstellungen.
+// Kunden, Aufträge und Einnahmen laufen getrennt von Mordsteam; nur die E/A-Rechnung (Finanzen) zählt beide zusammen.
 // Server: /api/bp/admin/* (functions/api/bp/[[route]].js, lib/brightpage.js). Bezahlte Rechnungen landen automatisch in Finanzen und Steuer.
 // Rechnung ansehen/drucken: eigenes Fenster mit A4-Layout und QR-Code „Zahlen mit Code“ (EPC/GiroCode) → „Drucken → Als PDF sichern“.
 (function () {
@@ -30,6 +32,8 @@
     ["KI-Helfer Einrichtung – Anfrage-Sortierer", 690, "pauschal", "AI helper setup – enquiry sorter"],
     ["KI-Helfer Einrichtung – Angebotsgenerator", 890, "pauschal", "AI helper setup – quote generator"],
     ["KI-Helfer Einrichtung – alle vier zusammen", 1990, "pauschal", "AI helper setup – all four together"],
+    ["Terminbuchung einbinden – bestehendes Buchungssystem auf der Website", 99, "pauschal", "Embed booking system – existing booking system on the website"],
+    ["Terminanfrage Plus – Wunschtermine aus den Öffnungszeiten, Bestätigung per Mail", 290, "pauschal", "Appointment request Plus – free slots from opening hours, confirmation by e-mail"],
     ["Texte schreiben – One-Pager", 190, "pauschal", "Copywriting – one-page website"],
     ["Texte schreiben", 90, "Seite", "Copywriting"],
     ["Arbeitszeit (Extras, Sonderwünsche)", 85, "Std.", "Working time (extras, special requests)"],
@@ -42,8 +46,11 @@
   const ABO_VORLAGEN = [["Service Basis", 29], ["Service Komfort", 59], ["Service Plus", 119], ["Werbe-Betreuung", 79],
     ["KI-Helfer Betrieb bis 1.000 Vorgänge", 29], ["KI-Helfer Betrieb bis 2.500 Vorgänge", 59], ["KI-Helfer Betrieb bis 5.000 Vorgänge", 89], ["KI-Helfer Betrieb bis 10.000 Vorgänge", 159]];
 
-  let el = null, H = null, D = null, sub = "rechnungen", edit = null, msg = "", errMsg = "", editKunde = null, editAbo = null;
-  try { sub = sessionStorage.getItem("bp_sub") || "rechnungen"; } catch {}
+  let el = null, H = null, D = null, sub = "auftraege", edit = null, msg = "", errMsg = "", editKunde = null, editAbo = null;
+  let kundeOpen = null, kundeNeu = false, kSuche = "", einJahr = null, aufOpen = null;
+  try { sub = sessionStorage.getItem("bp_sub") || "auftraege"; } catch {}
+  const SUBS = [["auftraege", "Aufträge"], ["kunden", "Kunden"], ["rechnungen", "Rechnungen"], ["abos", "Abos"], ["einnahmen", "Einnahmen"], ["einstellungen", "Einstellungen"]];
+  if (!SUBS.some((x) => x[0] === sub) && sub !== "neu") sub = "auftraege";
 
   async function api(method, path, body) {
     const r = await fetch("/api/bp/admin/" + path, { method, headers: { "content-type": "application/json", ...H() }, body: body ? JSON.stringify(body) : undefined });
@@ -57,27 +64,28 @@
   const kName = (k) => (k ? (k.art === "b2b" ? k.firma || k.name : k.name || k.firma) || "–" : "–");
 
   function head() {
+    return `<div class="panel" style="padding-bottom:6px"><div class="eyebrow">Brightpage · Websites, Shops und KI-Helfer · getrennt von Mordsteam</div>
+      ${D.fehlt.length ? `<p class="err" style="margin-top:10px">Vor der ersten Rechnung unter „Einstellungen“ eintragen: ${D.fehlt.map(esc).join(", ")}.</p>` : ""}
+      ${D.stats.abo_offen ? `<p class="small" style="margin-top:8px"><b>${D.stats.abo_offen} Abo-Rechnung(en) fällig.</b> <button class="tipbtn" id="bp-abo-gen">Als Entwürfe anlegen</button></p>` : ""}
+      <nav class="admtabs" role="tablist" style="margin-top:10px">${SUBS.map(([k, l], i) => `<button type="button" role="tab" data-bpsub="${k}" aria-selected="${k === sub || (k === "rechnungen" && sub === "neu")}">${i + 1} ${l}</button>`).join("")}</nav>
+      ${msg && sub !== "auftraege" ? `<p class="note" role="status" style="margin-top:10px">${esc(msg)}</p>` : ""}${errMsg && sub !== "auftraege" ? `<p class="err" style="margin-top:10px">${esc(errMsg)}</p>` : ""}</div>`;
+  }
+  function kpiRechnungen() {
     const S = D.stats;
-    return `<div class="panel"><div class="eyebrow">Brightpage · Webdesign unter der Mordsteam e.U.</div>
-      <div class="kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px">
+    return `<div class="panel"><div class="kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
         <div><div class="small">Bezahlt ${S.jahr}</div><b class="mono">${eur(S.bezahlt)}</b></div>
         <div><div class="small">Offen (${S.offen_n})</div><b class="mono" ${S.ueberfaellig_n ? 'style="color:var(--red)"' : ""}>${eur(S.offen)}</b>${S.ueberfaellig_n ? `<div class="small" style="color:var(--red)">${S.ueberfaellig_n} überfällig</div>` : ""}</div>
         <div><div class="small">Abos je Monat</div><b class="mono">${eur(S.abo_monat)}</b></div>
-        <div><div class="small">Entwürfe</div><b class="mono">${S.entwuerfe_n}</b></div>
-      </div>
-      ${D.fehlt.length ? `<p class="err" style="margin-top:10px">Vor der ersten Rechnung unter „Einstellungen“ eintragen: ${D.fehlt.map(esc).join(", ")}.</p>` : ""}
-      ${S.abo_offen ? `<p class="small" style="margin-top:8px"><b>${S.abo_offen} Abo-Rechnung(en) fällig.</b> <button class="tipbtn" id="bp-abo-gen">Als Entwürfe anlegen</button></p>` : ""}
-      <p class="small" style="margin-top:8px">Bezahlte Brightpage-Rechnungen zählen automatisch zu den Einnahmen (Finanzen), zur Kleinunternehmergrenze und zur U30/ZM (Steuer &amp; Abgaben). Ausgaben für Brightpage im Ausgabenbuch wie gewohnt erfassen.</p>
-      <nav class="admtabs" role="tablist" style="margin-top:12px">${[["rechnungen", "Rechnungen"], ["neu", edit && edit.id ? "Entwurf bearbeiten" : "Neue Rechnung"], ["kunden", "Kunden"], ["abos", "Abos"], ["einstellungen", "Einstellungen"]]
-        .map(([k, l]) => `<button type="button" role="tab" data-bpsub="${k}" aria-selected="${k === sub}">${l}</button>`).join("")}</nav>
-      ${msg ? `<p class="note" role="status" style="margin-top:10px">${esc(msg)}</p>` : ""}${errMsg ? `<p class="err" style="margin-top:10px">${esc(errMsg)}</p>` : ""}</div>`;
+        <div><div class="small">Entwürfe</div><b class="mono">${S.entwuerfe_n}</b></div></div>
+      <p style="margin-top:10px"><button class="btn btn-ink" type="button" data-bpsub="neu">${edit && edit.id ? "Entwurf bearbeiten" : "Neue Rechnung"}</button></p>
+      <p class="small">Rechnungen zu Aufträgen entstehen meist direkt im Auftrag (Anzahlung bei Annahme, Schlussrechnung in Schritt 7). Hier: alle Rechnungen, Einzelrechnungen, Abo-Rechnungen, Storno.</p></div>`;
   }
 
   // ---------- Rechnungen ----------
   function listPanel() {
     const R = D.rechnungen;
-    if (!R.length) return `<div class="panel"><p class="muted">Noch keine Rechnungen. <a href="#" data-bpsub="neu">Erste Rechnung anlegen</a>.</p></div>`;
-    return `<div class="panel"><div class="eyebrow">Rechnungen</div><div style="overflow-x:auto;margin-top:10px"><table class="grid small">
+    if (!R.length) return kpiRechnungen() + `<div class="panel"><p class="muted">Noch keine Rechnungen.</p></div>`;
+    return kpiRechnungen() + `<div class="panel"><div class="eyebrow">Rechnungen</div><div style="overflow-x:auto;margin-top:10px"><table class="grid small">
       <tr><th>Nr.</th><th>Datum</th><th>Kunde</th><th>Art</th><th style="text-align:right">Betrag</th><th>Status</th><th></th></tr>
       ${R.map((r) => {
         const st = STATUS[r.status] || [r.status, ""], late = r.status === "offen" && r.faellig && r.faellig < D.today;
@@ -85,7 +93,7 @@
           <td>${TYP[r.typ] || r.typ}${r.regime !== "ku" ? `<br><span class="muted">${esc(r.regime)}</span>` : ""}</td><td class="mono" style="text-align:right">${eur(r.summe_cents)}${r.status === "bezahlt" && r.bezahlt_cents !== r.summe_cents ? `<br><span class="muted">bezahlt ${eur(r.bezahlt_cents)}</span>` : ""}</td>
           <td><span class="chip ${st[1]}">${st[0]}</span>${late ? `<br><span style="color:var(--red)">fällig ${dat(r.faellig)}</span>` : r.status === "offen" ? `<br><span class="muted">fällig ${dat(r.faellig)}</span>` : r.status === "bezahlt" ? `<br><span class="muted">${dat(r.bezahlt_am)}</span>` : r.storno_nr ? `<br><span class="muted">${esc(r.storno_nr)}</span>` : ""}</td>
           <td style="white-space:nowrap">
-            <button class="tipbtn" data-bpshow="${r.id}">${r.status === "entwurf" ? "Vorschau" : "Ansehen / PDF"}</button>
+            <button class="tipbtn" data-bpshow="${r.id}">${r.status === "entwurf" ? "Vorschau" : "Ansehen / PDF"}</button>${r.nr ? `<button class="tipbtn" data-bplink="${r.id}">Kundenlink</button>` : ""}
             ${r.status === "entwurf" ? `<button class="tipbtn" data-bpedit="${r.id}">Bearbeiten</button><button class="tipbtn" data-bpissue="${r.id}">Ausstellen</button><button class="tipbtn" data-bpdel="${r.id}">Löschen</button>` : ""}
             ${r.status === "offen" ? `<button class="tipbtn" data-bppay="${r.id}">Bezahlt …</button>${r.typ !== "storno" ? `<button class="tipbtn" data-bpstorno="${r.id}">Stornieren</button>` : ""}` : ""}
             ${r.status === "bezahlt" ? `<button class="tipbtn" data-bpunpay="${r.id}">Zahlung zurücknehmen</button>` : ""}
@@ -147,29 +155,69 @@
     f.querySelector("#bp-sum").textContent = `Summe ${eur(tot)}${abz ? ` − Anzahlungen ${eur(abz)} = zu zahlen ${eur(tot - abz)}` : ""}`;
   }
 
-  // ---------- Kunden ----------
+  // ---------- Kunden (Brightpage-Kundendatenbank) ----------
+  const STN = { neu: "1 Anfrage", kontaktiert: "2 Erstgespräch", gespraech: "3 Angebot", angebot: "3 Angebot", auftrag: "4 Auftrag", bau: "5 Bau", korrektur: "5 Korrekturen", freischaltung: "6 Freischaltung", uebergabe: "6 Übergabe", schluss: "7 Schlussrechnung", abgeschlossen: "8 Abgeschlossen", verloren: "Verloren" };
+  function kundeForm(k) {
+    const f = (n, l, v, extra = "") => `<div class="field"><label>${l}</label><input name="${n}" value="${esc(v ?? "")}" ${extra}></div>`;
+    return `<form id="bp-kf" class="form" style="margin-top:10px">
+        <div class="two"><div class="field"><label>Art</label><select name="art"><option value="b2b" ${k.art !== "b2c" ? "selected" : ""}>Firma, Verein, Organisation</option><option value="b2c" ${k.art === "b2c" ? "selected" : ""}>Privatperson</option></select></div>${f("firma", "Firma / Verein", k.firma, 'maxlength="120"')}</div>
+        <div class="two">${f("name", "Ansprechperson / Name", k.name, 'maxlength="120"')}${f("email", "E-Mail", k.email, 'type="email" maxlength="160"')}</div>
+        <div class="two">${f("telefon", "Telefon", k.telefon, 'maxlength="40"')}${f("website", "Website", k.website, 'maxlength="200"')}</div>
+        <div class="two">${f("strasse", "Straße und Hausnummer", k.strasse, 'maxlength="120" required')}<div style="display:grid;grid-template-columns:110px 1fr;gap:8px">${f("plz", "PLZ", k.plz, 'maxlength="10" required')}${f("ort", "Ort", k.ort, 'maxlength="100" required')}</div></div>
+        <div class="two">${f("land", "Land (Kürzel)", k.land || "AT", 'maxlength="2" style="text-transform:uppercase" required')}${f("uid", "UID (Firmen, optional)", k.uid, 'maxlength="20" placeholder="z. B. ATU12345678"')}</div>
+        <div class="two"><div class="field"><label>Sprache der Rechnungen</label><select name="sprache"><option value="de">Deutsch</option><option value="en" ${k.sprache === "en" ? "selected" : ""}>Englisch</option></select></div>${f("notiz", "Notiz (intern)", k.notiz, 'maxlength="500"')}</div>
+        <p class="small">EU-Firma mit UID → Reverse Charge (UID vorher im <a href="https://ec.europa.eu/taxation_customs/vies/" target="_blank" rel="noopener">VIES</a> prüfen). Verein ohne eigene Einnahmen am Markt gilt oft als Verbraucher.</p>
+        <div style="display:flex;gap:8px"><button class="btn btn-ink" type="submit">${k.id ? "Speichern" : "Kunde anlegen"}</button><button type="button" class="btn btn-line" id="bp-kcancel">Abbrechen</button></div></form>`;
+  }
   function kundenPanel() {
-    const k = editKunde || { art: "b2b", land: "AT", sprache: "de" };
-    return `<div class="panel"><div class="eyebrow">${k.id ? "Kunde bearbeiten" : "Neuer Kunde"}</div>
-      <form id="bp-kf" class="form" style="margin-top:10px">
-        <div class="two"><div class="field"><label>Art</label><select name="art"><option value="b2b" ${k.art === "b2b" ? "selected" : ""}>Firma, Verein, Organisation</option><option value="b2c" ${k.art === "b2c" ? "selected" : ""}>Privatperson</option></select></div>
-          <div class="field"><label>Firma / Verein</label><input name="firma" maxlength="120" value="${esc(k.firma || "")}"></div></div>
-        <div class="two"><div class="field"><label>Ansprechperson / Name</label><input name="name" maxlength="120" value="${esc(k.name || "")}"></div>
-          <div class="field"><label>E-Mail</label><input name="email" type="email" maxlength="160" value="${esc(k.email || "")}"></div></div>
-        <div class="two"><div class="field"><label>Straße und Hausnummer</label><input name="strasse" maxlength="120" value="${esc(k.strasse || "")}" required></div>
-          <div class="field"><label>PLZ und Ort</label><input name="plz_ort" maxlength="120" value="${esc(k.plz_ort || "")}" required></div></div>
-        <div class="two"><div class="field"><label>Land (Kürzel)</label><input name="land" maxlength="2" value="${esc(k.land || "AT")}" style="text-transform:uppercase" required></div>
-          <div class="field"><label>UID des Kunden (Firmen, optional)</label><input name="uid" maxlength="20" value="${esc(k.uid || "")}" placeholder="z. B. ATU12345678 / DE123456789"></div></div>
-        <div class="two"><div class="field"><label>Sprache der Rechnungen</label><select name="sprache"><option value="de">Deutsch</option><option value="en" ${k.sprache === "en" ? "selected" : ""}>Englisch</option></select></div>
-          <div class="field"><label>Notiz (intern)</label><input name="notiz" maxlength="500" value="${esc(k.notiz || "")}"></div></div>
-        <p class="small">EU-Firma mit UID → Reverse Charge (UID vorher im <a href="https://ec.europa.eu/taxation_customs/vies/" target="_blank" rel="noopener">VIES</a> prüfen und Ausdruck aufheben). Verein ohne eigene Einnahmen am Markt gilt oft als Verbraucher – siehe WKO-Doc.</p>
-        <div style="display:flex;gap:8px"><button class="btn btn-ink" type="submit">${k.id ? "Speichern" : "Kunde anlegen"}</button>${k.id ? `<button type="button" class="btn btn-line" id="bp-kcancel">Abbrechen</button>` : ""}</div>
-      </form></div>
-      <div class="panel"><div class="eyebrow">Kunden (${D.kunden.length})</div>${D.kunden.length ? `<div style="overflow-x:auto;margin-top:10px"><table class="grid small"><tr><th>Kunde</th><th>Anschrift</th><th>Steuer</th><th>Umsatz</th><th></th></tr>
-        ${D.kunden.map((x) => { const u = D.rechnungen.filter((r) => r.kunde_id === x.id && r.status === "bezahlt").reduce((a, r) => a + r.bezahlt_cents, 0);
-          return `<tr><td><b>${esc(kName(x))}</b>${x.art === "b2b" && x.name ? `<br>${esc(x.name)}` : ""}${x.email ? `<br><span class="muted">${esc(x.email)}</span>` : ""}</td><td>${esc(x.strasse)}<br>${esc(x.plz_ort)} · ${esc(x.land)}</td>
-          <td>${esc(D.regime_label[x.regime])}${x.uid ? `<br><span class="mono">${esc(x.uid)}</span>` : ""}</td><td class="mono">${eur(u)}</td>
-          <td style="white-space:nowrap"><button class="tipbtn" data-bpkedit="${x.id}">Bearbeiten</button><button class="tipbtn" data-bpknew="${x.id}">Rechnung</button><button class="tipbtn" data-bpkdel="${x.id}">Löschen</button></td></tr>`; }).join("")}</table></div>` : `<p class="muted">Noch keine Kunden.</p>`}</div>`;
+    if (kundeNeu) return `<div class="panel"><div class="eyebrow">Neuer Kunde</div>${kundeForm({ art: "b2b", land: "AT", sprache: "de" })}</div>`;
+    const k = kundeOpen && D.kunden.find((x) => x.id === kundeOpen);
+    if (k) {
+      const R = D.rechnungen.filter((r) => r.kunde_id === k.id), A = (D.auftraege || []).filter((x) => x.kunde_id === k.id), B = D.abos.filter((x) => x.kunde_id === k.id);
+      const bez = R.filter((r) => r.status === "bezahlt").reduce((a, r) => a + r.bezahlt_cents, 0), off = R.filter((r) => r.status === "offen").reduce((a, r) => a + r.summe_cents, 0);
+      return `<div class="panel"><p style="margin:0 0 6px"><a href="#" id="bp-kback">← Alle Kunden</a></p>
+          <h2 style="margin:4px 0">${esc(kName(k))}</h2><p class="small muted">${esc(D.regime_label[k.regime])}${k.uid ? " · " + esc(k.uid) : ""} · Kunde seit ${new Date(k.created_at).toLocaleDateString("de-AT")}</p>
+          <div class="kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:8px"><div><div class="small">Umsatz bezahlt</div><b class="mono">${eur(bez)}</b></div><div><div class="small">Offen</div><b class="mono">${eur(off)}</b></div><div><div class="small">Aufträge</div><b class="mono">${A.length}</b></div><div><div class="small">Abos aktiv</div><b class="mono">${B.filter((b) => b.aktiv).length}</b></div></div></div>
+        <div class="panel"><div class="eyebrow">Aufträge</div>${A.length ? `<table class="grid small" style="margin-top:6px">${A.map((x) => `<tr><td class="mono">${esc(x.nr)}</td><td>${esc(STN[x.status] || x.status)}</td><td class="mono">${x.wert_cents != null ? eur(x.wert_cents) : "–"}</td><td><button class="tipbtn" data-bpauf="${x.id}">Auftrag öffnen</button></td></tr>`).join("")}</table>` : `<p class="small muted">Keine Aufträge verknüpft.</p>`}</div>
+        <div class="panel"><div class="eyebrow">Rechnungen</div>${R.length ? `<table class="grid small" style="margin-top:6px">${R.map((r) => `<tr><td class="mono">${esc(r.nr || "Entwurf")}</td><td>${TYP[r.typ] || r.typ}</td><td>${dat(r.datum)}</td><td class="mono">${eur(r.summe_cents)}</td><td><span class="chip ${(STATUS[r.status] || ["", ""])[1]}">${(STATUS[r.status] || [r.status])[0]}</span></td>
+            <td style="white-space:nowrap"><button class="tipbtn" data-bpshow="${r.id}">Ansehen</button>${r.nr ? `<button class="tipbtn" data-bplink="${r.id}">Kundenlink</button>` : ""}</td></tr>`).join("")}</table>` : `<p class="small muted">Noch keine Rechnungen.</p>`}
+          <p style="margin-top:8px"><button class="tipbtn" data-bpknew="${k.id}">Neue Rechnung für diesen Kunden</button></p></div>
+        <div class="panel"><div class="eyebrow">Abos</div>${B.length ? B.map((b) => `<p class="small" style="margin:4px 0">${esc(b.titel)} · ${eur(b.preis_cents)} / ${({ monat: "Monat", quartal: "Quartal", jahr: "Jahr" })[b.rhythmus]} · ab ${esc(b.start)} · ${b.aktiv ? "aktiv" : "beendet"}</p>`).join("") : `<p class="small muted">Keine Abos.</p>`}</div>
+        <div class="panel"><div class="eyebrow">Stammdaten</div>${kundeForm(editKunde && editKunde.id === k.id ? editKunde : k)}
+          <p style="margin-top:12px"><button class="tipbtn" data-bpkdel="${k.id}">Kunden löschen</button></p></div>`;
+    }
+    const q = kSuche.trim().toLowerCase(), L = D.kunden.filter((x) => !q || [x.firma, x.name, x.email, x.ort, x.plz_ort].join(" ").toLowerCase().includes(q));
+    return `<div class="panel"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn btn-ink" type="button" id="bp-kneu">Neuer Kunde</button>
+        <input id="bp-ksuche" placeholder="Suchen: Name, Firma, Ort, E-Mail" value="${esc(kSuche)}" style="flex:1;min-width:200px"></div>
+      <p class="small" style="margin-top:8px">Brightpage-Kunden – getrennt von den Mordsteam-Kunden (Tab „Kunden &amp; Newsletter“). Wer ein Angebot online annimmt, landet automatisch hier.</p>
+      ${L.length ? `<div style="overflow-x:auto;margin-top:10px"><table class="grid small"><tr><th>Kunde</th><th>Kontakt</th><th>Ort</th><th>Aufträge</th><th style="text-align:right">Umsatz</th><th style="text-align:right">offen</th></tr>
+        ${L.map((x) => { const R = D.rechnungen.filter((r) => r.kunde_id === x.id), u = R.filter((r) => r.status === "bezahlt").reduce((a, r) => a + r.bezahlt_cents, 0), o = R.filter((r) => r.status === "offen").reduce((a, r) => a + r.summe_cents, 0), A = (D.auftraege || []).filter((y) => y.kunde_id === x.id);
+          return `<tr style="cursor:pointer" data-bpkopen="${x.id}"><td><b>${esc(kName(x))}</b>${x.art === "b2b" && x.name ? `<br>${esc(x.name)}` : ""}</td><td>${esc(x.email || "")}${x.telefon ? `<br>${esc(x.telefon)}` : ""}</td><td>${esc(((x.plz || "") + " " + (x.ort || "")).trim())} · ${esc(x.land)}</td>
+            <td>${A.map((y) => esc(STN[y.status] || y.status)).join("<br>") || "–"}</td><td class="mono" style="text-align:right">${eur(u)}</td><td class="mono" style="text-align:right;${o ? "color:var(--red)" : ""}">${o ? eur(o) : "–"}</td></tr>`; }).join("")}</table></div>` : `<p class="muted" style="margin-top:10px">${q ? "Keine Treffer." : "Noch keine Kunden."}</p>`}</div>`;
+  }
+
+  // ---------- Einnahmen (nur Brightpage) ----------
+  function einnahmenPanel() {
+    const MON = ["Jänner", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+    const jahre = [...new Set([D.today.slice(0, 4), ...D.rechnungen.filter((r) => r.bezahlt_am).map((r) => r.bezahlt_am.slice(0, 4))])].sort().reverse();
+    const y = einJahr || jahre[0];
+    const P = D.rechnungen.filter((r) => r.status === "bezahlt" && (r.bezahlt_am || "").startsWith(y));
+    const art = (r) => (r.abo_id ? "abo" : r.typ === "anzahlung" ? "anzahlung" : r.typ === "schluss" ? "schluss" : "einzel");
+    const COL = [["anzahlung", "Anzahlungen"], ["schluss", "Schlussrechnungen"], ["einzel", "Einzelrechnungen"], ["abo", "Abos"]];
+    const rows = MON.map((m, i) => { const mm = `${y}-${String(i + 1).padStart(2, "0")}`, R = P.filter((r) => r.bezahlt_am.slice(0, 7) === mm), c = {}; COL.forEach(([k]) => (c[k] = R.filter((r) => art(r) === k).reduce((a, r) => a + r.bezahlt_cents, 0))); return { m, c, sum: R.reduce((a, r) => a + r.bezahlt_cents, 0) }; });
+    const tot = {}; COL.forEach(([k]) => (tot[k] = rows.reduce((a, r) => a + r.c[k], 0))); const total = rows.reduce((a, r) => a + r.sum, 0);
+    const offen = D.rechnungen.filter((r) => r.status === "offen"), late = offen.filter((r) => r.faellig && r.faellig < D.today);
+    const top = D.kunden.map((k) => [k, P.filter((r) => r.kunde_id === k.id).reduce((a, r) => a + r.bezahlt_cents, 0)]).filter((x) => x[1]).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    return `<div class="panel"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div class="eyebrow" style="margin:0">Einnahmen Brightpage</div><select id="bp-ejahr">${jahre.map((j) => `<option ${j === y ? "selected" : ""}>${j}</option>`).join("")}</select></div>
+        <div class="kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px">
+          <div><div class="small">Bezahlt ${y}</div><b class="mono">${eur(total)}</b></div><div><div class="small">Offen (${offen.length})</div><b class="mono">${eur(offen.reduce((a, r) => a + r.summe_cents, 0))}</b></div>
+          <div><div class="small">Überfällig (${late.length})</div><b class="mono" ${late.length ? 'style="color:var(--red)"' : ""}>${eur(late.reduce((a, r) => a + r.summe_cents, 0))}</b></div><div><div class="small">Abos je Monat</div><b class="mono">${eur(D.stats.abo_monat)}</b></div></div>
+        <div style="overflow-x:auto;margin-top:12px"><table class="grid small"><tr><th>Monat</th>${COL.map(([, l]) => `<th style="text-align:right">${l}</th>`).join("")}<th style="text-align:right">Summe</th></tr>
+          ${rows.map((r) => `<tr><td>${r.m}</td>${COL.map(([k]) => `<td class="mono" style="text-align:right">${r.c[k] ? eur(r.c[k]) : "–"}</td>`).join("")}<td class="mono" style="text-align:right"><b>${r.sum ? eur(r.sum) : "–"}</b></td></tr>`).join("")}
+          <tr><th>Summe</th>${COL.map(([k]) => `<th class="mono" style="text-align:right">${eur(tot[k])}</th>`).join("")}<th class="mono" style="text-align:right">${eur(total)}</th></tr></table></div>
+        <p class="small" style="margin-top:8px">Zahlungseingang nach Datum der Gutschrift (Zufluss). Die gemeinsame E/A-Rechnung von Mordsteam und Brightpage (eine Firma) steht unter <b>Finanzen</b>, dort auch je Sparte getrennt.</p></div>
+      ${late.length ? `<div class="panel"><div class="eyebrow">Überfällig</div><table class="grid small" style="margin-top:6px">${late.map((r) => `<tr><td class="mono">${esc(r.nr)}</td><td>${esc(kName(r.kunde))}</td><td>fällig ${dat(r.faellig)}</td><td class="mono">${eur(r.summe_cents)}</td></tr>`).join("")}</table><p class="small">Zahlungserinnerung im jeweiligen Auftrag (Schritt 4 bzw. 7) vorbereiten.</p></div>` : ""}
+      ${top.length ? `<div class="panel"><div class="eyebrow">Kunden nach Umsatz ${y}</div><table class="grid small" style="margin-top:6px">${top.map(([k, c]) => `<tr style="cursor:pointer" data-bpkopen="${k.id}"><td>${esc(kName(k))}</td><td class="mono" style="text-align:right">${eur(c)}</td></tr>`).join("")}</table></div>` : ""}`;
   }
 
   // ---------- Abos (Service, Werbe-Betreuung, KI-Betrieb) ----------
@@ -285,9 +333,16 @@ ${r.text_unten ? `<p style="margin-top:6mm">${esc(r.text_unten).replace(/\n/g, "
 <div>${esc(c.email)}<br>${esc(c.web)}${c.fusszeile ? "<br>" + esc(c.fusszeile) : ""}</div></div>
 </div></body></html>`;
   }
-  function show(id) {
+  async function show(id) {
     const r = D.rechnungen.find((x) => x.id === id);
     if (!r) return;
+    if (r.nr) {   // ausgestellte Rechnung: dasselbe Belegdesign mit Logo, das der Kunde unter seinem Link sieht
+      const w = window.open("", "_blank");
+      if (!w) { errMsg = "Das Fenster wurde vom Browser blockiert – Pop-ups für den Admin erlauben."; paint(); return; }
+      try { const h = (await api("POST", "rechnung/html", { id })).html; w.document.open(); w.document.write(h); w.document.close(); const pb = w.document.getElementById("pr"); if (pb) pb.addEventListener("click", () => w.print()); }
+      catch (e) { w.close(); errMsg = e.message; paint(); }
+      return;
+    }
     const w = window.open("", "_blank");
     if (!w) { errMsg = "Das Fenster wurde vom Browser blockiert – Pop-ups für den Admin erlauben."; paint(); return; }
     w.document.open(); w.document.write(invoiceHtml(r)); w.document.close();
@@ -297,9 +352,23 @@ ${r.text_unten ? `<p style="margin-top:6mm">${esc(r.text_unten).replace(/\n/g, "
   // ---------- Zeichnen und Ereignisse ----------
   function paint() {
     if (!el) return;
-    el.innerHTML = head() + (sub === "rechnungen" ? listPanel() : sub === "neu" ? formPanel() : sub === "kunden" ? kundenPanel() : sub === "abos" ? abosPanel() : cfgPanel());
+    if (sub === "auftraege") {
+      el.innerHTML = head() + `<div id="bp-auf"></div>`;
+      bindSub();
+      if (window.BPAuftraege) { BPAuftraege.mount(el.querySelector("#bp-auf"), H, { open: aufOpen }); aufOpen = null; }
+      return;
+    }
+    el.innerHTML = head() + (sub === "rechnungen" ? listPanel() : sub === "neu" ? formPanel() : sub === "kunden" ? kundenPanel() : sub === "abos" ? abosPanel() : sub === "einnahmen" ? einnahmenPanel() : cfgPanel());
     const $ = (s) => el.querySelector(s), $$ = (s) => el.querySelectorAll(s);
-    $$("[data-bpsub]").forEach((b) => (b.onclick = (e) => { e.preventDefault(); sub = b.dataset.bpsub; if (sub === "neu" && !b.closest("table")) {} msg = errMsg = ""; try { sessionStorage.setItem("bp_sub", sub); } catch {} paint(); }));
+    bindSub();
+    $$("[data-bplink]").forEach((b) => (b.onclick = async () => { try { const r = await api("POST", "rechnung/link", { id: b.dataset.bplink }); const url = "https://brightpage.net/k/rechnung/" + r.token;
+      (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => { msg = "Kundenlink kopiert: " + url; paint(); }, () => prompt("Kundenlink kopieren:", url)); } catch (e) { errMsg = e.message; paint(); } }));
+    $$("[data-bpkopen]").forEach((b) => (b.onclick = () => { sub = "kunden"; kundeOpen = b.dataset.bpkopen; kundeNeu = false; editKunde = null; msg = errMsg = ""; paint(); window.scrollTo(0, el.offsetTop); }));
+    $$("[data-bpauf]").forEach((b) => (b.onclick = () => go("auftraege", { open: b.dataset.bpauf })));
+    const kb = $("#bp-kback"); if (kb) kb.onclick = (e) => { e.preventDefault(); kundeOpen = null; editKunde = null; paint(); };
+    const kn = $("#bp-kneu"); if (kn) kn.onclick = () => { kundeNeu = true; kundeOpen = null; paint(); };
+    const ks = $("#bp-ksuche"); if (ks) { ks.oninput = () => { kSuche = ks.value; const pos = ks.selectionStart; paint(); const n = el.querySelector("#bp-ksuche"); n.focus(); n.setSelectionRange(pos, pos); }; }
+    const ej = $("#bp-ejahr"); if (ej) ej.onchange = () => { einJahr = ej.value; paint(); };
     const gen = $("#bp-abo-gen"); if (gen) gen.onclick = () => act(() => api("POST", "abo/rechnungen", {}), (r) => `${r.angelegt} Entwurf/Entwürfe angelegt – unter „Rechnungen“ prüfen und ausstellen.`);
     $$("[data-bpshow]").forEach((b) => (b.onclick = () => show(b.dataset.bpshow)));
     $$("[data-bpedit]").forEach((b) => (b.onclick = () => { const r = D.rechnungen.find((x) => x.id === b.dataset.bpedit); edit = { ...r, abzuege: r.abzuege || [] }; sub = "neu"; paint(); }));
@@ -331,12 +400,11 @@ ${r.text_unten ? `<p style="margin-top:6mm">${esc(r.text_unten).replace(/\n/g, "
     // Kunden
     const kf = $("#bp-kf");
     if (kf) {
-      kf.onsubmit = (e) => { e.preventDefault(); const b = Object.fromEntries(new FormData(kf)); b.id = editKunde && editKunde.id; act(async () => { const r = await api("POST", "kunde", b); editKunde = null; return r; }, "Kunde gespeichert."); };
-      const kc = $("#bp-kcancel"); if (kc) kc.onclick = () => { editKunde = null; paint(); };
-      $$("[data-bpkedit]").forEach((b) => (b.onclick = () => { editKunde = D.kunden.find((k) => k.id === b.dataset.bpkedit); paint(); window.scrollTo(0, el.offsetTop); }));
-      $$("[data-bpknew]").forEach((b) => (b.onclick = () => { edit = { kunde_id: b.dataset.bpknew, typ: "rechnung", positionen: [{}], abzuege: [] }; sub = "neu"; paint(); }));
-      $$("[data-bpkdel]").forEach((b) => (b.onclick = () => { if (confirm("Kunden löschen?")) act(() => api("POST", "kunde/loeschen", { id: b.dataset.bpkdel }), "Kunde gelöscht."); }));
+      kf.onsubmit = (e) => { e.preventDefault(); const b = Object.fromEntries(new FormData(kf)); b.id = kundeOpen || ""; act(async () => { const r = await api("POST", "kunde", b); editKunde = null; if (kundeNeu) { kundeNeu = false; kundeOpen = r.id; } return r; }, "Kunde gespeichert."); };
+      const kc = $("#bp-kcancel"); if (kc) kc.onclick = () => { editKunde = null; kundeNeu = false; paint(); };
     }
+    $$("[data-bpknew]").forEach((b) => (b.onclick = () => { edit = { kunde_id: b.dataset.bpknew, typ: "rechnung", positionen: [{}], abzuege: [] }; sub = "neu"; paint(); }));
+    $$("[data-bpkdel]").forEach((b) => (b.onclick = () => { if (confirm("Kunden löschen?")) act(async () => { await api("POST", "kunde/loeschen", { id: b.dataset.bpkdel }); kundeOpen = null; }, "Kunde gelöscht."); }));
     // Abos
     const af = $("#bp-af");
     if (af) {
@@ -366,7 +434,22 @@ ${r.text_unten ? `<p style="margin-top:6mm">${esc(r.text_unten).replace(/\n/g, "
     @media(max-width:640px){.bp-pos{grid-template-columns:1fr 1fr!important}.bp-pos textarea{grid-column:1/-1}}`;
   document.head.appendChild(css);
 
+  function bindSub() {
+    el.querySelectorAll("[data-bpsub]").forEach((b) => (b.onclick = (e) => { e.preventDefault(); sub = b.dataset.bpsub; if (sub === "kunden") { kundeOpen = null; kundeNeu = false; } msg = errMsg = ""; try { sessionStorage.setItem("bp_sub", sub === "neu" ? "rechnungen" : sub); } catch {} paint(); }));
+    const gen = el.querySelector("#bp-abo-gen"); if (gen) gen.onclick = () => act(() => api("POST", "abo/rechnungen", {}), (r) => `${r.angelegt} Entwurf/Entwürfe angelegt – unter „Rechnungen“ prüfen und ausstellen.`);
+  }
+  // Sprung zwischen Untertabs (z. B. aus einem Auftrag in die Kundendatenbank)
+  async function go(to, opts = {}) {
+    sub = to; msg = errMsg = "";
+    if (opts.kunde) { kundeOpen = opts.kunde; kundeNeu = false; }
+    if (opts.open) aufOpen = opts.open;
+    try { sessionStorage.setItem("bp_sub", sub); } catch {}
+    if (to !== "auftraege") { try { D = await api("GET", "daten"); } catch {} }
+    paint(); if (el) window.scrollTo(0, el.offsetTop);
+  }
+
   window.BPAdmin = {
+    go,
     async mount(target, headers) {
       el = target; H = headers;
       if (D) paint();

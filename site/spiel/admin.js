@@ -114,7 +114,8 @@
   let kunden = null, nlData = null, nlMsg = "", nlSyncMsg = "", nlPrev = "", nlForm = { lang: "de" }, kundenAll = false;
   let tab = "uebersicht";
   try { tab = sessionStorage.getItem("ms_admtab") || "uebersicht"; } catch {}
-  const TABS = [["uebersicht", "Übersicht"], ["bestellungen", "Bestellungen"], ["finanzen", "Finanzen"], ["steuer", "Steuer & Abgaben"], ["runden", "Spielrunden & Tests"], ["statistik", "Spielstatistik"], ["system", "Kapazität & System"], ["feedback", "Feedback"], ["kunden", "Kunden & Newsletter"], ["brightpage", "Brightpage"], ["bpauftraege", "BP Aufträge"]];
+  if (tab === "bpauftraege") { tab = "brightpage"; try { sessionStorage.setItem("ms_admtab", tab); sessionStorage.setItem("bp_sub", "auftraege"); } catch {} }   // früherer eigener Tab (bis 21.10.2026)
+  const TABS = [["uebersicht", "Übersicht"], ["bestellungen", "Bestellungen"], ["finanzen", "Finanzen"], ["steuer", "Steuer & Abgaben"], ["runden", "Spielrunden & Tests"], ["statistik", "Spielstatistik"], ["system", "Kapazität & System"], ["feedback", "Feedback"], ["kunden", "Kunden & Newsletter"], ["brightpage", "Brightpage"]];
   const tabBar = () => `<nav class="admtabs" role="tablist">${TABS.map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${l}${k === "system" && ops && (ops.errors.today || ops.alerts.some((a) => Date.now() - a.at < 86400000)) ? ' <span class="dot"></span>' : ""}</button>`).join("")}<button type="button" id="adm-logout" style="margin-left:auto;background:none;border:0;color:var(--ink-2);text-decoration:underline;cursor:pointer;font:inherit;font-size:14px">Abmelden</button></nav>`;
   const eur = (c) => (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
   // Betrag in der Währung der Bestellung (Nachttest 14.10.: £/$ standen mit €-Zeichen da)
@@ -675,7 +676,6 @@
       ${tab === "feedback" ? feedbackPanel() : ""}
       ${tab === "kunden" ? customersPanel() + newsletterPanel() : ""}
       ${tab === "brightpage" ? `<div id="bp-root"></div>` : ""}
-      ${tab === "bpauftraege" ? `<div id="bpa-root"></div>` : ""}
       ${tab === "runden" ? `<div class="panel"><div class="eyebrow">Alle Runden</div>
         <div class="list-sessions" style="margin-top:10px">${sessions.length ? sessions.map((s) => `<div class="sess">
           <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${MS.esc(s.label || s.id)}</b><span class="chip ${({ open: "open", running: "run", finished: "fin" })[s.status] || ""}">${s.status}</span></div>
@@ -684,7 +684,6 @@
     </div>`;
     root.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => { tab = b.dataset.tab; try { sessionStorage.setItem("ms_admtab", tab); } catch {} render(...last); }));
     { const bpEl = root.querySelector("#bp-root"); if (bpEl && window.BPAdmin) BPAdmin.mount(bpEl, H); }
-    { const bpaEl = root.querySelector("#bpa-root"); if (bpaEl && window.BPAuftraege) BPAuftraege.mount(bpaEl, H); }   // Tab BP Aufträge (site/spiel/admin-bpa.js)   // Tab Brightpage (site/spiel/admin-bp.js)
     { const lo = root.querySelector("#adm-logout"); if (lo) lo.onclick = () => { forgetKey(); keyView(); }; }
     const nfEl = document.getElementById("nf");
     if (nfEl) nfEl.onsubmit = async (e) => {
@@ -985,6 +984,7 @@
           <tr><th colspan="2">Summe</th>${cells(sum, true)}</tr></table>${monthsT}${payT}
           <p class="small" style="margin-top:8px"><b>EU-Privatkunden ${d.eu_b2c.year}:</b> ${eu(d.eu_b2c.cents)} von 10.000,00 € (${pct} %)${d.eu_b2c.cents >= d.eu_b2c.warn ? ` <b style="color:var(--red)">– Warnung: 8.000 € überschritten. Ab 10.000 € gilt die Umsatzsteuer des Kundenlandes (OSS) – jetzt mit Steuerberater/WKO klären!</b>` : ""}</p>
           <p class="small"><b>Kleinunternehmergrenze ${d.ku.year}:</b> ${eu(d.ku.cents)} von 55.000,00 € brutto (${Math.round(d.ku.cents / d.ku.limit * 100)} %) – zählt nur Rechnungen mit Kleinunternehmer-Hinweis (Österreich und EU-Privatkunden).${d.ku.cents >= d.ku.limit * 0.8 ? ` <b style="color:var(--red)">Grenze nähert sich!</b>` : ""}</p>
+          ${d.sparten && d.sparten.length > 1 ? `<h3 style="margin:16px 0 4px;font-size:16px">Je Sparte</h3><table class="grid small"><tr><th>Sparte</th>${HEAD}</tr>${d.sparten.map((r) => `<tr><td>${MS.esc(r.label)}</td>${cells(r)}</tr>`).join("")}</table><p class="small">Mordsteam und Brightpage laufen mit getrennten Kunden, Aufträgen und Einnahmen; hier und in der E/A-Rechnung zählen beide zusammen (eine Firma). Details zu Brightpage: Tab Brightpage → Einnahmen.</p>` : ""}
           ${d.regimes && d.regimes.length ? `<h3 style="margin:16px 0 4px;font-size:16px">Je Rechnungsart</h3><table class="grid small"><tr><th>Rechnungsart</th>${HEAD}</tr>${d.regimes.map((r) => `<tr><td>${MS.esc(r.label)}</td>${cells(r)}</tr>`).join("")}</table>` : ""}
           <p class="small" style="margin-top:8px"><b>Zusammenfassende Meldung</b> (EU-Firmen mit UID, Reverse Charge) im Zeitraum: ${d.zm.length ? "" : "keine"}</p>
           ${d.zm.length ? `<table class="grid small"><tr><th>Datum</th><th>UID Kunde</th><th>Land</th><th>Betrag</th><th>Rechnung</th></tr>${d.zm.map((z) => `<tr><td>${new Date(z.date).toLocaleDateString("de-AT")}</td><td class="mono">${MS.esc(z.uid || "")}</td><td>${MS.esc(z.land || "")}</td><td class="mono">${eu(z.cents)}</td><td class="mono">${MS.esc(z.invoice || "")}</td></tr>`).join("")}</table>
