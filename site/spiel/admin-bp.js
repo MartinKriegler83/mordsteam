@@ -35,6 +35,8 @@
     ["Arbeitszeit (Extras, Sonderwünsche)", 85, "Std.", "Working time (extras, special requests)"],
     ["Arbeitszeit mit Service-Plan", 75, "Std.", "Working time with service plan"],
     ["Kleine Änderung (bis 15 Minuten)", 35, "pauschal", "Small change (up to 15 minutes)"],
+    // Empfehlungsbonus als Brightpage-Gutschein (20.10.2026): Betrag laut Preisliste (50/100/200/300 €) eintragen, negativ = Abzug auf der Rechnung des Empfehlers
+    ["Gutschrift Empfehlungsbonus (Empfehlung von …)", -100, "pauschal", "Referral bonus credit (referral of …)"],
   ];
   const EINHEIT_EN = { pauschal: "flat rate", Seite: "page", "Stück": "pc.", km: "km", "Std.": "hrs" };   // Einheit auf englischen Rechnungen
   const ABO_VORLAGEN = [["Service Basis", 29], ["Service Komfort", 59], ["Service Plus", 119], ["Werbe-Betreuung", 79],
