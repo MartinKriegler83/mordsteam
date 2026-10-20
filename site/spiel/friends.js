@@ -9,6 +9,7 @@
   let S = null, off = 0, tab = "einsatz", openDoc = null, busy = false, verdict = null, armed = false, giveArmed = false, poll = null;
   const seenKey = () => "ms_friends_seen_" + token.slice(0, 12);
   let seen = new Set();
+  const fmtTime = (ms) => new Intl.DateTimeFormat(MS.lang === "en" ? "en-GB" : "de-AT", { hour: "2-digit", minute: "2-digit" }).format(new Date(ms)) + (MS.lang === "en" ? "" : " Uhr");
   const fmtDate = (ms) => new Intl.DateTimeFormat(MS.lang === "en" ? "en-GB" : "de-AT", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(new Date(ms));
   const MIN = () => t("Min.", "min");
   // Platzierung: „Platz 2“ / „2nd place“
@@ -154,7 +155,7 @@
   }
   function waitRevealView() {
     const g = S.group, o = S.own || {};
-    const when = g.mode === "live" ? t("sobald alle fertig sind – spätestens eine Stunde nach dem Start", "as soon as everyone has finished – at the latest one hour after the start") : t(`sobald alle fertig sind – spätestens ${g.deadline ? fmtDate(g.deadline) : "am Ende des Zeitfensters"}`, `as soon as everyone has finished – at the latest ${g.deadline ? "on " + fmtDate(g.deadline) : "at the end of the time window"}`);
+    const when = g.mode === "live" ? (g.deadline ? t(`sobald alle fertig sind – spätestens um ${fmtTime(g.deadline)}`, `as soon as everyone has finished – at ${fmtTime(g.deadline)} at the latest`) : t("sobald alle fertig sind – spätestens kurz nach Ende der Spielzeit", "as soon as everyone has finished – shortly after the playing time ends at the latest")) : t(`sobald alle fertig sind – spätestens ${g.deadline ? fmtDate(g.deadline) : "am Ende des Zeitfensters"}`, `as soon as everyone has finished – at the latest ${g.deadline ? "on " + fmtDate(g.deadline) : "at the end of the time window"}`);
     root.innerHTML = `<section class="report paper so-result">
       <div class="solved"><div class="bigstamp ${o.solved ? "" : "grey"}"><div><small>MORDSTEAM FRIENDS · ${t("HÜTTE", "CHALET")}</small><strong>${o.solved ? t("GELÖST!", "SOLVED!") : t("AKTE ZU", "CASE CLOSED")}</strong><small>${String(S.name).toUpperCase()}</small></div></div></div>
       ${o.solved ? `<div class="so-score"><div><small>${t("Endzeit", "Final time")}</small><b>${MS.dur(o.score_ms)}</b></div><div><small>${t("Gespielt", "Played")}</small><b>${MS.dur(o.played_ms)}</b></div><div><small>${t("Strafminuten", "Penalty minutes")}</small><b>${o.penalty}</b></div></div>` : ""}
@@ -287,7 +288,7 @@
     if (inp && q.type === "time") {
       inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("check").click(); } });
       inp.addEventListener("input", (e) => {
-        const dg = inp.value.replace(/[^0-9]/g, "").slice(0, 4);
+        const dg = (/^\d:/.test(inp.value) ? "0" : "").concat(inp.value).replace(/[^0-9]/g, "").slice(0, 4);   // „1:31“ → 01:31 (Nachttest 20.10.2026)
         const del = e.inputType && e.inputType.startsWith("delete");
         inp.value = dg.length > 2 || (dg.length === 2 && !del) ? dg.slice(0, 2) + ":" + dg.slice(2) : dg;
       });

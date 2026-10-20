@@ -379,7 +379,7 @@ async function loesung({ request, env, team, session }) {
   const now = Date.now();
   if (team.last_attempt_at && now - team.last_attempt_at < RULES.minSecondsBetween * 1000) {
     const wait = Math.ceil((RULES.minSecondsBetween * 1000 - (now - team.last_attempt_at)) / 1000);
-    return fail(L(langOf(session), `Kurz durchatmen: nächster Versuch in ${wait} Sekunden.`, `Take a breath: next attempt in ${wait} seconds.`), 429);
+    return fail(L(langOf(session), `Kurz durchatmen: nächster Versuch in ${wait} ${wait === 1 ? "Sekunde" : "Sekunden"}.`, `Take a breath: next attempt in ${wait} ${wait === 1 ? "second" : "seconds"}.`), 429);
   }
   const b = await body(request);
   const qs = stageQuestions(session, stage);

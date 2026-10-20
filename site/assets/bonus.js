@@ -56,7 +56,12 @@
     c.addEventListener("click", function () { tap(l); });
     c.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tap(l); } });
   });
-  s3.querySelector(".bz-del").addEventListener("click", function () { if (!done3) { got = ""; paint(); m3.textContent = ""; } });
+  s3.querySelector(".bz-del").addEventListener("click", function () {
+    if (done3) return;
+    var had = got.length > 0; got = ""; paint(); m3.className = "bz-msg";
+    // kurze Rückmeldung, damit man sieht, dass gelöscht wurde (Nachttest 20.10.2026)
+    m3.textContent = had ? (/^en/.test(document.documentElement.lang) ? "Cleared – tap the letters again." : "Gelöscht – tipp die Buchstaben neu an.") : "";
+  });
 
   // Kommt jemand über die Rätsel-Anzeige (?src=…-r), gleich zum Rätsel springen
   try { if (/-r$/.test(new URLSearchParams(location.search).get("src") || "")) setTimeout(function () { sec.scrollIntoView({ block: "start" }); }, 300); } catch (x) {}

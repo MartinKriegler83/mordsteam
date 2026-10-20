@@ -10,32 +10,33 @@
   const TYP = { rechnung: "Rechnung", anzahlung: "Anzahlung", schluss: "Schlussrechnung", storno: "Storno" };
   // Preisliste von brightpage.net (Stand 20.10.2026, siehe brightpage.net/preise) als Schnellauswahl – Preise im Formular frei änderbar
   const VORLAGEN = [
-    ["Web Start – One-Pager mit bis zu 6 Abschnitten, Kontaktformular, für Google vorbereitet", 990, "pauschal"],
-    ["Web Premium – Firmenwebsite mit bis zu 8 Seiten und Online-Editor", 2490, "pauschal"],
-    ["Zusätzliche Seite (Web Premium)", 150, "Seite"],
-    ["Online-Editor für Web Start", 190, "pauschal"],
-    ["Shop Start – bis zu 15 Produkte, Kartenzahlung über Stripe", 2490, "pauschal"],
-    ["Shop Premium – bis zu 30 Produkte, Gutscheine, Rechnungen, Produktverwaltung", 3900, "pauschal"],
-    ["Zusätzliches Produkt (Shop)", 15, "Stück"],
-    ["Paket „Gefunden werden“ (Google-Profil, Apple Maps, Bing, Verzeichnisse, Bewertungs-QR)", 290, "pauschal"],
-    ["Paket „Gefunden werden“ zusammen mit neuer Website", 150, "pauschal"],
-    ["Online-Werbung starten – eine Plattform, eine Kampagne, Auswertung nach 30 Tagen", 390, "pauschal"],
-    ["Online-Werbung – zweite Plattform", 190, "pauschal"],
-    ["Newsletter-Paket – Anmeldung, Tool, Vorlage, Einschulung", 490, "pauschal"],
-    ["Newsletter – Anbindung an den Shop", 190, "pauschal"],
-    ["Fotos vom Betrieb – vor Ort bis 2 Stunden, 15 bearbeitete Bilder", 190, "pauschal"],
-    ["Anfahrt (amtliches Kilometergeld)", 0.5, "km"],
-    ["KI-Helfer Einrichtung – Bewertungs-Antworthelfer", 390, "pauschal"],
-    ["KI-Helfer Einrichtung – FAQ-Assistent", 490, "pauschal"],
-    ["KI-Helfer Einrichtung – Anfrage-Sortierer", 690, "pauschal"],
-    ["KI-Helfer Einrichtung – Angebotsgenerator", 890, "pauschal"],
-    ["KI-Helfer Einrichtung – alle vier zusammen", 1990, "pauschal"],
-    ["Texte schreiben – One-Pager", 190, "pauschal"],
-    ["Texte schreiben", 90, "Seite"],
-    ["Arbeitszeit (Extras, Sonderwünsche)", 85, "Std."],
-    ["Arbeitszeit mit Service-Plan", 75, "Std."],
-    ["Kleine Änderung (bis 15 Minuten)", 35, "pauschal"],
+    ["Web Start – One-Pager mit bis zu 6 Abschnitten, Kontaktformular, für Google vorbereitet", 990, "pauschal", "Web Start – one-page website with up to 6 sections, contact form, prepared for Google"],
+    ["Web Premium – Firmenwebsite mit bis zu 8 Seiten und Online-Editor", 2490, "pauschal", "Web Premium – company website with up to 8 pages and online editor"],
+    ["Zusätzliche Seite (Web Premium)", 150, "Seite", "Additional page (Web Premium)"],
+    ["Online-Editor für Web Start", 190, "pauschal", "Online editor for Web Start"],
+    ["Shop Start – bis zu 15 Produkte, Kartenzahlung über Stripe", 2490, "pauschal", "Shop Start – up to 15 products, card payment via Stripe"],
+    ["Shop Premium – bis zu 30 Produkte, Gutscheine, Rechnungen, Produktverwaltung", 3900, "pauschal", "Shop Premium – up to 30 products, vouchers, invoices, product management"],
+    ["Zusätzliches Produkt (Shop)", 15, "Stück", "Additional product (shop)"],
+    ["Paket „Gefunden werden“ (Google-Profil, Apple Maps, Bing, Verzeichnisse, Bewertungs-QR)", 290, "pauschal", "“Get found” package (Google Business Profile, Apple Maps, Bing, directories, review QR)"],
+    ["Paket „Gefunden werden“ zusammen mit neuer Website", 150, "pauschal", "“Get found” package with a new website"],
+    ["Online-Werbung starten – eine Plattform, eine Kampagne, Auswertung nach 30 Tagen", 390, "pauschal", "Start online advertising – one platform, one campaign, review after 30 days"],
+    ["Online-Werbung – zweite Plattform", 190, "pauschal", "Online advertising – second platform"],
+    ["Newsletter-Paket – Anmeldung, Tool, Vorlage, Einschulung", 490, "pauschal", "Newsletter package – sign-up, tool, template, training"],
+    ["Newsletter – Anbindung an den Shop", 190, "pauschal", "Newsletter – connection to the shop"],
+    ["Fotos vom Betrieb – vor Ort bis 2 Stunden, 15 bearbeitete Bilder", 190, "pauschal", "Photos of your business – on site up to 2 hours, 15 edited pictures"],
+    ["Anfahrt (amtliches Kilometergeld)", 0.5, "km", "Travel (official mileage rate)"],
+    ["KI-Helfer Einrichtung – Bewertungs-Antworthelfer", 390, "pauschal", "AI helper setup – review reply helper"],
+    ["KI-Helfer Einrichtung – FAQ-Assistent", 490, "pauschal", "AI helper setup – FAQ assistant"],
+    ["KI-Helfer Einrichtung – Anfrage-Sortierer", 690, "pauschal", "AI helper setup – enquiry sorter"],
+    ["KI-Helfer Einrichtung – Angebotsgenerator", 890, "pauschal", "AI helper setup – quote generator"],
+    ["KI-Helfer Einrichtung – alle vier zusammen", 1990, "pauschal", "AI helper setup – all four together"],
+    ["Texte schreiben – One-Pager", 190, "pauschal", "Copywriting – one-page website"],
+    ["Texte schreiben", 90, "Seite", "Copywriting"],
+    ["Arbeitszeit (Extras, Sonderwünsche)", 85, "Std.", "Working time (extras, special requests)"],
+    ["Arbeitszeit mit Service-Plan", 75, "Std.", "Working time with service plan"],
+    ["Kleine Änderung (bis 15 Minuten)", 35, "pauschal", "Small change (up to 15 minutes)"],
   ];
+  const EINHEIT_EN = { pauschal: "flat rate", Seite: "page", "Stück": "pc.", km: "km", "Std.": "hrs" };   // Einheit auf englischen Rechnungen
   const ABO_VORLAGEN = [["Service Basis", 29], ["Service Komfort", 59], ["Service Plus", 119], ["Werbe-Betreuung", 79],
     ["KI-Helfer Betrieb bis 1.000 Vorgänge", 29], ["KI-Helfer Betrieb bis 2.500 Vorgänge", 59], ["KI-Helfer Betrieb bis 5.000 Vorgänge", 89], ["KI-Helfer Betrieb bis 10.000 Vorgänge", 159]];
 
@@ -136,7 +137,7 @@
     return { id: edit && edit.id, kunde_id: f.kunde_id.value, typ: f.typ.value, titel: f.titel.value, leistung: f.leistung.value, sprache: f.sprache.value, text_oben: f.text_oben.value, text_unten: f.text_unten.value,
       positionen: pos, anzahlungen: [...f.querySelectorAll('[name="anz"]:checked')].map((x) => x.value) };
   }
-  const toC = (v) => { let t = String(v || "").replace(/\s|€/g, ""); if (/,\d{1,2}$/.test(t)) t = t.replace(/\./g, "").replace(",", "."); else t = t.replace(/,/g, ""); const n = Math.round(Number(t) * 100); return Number.isFinite(n) ? n : 0; };
+  const toC = (v) => { let t = String(v || "").replace(/\s|€/g, ""); if (/,\d{1,2}$/.test(t)) t = t.replace(/\./g, "").replace(",", "."); else if (/^-?\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, ""); else t = t.replace(/,/g, ""); const n = Math.round(Number(t) * 100); return Number.isFinite(n) ? n : 0; };
   function updateSum(f) {
     const b = readForm(f);
     const tot = b.positionen.reduce((a, p) => a + Math.round((Number(String(p.menge).replace(",", ".")) || 0) * toC(p.preis)), 0);
@@ -226,7 +227,9 @@
     const money = (x) => (x / 100).toLocaleString(lang === "en" ? "en-GB" : "de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
     const d = (ymd) => (ymd ? (lang === "en" ? new Date(ymd + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : dat(ymd)) : "");
     const brutto = r.positionen.reduce((a, p) => a + p.cents, 0);
-    const qr = r.status === "offen" || r.status === "entwurf" ? epc(c, r) : "";
+    const qr = r.status === "offen" ? epc(c, r) : "";   // Entwurf: kein Zahl-Code, sonst zahlt jemand eine nie ausgestellte Rechnung
+    const addDays = (ymd, n) => new Date(Date.parse(ymd + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
+    const faellig = d(r.faellig || addDays(r.datum || D.today, Number(c.ziel_tage) || 14));   // Entwurf: voraussichtlich, aus dem Zahlungsziel (wie der Server beim Ausstellen)
     const draft = r.status === "entwurf";
     return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><title>${esc(r.nr || "Entwurf")} ${esc(kName(k))}</title>
 <style>
@@ -259,7 +262,7 @@ ${k.art === "b2b" && k.firma ? `<b>${esc(k.firma)}</b><br>${k.name ? esc(k.name)
 <table class="meta"><tr><td>${T("Rechnungsnummer", "Invoice no.")}</td><td><b>${esc(r.nr || T("(Entwurf)", "(draft)"))}</b></td></tr>
 <tr><td>${T("Rechnungsdatum", "Invoice date")}</td><td>${d(r.datum || D.today)}</td></tr>
 <tr><td>${r.typ === "anzahlung" ? T("Leistung", "Service") : T("Leistungszeitraum", "Service period")}</td><td>${esc(r.leistung || d(r.datum || D.today))}</td></tr>
-${r.typ !== "storno" ? `<tr><td>${T("Fällig am", "Due date")}</td><td>${d(r.faellig) || T("14 Tage nach Rechnungsdatum", "14 days after invoice date")}</td></tr>` : ""}
+${r.typ !== "storno" ? `<tr><td>${T("Fällig am", "Due date")}</td><td>${faellig}</td></tr>` : ""}
 ${k.uid ? `<tr><td>${T("UID Kunde", "Customer VAT ID")}</td><td>${esc(k.uid)}</td></tr>` : ""}
 ${c.uid ? `<tr><td>${T("Unsere UID", "Our VAT ID")}</td><td>${esc(c.uid)}</td></tr>` : ""}</table></div>
 <h1>${titel}${r.titel ? ": " + esc(r.titel) : ""}</h1>
@@ -268,10 +271,10 @@ ${r.text_oben ? `<p>${esc(r.text_oben).replace(/\n/g, "<br>")}</p>` : ""}
 ${r.positionen.map((p, i) => `<tr><td>${i + 1}</td><td>${esc(p.text).replace(/\n/g, "<br>")}</td><td class="r">${String(p.menge).replace(".", lang === "en" ? "." : ",")} ${esc(p.einheit || "")}</td><td class="r">${money(p.preis_cents)}</td><td class="r">${money(p.cents)}</td></tr>`).join("")}
 </table>
 <table class="pos tot">${r.abzuege.length ? `<tr><td></td><td class="r">${T("Summe", "Subtotal")}</td><td class="r" style="width:28mm">${money(brutto)}</td></tr>
-${r.abzuege.map((a) => `<tr><td></td><td class="r">${T("abzüglich Anzahlung", "less advance payment")} ${esc(a.nr)} ${T("vom", "of")} ${d(a.datum)}</td><td class="r">−${money(Math.abs(a.cents)).replace("-", "")}</td></tr>`).join("")}` : ""}
+${r.abzuege.map((a) => `<tr><td></td><td class="r">${a.cents < 0 ? T("Rücknahme Abzug Anzahlung", "reversal of advance payment") : T("abzüglich Anzahlung", "less advance payment")} ${esc(a.nr)} ${T("vom", "of")} ${d(a.datum)}</td><td class="r">${a.cents < 0 ? "+" : "−"}${money(Math.abs(a.cents)).replace("-", "")}</td></tr>`).join("")}` : ""}
 <tr class="big"><td></td><td class="r">${r.typ === "storno" ? T("Gutschrift", "Credit") : r.abzuege.length ? T("Zu zahlen", "Amount due") : T("Gesamtbetrag", "Total")}</td><td class="r" style="width:28mm">${money(r.summe_cents)}</td></tr></table>
 <p class="vat">${esc(D.vat[lang][r.regime] || "")}</p>
-${r.typ !== "storno" && r.status !== "bezahlt" ? `<div class="pay">${qr ? `<div>${qr}</div>` : ""}<div>${T("Bitte überweisen Sie den Betrag bis", "Please transfer the amount by")} <b>${d(r.faellig) || T("14 Tage nach Rechnungsdatum", "14 days after the invoice date")}</b> ${T("auf folgendes Konto", "to")}:<br>
+${r.typ !== "storno" && r.status !== "bezahlt" ? `<div class="pay">${qr ? `<div>${qr}</div>` : ""}<div>${T("Bitte überweisen Sie den Betrag bis", "Please transfer the amount by")} <b>${faellig}</b> ${T("auf folgendes Konto", "to")}:<br>
 <b>${esc(c.firma)}</b> · IBAN <b>${esc((c.iban || "").replace(/(.{4})/g, "$1 ").trim())}</b>${c.bic ? " · BIC " + esc(c.bic) : ""}${c.bank ? "<br>" + esc(c.bank) : ""}<br>${T("Verwendungszweck", "Reference")}: <b>${esc(r.nr || "")}</b>
 ${qr ? `<br><small>${T("Mit der Banking-App scannen („Zahlen mit Code“) – Betrag und Verwendungszweck sind schon ausgefüllt.", "Scan with your banking app (EPC QR code) – amount and reference are pre-filled.")}</small>` : ""}</div></div>` : r.status === "bezahlt" ? `<p><b>${T("Bezahlt am", "Paid on")} ${d(r.bezahlt_am)}.</b> ${T("Vielen Dank!", "Thank you!")}</p>` : ""}
 ${r.text_unten ? `<p style="margin-top:6mm">${esc(r.text_unten).replace(/\n/g, "<br>")}</p>` : ""}
@@ -314,7 +317,8 @@ ${r.text_unten ? `<p style="margin-top:6mm">${esc(r.text_unten).replace(/\n/g, "
       wirePos();
       $("#bp-v").onchange = (e) => { const v = VORLAGEN[e.target.value]; if (!v) return;
         const empty = [...f.querySelectorAll(".bp-pos")].find((r) => !r.querySelector('[name="text"]').value.trim());
-        const html = posRow({ text: v[0], menge: 1, einheit: v[2], preis_cents: Math.round(v[1] * 100) });
+        const kd = D.kunden.find((k) => k.id === f.kunde_id.value), en = (f.sprache.value || (kd && kd.sprache)) === "en";   // englische Rechnung → englischer Vorlagentext
+        const html = posRow({ text: en ? v[3] : v[0], menge: 1, einheit: en ? EINHEIT_EN[v[2]] || v[2] : v[2], preis_cents: Math.round(v[1] * 100) });
         if (empty) empty.outerHTML = html; else $("#bp-pos").insertAdjacentHTML("beforeend", html);
         e.target.value = ""; wirePos(); sum(); };
       $("#bp-t").onchange = () => { $("#bp-anz").hidden = $("#bp-t").value !== "schluss"; sum(); };
@@ -339,6 +343,17 @@ ${r.text_unten ? `<p style="margin-top:6mm">${esc(r.text_unten).replace(/\n/g, "
       const ac = $("#bp-acancel"); if (ac) ac.onclick = () => { editAbo = null; paint(); };
       $$("[data-bpaedit]").forEach((b) => (b.onclick = () => { editAbo = D.abos.find((x) => x.id === b.dataset.bpaedit); paint(); }));
     }
+    $$("form").forEach((fm) => fm.addEventListener("invalid", (ev) => {
+      const fld = ev.target, lab = (fld.closest(".field") && fld.closest(".field").querySelector("label")) || null;
+      let p = fm.querySelector(".bp-inv");
+      if (!p) { p = document.createElement("p"); p.className = "err bp-inv"; p.setAttribute("role", "alert"); p.style.marginTop = "10px"; fm.appendChild(p); p.dataset.n = ""; }
+      const name = lab ? lab.textContent.trim() : fld.name;
+      const list = p.dataset.n ? p.dataset.n.split("|") : [];
+      if (!list.includes(name)) list.push(name);
+      p.dataset.n = list.join("|");
+      p.textContent = (fld.validity.valueMissing || list.length > 1 ? "Bitte ausfüllen bzw. prüfen: " : "Bitte prüfen: ") + list.join(", ");
+      clearTimeout(p._t); p._t = setTimeout(() => { p.dataset.n = ""; }, 50);   // nächster Absendeversuch beginnt eine neue Liste
+    }, true));
     const cf = $("#bp-cf");
     if (cf) cf.onsubmit = (e) => { e.preventDefault(); act(() => api("POST", "einstellungen", Object.fromEntries(new FormData(cf))), "Einstellungen gespeichert."); };
   }

@@ -280,7 +280,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
     if (inp && q.type === "time") {
       inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("check").click(); } });
       inp.addEventListener("input", (e) => {
-        const dg = inp.value.replace(/[^0-9]/g, "").slice(0, 4);
+        const dg = (/^\d:/.test(inp.value) ? "0" : "").concat(inp.value).replace(/[^0-9]/g, "").slice(0, 4);   // „1:31“ → 01:31 (Nachttest 20.10.2026)
         // beim Löschen den Doppelpunkt nicht sofort wieder einsetzen
         const del = e.inputType && e.inputType.startsWith("delete");
         inp.value = dg.length > 2 || (dg.length === 2 && !del) ? dg.slice(0, 2) + ":" + dg.slice(2) : dg;
@@ -576,9 +576,13 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
     $("probebuy").addEventListener("click", () => { try { fetch("/api/solo/probe/kauf", { method: "POST", keepalive: true, headers: { "x-solo": token || "" } }).catch(() => {}); } catch {} });
   }
   async function startProbe(caseId) {
+    // Schon eine Probe auf diesem Gerät (letzte 24 h)? Dann dort weitermachen statt ein neues Probe-Ticket anzulegen (Trichter zählt sonst doppelt)
+    const PK = "ms_probe_" + caseId + "_" + MS.lang;
+    try { const o = JSON.parse(localStorage.getItem(PK) || "null"); if (o && o.code && Date.now() - o.at < 86400000) { code = o.code; history.replaceState(null, "", "/spiel/solo.html?c=" + code + (probeSrc ? "&src=" + probeSrc : "")); return loadTicket(); } } catch {}
     try {
       const d = await api("POST", "probe", { case: caseId, lang: MS.lang });
       code = d.code;
+      try { localStorage.setItem(PK, JSON.stringify({ code, at: Date.now() })); } catch {}
       // Adresse auf den Probe-Code umstellen: Neu laden setzt die Probe fort statt eine neue anzulegen
       history.replaceState(null, "", "/spiel/solo.html?c=" + code + (probeSrc ? "&src=" + probeSrc : ""));
       loadTicket();
