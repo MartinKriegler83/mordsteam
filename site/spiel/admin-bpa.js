@@ -11,6 +11,7 @@
   const dt = (ms) => new Date(ms).toLocaleString("de-AT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
   const KLINK = "https://brightpage.net/k/";
   let el = null, H = null, D = null, open = null, filter = "offen", neu = false, msg = "", errMsg = "";
+  let artInit = null;   // Verein-Regel nur einmal je Angebot beim ersten Öffnen anwenden
   let AN = null, anFor = null, edit = null, aufSteps = new Set(), mailDlg = null, kontaktEdit = false, payFor = null, curStep = 0, rStep = 0, zeigFormular = false, prodVorschlag = null;
 
   async function api(method, path, body) {
@@ -51,15 +52,15 @@
   // Fließtext ohne feste Farbe, damit das Mailprogramm ihn im dunklen Modus selbst hell stellt.
   function mailHtml(lang, body) {
     const en = lang === "en";
-    return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%">
+    return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:600px;table-layout:fixed;-webkit-text-size-adjust:100%;text-size-adjust:100%">
 <tr><td style="background:#15171C;padding:20px 26px;border-radius:12px 12px 0 0"><span style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:700;letter-spacing:1.5px;color:#D9820B">BRIGHT</span><span style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:700;letter-spacing:1.5px;color:#F3EFE6">PAGE</span>
-<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#B9BCC3;margin-top:4px">${en ? "Websites, shops and AI solutions for small businesses" : "Websites, Shops und KI-Lösungen für Betriebe"}</div></td></tr>
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#B9BCC3;margin-top:4px">${en ? "Websites, shops and AI solutions for small businesses" : "Websites, Shops und KI-Lösungen für Betriebe"}</div></td></tr>
 <tr><td style="height:4px;line-height:4px;font-size:0;background:#D9820B">&nbsp;</td></tr>
-<tr><td data-mailbody style="padding:24px 26px 8px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6">${body.replace(/<a href="([^"]+)">/g, '<a href="$1" style="color:#D9820B;text-decoration:underline">')}</td></tr>
-<tr><td style="padding:8px 26px 22px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6">${en ? "Best regards" : "Liebe Grüße"}<br><b>Martin Kriegler</b><br>Brightpage – ${en ? "a service of" : "ein Angebot der"} Mordsteam e.U.</td></tr>
-<tr><td style="padding:12px 26px;border-top:1px solid #D9D6CF;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#8A8D94">office@brightpage.net · <a href="https://brightpage.net" style="color:#D9820B;text-decoration:none">brightpage.net</a></td></tr></table>`;
+<tr><td data-mailbody style="padding:24px 22px 8px;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:1.6;word-break:break-word;overflow-wrap:anywhere">${body.replace(/<a href="([^"]+)">/g, '<a href="$1" style="color:#D9820B;text-decoration:underline">')}</td></tr>
+<tr><td style="padding:8px 22px 22px;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:1.6">${en ? "Best regards" : "Liebe Grüße"}<br><b>Martin Kriegler</b><br>Brightpage – ${en ? "a service of" : "ein Angebot der"} Mordsteam e.U.</td></tr>
+<tr><td style="padding:12px 26px;border-top:1px solid #D9D6CF;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#8A8D94">office@brightpage.net · <a href="https://brightpage.net" style="color:#D9820B;text-decoration:none">brightpage.net</a></td></tr></table>`;
   }
-  const btn = (text, url) => `<p style="margin:20px 0"><a href="${esc(url)}" style="display:inline-block;background:#D9820B;color:#15171C;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:15px;text-decoration:none;padding:13px 22px;border-radius:8px">${esc(text)}</a></p>`;
+  const btn = (text, url) => `<p style="margin:20px 0"><a href="${esc(url)}" style="display:inline-block;background:#D9820B;color:#15171C;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:17px;text-decoration:none;padding:14px 22px;border-radius:8px">${esc(text)}</a></p>`;
   const P = (x) => `<p style="margin:0 0 14px">${x}</p>`;
   const UL = (items) => `<ul style="margin:0 0 14px;padding-left:20px">${items.map((i) => `<li style="margin:0 0 4px">${i}</li>`).join("")}</ul>`;
   // Termin aus „Erstgespräch (Video) 26.10.2026 um 15:00“ englisch formulieren (Nachttest 21.10.2026, UX8)
@@ -311,6 +312,7 @@
       <div class="two">${f("anzahlung_pct", "Anzahlung in % (Test: 0 = keine Rechnung)", x.anzahlung_pct ?? 50, 'inputmode="numeric"')}${f("gueltig_tage", "Gültig (Tage ab Freigabe)", x.gueltig_tage ?? 30, 'inputmode="numeric"')}</div>
       ${f("stripe_link", "Stripe-Zahlungslink für die Anzahlung (optional)", x.stripe_link, 'maxlength="300" placeholder="https://buy.stripe.com/…"')}
       <div class="field"><label>Schlusstext (optional)</label><textarea name="text_unten" rows="2" maxlength="2000">${esc(x.text_unten || "")}</textarea></div>
+      ${errMsg ? `<p class="err" id="bpa-ederr" role="alert" style="margin:8px 0 0">${esc(errMsg)}</p>` : ""}
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button class="tipbtn" type="submit" data-then="">Speichern</button><button class="tipbtn" type="submit" data-then="vorschau">Speichern + Vorschau</button>
         <button class="btn btn-ink" type="submit" data-then="frei">${x.status === "entwurf" ? "Speichern + freigeben" : "Speichern + Gültigkeit erneuern"}</button><button class="tipbtn" type="button" id="bpa-edx">Schließen</button></div></form>`;
   }
@@ -530,7 +532,7 @@
       // D-M1: Firma eingetragen → Art automatisch „Firma“ (sonst bekäme eine Firma die Verbraucher-Bedingungen)
       // Vereine ohne Geschäftsbetrieb sind Verbraucher (§ 1 KSchG) – „Verein“ im Namen und keine UID → Verbraucher vorschlagen (AGB-Prüfung 21.10.2026)
       const artAuto = () => { const fi = f.k_firma.value.trim(), uid = f.k_uid && f.k_uid.value.trim(); if (!fi) return; f.k_art.value = /verein/i.test(fi) && !uid ? "b2c" : "b2b"; };
-      if (f.k_firma && f.k_art) { f.k_firma.addEventListener("input", artAuto); if (f.k_uid) f.k_uid.addEventListener("input", artAuto); }
+      if (f.k_firma && f.k_art) { f.k_firma.addEventListener("input", artAuto); if (f.k_uid) f.k_uid.addEventListener("input", artAuto); if (artInit !== edit.id) { artInit = edit.id; if (edit.status === "entwurf" && !f.k_strasse.value.trim()) artAuto(); } }
       edSum(f); f.addEventListener("input", () => edSum(f)); f.addEventListener("change", () => edSum(f));
       $("#bpa-edx").onclick = () => { edit = null; paint(); };
       const keep = () => { edit = { ...edit, ...readEditor(f) }; edit.positionen = edit.positionen.map((p) => ({ ...p, cents: Math.round((Number(String(p.menge).replace(",", ".")) || 0) * p.preis_cents) })); };
@@ -550,7 +552,7 @@
         act(async () => { await api("POST", "angebot", body);
           if (then === "vorschau") htmlFenster((await api("POST", "angebot/vorschau", { id })).html);
           if (then === "frei") { await api("POST", "angebot/freigeben", { id }); edit = null; } },
-        then === "frei" ? "Freigegeben – jetzt „Angebots-Mail“ vorbereiten und selbst senden." : "Angebot gespeichert."); };
+        then === "frei" ? "Freigegeben – jetzt „Angebots-Mail“ vorbereiten und selbst senden." : "Angebot gespeichert.").then(() => { const er = $("#bpa-ederr"); if (er) er.scrollIntoView({ block: "center", behavior: "smooth" }); }); };
     }
     // Rechnungen (Schritt 4 und 7)
     $$("[data-bparshow]").forEach((x) => (x.onclick = async () => { try { htmlFenster((await api("POST", "rechnung/html", { id: x.dataset.bparshow })).html); } catch (e) { errMsg = e.message; paint(); } }));
