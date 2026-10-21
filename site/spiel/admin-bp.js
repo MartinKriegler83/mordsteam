@@ -282,6 +282,7 @@
         <div class="two">${f("fn", "Firmenbuchnummer", "FN 123456a")}${f("fb_gericht", "Firmenbuchgericht", "Landesgericht Eisenstadt")}</div>
         <div class="two">${f("iban", "IBAN Geschäftskonto")}${f("bic", "BIC")}</div>
         <div class="two">${f("bank", "Bank")}${f("ziel_tage", "Zahlungsziel (Tage)", "14", "number")}</div>
+        <div class="field"><label>Google-Bewertungslink (für die Bewertungs-Mail in Schritt 8)</label><input name="bewertung_link" maxlength="120" value="${esc(c.bewertung_link || "")}" placeholder="https://g.page/r/…/review"></div>
         <div class="field"><label>Zusatz in der Fußzeile (optional)</label><input name="fusszeile" maxlength="300" value="${esc(c.fusszeile || "")}"></div>
         <p class="small">Eigene UID: <b class="mono">${esc(c.uid || "nicht gesetzt")}</b> (kommt aus der Cloudflare-Variable UID_NR). Die Steuernummer gehört nicht auf die Rechnung und wird hier nicht gespeichert.</p>
         <div><button class="btn btn-ink" type="submit">Speichern</button></div></form></div>`;
