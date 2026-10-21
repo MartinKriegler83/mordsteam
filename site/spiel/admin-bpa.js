@@ -396,8 +396,14 @@
       <div style="margin-top:10px">${ckItem(a, "basis:bewertung", basisLabel("bewertung"))}</div>
       ${a.empfohlen ? `<p class="note" style="margin-top:10px"><b>Empfohlen von ${esc(a.empfohlen)}:</b> Auftrag bezahlt → Empfehlungsbonus fällig (Gutschein laut Preisliste). Gutschein vorbereiten und schicken.</p>` : ""}
       ${bericht ? `<p class="small">Kurzbericht nach 30 Tagen (Gefunden werden / Werbung): rechts als nächsten Schritt mit Datum eintragen.</p>` : ""}
+      <div class="eyebrow" style="margin-top:14px">Nachfassen: Ist der Kunde zufrieden?</div>
+      ${/^Nachfassen/.test(a.next_was || "") && a.next_at ? `<p class="small" style="margin:6px 0">Geplant am <b>${dat(a.next_at)}</b> – erscheint an dem Tag oben in den Hinweisen. <button class="tipbtn" type="button" id="bpa-nfok">Erledigt</button></p>` : ""}
+      <form id="bpa-nf8" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:6px">
+        <div class="field" style="margin:0"><label>Datum</label><input type="date" name="d" value="${esc(/^Nachfassen/.test(a.next_was || "") && a.next_at ? a.next_at : plusTage(D.today, 30))}" required></div>
+        <button class="btn btn-ink" type="submit">${/^Nachfassen/.test(a.next_was || "") ? "Datum ändern" : "Nachfassen planen"}</button></form>
       <p class="small muted">Laufende Leistungen (Service, KI-Betrieb, Werbe-Betreuung) verrechnen sich über Brightpage → Abos.</p>`;
   }
+  function plusTage(ymd, n) { const d = new Date(ymd + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
 
   function sidebar(a) {
     const sumMin = a.zeiten.reduce((x, z) => x + z.min, 0);
@@ -435,7 +441,7 @@
       if (n === 3 && ok) { const x = AN.list[0]; return x ? `${x.nr || "Entwurf"} · ${AST[x.status][0]} · ${eur(x.summen.einmal)}` : "noch kein Angebot"; }
       if (n === 4 && ok) { const x = AN.list.find((y) => y.status === "angenommen"), r = x && AN.rechnungen.find((y) => y.id === x.rechnung_id); return r ? `Anzahlung ${r.nr || ""} ${r.status}` : x ? "angenommen" : ""; }
       if (n === 5) return `Korrekturrunden ${a.runden}`;
-      if (n === 7 && ok) { const r = AN.rechnungen.find((y) => y.typ === "schluss" && y.status !== "storniert"); return r ? `${r.nr || "Entwurf"} ${r.status}` : ""; }
+      if (n === 7 && ok) { const r = AN.rechnungen.find((y) => y.typ === "schluss" && y.status !== "storniert"); return r ? (r.nr ? `${r.nr} ${r.status}` : "Entwurf") : ""; }
       return "";
     };
     return `<div class="panel" style="padding-bottom:10px">
@@ -583,6 +589,10 @@
     const ke = $("#bpa-ke"); if (ke) ke.onclick = () => { kontaktEdit = true; paint(); };
     const kx = $("#bpa-kx"); if (kx) kx.onclick = () => { kontaktEdit = false; paint(); };
     const kf = $("#bpa-kontakt"); if (kf) kf.onsubmit = (e) => { e.preventDefault(); act(async () => { await api("POST", "auftrag", { id: a.id, ...Object.fromEntries(new FormData(kf)) }); kontaktEdit = false; }, "Kontakt gespeichert."); };
+    // Schritt 8: Nachfassen als nächsten Schritt planen (Martin 21.10.2026)
+    const nf8 = $("#bpa-nf8"); if (nf8) nf8.onsubmit = (e) => { e.preventDefault(); const d = nf8.d.value;
+      act(async () => { await api("POST", "auftrag", { id: a.id, next_at: d, next_was: "Nachfassen: Ist der Kunde zufrieden?" }); await api("POST", "auftrag/notiz", { id: a.id, text: `Nachfassen geplant für ${dat(d)}` }); }, `Nachfassen am ${dat(d)} geplant.`); };
+    const nfok = $("#bpa-nfok"); if (nfok) nfok.onclick = () => act(async () => { await api("POST", "auftrag", { id: a.id, next_at: "", next_was: "" }); await api("POST", "auftrag/notiz", { id: a.id, text: "Nachgefasst – erledigt" }); }, "Nachfassen erledigt.");
     $("#bpa-next").onsubmit = (e) => { e.preventDefault(); const t = e.target; act(() => api("POST", "auftrag", { id: a.id, next_was: t.next_was.value, next_at: t.next_at.value }), "Nächster Schritt gespeichert."); };
     $("#bpa-zeit").onsubmit = (e) => { e.preventDefault(); act(() => api("POST", "auftrag/zeit", { id: a.id, ...Object.fromEntries(new FormData(e.target)) }), "Zeit eingetragen."); };
     $$("[data-bpazdel]").forEach((x) => (x.onclick = () => act(() => api("POST", "auftrag/zeit", { id: a.id, del: Number(x.dataset.bpazdel) }), "")));
