@@ -5,6 +5,7 @@ import { adminDenied } from "../../../lib/adminauth.js";
 import { auftragListe, auftragNeu, auftragSave, auftragStatus, auftragNotiz, auftragZeit, auftragLoeschen, anfrageEingang } from "../../../lib/bpauftrag.js";
 import { angeboteListe, angebotSave, angebotFreigeben, angebotStatus, angebotVorschau, rechnungLink, angebotWarnungen, rechnungAdminHtml, schlussAusAngebot, bpKeyOk, htmlPage, publicAngebot, publicAnnahme, publicRechnung } from "../../../lib/bpangebot.js";
 import { publicFormular, publicFormularPost, publicAnleitung, publicAV, publicWiderruf, publicAgb, publicWiderrufen, publicUebergabe, publicUebergabePost, uebergabeSave, uebergabeVorlage, nachfassWarnungen, formAbschnitte, anleitungenFuer } from "../../../lib/bpkunde.js";
+import { besuchEingang, besucherStats } from "../../../lib/bpbesuch.js";
 import { bpOverview, bpConfigSave, kundeSave, kundeDelete, rechnungSave, rechnungAusstellen, rechnungBezahlt, rechnungStorno, aboSave, aboRechnungen } from "../../../lib/brightpage.js";
 
 export async function onRequest({ request, env, params }) {
@@ -15,6 +16,12 @@ export async function onRequest({ request, env, params }) {
   if (route === "public/anfrage" && request.method === "POST") {
     try { let b = {}; try { b = await request.json(); } catch {} return json(await anfrageEingang(env, request, b)); }
     catch (e) { if (e.status) return fail(e.message, e.status); throw e; }
+  }
+  // Besuchszählung von brightpage.net (Server zu Server, Schlüssel BP_INBOX_KEY)
+  if (route === "public/besuch" && request.method === "POST") {
+    if (!bpKeyOk(env, request)) return fail("Nicht erlaubt.", 403);
+    let b = {}; try { b = await request.json(); } catch {}
+    return json(await besuchEingang(env, b));
   }
   // Kundenseiten brightpage.net/k/* (Durchreicher auf brightpage.net, gleicher Schlüssel): Angebot ansehen/annehmen, Rechnung ansehen
   if (route.startsWith("public/k/")) {
@@ -43,6 +50,7 @@ export async function onRequest({ request, env, params }) {
   const body = async () => { try { return await request.json(); } catch { return {}; } };
   try {
     if (route === "admin/daten" && m === "GET") return json(await bpOverview(env));
+    if (route === "admin/besucher" && m === "GET") return json(await besucherStats(env, new URL(request.url).searchParams.get("tage")));
     if (route === "admin/auftraege" && m === "GET") { const d = await auftragListe(env); d.warn = [...(await angebotWarnungen(env)), ...(await nachfassWarnungen(env)), ...d.warn]; return json(d); }
     if (route === "admin/angebote" && m === "GET") { const id = new URL(request.url).searchParams.get("auftrag") || "", d = await angeboteListe(env, id);
       const au = await env.DB.prepare("SELECT produkte FROM bp_auftraege WHERE id=?").bind(id).first(); const pr = au ? JSON.parse(au.produkte || "[]") : [];

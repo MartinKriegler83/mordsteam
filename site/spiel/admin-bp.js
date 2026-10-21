@@ -49,7 +49,7 @@
   let el = null, H = null, D = null, sub = "auftraege", edit = null, msg = "", errMsg = "", editKunde = null, editAbo = null;
   let kundeOpen = null, kundeNeu = false, kSuche = "", einJahr = null, aufOpen = null;
   try { sub = sessionStorage.getItem("bp_sub") || "auftraege"; } catch {}
-  const SUBS = [["auftraege", "Aufträge"], ["kunden", "Kunden"], ["rechnungen", "Rechnungen"], ["abos", "Abos"], ["einnahmen", "Einnahmen"], ["einstellungen", "Einstellungen"]];
+  const SUBS = [["auftraege", "Aufträge"], ["kunden", "Kunden"], ["rechnungen", "Rechnungen"], ["abos", "Abos"], ["einnahmen", "Einnahmen"], ["besucher", "Besucher"], ["einstellungen", "Einstellungen"]];
   if (!SUBS.some((x) => x[0] === sub) && sub !== "neu") sub = "auftraege";
 
   async function api(method, path, body) {
@@ -194,6 +194,34 @@
         ${L.map((x) => { const R = D.rechnungen.filter((r) => r.kunde_id === x.id), u = R.filter((r) => r.status === "bezahlt").reduce((a, r) => a + r.bezahlt_cents, 0), o = R.filter((r) => r.status === "offen").reduce((a, r) => a + r.summe_cents, 0), A = (D.auftraege || []).filter((y) => y.kunde_id === x.id);
           return `<tr style="cursor:pointer" data-bpkopen="${x.id}"><td><b>${esc(kName(x))}</b>${x.art === "b2b" && x.name ? `<br>${esc(x.name)}` : ""}</td><td>${esc(x.email || "")}${x.telefon ? `<br>${esc(x.telefon)}` : ""}</td><td>${esc(((x.plz || "") + " " + (x.ort || "")).trim())} · ${esc(x.land)}</td>
             <td>${A.map((y) => esc(STN[y.status] || y.status)).join("<br>") || "–"}</td><td class="mono" style="text-align:right">${eur(u)}</td><td class="mono" style="text-align:right;${o ? "color:var(--red)" : ""}">${o ? eur(o) : "–"}</td></tr>`; }).join("")}</table></div>` : `<p class="muted" style="margin-top:10px">${q ? "Keine Treffer." : "Noch keine Kunden."}</p>`}</div>`;
+  }
+
+  // ---------- Besucher brightpage.net (Zähler ohne Cookies, 21.10.2026) ----------
+  let BES = null, besTage = 30, besLaden = false;
+  async function besucherLaden() { besLaden = true; try { BES = await api("GET", "besucher?tage=" + besTage); } catch (e) { errMsg = e.message; } besLaden = false; if (sub === "besucher") paint(); }
+  function besucherPanel() {
+    if (!BES) { if (!besLaden) besucherLaden(); return `<div class="panel"><p class="small">Besucherzahlen werden geladen …</p></div>`; }
+    const B = BES, max = Math.max(1, ...B.proTag.map((d) => d.besuche || 0));
+    const tage = []; for (let i = B.tage - 1; i >= 0; i--) { const d = new Date(Date.now() - i * 86400000).toLocaleDateString("en-CA", { timeZone: "Europe/Vienna" }); tage.push(B.proTag.find((x) => x.day === d) || { day: d, besuche: 0, aufrufe: 0 }); }
+    const kpi = (l, v, sub2) => `<div style="background:#fff;border:1px solid #E4E1DA;border-radius:10px;padding:12px"><div class="small muted">${l}</div><div style="font-size:26px;font-weight:800">${v}</div>${sub2 ? `<div class="small muted">${sub2}</div>` : ""}</div>`;
+    const zeit = (ms) => new Date(ms).toLocaleString("de-AT", { timeZone: "Europe/Vienna", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    return `<div class="panel"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div class="eyebrow" style="margin:0">Besucher brightpage.net</div>
+        <select id="bp-btage">${[7, 30, 90, 365].map((t) => `<option value="${t}" ${t === besTage ? "selected" : ""}>letzte ${t} Tage</option>`).join("")}</select>
+        <button class="tipbtn" type="button" id="bp-breload">Aktualisieren</button></div>
+      <p class="small muted" style="margin-top:6px">Ohne Cookies und ohne IP gezählt. „Besuche“ = Einstiege von außen (ein Näherungswert), „Aufrufe“ = alle Seitenaufrufe. Bots werden großteils herausgefiltert. Musterseiten und Kundenseiten zählen nicht mit. Ausführlicher: Cloudflare → Analytics &amp; Logs → Web Analytics.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px">
+        ${kpi("Heute", B.heute.besuche || 0, (B.heute.aufrufe || 0) + " Aufrufe")}${kpi("Gestern", B.gestern.besuche || 0, (B.gestern.aufrufe || 0) + " Aufrufe")}
+        ${kpi(`Besuche ${B.tage} Tage`, B.summe.besuche, B.summe.aufrufe + " Aufrufe")}${kpi("Anfragen im Zeitraum", B.summe.anfragen, B.summe.besuche ? ((B.summe.anfragen / B.summe.besuche) * 100).toFixed(1).replace(".", ",") + " % der Besuche" : "")}</div>
+      <div style="display:flex;align-items:flex-end;gap:2px;height:120px;margin-top:16px;border-bottom:1px solid #D9D6CF" aria-label="Besuche pro Tag">
+        ${tage.map((d) => `<div title="${d.day.split("-").reverse().join(".")}: ${d.besuche || 0} Besuche, ${d.aufrufe || 0} Aufrufe" style="flex:1;min-width:2px;background:#D9820B;border-radius:2px 2px 0 0;height:${Math.round(((d.besuche || 0) / max) * 100)}%"></div>`).join("")}</div>
+      <div class="small muted" style="display:flex;justify-content:space-between;margin-top:4px"><span>${tage[0].day.split("-").reverse().join(".")}</span><span>heute</span></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:18px">
+        <div><div class="eyebrow">Woher</div><table class="grid small"><tr><th>Herkunft</th><th style="text-align:right">Besuche</th><th style="text-align:right">Aufrufe</th><th style="text-align:right">Anfragen</th></tr>
+          ${B.herkunft.map((h) => `<tr><td>${esc(h.herkunft)}</td><td style="text-align:right">${h.besuche}</td><td style="text-align:right">${h.aufrufe}</td><td style="text-align:right">${h.anfragen || ""}</td></tr>`).join("") || `<tr><td colspan="4" class="muted">Noch keine Daten.</td></tr>`}</table></div>
+        <div><div class="eyebrow">Seiten</div><table class="grid small"><tr><th>Seite</th><th style="text-align:right">Aufrufe</th></tr>${B.seiten.map((x) => `<tr><td>${esc(x.path)}</td><td style="text-align:right">${x.aufrufe}</td></tr>`).join("") || `<tr><td colspan="2" class="muted">–</td></tr>`}</table>
+          <div class="eyebrow" style="margin-top:14px">Länder</div><p class="small">${B.laender.map((x) => `${esc(x.land || "?")} ${x.besuche}`).join(" · ") || "–"}</p></div>
+        <div><div class="eyebrow">Letzte Besuche</div><table class="grid small"><tr><th>Zeit</th><th>Herkunft</th><th>Seite</th></tr>${B.zuletzt.map((z) => `<tr><td>${zeit(z.at)}</td><td>${esc(z.herkunft)}${z.land ? " · " + esc(z.land) : ""}</td><td>${esc(z.path)}</td></tr>`).join("") || `<tr><td colspan="3" class="muted">–</td></tr>`}</table></div>
+      </div></div>`;
   }
 
   // ---------- Einnahmen (nur Brightpage) ----------
@@ -358,13 +386,15 @@ ${r.text_unten ? `<p style="margin-top:6mm">${esc(r.text_unten).replace(/\n/g, "
       if (window.BPAuftraege) { BPAuftraege.mount(el.querySelector("#bp-auf"), H, { open: aufOpen }); aufOpen = null; }
       return;
     }
-    el.innerHTML = head() + (sub === "rechnungen" ? listPanel() : sub === "neu" ? formPanel() : sub === "kunden" ? kundenPanel() : sub === "abos" ? abosPanel() : sub === "einnahmen" ? einnahmenPanel() : cfgPanel());
+    el.innerHTML = head() + (sub === "rechnungen" ? listPanel() : sub === "neu" ? formPanel() : sub === "kunden" ? kundenPanel() : sub === "abos" ? abosPanel() : sub === "einnahmen" ? einnahmenPanel() : sub === "besucher" ? besucherPanel() : cfgPanel());
     const $ = (s) => el.querySelector(s), $$ = (s) => el.querySelectorAll(s);
     bindSub();
     $$("[data-bplink]").forEach((b) => (b.onclick = async () => { try { const r = await api("POST", "rechnung/link", { id: b.dataset.bplink }); const url = "https://brightpage.net/k/rechnung/" + r.token;
       (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => { msg = "Kundenlink kopiert: " + url; paint(); }, () => prompt("Kundenlink kopieren:", url)); } catch (e) { errMsg = e.message; paint(); } }));
     $$("[data-bpkopen]").forEach((b) => (b.onclick = () => { sub = "kunden"; kundeOpen = b.dataset.bpkopen; kundeNeu = false; editKunde = null; msg = errMsg = ""; paint(); window.scrollTo(0, el.offsetTop); }));
     $$("[data-bpauf]").forEach((b) => (b.onclick = () => go("auftraege", { open: b.dataset.bpauf })));
+    const bt = $("#bp-btage"); if (bt) bt.onchange = () => { besTage = Number(bt.value); BES = null; paint(); };
+    const br = $("#bp-breload"); if (br) br.onclick = () => { BES = null; paint(); };
     const kb = $("#bp-kback"); if (kb) kb.onclick = (e) => { e.preventDefault(); kundeOpen = null; editKunde = null; paint(); };
     const kn = $("#bp-kneu"); if (kn) kn.onclick = () => { kundeNeu = true; kundeOpen = null; paint(); };
     const ks = $("#bp-ksuche"); if (ks) { ks.oninput = () => { kSuche = ks.value; const pos = ks.selectionStart; paint(); const n = el.querySelector("#bp-ksuche"); n.focus(); n.setSelectionRange(pos, pos); }; }
