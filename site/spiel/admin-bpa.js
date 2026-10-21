@@ -53,7 +53,7 @@
     const en = lang === "en";
     return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%">
 <tr><td style="background:#15171C;padding:20px 26px;border-radius:12px 12px 0 0"><span style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:700;letter-spacing:1.5px;color:#D9820B">BRIGHT</span><span style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:700;letter-spacing:1.5px;color:#F3EFE6">PAGE</span>
-<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#B9BCC3;margin-top:4px">${en ? "Websites, shops and AI helpers for small businesses" : "Websites, Shops und KI-Helfer für Betriebe"}</div></td></tr>
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#B9BCC3;margin-top:4px">${en ? "Websites, shops and AI solutions for small businesses" : "Websites, Shops und KI-Lösungen für Betriebe"}</div></td></tr>
 <tr><td style="height:4px;line-height:4px;font-size:0;background:#D9820B">&nbsp;</td></tr>
 <tr><td data-mailbody style="padding:24px 26px 8px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6">${body.replace(/<a href="([^"]+)">/g, '<a href="$1" style="color:#D9820B;text-decoration:underline">')}</td></tr>
 <tr><td style="padding:8px 26px 22px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6">${en ? "Best regards" : "Liebe Grüße"}<br><b>Martin Kriegler</b><br>Brightpage – ${en ? "a service of" : "ein Angebot der"} Mordsteam e.U.</td></tr>

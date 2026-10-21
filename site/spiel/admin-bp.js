@@ -27,11 +27,11 @@
     ["Newsletter – Anbindung an den Shop", 190, "pauschal", "Newsletter – connection to the shop"],
     ["Fotos vom Betrieb – vor Ort bis 2 Stunden, 15 bearbeitete Bilder", 190, "pauschal", "Photos of your business – on site up to 2 hours, 15 edited pictures"],
     ["Anfahrt (amtliches Kilometergeld)", 0.5, "km", "Travel (official mileage rate)"],
-    ["KI-Helfer Einrichtung – Bewertungs-Antworthelfer", 390, "pauschal", "AI helper setup – review reply helper"],
-    ["KI-Helfer Einrichtung – FAQ-Assistent", 490, "pauschal", "AI helper setup – FAQ assistant"],
-    ["KI-Helfer Einrichtung – Anfrage-Sortierer", 690, "pauschal", "AI helper setup – enquiry sorter"],
-    ["KI-Helfer Einrichtung – Angebotsgenerator", 890, "pauschal", "AI helper setup – quote generator"],
-    ["KI-Helfer Einrichtung – alle vier zusammen", 2190, "pauschal", "AI helper setup – all four together"],
+    ["KI-Lösung Einrichtung – Bewertungs-Antworthelfer", 390, "pauschal", "AI solution setup – review reply helper"],
+    ["KI-Lösung Einrichtung – FAQ-Assistent", 490, "pauschal", "AI solution setup – FAQ assistant"],
+    ["KI-Lösung Einrichtung – Anfrage-Sortierer", 690, "pauschal", "AI solution setup – enquiry sorter"],
+    ["KI-Lösung Einrichtung – Angebotsgenerator", 890, "pauschal", "AI solution setup – quote generator"],
+    ["KI-Lösung Einrichtung – alle vier zusammen", 2190, "pauschal", "AI solution setup – all four together"],
     ["Terminbuchung einbinden – bestehendes Buchungssystem auf der Website", 99, "pauschal", "Embed booking system – existing booking system on the website"],
     ["Terminanfrage Plus – Wunschtermine aus den Öffnungszeiten, Bestätigung per Mail", 290, "pauschal", "Appointment request Plus – free slots from opening hours, confirmation by e-mail"],
     ["Texte schreiben – One-Pager", 190, "pauschal", "Copywriting – one-page website"],
@@ -44,7 +44,7 @@
   ];
   const EINHEIT_EN = { pauschal: "flat rate", Seite: "page", "Stück": "pc.", km: "km", "Std.": "hrs" };   // Einheit auf englischen Rechnungen
   const ABO_VORLAGEN = [["Service Basis", 29], ["Service Komfort", 59], ["Service Plus", 119], ["Werbe-Betreuung", 79],
-    ["KI-Helfer Betrieb bis 1.000 Vorgänge", 29], ["KI-Helfer Betrieb bis 2.500 Vorgänge", 59], ["KI-Helfer Betrieb bis 5.000 Vorgänge", 89], ["KI-Helfer Betrieb bis 10.000 Vorgänge", 159]];
+    ["KI-Betrieb bis 1.000 Vorgänge", 29], ["KI-Betrieb bis 2.500 Vorgänge", 59], ["KI-Betrieb bis 5.000 Vorgänge", 89], ["KI-Betrieb bis 10.000 Vorgänge", 159]];
 
   let el = null, H = null, D = null, sub = "auftraege", edit = null, msg = "", errMsg = "", editKunde = null, editAbo = null;
   let kundeOpen = null, kundeNeu = false, kSuche = "", einJahr = null, aufOpen = null;
@@ -64,7 +64,7 @@
   const kName = (k) => (k ? (k.art === "b2b" ? k.firma || k.name : k.name || k.firma) || "–" : "–");
 
   function head() {
-    return `<div class="panel" style="padding-bottom:6px"><div class="eyebrow">Brightpage · Websites, Shops und KI-Helfer · getrennt von Mordsteam</div>
+    return `<div class="panel" style="padding-bottom:6px"><div class="eyebrow">Brightpage · Websites, Shops und KI-Lösungen · getrennt von Mordsteam</div>
       ${D.fehlt.length ? `<p class="err" style="margin-top:10px">Vor der ersten Rechnung unter „Einstellungen“ eintragen: ${D.fehlt.map(esc).join(", ")}.</p>` : ""}
       ${D.stats.abo_offen ? `<p class="small" style="margin-top:8px"><b>${D.stats.abo_offen} Abo-Rechnung(en) fällig.</b> <button class="tipbtn" id="bp-abo-gen">Als Entwürfe anlegen</button></p>` : ""}
       <nav class="admtabs" role="tablist" style="margin-top:10px">${SUBS.map(([k, l], i) => `<button type="button" role="tab" data-bpsub="${k}" aria-selected="${k === sub || (k === "rechnungen" && sub === "neu")}">${i + 1} ${l}</button>`).join("")}</nav>
