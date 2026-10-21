@@ -12,6 +12,8 @@
   const KLINK = "https://brightpage.net/k/";
   let el = null, H = null, D = null, open = null, filter = "offen", neu = false, msg = "", errMsg = "";
   let artInit = null;   // Verein-Regel nur einmal je Angebot beim ersten Öffnen anwenden
+  // Geöffneten Auftrag über ein Neuladen der Seite behalten (Test 21.10.2026: nach Refresh landete man in der Übersicht)
+  try { open = sessionStorage.getItem("bpa_open") || null; } catch {}
   let AN = null, anFor = null, edit = null, aufSteps = new Set(), mailDlg = null, kontaktEdit = false, payFor = null, curStep = 0, rStep = 0, zeigFormular = false, prodVorschlag = null;
 
   async function api(method, path, body) {
@@ -54,13 +56,13 @@
     const en = lang === "en";
     return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:600px;table-layout:fixed;-webkit-text-size-adjust:100%;text-size-adjust:100%">
 <tr><td style="background:#15171C;padding:20px 26px;border-radius:12px 12px 0 0"><span style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:700;letter-spacing:1.5px;color:#D9820B">BRIGHT</span><span style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:700;letter-spacing:1.5px;color:#F3EFE6">PAGE</span>
-<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#B9BCC3;margin-top:4px">${en ? "Websites, shops and AI solutions for small businesses" : "Websites, Shops und KI-Lösungen für Betriebe"}</div></td></tr>
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#B9BCC3;margin-top:4px">${en ? "Websites, shops and AI solutions for small businesses" : "Websites, Shops und KI-Lösungen für Betriebe"}</div></td></tr>
 <tr><td style="height:4px;line-height:4px;font-size:0;background:#D9820B">&nbsp;</td></tr>
-<tr><td data-mailbody style="padding:24px 22px 8px;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:1.6;word-break:break-word;overflow-wrap:anywhere">${body.replace(/<a href="([^"]+)">/g, '<a href="$1" style="color:#D9820B;text-decoration:underline">')}</td></tr>
-<tr><td style="padding:8px 22px 22px;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:1.6">${en ? "Best regards" : "Liebe Grüße"}<br><b>Martin Kriegler</b><br>Brightpage – ${en ? "a service of" : "ein Angebot der"} Mordsteam e.U.</td></tr>
-<tr><td style="padding:12px 26px;border-top:1px solid #D9D6CF;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#8A8D94">office@brightpage.net · <a href="https://brightpage.net" style="color:#D9820B;text-decoration:none">brightpage.net</a></td></tr></table>`;
+<tr><td data-mailbody style="padding:24px 22px 8px;font-family:Arial,Helvetica,sans-serif;font-size:19px;line-height:1.6;word-break:break-word;overflow-wrap:anywhere">${body.replace(/<a href="([^"]+)">/g, '<a href="$1" style="color:#D9820B;text-decoration:underline">')}</td></tr>
+<tr><td style="padding:8px 22px 22px;font-family:Arial,Helvetica,sans-serif;font-size:19px;line-height:1.6">${en ? "Best regards" : "Liebe Grüße"}<br><b>Martin Kriegler</b><br>Brightpage – ${en ? "a service of" : "ein Angebot der"} Mordsteam e.U.</td></tr>
+<tr><td style="padding:12px 26px;border-top:1px solid #D9D6CF;font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#8A8D94">office@brightpage.net · <a href="https://brightpage.net" style="color:#D9820B;text-decoration:none">brightpage.net</a></td></tr></table>`;
   }
-  const btn = (text, url) => `<p style="margin:20px 0"><a href="${esc(url)}" style="display:inline-block;background:#D9820B;color:#15171C;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:17px;text-decoration:none;padding:14px 22px;border-radius:8px">${esc(text)}</a></p>`;
+  const btn = (text, url) => `<p style="margin:20px 0"><a href="${esc(url)}" style="display:inline-block;background:#D9820B;color:#15171C;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:19px;text-decoration:none;padding:14px 22px;border-radius:8px">${esc(text)}</a></p>`;
   const P = (x) => `<p style="margin:0 0 14px">${x}</p>`;
   const UL = (items) => `<ul style="margin:0 0 14px;padding-left:20px">${items.map((i) => `<li style="margin:0 0 4px">${i}</li>`).join("")}</ul>`;
   // Termin aus „Erstgespräch (Video) 26.10.2026 um 15:00“ englisch formulieren (Nachttest 21.10.2026, UX8)
@@ -480,6 +482,7 @@
     if (!el) return;
     const a = open && D.list.find((x) => x.id === open);
     if (open && !a) open = null;
+    try { if (open) sessionStorage.setItem("bpa_open", open); else sessionStorage.removeItem("bpa_open"); } catch {}
     el.innerHTML = head() + (a ? detail(a) : listPanel()) + mailDialog();
     const $ = (s) => el.querySelector(s), $$ = (s) => el.querySelectorAll(s);
     bindMail();
@@ -599,6 +602,19 @@
     .bpa-pos input,.bpa-pos textarea,.bpa-pos select{font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line,#ccc);border-radius:6px;background:#fff;color:inherit;min-width:0}
     @media(max-width:900px){.bpa-grid{grid-template-columns:1fr}.bpa-grid aside{position:static}.bpa-pos{grid-template-columns:1fr 1fr 1fr!important}.bpa-pos>div:first-child{grid-column:1/-1}}`;
   document.head.appendChild(css);
+
+  // Zurück im Browserfenster (z. B. nach dem Mailprogramm): Daten still neu laden, damit Kundenaktionen ohne Refresh sichtbar sind.
+  // Nicht, solange etwas bearbeitet wird (Angebot, Mail, Zahlung, Kontakt) oder ein Eingabefeld den Fokus hat.
+  let lastSync = 0;
+  async function sync() {
+    if (!el || !el.isConnected || !D || edit || mailDlg || payFor || kontaktEdit || neu) return;
+    const ae = document.activeElement; if (ae && el.contains(ae) && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return;
+    if (Date.now() - lastSync < 5000) return; lastSync = Date.now();
+    const y = window.scrollY;
+    try { D = await api("GET", "auftraege"); if (open) await loadAN(); paint(); window.scrollTo(0, y); } catch {}
+  }
+  window.addEventListener("focus", sync);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") sync(); });
 
   window.BPAuftraege = {
     async mount(target, headers, opts = {}) {
