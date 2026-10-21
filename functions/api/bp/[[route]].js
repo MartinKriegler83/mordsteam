@@ -4,7 +4,7 @@ import { json, fail, badBody } from "../../../lib/game.js";
 import { adminDenied } from "../../../lib/adminauth.js";
 import { auftragListe, auftragNeu, auftragSave, auftragStatus, auftragNotiz, auftragZeit, auftragLoeschen, anfrageEingang } from "../../../lib/bpauftrag.js";
 import { angeboteListe, angebotSave, angebotFreigeben, angebotStatus, angebotVorschau, rechnungLink, angebotWarnungen, rechnungAdminHtml, schlussAusAngebot, bpKeyOk, htmlPage, publicAngebot, publicAnnahme, publicRechnung } from "../../../lib/bpangebot.js";
-import { publicFormular, publicFormularPost, publicAnleitung, publicAV, publicWiderruf, publicUebergabe, publicUebergabePost, uebergabeSave, uebergabeVorlage, nachfassWarnungen, formAbschnitte, anleitungenFuer } from "../../../lib/bpkunde.js";
+import { publicFormular, publicFormularPost, publicAnleitung, publicAV, publicWiderruf, publicAgb, publicWiderrufen, publicUebergabe, publicUebergabePost, uebergabeSave, uebergabeVorlage, nachfassWarnungen, formAbschnitte, anleitungenFuer } from "../../../lib/bpkunde.js";
 import { bpOverview, bpConfigSave, kundeSave, kundeDelete, rechnungSave, rechnungAusstellen, rechnungBezahlt, rechnungStorno, aboSave, aboRechnungen } from "../../../lib/brightpage.js";
 
 export async function onRequest({ request, env, params }) {
@@ -32,6 +32,9 @@ export async function onRequest({ request, env, params }) {
     if (art === "anleitung" && request.method === "GET") return publicAnleitung(env, tok, lang);
     if (art === "av" && request.method === "GET") return publicAV(env, lang);
     if (art === "widerruf" && request.method === "GET") return publicWiderruf(env, lang);
+    if (art === "agb" && request.method === "GET") return publicAgb(env, lang);
+    if (art === "widerrufen" && request.method === "GET") return publicWiderrufen(env, lang);
+    if (art === "widerrufen" && request.method === "POST") return publicWiderrufen(env, lang, await form(), ip);
     return htmlPage("Nicht gefunden.", 404);
   }
   if (!route.startsWith("admin/")) return fail("Nicht gefunden.", 404);
