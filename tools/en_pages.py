@@ -1289,7 +1289,7 @@ P["specials-xmas"] = dict(title="Mordsteam Specials – Christmas mystery “Fou
 <div class="stack">
 <div class="eyebrow">Special · Christmas · Four Minutes Dark</div>
 <h2 class="h2">“When the tree came on, the box was gone.”</h2>
-<p class="lead">Kerzenthal on the evening of the third Sunday of Advent. At 18:00 the Christkind is due to switch on the big tree – and for that the whole Christmas market goes dark for four minutes. In the darkness the punch stall’s donation box disappears, and market manager Alois Brunner ends up in the butcher’s cold store. He is found much later, frozen to the bone but alive. The detectives are stuck in the snow on the mountain road. Until they arrive, you have visitors’ photos, the church clock, a group photo with punch mugs, a carton from the rubbish – and a keypad covered in icing sugar.</p>
+<p class="lead">Kerzenthal, on the Saturday before the third Sunday of Advent. At 18:00 the Christkind is due to switch on the big tree – and for that the whole Christmas market goes dark for four minutes. In the darkness the punch stall’s donation box disappears, and market manager Sepp Wimmer ends up in the butcher’s cold store. He is found much later, frozen to the bone but alive. The detectives are stuck in the snow on the mountain road. Until they arrive, you have visitors’ photos, the church clock, a group photo with punch mugs, a carton from the rubbish – and a keypad covered in icing sugar.</p>
 <p><b>Five stallholders under suspicion:</b></p>
 <div class="objects"><span>the chestnut roaster</span><span>the gingerbread seller</span><span>the mulled-wine landlady</span><span>the nativity carver</span><span>the Christkind’s angel</span></div>
 </div>
@@ -1371,7 +1371,7 @@ P["specials-xmas"] = dict(title="Mordsteam Specials – Christmas mystery “Fou
 
 <section class="cta"><div class="wrap">
 <h2>The detectives arrive at 20:35.</h2>
-<p>By then you’ll know who locked market manager Brunner in.</p>
+<p>By then you’ll know who locked market manager Wimmer in.</p>
 <div class="actions" style="justify-content:center"><a class="btn btn-ink" href="solo-buy.html?fall=christmas" data-fn="buy">Buy the case – €8.90</a><a class="btn btn-line" href="/spiel/solo.html?probe=special-002&amp;lang=en" data-fn="probe">Take a free look first</a></div>
 </div></section>
 </main>''')

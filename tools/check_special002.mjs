@@ -42,12 +42,31 @@ for (const [lang, C] of [["de", DE], ["en", { ...DE, ...EN }]]) for (let v = 0; 
   if ([5, 9, 12, 13, 14, 16, 21, 24].some((h) => R.closed.includes(h))) fail(`${tag} besondere Hütte geschlossen`);
   let traps = 0; for (let x = 0; x <= COLS - TW; x++) for (let y = 0; y <= ROWS - TH; y++) if (!(x === R.x0 && y === 0) && show(x, y).filter((h) => R.closed.includes(h)).length === 1) traps++;
   if (traps < 2) fail(`${tag} zu wenig Fallen (${traps})`);
+  // Kerbe noch unter dem Turm, aber tiefer (Simulation 21.10.): darf nie genau eine geschlossene Hütte zeigen
+  for (let y = 1; y <= ROWS - TH; y++) if (show(R.x0, y).filter((h) => R.closed.includes(h)).length === 1) fail(`${tag} Falle unter dem Turm (y=${y})`);
+  const plan = docs.find((d) => d.id === "plan").html;
+  if (!/<path d="M[\d.]+,165 L[\d.]+,175 L[\d.]+,165"/.test(plan)) fail(`${tag} roter Pfeil am Turmfuß fehlt im Plan`);
   const gs = docs.find((d) => d.id === "geschlossen").html;
   for (const h of R.closed) if (!gs.includes(`<td class="mono">${h}</td>`)) fail(`${tag} Aushang ohne ${h}`);
   // Frage 4: Code aus Staubzucker + Form eindeutig, Ziffern verschieden
   if (new Set(R.code).size !== 4 || R.codeStr !== sol.code) fail(`${tag} Code ${R.codeStr}`);
   const vec = R.code.slice(1).map((k, i) => { const [a, b] = KEYPOS(R.code[i]), [x, y] = KEYPOS(k); return [x - a, y - b]; });
   if (DE.pathMatches(R.keys, vec).length !== 1) fail(`${tag} Tastenweg nicht eindeutig`);
+  // auch rückwärts gelesen (Stern → Schweif) eindeutig, Maßstab egal (pathMatches vergleicht bis auf positiven Faktor)
+  const rc = [...R.code].reverse(), rvec = rc.slice(1).map((k, i) => { const [p, q] = KEYPOS(rc[i]), [x, y] = KEYPOS(k); return [x - p, y - q]; });
+  if (DE.pathMatches(R.keys, rvec).length !== 1) fail(`${tag} rückwärts nicht eindeutig`);
+  for (const f of [2, 0.5, 1.5]) if (DE.pathMatches(R.keys, vec.map(([x, y]) => [x * f, y * f])).length !== 1) fail(`${tag} Maßstab ${f} nicht eindeutig`);
+  if (vec.some(DE.overKey)) fail(`${tag} Schritt läuft über eine Taste: ${JSON.stringify(vec)}`);
+  if (vec.some(([x, y], i) => i && x * vec[i - 1][1] === y * vec[i - 1][0])) fail(`${tag} Umkehr/Gerade im Weg`);
+  if (DE.selfTouch(R.code) < 0.3) fail(`${tag} Weg berührt sich selbst`);
+  if (DE.tailClear(R.code) < 0.35) fail(`${tag} Schweif liegt auf einer Linie (${DE.tailClear(R.code).toFixed(2)})`);
+  const nap = docs.find((d) => d.id === "serviette").html;
+  if ((nap.match(/<path d="M-9,-8 L5,0 L-9,8"/g) || []).length !== 3) fail(`${tag} Serviette: drei Richtungspfeile fehlen`);
+  if (/r="9" fill="none" stroke="#D9D3C4"/.test(nap)) fail(`${tag} Serviette hat noch ein Punktraster`);
+  // Fundzeit: nicht Tatzeit + 90, Notiz vor 19:45
+  if (R.found === R.T + 90 || R.found < DE.hm("19:24") || R.found + 2 >= DE.hm("19:45")) fail(`${tag} Fundzeit ${DE.fmt(R.found)}`);
+  const mel = docs.find((d) => d.id === "meldung").html;
+  if (!mel.includes(DE.fmt(R.found)) || !mel.includes(DE.fmt(R.found + 2))) fail(`${tag} Fundzeit nicht in der Meldung`);
   const kp = docs.find((d) => d.id === "kassa").html;
   if ((kp.match(/opacity="\.92"/g) || []).length !== 4 * 26) fail(`${tag} Staubzucker nicht auf genau vier Tasten`);
   // gleich lange Beweisstücke (Stufen 1–3) je Sprache
@@ -60,6 +79,10 @@ for (const [lang, C] of [["de", DE], ["en", { ...DE, ...EN }]]) for (let v = 0; 
     fail(`${tag} deutsche Reste: ${(all.match(/.{20}([äöüÄÖÜß]|\bUhr\b| und | der | die | das |Hütte|„).{20}/) || [""])[0]}`);
   }
   if (docs.length !== 16) fail(`${tag} ${docs.length} Akten`);
+  const everything = docs.map((d) => d.title + d.html).join(" ") + r.text + JSON.stringify(hints) + JSON.stringify(C.QUESTIONS) + JSON.stringify(C.briefing("X")) + JSON.stringify(C.UI) + JSON.stringify(C.SUSPECTS);
+  if (/Alois|Brunner/.test(everything)) fail(`${tag} alter Name Alois Brunner`);
+  if (lang === "en" && /carton|landlady|with the Christkind \(|saw who was walking|by the light of a phone/i.test(everything)) fail(`${tag} EN-Wortwahl: ${(everything.match(/.{20}(carton|landlady|with the Christkind \(|by the light of a phone).{10}/i) || [""])[0]}`);
+  if (/#6E2A2A/i.test(docs.find((d) => d.id === "fotos").html)) fail(`${tag} roter Handschuh auf Foto 3`);
 }
 for (const [id, s] of Object.entries(lens)) if (s.size !== 1) fail(`Länge ${id}: ${[...s]}`);
 console.log(err ? `${err} Fehler` : `${n} Kombinationen (DE+EN): alle vier Fragen eindeutig, Fallen vorhanden, gleich lang`);

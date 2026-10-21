@@ -607,7 +607,7 @@ async function status(request, env) {
   }
   if (order.paket === "friends" || order.paket === "friends-plus") {
     out.produkt = "friends"; out.plus = order.paket === "friends-plus";
-    { const fc = friendsCaseId(ct.produkt), FO = friendsOffer(fc); Object.assign(out, { friends_case: fc, friends_nr: FO.nr, friends_title: FO.de, friends_title_en: FO.en, friends_special: !!FO.special }); }
+    { const fc = friendsCaseId(ct.produkt), FO = friendsOffer(fc); Object.assign(out, { friends_case: fc, friends_nr: FO.nr, friends_title: FO.de, friends_title_en: FO.en, friends_h2: FO.h2 && FO.h2[0], friends_h2_en: FO.h2 && FO.h2[1], friends_special: !!FO.special }); }
     out.teams = order.teams;
     if (order.status === "fulfilled") {
       const g = await friendsGroupOfOrder(env, order.id);

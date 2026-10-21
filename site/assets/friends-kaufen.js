@@ -51,6 +51,11 @@
     document.getElementById("quirkhint").textContent = C.quirks
       ? T("Vornamen reichen, bei gleichen Vornamen mit Initial (z. B. „Anna B.“). Die Eigenheit ist ein harmloser Running Gag im Fall – Freitexte gibt es bewusst nicht.", "First names are enough; if two share a first name, add an initial (e.g. “Anna B.”). The quirk is a harmless running gag in the case – there is deliberately no free text.")
       : T("Vornamen reichen, bei gleichen Vornamen mit Initial (z. B. „Anna B.“). In diesem Fall gibt es keine Eigenheiten.", "First names are enough; if two share a first name, add an initial (e.g. “Anna B.”). This case has no quirks.");
+    // Einwilligung ohne „Eigenheit“, wenn der Fall keine hat (Friends 002, Test 21.10.2026) – gilt für DE und EN (Text kommt von hier)
+    const zt = form.zustimmung && form.zustimmung.nextElementSibling;
+    if (zt) zt.textContent = C.quirks
+      ? T("Alle Genannten wissen Bescheid und sind einverstanden, mit ihrem Namen und der gewählten Eigenheit im fiktiven Fall mitzuspielen – auch als Verdächtige oder Täter. *", "Everyone named knows about it and agrees to play in the fictional case with their name and the chosen quirk – including as a suspect or culprit. *")
+      : T("Alle Genannten wissen Bescheid und sind einverstanden, mit ihrem Namen im fiktiven Fall mitzuspielen – auch als Verdächtige oder Täter. *", "Everyone named knows about it and agrees to play in the fictional case with their name – including as a suspect or culprit. *");
     document.getElementById("fr-eyebrow").textContent = T(`Bestellung · Mordsteam Friends ${curCase().nr}${C.special ? " · Weihnachts-Special" : ""}`, `Order · Mordsteam Friends ${curCase().nr}${C.special ? " · Christmas special" : ""}`);
     document.getElementById("fr-h1").textContent = C.title;
     const lead = document.getElementById("fr-lead");

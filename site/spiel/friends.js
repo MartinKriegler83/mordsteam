@@ -45,7 +45,7 @@
       <h1>${esc(g.title)}</h1>
       <p class="sub">${t("Einer von euch war's. Wer bist du?", "One of you did it. Who are you?")}</p>
       <div class="fr-names">${g.players.map((p) => `<button type="button" class="fr-name" data-idx="${p.idx}"><b>${p.name}</b><span>${p.done ? t("fertig", "finished") : p.joined ? t("schon verbunden", "already connected") : t("noch frei", "still free")}</span></button>`).join("")}</div>
-      <p class="small">${t("Tippe auf deinen Namen. Du kannst auf jedem Gerät spielen – Handy, Tablet oder Laptop – und über diesen Link jederzeit auf einem anderen Gerät weitermachen.", "Tap your name. You can play on any device – phone, tablet or laptop – and carry on on another device at any time using this link.")}</p>
+      <p class="small">${t("Tippe auf deinen Namen. Du kannst auf jedem Gerät spielen – Handy, Tablet oder Laptop – und über diesen Link jederzeit auf einem anderen Gerät weitermachen.", "Tap your name. You can play on any device – phone, tablet or laptop – and continue on another device at any time using this link.")}</p>
       <p class="small">${g.mode === "live" ? t("Gespielt wird gleichzeitig: Der Fall startet für alle, sobald euer Organisator auf Start drückt.", "You all play at the same time: the case starts for everyone as soon as your organiser presses start.") : t(`Gespielt wird über ${g.days} Tage: Jeder startet, wann er Zeit hat. Die Auflösung kommt für alle gleichzeitig.`, `You play over ${g.days} days: everyone starts whenever they have time. The solution is revealed to everyone at the same time.`)}</p>
       <p class="err" role="alert">${err ? esc(err) : ""}</p>
     </div></section>`;
@@ -169,7 +169,7 @@
     const g = S.group, o = S.own || {};
     const when = g.mode === "live" ? (g.deadline ? t(`sobald alle fertig sind – spätestens um ${fmtTime(g.deadline)}`, `as soon as everyone has finished – at ${fmtTime(g.deadline)} at the latest`) : t("sobald alle fertig sind – spätestens kurz nach Ende der Spielzeit", "as soon as everyone has finished – shortly after the playing time ends at the latest")) : t(`sobald alle fertig sind – spätestens ${g.deadline ? fmtDate(g.deadline) : "am Ende des Zeitfensters"}`, `as soon as everyone has finished – at the latest ${g.deadline ? "on " + fmtDate(g.deadline) : "at the end of the time window"}`);
     root.innerHTML = `<section class="report paper so-result">
-      <div class="solved"><div class="bigstamp ${o.solved ? "" : "grey"}"><div><small>MORDSTEAM FRIENDS · ${t("HÜTTE", "CHALET")}</small><strong>${o.solved ? t("GELÖST!", "SOLVED!") : t("AKTE ZU", "CASE CLOSED")}</strong><small>${String(S.name).toUpperCase()}</small></div></div></div>
+      <div class="solved"><div class="bigstamp ${o.solved ? "" : "grey"}"><div><small>MORDSTEAM FRIENDS · ${esc(String(S.place || t("Hütte", "Chalet")).toUpperCase())}</small><strong>${o.solved ? t("GELÖST!", "SOLVED!") : t("AKTE ZU", "CASE CLOSED")}</strong><small>${String(S.name).toUpperCase()}</small></div></div></div>
       ${o.solved ? `<div class="so-score"><div><small>${t("Endzeit", "Final time")}</small><b>${MS.dur(o.score_ms)}</b></div><div><small>${t("Gespielt", "Played")}</small><b>${MS.dur(o.played_ms)}</b></div><div><small>${t("Strafminuten", "Penalty minutes")}</small><b>${o.penalty}</b></div></div>` : ""}
       <p class="so-pct">${t(`Die Auflösung und die Rangliste kommen für alle gleichzeitig, ${when}.`, `The solution and the leaderboard are revealed to everyone at the same time, ${when}.`)}</p>
       <div class="fr-hush"><b>${t("Pssst – nichts verraten!", "Shhh – don’t give anything away!")}</b> ${t("Wer anderen hilft, macht sich selbst in der Rangliste schlechter.", "If you help the others, you only push yourself down the leaderboard.")}</div>
@@ -188,7 +188,7 @@
       <h2 class="qhead">${({ 3: t("Deine drei Fragen", "Your three questions"), 4: t("Deine vier Fragen", "Your four questions"), 5: t("Deine fünf Fragen", "Your five questions") })[S.questions.length] || t("Deine Fragen", "Your questions")}</h2>
       <div class="qcards">${S.questions.map((q) => `<div><i>${pad(q.nr)}</i><span>${esc(q.label)}</span></div>`).join("")}</div>
       ${S.begun ? "" : `<p class="small" style="margin-bottom:12px">${t("Die Uhr startet, sobald du die Akte oder die Fragen öffnest, und lässt sich dann nicht mehr anhalten.", "The clock starts as soon as you open the case file or the questions, and can’t be stopped after that.")}</p>`}
-      ${S.pin && !S.ended ? `<p class="small" style="margin:0 0 12px;padding:10px 12px;border:1px dashed currentColor;border-radius:6px">${t("Deine Weiterspiel-PIN:", "Your continue PIN:")} <b class="mono" style="font-size:18px;letter-spacing:.15em">${esc(S.pin)}</b><br>${t("Nur nötig, wenn du mitten im Spiel das Gerät wechselst, z. B. vom Handy auf den Laptop. Sonst kann niemand auf deinem Namen weiterspielen.", "Only needed if you switch devices mid-game, e.g. from phone to laptop. Otherwise nobody can continue under your name.")}</p>` : ""}
+      ${S.pin && !S.ended ? `<p class="small" style="margin:0 0 12px;padding:10px 12px;border:1px dashed currentColor;border-radius:6px">${t("Deine Weiterspiel-PIN:", "Your continue PIN:")} <b class="mono" style="font-size:18px;letter-spacing:.15em">${esc(S.pin)}</b><br>${t("Nur nötig, wenn du mitten im Spiel das Gerät wechselst, z. B. vom Handy auf den Laptop. Sonst kann niemand unter deinem Namen weiterspielen.", "Only needed if you switch devices mid-game, e.g. from phone to laptop. Otherwise nobody can continue under your name.")}</p>` : ""}
       <button type="button" class="btn btn-red btn-big" id="toAkte">${S.begun ? t("Zur Akte →", "To the case file →") : t("Akte öffnen – die Uhr startet →", "Open the case file – the clock starts →")}</button>
     </div></section>`;
     $("toAkte").onclick = () => go("akte");
@@ -330,7 +330,7 @@
     if ($("hint")) $("hint").onclick = async () => {
       if (!armed) { armed = true; return fragenView(); }
       armed = false;
-      try { await refresh(await api("POST", "hint")); } catch (e) { verdict = { cls: "warn", html: esc(e.message) }; fragenView(); }
+      try { const d = await api("POST", "hint", { key: q.key }); if (d.stale) verdict = { cls: "warn", html: esc(t("Diese Frage hast du schon auf einem anderen Gerät gelöst – hier ist der aktuelle Stand.", "You’ve already solved this question on another device – here’s the current state.")) }; await refresh(d); } catch (e) { verdict = { cls: "warn", html: esc(e.message) }; fragenView(); }
     };
     if ($("hintno")) $("hintno").onclick = () => { armed = false; fragenView(); };
     $("give").onclick = async () => {
@@ -404,10 +404,10 @@
     root.innerHTML = `<section class="report paper so-result">
       <div class="solved"><div class="bigstamp"><div><small>MORDSTEAM FRIENDS · ${t("AUFLÖSUNG", "SOLUTION")}</small><strong>${t("ES WAR", "IT WAS")} ${String(r.culprit).toUpperCase()}</strong><small>${esc(String(S.title).toUpperCase())}</small></div></div></div>
       ${r.ranking[0] && r.ranking[0].idx === S.me && mine.solved ? `<p class="so-pct"><b>${t("Du hast gewonnen!", "You won!")}</b></p>` : mine && mine.place ? `<p class="so-pct">${t(`Du bist auf <b>Platz ${mine.place}</b>.`, `You came <b>${ord(mine.place)}</b>.`)}</p>` : ""}
-      <h3>${t("Was in der Nacht geschah", "What happened that night")}</h3>
+      <h3>${esc(r.story_label || t("Was in der Nacht geschah", "What happened that night"))}</h3>
       <p><button type="button" class="btn btn-line" id="rbagain">▶ ${t("Rückblende ansehen", "Watch the flashback")}</button></p>
       <p>${r.text}</p>
-      <p><b>${t("Versteck der Speicherkarte:", "Where the memory card was hidden:")}</b> ${r.item}</p>
+      <p><b>${esc(r.item_label || t("Versteck der Speicherkarte:", "Where the memory card was hidden:"))}</b> ${r.item}</p>
       <h3>${t("Rangliste", "Leaderboard")}</h3>${rankTable(r, S.me)}
       ${win ? `<p class="small">${t(`Gewonnen hat ${win.name}. Endzeit = gespielte Zeit plus Strafminuten.`, `The winner is ${win.name}. Final time = time played plus penalty minutes.`)}</p>` : ""}
       <p class="small" style="margin-top:18px">${t("Lust auf mehr? Weitere Fälle – allein, mit Freunden oder im Team:", "Fancy more? Further cases – solo, with friends or as a team:")} <a href="/${MS.lang === "en" ? "en/" : ""}">mordsteam.com</a></p>
@@ -423,7 +423,7 @@
   function fbHtml() {
     const vor = String(S.name).split(/\s+/)[0];
     return `<section class="report paper so-fb" id="fbi">
-      <div class="eyebrow">${t("Dein Feedback", "Your feedback")}</div><h3 style="margin-top:6px">${t("Wie fandest du den Krimiabend?", "How did you like the murder mystery night?")}</h3>
+      <div class="eyebrow">${t("Dein Feedback", "Your feedback")}</div><h3 style="margin-top:6px">${S.case_id === "friends-002" ? t("Wie fandest du den Fall am Christkindlmarkt?", "How did you like the Christmas market case?") : t("Wie fandest du den Krimiabend?", "How did you like the murder mystery night?")}</h3>
       <p class="muted">${t("Zwei Klicks, die uns sehr helfen – neue Fälle bauen wir aus eurem Feedback.", "Two clicks that help us a lot – we build new cases from your feedback.")}</p>
       <div class="stars" role="radiogroup" aria-label="${t("Sterne", "Stars")}">${[1, 2, 3, 4, 5].map((n) => `<button type="button" data-star="${n}" aria-label="${t(`${n} von 5 Sternen`, `${n} of 5 stars`)}">★</button>`).join("")}</div>
       <div class="field"><span class="label">${t("Wie schwer war der Fall?", "How difficult was the case?")}</span>${chips("diff", [["zu leicht", t("zu leicht", "too easy")], ["genau richtig", t("genau richtig", "just right")], ["zu schwer", t("zu schwer", "too hard")]])}</div>
@@ -475,7 +475,7 @@
         <span class="small">${t("Schick den Link in eure Gruppe. Jeder tippt auf seinen Namen.", "Send the link to your group. Everyone taps their own name.")}</span></div>
       <h3 style="margin-top:22px">${t(`Ermittler (${joined} von ${n} verbunden${g.status !== "ready" ? `, ${done} fertig` : ""})`, `Detectives (${joined} of ${n} connected${g.status !== "ready" ? `, ${done} finished` : ""})`)}</h3>
       <ul class="fr-roster">${g.players.map((p) => `<li><b>${p.name}</b>${p.pin ? ` <span class="small mono" title="${t("Weiterspiel-PIN – nur für Gerätewechsel mitten im Spiel", "Continue PIN – only for switching devices mid-game")}">PIN ${esc(p.pin)}</span>` : ""}<span>${g.status === "revealed" ? (!p.done ? t("nicht gespielt", "didn’t play") : p.solved ? t("✓ gelöst", "✓ solved") : t("nicht gelöst", "not solved")) : pstat(p)}</span></li>`).join("")}</ul>
-      ${g.players.some((p) => p.pin) ? `<p class="small">${t("PIN: braucht nur, wer mitten im Spiel das Gerät wechselt (z. B. Handy → Laptop). Fragt dich jemand danach, sag sie ihm.", "PIN: only needed by someone switching devices mid-game (e.g. phone → laptop). If someone asks you for it, tell them.")}</p>` : ""}
+      ${g.players.some((p) => p.pin) ? `<p class="small">${t("PIN: braucht nur, wer mitten im Spiel das Gerät wechselt (z. B. Handy → Laptop). Fragt dich jemand danach, sag sie der Person.", "PIN: only needed by someone switching devices mid-game (e.g. phone → laptop). If someone asks you for it, tell them.")}</p>` : ""}
       ${g.status === "ready" ? `<p class="muted">${g.mode === "live" ? t(`Wenn alle da sind, startest du den Fall für alle gleichzeitig. Die Uhr läuft dann ${g.limit_min} Minuten.`, `When everyone’s here, you start the case for everyone at once. The clock then runs for ${g.limit_min} minutes.`) : t(`Mit dem Start beginnen die ${g.days} Tage. Jeder spielt, wann er will – die Auflösung kommt für alle gleichzeitig.`, `Starting begins the ${g.days} days. Everyone plays whenever they like – the solution is revealed to everyone at the same time.`)}</p>
         <button type="button" class="btn btn-red btn-big" id="start">${g.mode === "live" ? t("Fall für alle starten", "Start the case for everyone") : t(`${g.days} Tage starten`, `Start the ${g.days} days`)}</button>` : ""}
       ${g.status === "running" && g.mode === "live" && g.started_at > g.now ? `<p class="muted"><b>${t("Der Countdown läuft – in wenigen Sekunden startet der Fall auf allen Geräten gleichzeitig.", "The countdown is running – in a few seconds the case starts on every device at the same time.")}</b></p>` : ""}

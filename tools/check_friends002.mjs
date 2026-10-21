@@ -81,10 +81,18 @@ for (let n = 4; n <= 8; n++) for (let c = 0; c < n; c++) for (let dd = 0; dd < n
   if ("m" + mi !== sol.motiv) err("Frage 5", n, word, sol.motiv);
   const opt = F.questions(G)[4].options[mi][1];
   if (!opt.toUpperCase().includes(word.slice(0, 4))) err("Frage 5 Option passt nicht zum Wort", word, opt);
+  // Test 21.10.2026: Uhrversatz ganze Minuten, Alibi-Sekunden wie in der Auflösung, eindeutige Auszeichnungen und Aussagen, alter Opfername
+  if ((netz - aus) % 60 !== 0) err("Uhrversatz nicht exakt", n, netz - aus);
+  const gap = Math.min(...br.filter((r) => r[1] === owner).map((r) => hms(r[0]) - off - close).filter((x) => x > 0));
+  if (!new RegExp(`\\b${gap} (Sekunden|seconds)`).test(F.resolution(G).text)) err("Alibi-Sekunden passen nicht zur Auflösung", n, gap);
+  if (new Set(P.map((pl) => F.awardOf(pl, G))).size !== n) err("Auszeichnung doppelt", n, P.map((pl) => F.awardOf(pl, G)).join(" | "));
+  const says = [...by.aussagen.html.matchAll(/<p class="a">(.*?)<\/p>/gs)].map((m) => m[1]);
+  if (new Set(says).size !== says.length) err("gleiche Aussage doppelt", n);
   // Platzhalter, Sprache
   const all = D.map((d) => d.html).join("") + Object.values(F.hints(G)).flat().join(" ") + F.resolution(G).text + JSON.stringify(F.questions(G)) + JSON.stringify(F.briefing("Anna"));
   if (/undefined|NaN|\$\{|\[object/.test(all)) err("Platzhalter", n);
-  if (en && GERMAN.test(strip(all).replace(/Kerzenthal|Christkind|Brunner|Gruber|Petra Hold|Hofer|Strobl|Pammer|Wagenhofer|Eibl|KühlTec|Elektro|Lángos/g, ""))) err("Deutsch im Englischen", n, strip(all).match(GERMAN)[0]);
+  if (/Alois|Brunner|KAUTION|Kaution/.test(all + F.STAGE_TITLES[5])) err("alter Name oder altes Motiv", n);
+  if (en && GERMAN.test(strip(all).replace(/Kerzenthal|Christkind|Wimmer|Gruber|Petra Hold|Hofer|Strobl|Pammer|Wagenhofer|Eibl|KühlTec|Elektro|Lángos/g, ""))) err("Deutsch im Englischen", n, strip(all).match(GERMAN)[0]);
 }
 for (const [k, v] of Object.entries(sols)) if (v.size < 3) err("zu wenig Varianz", k, [...v]);
 console.log(`${runs} Gruppen geprüft (${en ? "EN" : "DE"}; 4–8 Spieler, alle Täter/Lockvogel-Paare, 3 Zeitvarianten, je 3 Seeds); Lösungen: Zeit ${sols.zeit.size}, Schlüssel ${sols.schluessel.size}, Versteck ${sols.versteck.size}, Motiv ${sols.motiv.size}`);
