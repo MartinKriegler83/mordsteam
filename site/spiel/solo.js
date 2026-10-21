@@ -594,7 +594,7 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
       <div class="qcards" style="text-align:left;margin:18px 0">${S.questions.slice(1).map((q) => `<div><i>${pad(q.nr)}</i><span>${esc(q.label)}</span></div>`).join("")}</div>
       <p class="small">${L("Im ganzen Fall werden Täter, Tatzeit und Versteck neu ausgelost – du ermittelst also von vorn, mit neuen Spuren. Am Ende: Rückblende, Urkunde und ein 5-€-Gutschein für Friends oder Teams.", "In the full case, culprit, time and hiding place are drawn anew – so you start fresh, with new clues. At the end: flashback, certificate and a €5 voucher for Friends or Teams.")}</p>
       <div class="actions-row" style="justify-content:center;margin-top:18px"><a class="btn btn-red btn-big" id="probebuy" href="${buyUrl()}">${L("Ganzen Fall kaufen – 8,90 €", "Get the full case")}</a></div>
-      <p style="margin-top:12px"><a class="linkbtn" href="${EN() ? "/en/specials.html" : "/specials.html"}${probeSrc ? "?src=" + probeSrc : ""}">${isXmas() ? L("Zurück zum Weihnachts-Special", "Back to the Christmas Special") : L("Zurück zum Halloween-Special", "Back to the Halloween Special")}</a></p>
+      <p style="margin-top:12px"><a class="linkbtn" href="${EN() ? "/en/specials.html" : "/specials.html"}${probeSrc ? "?src=" + probeSrc : ""}${isXmas() ? "" : "#halloween"}">${isXmas() ? L("Zurück zum Weihnachts-Special", "Back to the Christmas Special") : L("Zurück zum Halloween-Special", "Back to the Halloween Special")}</a></p>
     </section>`;
     $("probebuy").addEventListener("click", () => { try { fetch("/api/solo/probe/kauf", { method: "POST", keepalive: true, headers: { "x-solo": token || "" } }).catch(() => {}); } catch {} });
   }

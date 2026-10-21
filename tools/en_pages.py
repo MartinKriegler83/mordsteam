@@ -1347,7 +1347,7 @@ P["specials-xmas"] = dict(title="Mordsteam Specials – Christmas mystery “Fou
 <img class="sp-cover" src="/assets/cover/special001-en.webp" alt="Case cover: Trick or Treat" width="600" height="750" loading="lazy" decoding="async">
 <div class="stack">
 <div class="eyebrow">Halloween 2026</div>
-<h3 class="h2">Trick or Treat</h3>
+<h3 class="h2" id="halloween">Trick or Treat</h3>
 <p class="purpose">One skeleton too many.</p>
 <p>Halloween in a small American town: a neighbor is locked in his own prop coffin, the prize money is gone – and on the porch camera there’s a skeleton that isn’t made of plastic.</p>
 <p class="meta">1 INVESTIGATOR · 4 QUESTIONS · 50 MIN · €8.90</p>
