@@ -353,7 +353,7 @@ ${r.abzuege.map((a) => `<tr><td></td><td class="r">${a.cents < 0 ? T("Rücknahme
 <tr class="big"><td></td><td class="r">${r.typ === "storno" ? T("Gutschrift", "Credit") : r.abzuege.length ? T("Zu zahlen", "Amount due") : T("Gesamtbetrag", "Total")}</td><td class="r" style="width:28mm">${money(r.summe_cents)}</td></tr></table>
 <p class="vat">${esc(D.vat[lang][r.regime] || "")}</p>
 ${r.typ !== "storno" && r.status !== "bezahlt" ? `<div class="pay">${qr ? `<div>${qr}</div>` : ""}<div>${T("Bitte überweisen Sie den Betrag bis", "Please transfer the amount by")} <b>${faellig}</b> ${T("auf folgendes Konto", "to")}:<br>
-<b>${esc(c.firma)}</b> · IBAN <b>${esc((c.iban || "").replace(/(.{4})/g, "$1 ").trim())}</b>${c.bic ? " · BIC " + esc(c.bic) : ""}${c.bank ? "<br>" + esc(c.bank) : ""}<br>${T("Verwendungszweck", "Reference")}: <b>${esc(r.nr || "")}</b>
+<b>${esc(c.firma)}</b> · IBAN <b>${esc((c.iban || "").replace(/(.{4})/g, "$1 ").trim())}</b>${c.bic ? " · BIC " + esc(c.bic) : ""}${c.bank ? "<br>" + esc(c.bank) : ""}<br>${T("Verwendungszweck", "Reference")}: <b>${r.nr ? esc(r.nr) : T("Rechnungsnummer (wird beim Ausstellen vergeben)", "invoice number (assigned when issued)")}</b>
 ${qr ? `<br><small>${T("Mit der Banking-App scannen („Zahlen mit Code“) – Betrag und Verwendungszweck sind schon ausgefüllt.", "Scan with your banking app (EPC QR code) – amount and reference are pre-filled.")}</small>` : ""}</div></div>` : r.status === "bezahlt" ? `<p><b>${T("Bezahlt am", "Paid on")} ${d(r.bezahlt_am)}.</b> ${T("Vielen Dank!", "Thank you!")}</p>` : ""}
 ${r.text_unten ? `<p style="margin-top:6mm">${esc(r.text_unten).replace(/\n/g, "<br>")}</p>` : ""}
 <div class="foot"><div>${esc(c.firma)}${c.inhaber ? ", " + T("Inhaber", "owner") + " " + esc(c.inhaber) : ""}<br>${esc(c.strasse)}, ${esc(c.plz_ort)}, ${T("Österreich", "Austria")}</div>
@@ -465,7 +465,9 @@ ${r.text_unten ? `<p style="margin-top:6mm">${esc(r.text_unten).replace(/\n/g, "
   document.head.appendChild(css);
 
   function bindSub() {
-    el.querySelectorAll("[data-bpsub]").forEach((b) => (b.onclick = (e) => { e.preventDefault(); sub = b.dataset.bpsub; if (sub === "kunden") { kundeOpen = null; kundeNeu = false; } msg = errMsg = ""; try { sessionStorage.setItem("bp_sub", sub === "neu" ? "rechnungen" : sub); } catch {} paint(); }));
+    el.querySelectorAll("[data-bpsub]").forEach((b) => (b.onclick = (e) => { e.preventDefault(); sub = b.dataset.bpsub; if (sub === "kunden") { kundeOpen = null; kundeNeu = false; } msg = errMsg = ""; try { sessionStorage.setItem("bp_sub", sub === "neu" ? "rechnungen" : sub); } catch {} paint();
+      // frische Daten nachladen (Test 21.10.2026: neues Abo aus einem Auftrag erschien erst nach Refresh unter „Abos“)
+      const s0 = sub; if (!["auftraege", "besucher", "neu"].includes(s0)) api("GET", "daten").then((d) => { D = d; if (sub === s0) paint(); }, () => {}); }));
     const gen = el.querySelector("#bp-abo-gen"); if (gen) gen.onclick = () => act(() => api("POST", "abo/rechnungen", {}), (r) => `${r.angelegt} Entwurf/Entwürfe angelegt – unter „Rechnungen“ prüfen und ausstellen.`);
   }
   // Sprung zwischen Untertabs (z. B. aus einem Auftrag in die Kundendatenbank)

@@ -302,7 +302,7 @@
       <div class="two">${f("k_strasse", "Straße und Hausnummer", k.strasse, 'maxlength="120"')}<div style="display:grid;grid-template-columns:100px 1fr;gap:8px">${f("k_plz", "PLZ", k.plz, 'maxlength="10"')}${f("k_ort", "Ort", k.ort, 'maxlength="100"')}</div></div>
       <div class="two">${f("k_land", "Land (Kürzel)", k.land || "AT", 'maxlength="2"')}${f("k_uid", "UID (optional)", k.uid, 'maxlength="20"')}</div>
       <div class="eyebrow" style="margin-top:10px">2 · Inhalt</div>
-      <div class="two"><div class="field"><label>Sprache</label><select name="sprache"><option value="de" ${lang === "de" ? "selected" : ""}>Deutsch</option><option value="en" ${lang === "en" ? "selected" : ""}>Englisch</option></select></div>${f("titel", "Titel", x.titel, 'maxlength="160"')}</div>
+      <div class="two"><div class="field"><label>Sprache</label><select name="sprache"><option value="de" ${lang === "de" ? "selected" : ""}>Deutsch</option><option value="en" ${lang === "en" ? "selected" : ""}>Englisch</option></select></div>${f("titel", "Titel des Projekts (steht auch auf Anzahlungs- und Schlussrechnung)", x.titel, 'maxlength="160" placeholder="z. B. Neue Website für den Musikverein"')}</div>
       <div class="field"><label>Einleitung (leer = „Vielen Dank für das angenehme Gespräch …“)</label><textarea name="text_oben" rows="2" maxlength="2000">${esc(x.text_oben || "")}</textarea></div>
       <div class="eyebrow" style="margin-top:10px">3 · Positionen</div>
       <div id="bpa-poslist">${x.positionen.map(posEdit).join("") || `<p class="small muted">Noch keine Positionen – unten eine Vorlage wählen.</p>`}</div>
@@ -387,7 +387,7 @@
     const hasAbo = (t) => AN.abos.some((b) => b.titel === t && b.aktiv);
     return `${R.length ? R.map((r) => rechnungZeile(r, "rechnung")).join("") : `<p>${x ? `<button class="btn btn-ink" type="button" id="bpa-schluss">Schlussrechnung aus Angebot ${esc(x.nr)} erstellen</button>` : ""}</p><p class="small muted">Übernimmt alle gewählten einmaligen Positionen und zieht die bezahlte Anzahlung ab. Entsteht als Entwurf – prüfen, dann „Ausstellen“.${x ? "" : " Ohne angenommenes Angebot: unter „Rechnungen“ anlegen."}</p>`}
       ${ckItem(a, "basis:schluss", basisLabel("schluss"))}${ckItem(a, "basis:bezahlt", basisLabel("bezahlt"))}
-      ${mon.length ? `<div class="eyebrow" style="margin-top:14px">Laufende Leistungen aus dem Angebot</div>${mon.map(([p, i]) => `<div class="small" style="margin:4px 0">${esc(p.text)} – ${eur(p.cents)} / Monat ${hasAbo(p.text) ? `<span class="chip fin">Abo läuft</span>` : `<button class="tipbtn" type="button" data-bpaabo="${i}">Als Abo anlegen (ab nächstem Monat)</button>`}</div>`).join("")}` : ""}
+      ${mon.length ? `<div class="eyebrow" style="margin-top:14px">Laufende Leistungen aus dem Angebot</div>${mon.map(([p, i]) => `<div class="small" style="margin:4px 0">${esc(p.text)} – ${eur(p.cents)} / Monat ${hasAbo(p.text) ? `<span class="chip" style="background:#2F7D4F;color:#fff">Abo läuft</span>` : `<button class="tipbtn" type="button" data-bpaabo="${i}">Als Abo anlegen (ab nächstem Monat)</button>`}</div>`).join("")}` : ""}
       <div style="margin-top:12px">${nextBtn("abgeschlossen", "Bezahlt → weiter zu 8 Nachbetreuung")}</div>`;
   }
   function step8(a) {
