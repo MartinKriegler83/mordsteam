@@ -26,7 +26,10 @@
   const prodName = (k) => (D.produkte.find((p) => p[0] === k) || [k, k])[1];
   const quelleName = (k) => (D.quellen.find((q) => q[0] === k) || [k, k])[1];
   const who = (a) => a.firma ? `${a.firma}${a.name ? " · " + a.name : ""}` : a.name || "–";
-  const chipCls = (st) => (st === "neu" ? "open" : st === "abgeschlossen" ? "fin" : st === "verloren" ? "" : "run");
+  const chipCls = (st, late) => (late ? "run" : st === "abgeschlossen" ? "fin" : "");
+  const chipStyle = (st, late) => `white-space:nowrap${st === "neu" && !late ? ";background:#D9820B;color:#15171C" : ""}`;
+  // Herkunft lesbar (wie in der Anfrage-Mail, functions/api/kontakt.js)
+  const herkunftName = (hk) => (!hk ? "" : hk === "gads" ? "Google-Anzeige" : hk === "chat" ? "über den Chat" : hk.startsWith("ref:") ? "Link von " + hk.slice(4) : "Kürzel " + hk);
 
   // ---------- Schritte ----------
   const STEPS = [
@@ -87,7 +90,7 @@
     if (art === "formular") { const G = (AN && AN.anleitungen) || []; return { to, lang, subject: en ? "Your order form – Brightpage" : "Ihr Auftragsformular – Brightpage", body:
       P(anrede(lang, name)) + P(en ? "to get started we need a few details: your business details for the imprint, your design wishes, content and domain. You can save in between and continue later." : "damit wir loslegen können, brauchen wir ein paar Angaben: Firmendaten fürs Impressum, Ihre Design-Wünsche, Inhalte und Domain. Sie können zwischendurch speichern und später weitermachen.") +
       btn(en ? "Open order form" : "Auftragsformular öffnen", KLINK + "formular/" + a.token) +
-      (G.length ? P(en ? "A few short steps you do yourself (a few minutes each, never send us passwords):" : "Ein paar kurze Schritte machen Sie selbst – je ein paar Minuten, Passwörter bitte nie an uns schicken:") + UL(G.map((g) => `<a href="${KLINK}anleitung/${g.key}">${esc(g.titel)}</a>`)) : "") +
+      (G.length ? P(en ? "A few short steps you do yourself (a few minutes each, never send us passwords):" : "Ein paar kurze Schritte machen Sie selbst – je ein paar Minuten, Passwörter bitte nie an uns schicken:") + UL(G.map((g) => `<a href="${KLINK}anleitung/${g.key}${en ? "?lang=en" : ""}">${esc((en && g.titel_en) || g.titel)}</a>`)) : "") +
       P(en ? "We start as soon as the form and the advance payment have arrived." : "Wir beginnen, sobald Formular und Anzahlung da sind.") }; }
     if (art === "uebergabe") return { to, lang, subject: en ? "Your website is live – handover record" : "Ihre Website ist online – Übergabeprotokoll", body:
       P(anrede(lang, name)) + P(en ? "your website is live! Here is the handover record with everything we set up and handed over. Please check it and confirm with one click." : "Ihre Website ist online! Hier ist das Übergabeprotokoll mit allem, was wir eingerichtet und übergeben haben. Bitte kurz durchsehen und mit einem Klick bestätigen.") +
@@ -168,9 +171,9 @@
       ${L.length ? `<div style="overflow-x:auto;margin-top:12px"><table class="grid small">
         <tr><th>Nr.</th><th>Eingang</th><th>Kunde</th><th>Schritt</th><th>Nächster Schritt</th><th style="text-align:right">Wert</th></tr>
         ${L.map((a) => { const late = a.next_at && a.next_at < D.today, n = stepOf(a.status); return `<tr style="cursor:pointer" data-bpaopen="${a.id}">
-          <td class="mono">${esc(a.nr)}</td><td>${dt(a.created_at)}<br><span class="muted">${esc(quelleName(a.quelle))}</span></td>
+          <td class="mono" style="white-space:nowrap">${esc(a.nr)}</td><td>${dt(a.created_at)}<br><span class="muted">${esc(quelleName(a.quelle))}</span></td>
           <td><b>${esc(who(a))}</b>${a.rueckruf ? ` <span class="chip open">Rückruf</span>` : ""}<br><span class="muted">${a.produkte.map((p) => esc(prodName(p))).join(", ")}</span></td>
-          <td>${a.status === "verloren" ? `<span class="chip">Verloren</span>` : `<span class="chip ${chipCls(a.status)}">${n}/8 ${esc(STEPS[n - 1][1])}</span>`}</td>
+          <td>${a.status === "verloren" ? `<span class="chip">Verloren</span>` : `<span class="chip ${chipCls(a.status, late)}" style="${chipStyle(a.status, late)}">${n}/8 ${esc(STEPS[n - 1][1])}</span>`}</td>
           <td ${late ? 'style="color:var(--red)"' : ""}>${a.next_at ? dat(a.next_at) + "<br>" : ""}<span class="${late ? "" : "muted"}">${esc(a.next_was || "")}</span></td>
           <td class="mono" style="text-align:right">${eur0(a.wert_cents)}</td></tr>`; }).join("")}</table></div>`
         : `<p class="muted" style="margin-top:12px">Keine Einträge in dieser Ansicht.</p>`}
@@ -227,7 +230,7 @@
   // ---------- Schritte im Detail ----------
   function step1(a) {
     return `${a.nachricht ? `<div style="white-space:pre-wrap;border-left:3px solid #D9820B;padding:8px 12px;margin:4px 0 10px;background:#faf7f0">${esc(a.nachricht)}</div>` : `<p class="small muted">Keine Nachricht.</p>`}
-      <p class="small">${esc(quelleName(a.quelle))}${a.herkunft ? " · " + esc(a.herkunft) : ""}${a.website ? ` · bisherige Website: <a href="${esc(/^https?:/.test(a.website) ? a.website : "https://" + a.website)}" target="_blank" rel="noopener">${esc(a.website)}</a>` : ""}${a.empfohlen ? ` · <b>empfohlen von ${esc(a.empfohlen)}</b> (Empfehlungsbonus nach Bezahlung)` : ""}${a.rueckruf ? " · <b>wünscht Rückruf</b>" : ""}</p>
+      <p class="small">${esc(quelleName(a.quelle))}${a.herkunft ? " · " + esc(herkunftName(a.herkunft)) : ""}${a.website ? ` · bisherige Website: <a href="${esc(/^https?:/.test(a.website) ? a.website : "https://" + a.website)}" target="_blank" rel="noopener">${esc(a.website)}</a>` : ""}${a.empfohlen ? ` · <b>empfohlen von ${esc(a.empfohlen)}</b> (Empfehlungsbonus nach Bezahlung)` : ""}${a.rueckruf ? " · <b>wünscht Rückruf</b>" : ""}</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">${a.email ? mailBtn("antwort", "", "Antwort-Mail vorbereiten") : ""}${a.telefon ? `<a class="tipbtn" href="tel:${esc(a.telefon.replace(/[^\d+]/g, ""))}">☎ Anrufen ${esc(a.telefon)}</a>` : ""}</div>
       <div style="margin-top:12px">${nextBtn("kontaktiert", "Kunde kontaktiert → weiter zu 2 Erstgespräch")}</div>`;
   }
@@ -374,7 +377,7 @@
     const hasAbo = (t) => AN.abos.some((b) => b.titel === t && b.aktiv);
     return `${R.length ? R.map((r) => rechnungZeile(r, "rechnung")).join("") : `<p>${x ? `<button class="btn btn-ink" type="button" id="bpa-schluss">Schlussrechnung aus Angebot ${esc(x.nr)} erstellen</button>` : ""}</p><p class="small muted">Übernimmt alle gewählten einmaligen Positionen und zieht die bezahlte Anzahlung ab. Entsteht als Entwurf – prüfen, dann „Ausstellen“.${x ? "" : " Ohne angenommenes Angebot: unter „Rechnungen“ anlegen."}</p>`}
       ${ckItem(a, "basis:schluss", basisLabel("schluss"))}${ckItem(a, "basis:bezahlt", basisLabel("bezahlt"))}
-      ${mon.length ? `<div class="eyebrow" style="margin-top:14px">Laufende Leistungen aus dem Angebot</div>${mon.map(([p]) => `<div class="small" style="margin:4px 0">${esc(p.text)} – ${eur(p.cents)} / Monat ${hasAbo(p.text) ? `<span class="chip fin">Abo läuft</span>` : `<button class="tipbtn" type="button" data-bpaabo="${esc(p.text)}|${p.cents}">Als Abo anlegen (ab nächstem Monat)</button>`}</div>`).join("")}` : ""}
+      ${mon.length ? `<div class="eyebrow" style="margin-top:14px">Laufende Leistungen aus dem Angebot</div>${mon.map(([p, i]) => `<div class="small" style="margin:4px 0">${esc(p.text)} – ${eur(p.cents)} / Monat ${hasAbo(p.text) ? `<span class="chip fin">Abo läuft</span>` : `<button class="tipbtn" type="button" data-bpaabo="${i}">Als Abo anlegen (ab nächstem Monat)</button>`}</div>`).join("")}` : ""}
       <div style="margin-top:12px">${nextBtn("abgeschlossen", "Bezahlt → weiter zu 8 Nachbetreuung")}</div>`;
   }
   function step8(a) {
@@ -419,7 +422,7 @@
     const sum = (n) => {
       if (n === 1) return a.status === "neu" ? "noch nicht beantwortet" : "beantwortet";
       if (n === 2) { const d = D.leitfaden.filter((l) => a.leitfaden[l[0]] && a.leitfaden[l[0]].ok).length; return `${a.produkte.length ? a.produkte.map(prodName).join(", ") : "Produkte offen"} · Leitfaden ${d}/${D.leitfaden.length}`; }
-      if (n === 3 && ok) { const x = AN.list[0]; return x ? `${x.nr || "Entwurf"} · ${AST[x.status][0]} · ${eur0(x.summen.einmal)}` : "noch kein Angebot"; }
+      if (n === 3 && ok) { const x = AN.list[0]; return x ? `${x.nr || "Entwurf"} · ${AST[x.status][0]} · ${eur(x.summen.einmal)}` : "noch kein Angebot"; }
       if (n === 4 && ok) { const x = AN.list.find((y) => y.status === "angenommen"), r = x && AN.rechnungen.find((y) => y.id === x.rechnung_id); return r ? `Anzahlung ${r.nr || ""} ${r.status}` : x ? "angenommen" : ""; }
       if (n === 5) return `Korrekturrunden ${a.runden}`;
       if (n === 7 && ok) { const r = AN.rechnungen.find((y) => y.typ === "schluss" && y.status !== "storniert"); return r ? `${r.nr || "Entwurf"} ${r.status}` : ""; }
@@ -511,9 +514,15 @@
     $$("[data-bpaavs]").forEach((x) => (x.onclick = async () => { try { htmlFenster((await api("POST", "angebot/vorschau", { id: x.dataset.bpaavs })).html); } catch (e) { errMsg = e.message; paint(); } }));
     $$("[data-bpacopy]").forEach((x) => (x.onclick = () => copy(x.dataset.bpacopy)));
     $$("[data-bpaast]").forEach((x) => (x.onclick = () => { const [id, st] = x.dataset.bpaast.split(":"); if (st === "loeschen" && !confirm("Entwurf löschen?")) return;
-      act(async () => { await api("POST", "angebot/status", { id, status: st }); if (edit && edit.id === id) edit = null; }, st === "abgelehnt" ? "Als abgelehnt markiert." : "Gelöscht."); }));
+      const grund = st === "abgelehnt" && !AN.list.some((y) => y.id !== id && ["gesendet", "angenommen", "annahme"].includes(y.status))
+        ? prompt("Angebot abgelehnt. Auftrag auch auf „Verloren“ setzen? Dann kurz den Grund eintragen (leer lassen = Auftrag bleibt offen):", "") : null;
+      act(async () => { await api("POST", "angebot/status", { id, status: st }); if (edit && edit.id === id) edit = null;
+        if (grund && grund.trim()) await api("POST", "auftrag/status", { id: a.id, status: "verloren", grund: grund.trim() }); },
+        st === "abgelehnt" ? (grund && grund.trim() ? "Abgelehnt – Auftrag auf „Verloren“ gesetzt." : "Als abgelehnt markiert.") : "Gelöscht."); }));
     const f = $("#bpa-ed");
     if (f) {
+      // D-M1: Firma eingetragen → Art automatisch „Firma“ (sonst bekäme eine Firma die Verbraucher-Bedingungen)
+      if (f.k_firma && f.k_art) f.k_firma.addEventListener("input", () => { if (f.k_firma.value.trim()) f.k_art.value = "b2b"; });
       edSum(f); f.addEventListener("input", () => edSum(f)); f.addEventListener("change", () => edSum(f));
       $("#bpa-edx").onclick = () => { edit = null; paint(); };
       const keep = () => { edit = { ...edit, ...readEditor(f) }; edit.positionen = edit.positionen.map((p) => ({ ...p, cents: Math.round((Number(String(p.menge).replace(",", ".")) || 0) * p.preis_cents) })); };
@@ -543,7 +552,8 @@
       act(async () => { await api("POST", "rechnung/bezahlt", { id, bezahlt_am: fm.bezahlt_am.value, betrag: fm.betrag.value }); payFor = null;
         const key = r && r.typ === "anzahlung" ? "basis:anzahlung" : r && r.typ === "schluss" ? "basis:bezahlt" : ""; if (key) await api("POST", "auftrag", { id: a.id, checkliste: { [key]: true } }); }, "Als bezahlt gebucht – zählt jetzt zu den Einnahmen."); }));
     $$("[data-bpaissue]").forEach((x) => (x.onclick = () => { if (confirm("Rechnung jetzt ausstellen? Sie bekommt die nächste Nummer und lässt sich danach nicht mehr ändern."))
-      act(async () => { await api("POST", "rechnung/ausstellen", { id: x.dataset.bpaissue }); await api("POST", "rechnung/link", { id: x.dataset.bpaissue }); await api("POST", "auftrag", { id: a.id, checkliste: { "basis:schluss": true } }); }, "Ausgestellt – jetzt „Rechnungs-Mail“ vorbereiten."); }));
+      act(async () => { await api("POST", "rechnung/ausstellen", { id: x.dataset.bpaissue }); await api("POST", "rechnung/link", { id: x.dataset.bpaissue });
+        const r = AN.rechnungen.find((y) => y.id === x.dataset.bpaissue); if (r && r.typ === "schluss") await api("POST", "auftrag", { id: a.id, checkliste: { "basis:schluss": true } }); }, "Ausgestellt – jetzt „Rechnungs-Mail“ vorbereiten."); }));
     const fz = $("#bpa-fzeig"); if (fz) fz.onclick = () => { zeigFormular = !zeigFormular; paint(); };
     const uf = $("#bpa-ueb");
     if (uf) { let fr = "0"; uf.querySelectorAll("button[type=submit]").forEach((b) => b.addEventListener("click", () => (fr = b.dataset.fr)));
@@ -551,7 +561,7 @@
         if (fr === "1" && !confirm("Protokoll zur Bestätigung freigeben? Danach „Protokoll-Mail“ vorbereiten und selbst senden.")) return;
         act(() => api("POST", "auftrag/uebergabe", { id: a.id, website: uf.website.value, einschulung: uf.einschulung.value, punkte, offen: uf.offen.value, hinweise: uf.hinweise.value, freigeben: fr === "1" }), fr === "1" ? "Freigegeben – jetzt „Protokoll-Mail“ vorbereiten." : "Protokoll gespeichert."); }; }
     const sb = $("#bpa-schluss"); if (sb) sb.onclick = () => act(() => api("POST", "auftrag/schluss", { auftrag_id: a.id }), "Schlussrechnung als Entwurf angelegt – prüfen und ausstellen.");
-    $$("[data-bpaabo]").forEach((x) => (x.onclick = () => { const [titel, cents] = x.dataset.bpaabo.split("|"); const d = new Date(D.today + "T12:00:00Z"); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() + 1);
+    $$("[data-bpaabo]").forEach((x) => (x.onclick = () => { const ang = AN.list.find((y) => y.status === "angenommen"), pos = ang && ang.positionen[Number(x.dataset.bpaabo)]; if (!pos) return; const titel = pos.text, cents = pos.cents; const d = new Date(D.today + "T12:00:00Z"); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() + 1);
       act(() => api("POST", "abo", { kunde_id: a.kunde_id, titel, preis: (Number(cents) / 100).toFixed(2).replace(".", ","), rhythmus: "monat", start: d.toISOString().slice(0, 7) }), "Abo angelegt – Rechnungen entstehen unter Brightpage → Abos."); }));
     // Checkliste, Runden
     $$("[data-bpack]").forEach((x) => (x.onchange = () => act(() => api("POST", "auftrag", { id: a.id, checkliste: { [x.dataset.bpack]: x.checked } }), "")));

@@ -28,9 +28,10 @@ export async function onRequest({ request, env, params }) {
     if (art === "formular" && request.method === "POST") return publicFormularPost(env, tok, await form(), ip);
     if (art === "uebergabe" && request.method === "GET") return publicUebergabe(env, tok);
     if (art === "uebergabe" && request.method === "POST") return publicUebergabePost(env, tok, await form(), ip);
-    if (art === "anleitung" && request.method === "GET") return publicAnleitung(env, tok);
-    if (art === "av" && request.method === "GET") return publicAV(env);
-    if (art === "widerruf" && request.method === "GET") return publicWiderruf(env);
+    const lang = new URL(request.url).searchParams.get("lang") === "en" ? "en" : "de";
+    if (art === "anleitung" && request.method === "GET") return publicAnleitung(env, tok, lang);
+    if (art === "av" && request.method === "GET") return publicAV(env, lang);
+    if (art === "widerruf" && request.method === "GET") return publicWiderruf(env, lang);
     return htmlPage("Nicht gefunden.", 404);
   }
   if (!route.startsWith("admin/")) return fail("Nicht gefunden.", 404);
