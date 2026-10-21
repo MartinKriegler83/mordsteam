@@ -31,7 +31,7 @@
     ["KI-Helfer Einrichtung – FAQ-Assistent", 490, "pauschal", "AI helper setup – FAQ assistant"],
     ["KI-Helfer Einrichtung – Anfrage-Sortierer", 690, "pauschal", "AI helper setup – enquiry sorter"],
     ["KI-Helfer Einrichtung – Angebotsgenerator", 890, "pauschal", "AI helper setup – quote generator"],
-    ["KI-Helfer Einrichtung – alle vier zusammen", 1990, "pauschal", "AI helper setup – all four together"],
+    ["KI-Helfer Einrichtung – alle vier zusammen", 2190, "pauschal", "AI helper setup – all four together"],
     ["Terminbuchung einbinden – bestehendes Buchungssystem auf der Website", 99, "pauschal", "Embed booking system – existing booking system on the website"],
     ["Terminanfrage Plus – Wunschtermine aus den Öffnungszeiten, Bestätigung per Mail", 290, "pauschal", "Appointment request Plus – free slots from opening hours, confirmation by e-mail"],
     ["Texte schreiben – One-Pager", 190, "pauschal", "Copywriting – one-page website"],
