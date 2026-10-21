@@ -21,7 +21,7 @@
   async function api(method, path, body) {
     const r = await fetch("/api/friends/" + path, { method, headers: { "content-type": "application/json", "x-lang": MS.lang, ...(token ? { "x-friends": token } : {}) }, body: body ? JSON.stringify(body) : undefined });
     let d = {}; try { d = await r.json(); } catch {}
-    if (!r.ok) { const e = new Error(d.error || t("Fehler ", "Error ") + r.status); e.status = r.status; throw e; }
+    if (!r.ok) { const e = new Error(d.error || t("Fehler ", "Error ") + r.status); e.status = r.status; e.data = d; throw e; }
     return d;
   }
   function toast(html, ms = 4200) {
@@ -52,8 +52,20 @@
     root.querySelectorAll("[data-idx]").forEach((b) => (b.onclick = async () => {
       const p = g.players.find((x) => x.idx === Number(b.dataset.idx));
       if (p.joined && !b.dataset.sure) { b.dataset.sure = "1"; b.querySelector("span").textContent = t("nochmal tippen, wenn du das bist", "tap again if this is you"); return; }
-      try { const d = await api("POST", "claim", { e: invite, idx: p.idx }); token = d.token; MS.set("ms_friends_tok_" + invite, token); seen = new Set(JSON.parse(MS.get(seenKey()) || "[]")); tab = "einsatz"; await refresh(); scrollTo(0, 0); }
-      catch (e) { inviteView(e.message); }
+      const pinIn = root.querySelector(`[data-pin="${p.idx}"]`);
+      try { const d = await api("POST", "claim", { e: invite, idx: p.idx, pin: pinIn ? pinIn.value : "" }); token = d.token; MS.set("ms_friends_tok_" + invite, token); seen = new Set(JSON.parse(MS.get(seenKey()) || "[]")); tab = "einsatz"; await refresh(); scrollTo(0, 0); }
+      catch (e) {
+        // Weiterspiel-PIN (21.10.2026): Name läuft gerade auf einem anderen Gerät → PIN-Feld unter dem Namen
+        if (e.data && e.data.pin_needed) {
+          let box = root.querySelector(`.fr-pin[data-for="${p.idx}"]`); root.querySelectorAll(".fr-pin").forEach((x) => { if (x !== box) x.remove(); });
+          if (!box) { box = document.createElement("div"); box.className = "fr-pin"; box.dataset.for = p.idx; box.style.cssText = "display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:4px 0 14px";
+            box.innerHTML = `<label for="pin-${p.idx}" style="font-weight:600">${t("PIN für", "PIN for")} ${p.name}</label><input id="pin-${p.idx}" data-pin="${p.idx}" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="PIN" aria-label="${t("Weiterspiel-PIN", "Continue PIN")}" style="width:7em;font-size:20px;letter-spacing:.2em;text-align:center"><button type="button" class="btn btn-red">${t("Weiterspielen", "Continue")}</button>`;
+            b.parentElement.after(box); box.querySelector("button").onclick = () => { b.dataset.sure = "1"; b.click(); };
+            box.querySelector("input").addEventListener("keydown", (ev) => { if (ev.key === "Enter") { b.dataset.sure = "1"; b.click(); } }); }
+          const er = root.querySelector(".err"); if (er) er.textContent = e.message; box.querySelector("input").focus(); return;
+        }
+        inviteView(e.message);
+      }
     }));
   }
 
@@ -176,6 +188,7 @@
       <h2 class="qhead">${({ 3: t("Deine drei Fragen", "Your three questions"), 4: t("Deine vier Fragen", "Your four questions"), 5: t("Deine fünf Fragen", "Your five questions") })[S.questions.length] || t("Deine Fragen", "Your questions")}</h2>
       <div class="qcards">${S.questions.map((q) => `<div><i>${pad(q.nr)}</i><span>${esc(q.label)}</span></div>`).join("")}</div>
       ${S.begun ? "" : `<p class="small" style="margin-bottom:12px">${t("Die Uhr startet, sobald du die Akte oder die Fragen öffnest, und lässt sich dann nicht mehr anhalten.", "The clock starts as soon as you open the case file or the questions, and can’t be stopped after that.")}</p>`}
+      ${S.pin && !S.ended ? `<p class="small" style="margin:0 0 12px;padding:10px 12px;border:1px dashed currentColor;border-radius:6px">${t("Deine Weiterspiel-PIN:", "Your continue PIN:")} <b class="mono" style="font-size:18px;letter-spacing:.15em">${esc(S.pin)}</b><br>${t("Nur nötig, wenn du mitten im Spiel das Gerät wechselst, z. B. vom Handy auf den Laptop. Sonst kann niemand auf deinem Namen weiterspielen.", "Only needed if you switch devices mid-game, e.g. from phone to laptop. Otherwise nobody can continue under your name.")}</p>` : ""}
       <button type="button" class="btn btn-red btn-big" id="toAkte">${S.begun ? t("Zur Akte →", "To the case file →") : t("Akte öffnen – die Uhr startet →", "Open the case file – the clock starts →")}</button>
     </div></section>`;
     $("toAkte").onclick = () => go("akte");
@@ -441,7 +454,8 @@
         <div class="fr-link"><input readonly value="${esc(link)}" id="lnk" aria-label="${t("Einladungslink", "Invitation link")}"><button type="button" class="btn btn-ink" id="share">${navigator.share ? t("Teilen", "Share") : t("Kopieren", "Copy")}</button></div>
         <span class="small">${t("Schick den Link in eure Gruppe. Jeder tippt auf seinen Namen.", "Send the link to your group. Everyone taps their own name.")}</span></div>
       <h3 style="margin-top:22px">${t(`Ermittler (${joined} von ${n} verbunden${g.status !== "ready" ? `, ${done} fertig` : ""})`, `Detectives (${joined} of ${n} connected${g.status !== "ready" ? `, ${done} finished` : ""})`)}</h3>
-      <ul class="fr-roster">${g.players.map((p) => `<li><b>${p.name}</b><span>${g.status === "revealed" ? (!p.done ? t("nicht gespielt", "didn’t play") : p.solved ? t("✓ gelöst", "✓ solved") : t("nicht gelöst", "not solved")) : pstat(p)}</span></li>`).join("")}</ul>
+      <ul class="fr-roster">${g.players.map((p) => `<li><b>${p.name}</b>${p.pin ? ` <span class="small mono" title="${t("Weiterspiel-PIN – nur für Gerätewechsel mitten im Spiel", "Continue PIN – only for switching devices mid-game")}">PIN ${esc(p.pin)}</span>` : ""}<span>${g.status === "revealed" ? (!p.done ? t("nicht gespielt", "didn’t play") : p.solved ? t("✓ gelöst", "✓ solved") : t("nicht gelöst", "not solved")) : pstat(p)}</span></li>`).join("")}</ul>
+      ${g.players.some((p) => p.pin) ? `<p class="small">${t("PIN: braucht nur, wer mitten im Spiel das Gerät wechselt (z. B. Handy → Laptop). Fragt dich jemand danach, sag sie ihm.", "PIN: only needed by someone switching devices mid-game (e.g. phone → laptop). If someone asks you for it, tell them.")}</p>` : ""}
       ${g.status === "ready" ? `<p class="muted">${g.mode === "live" ? t(`Wenn alle da sind, startest du den Fall für alle gleichzeitig. Die Uhr läuft dann ${g.limit_min} Minuten.`, `When everyone’s here, you start the case for everyone at once. The clock then runs for ${g.limit_min} minutes.`) : t(`Mit dem Start beginnen die ${g.days} Tage. Jeder spielt, wann er will – die Auflösung kommt für alle gleichzeitig.`, `Starting begins the ${g.days} days. Everyone plays whenever they like – the solution is revealed to everyone at the same time.`)}</p>
         <button type="button" class="btn btn-red btn-big" id="start">${g.mode === "live" ? t("Fall für alle starten", "Start the case for everyone") : t(`${g.days} Tage starten`, `Start the ${g.days} days`)}</button>` : ""}
       ${g.status === "running" && g.mode === "live" && g.started_at > g.now ? `<p class="muted"><b>${t("Der Countdown läuft – in wenigen Sekunden startet der Fall auf allen Geräten gleichzeitig.", "The countdown is running – in a few seconds the case starts on every device at the same time.")}</b></p>` : ""}
