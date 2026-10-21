@@ -65,7 +65,7 @@
       return dt.toLocaleDateString(EN ? "en-GB" : "de-AT", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
     })();
     // Titelbild des Falls (site/assets/cover, tools/cover_bilder.mjs) – Zuordnung über den Titel
-    const COVER = { "Nachtzug nach Venedig": "solo001", "Night Train to Venice": "solo001", "Applaus für einen Toten": "solo002", "Applause for a Dead Man": "solo002", "Der letzte Jahrgang": "soloplus", "The Last Vintage": "soloplus", "Süßes oder Saures": "special001", "Trick or Treat": "special001" };
+    const COVER = { "Nachtzug nach Venedig": "solo001", "Night Train to Venice": "solo001", "Applaus für einen Toten": "solo002", "Applause for a Dead Man": "solo002", "Der letzte Jahrgang": "soloplus", "The Last Vintage": "soloplus", "Süßes oder Saures": "special001", "Trick or Treat": "special001", "Vier Minuten Finsternis": "special002", "Four Minutes Dark": "special002" };
     const coverSrc = (key) => { const p = `/assets/cover/${key}-${EN ? "en" : "de"}.webp`; return PRE ? PRE.img[p] || "" : p; };
     const coverImg = (key) => key && coverSrc(key) ? `<img class="gk-cover" src="${coverSrc(key)}" alt="" width="600" height="750">` : "";
     let card;
@@ -76,7 +76,7 @@
       const ck = COVER[d.solo_title] || COVER[d.solo_title_en] || "", sp = ck.startsWith("special");
       card = {
         eyebrow: T("Ein Krimi für dich", "A mystery for you"),
-        title, sub: sp ? T(`Halloween-Special · ${d.solo_min} Minuten Countdown · im Browser am Handy, Tablet oder Laptop`, `Halloween Special · ${d.solo_min}-minute countdown · in the browser on phone, tablet or laptop`) : T(`Solo-Krimi · ${d.solo_min} Minuten Countdown · im Browser am Handy, Tablet oder Laptop`, `Solo mystery · ${d.solo_min}-minute countdown · in the browser on phone, tablet or laptop`),
+        title, sub: sp ? (ck === "special002" ? T(`Weihnachts-Special · ${d.solo_min} Minuten Countdown · im Browser am Handy, Tablet oder Laptop`, `Christmas Special · ${d.solo_min}-minute countdown · in the browser on phone, tablet or laptop`) : T(`Halloween-Special · ${d.solo_min} Minuten Countdown · im Browser am Handy, Tablet oder Laptop`, `Halloween Special · ${d.solo_min}-minute countdown · in the browser on phone, tablet or laptop`)) : T(`Solo-Krimi · ${d.solo_min} Minuten Countdown · im Browser am Handy, Tablet oder Laptop`, `Solo mystery · ${d.solo_min}-minute countdown · in the browser on phone, tablet or laptop`),
         kind: sp ? "Special" : "Solo", cover: ck, tagLabel: T("Beweisstück 1 · Dein Code", "Exhibit 1 · Your code"), code: d.solo_code, link,
         tagText: T("Einmal einlösbar · nach dem ersten Durchgang 30 Tage lang bis zu dreimal wiederholbar", "Redeem once · replay up to three times within 30 days of your first run"),
         steps: [

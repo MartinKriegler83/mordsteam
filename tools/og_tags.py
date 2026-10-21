@@ -19,7 +19,7 @@ for p in sorted(glob.glob(os.path.join(ROOT, "*.html")) + glob.glob(os.path.join
     desc = re.search(r'<meta name="description" content="([^"]*)"', s)
     canon = re.search(r'<link rel="canonical" href="([^"]+)"', s)
     url = canon.group(1) if canon else BASE + "/" + ("" if rel == "index.html" else "en/" if rel == "en/index.html" else re.sub(r"\.html$", "", rel))
-    img = f"{BASE}/assets/og/{'special' if 'specials' in rel else 'home'}-{lang}.jpg"
+    img = f"{BASE}/assets/og/{'special-xmas' if 'specials-xmas' in rel else 'special' if 'specials' in rel else 'home'}-{lang}.jpg"
     t = html.escape(html.unescape(title.group(1).strip()), quote=True) if title else "Mordsteam"
     d = desc.group(1) if desc else ""
     block = ("<!--og-->\n"

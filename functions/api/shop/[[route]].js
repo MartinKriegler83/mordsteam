@@ -25,7 +25,7 @@ import { taxContext, TaxInputError, invoiceFooter, invoiceFields } from "../../.
 import { PRICE_TABLE, curOfLand, convPrice } from "../../../lib/prices.js";
 import { nlSignup, nlConfirm, nlConfirmPost, nlUnsubscribe, nlUnsubscribePost, nlVisit, srcVisit, nlAfterOrder, nlTag, migrateNewsletter } from "../../../lib/newsletter.js";
 import { funnelEvent } from "../../../lib/funnel.js";
-import { createSoloTicket, migrateSolo, soloGiftInfo } from "../../../lib/solo.js";
+import { createSoloTicket, migrateSolo, soloGiftInfo, notYetOnSale } from "../../../lib/solo.js";
 import { giftPdfHtml, giftPdfRender, giftPdfLimit } from "../../../lib/geschenkpdf.js";
 import { createFriendsGroup, friendsGroupOfOrder, ensureShortCode, friendsPrice, FRIENDS_PRICE, FRIENDS_PRICE_PLUS, FRIENDS_CASES, friendsCase, friendsCron } from "../../../lib/friends.js";
 
@@ -48,6 +48,7 @@ export const SOLO_OFFERS = {
   "solo-001": { price: 890, no: "Solo 001", de: "Nachtzug nach Venedig", en: "Night Train to Venice", min: 40, head: ["Der Nachtzug wartet.", "The night train is waiting."], goal: ["bis Udine", "until Udine"] },
   "solo-002": { price: 890, no: "Solo 002", de: "Applaus für einen Toten", en: "Applause for a Dead Man", min: 35, head: ["Der Vorhang ist gefallen.", "The curtain has fallen."], goal: ["bis die Polizei im Theater ist", "until the police reach the theatre"] },
   "special-001": { price: 890, no: "Special", de: "Süßes oder Saures", en: "Trick or Treat", min: 50, head: ["Die Hollow Lane wartet.", "Hollow Lane is waiting."], goal: ["bis der Sheriff kommt", "until the sheriff arrives"] },
+  "special-002": { price: 890, no: "Special", de: "Vier Minuten Finsternis", en: "Four Minutes Dark", min: 50, head: ["Der Christkindlmarkt wartet.", "The Christmas market is waiting."], goal: ["bis die Kripo kommt", "until the detectives arrive"] },
   "solo-plus-001": { price: 1590, no: "Solo Plus", de: "Der letzte Jahrgang", en: "The Last Vintage", min: 45, plus: true, head: ["Das Weinfest wartet.", "The wine festival is waiting."], goal: ["bis die Polizei aus Krems kommt", "until the police arrive from Krems"] },
 };
 // nur eigene Schlüssel (sonst ergab „__proto__“ einen 500er, Nachttest 14.10.)
@@ -392,6 +393,7 @@ async function soloBestellung(request, env) {
   const s = (x, max = 120) => String(x ?? "").trim().slice(0, max);
   if (b.fall && !own(SOLO_OFFERS, b.fall)) throw new InputError(L(site, "Diesen Fall gibt es nicht – bitte im Formular einen Fall auswählen.", "This case doesn’t exist – please choose a case in the form."));
   const fall = own(SOLO_OFFERS, b.fall) ? b.fall : "solo-001", F = SOLO_OFFERS[fall];
+  if (notYetOnSale(request, fall)) throw new InputError(L(site, "Das Weihnachts-Special gibt es ab 2. November – bitte einen anderen Fall wählen.", "The Christmas Special is available from 2 November – please choose another case."));
   const contact = { name: s(k.name), email: s(k.email, 160).toLowerCase(), lang: b.lang === "en" ? "en" : "de", site, produkt: fall };
   const GL = contact.lang === "en" ? L(site, "Englisch", "English") : L(site, "Deutsch", "German");
   if (!["b2b", "b2c"].includes(k.kunde)) throw new InputError(L(site, "Bitte angeben, ob du als Privatperson oder für ein Unternehmen bestellst.", "Please tell us whether you are ordering as a private individual or for a company."));

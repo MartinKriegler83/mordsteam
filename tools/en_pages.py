@@ -4,7 +4,7 @@ import os, html, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from zebra import finish
 ROOT = os.path.join(os.path.dirname(__file__), "..", "site")
-MAP = {"index": "index", "teams": "teams", "friends": "friends", "solo": "solo", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "contact": "kontakt", "early-bird": "earlybird", "feedback": "feedback", "withdraw": "widerruf", "solo-buy": "solo-kaufen", "friends-buy": "friends-kaufen", "newsletter": "newsletter", "specials": "specials"}
+MAP = {"index": "index", "teams": "teams", "friends": "friends", "solo": "solo", "order": "bestellen", "ordered": "bestellt", "privacy": "datenschutz", "imprint": "impressum", "terms": "agb", "contact": "kontakt", "early-bird": "earlybird", "feedback": "feedback", "withdraw": "widerruf", "solo-buy": "solo-kaufen", "friends-buy": "friends-kaufen", "newsletter": "newsletter", "specials": "specials", "specials-xmas": "specials-xmas"}
 LOGO = '<svg width="30" height="30" viewBox="0 0 34 34" fill="none" stroke="#15171C" stroke-width="3" aria-hidden="true"><circle cx="14" cy="14" r="10"/><line x1="21.5" y1="21.5" x2="31" y2="31" stroke-linecap="round"/><circle cx="14" cy="14" r="3.5" fill="#B3261E" stroke="none"/></svg>'
 
 
@@ -14,8 +14,8 @@ EBBAR = """<div class="promo" id="ebbar"><div class="wrap"><span class="tag">EAR
 def page(name, title, desc, body, robots=None, scripts="", home=False, promo=False):
     de = MAP[name]
     # „Play now“: auf Teams/Solo zu den eigenen Optionen, sonst zur Spielauswahl auf der Startseite
-    play = {"index": "#games", "teams": "#packages", "solo": "#price", "specials": "#halloween", "solo-buy": "#solo", "friends": "#price", "friends-buy": "#friends"}.get(name, "index.html#games")
-    cur = lambda k: ' aria-current="page"' if k == name else ''
+    play = {"index": "#games", "teams": "#packages", "solo": "#price", "specials": "#halloween", "specials-xmas": "#christmas", "solo-buy": "#solo", "friends": "#price", "friends-buy": "#friends"}.get(name, "index.html#games")
+    cur = lambda k: ' aria-current="page"' if k == name or (k == "specials" and name == "specials-xmas") else ''
     nav = f'''<a href="teams.html"{cur("teams")}>Teams</a>
 <a href="friends.html"{cur("friends")}>Friends</a>
 <a href="solo.html"{cur("solo")}>Solo</a>
@@ -28,7 +28,7 @@ def page(name, title, desc, body, robots=None, scripts="", home=False, promo=Fal
 <title>{title}</title>
 <meta name="description" content="{html.escape(desc)}">
 {f'<meta name="robots" content="{robots}">' if robots else ''}
-{f'<link rel="canonical" href="https://mordsteam.com/en/{"" if name == "index" else name}">' + chr(10) if name in ("index", "teams", "friends", "solo", "specials") else ''}<link rel="alternate" hreflang="de" href="https://mordsteam.com/{'' if de == 'index' else de}">
+{f'<link rel="canonical" href="https://mordsteam.com/en/{"" if name == "index" else name}">' + chr(10) if name in ("index", "teams", "friends", "solo", "specials", "specials-xmas") else ''}<link rel="alternate" hreflang="de" href="https://mordsteam.com/{'' if de == 'index' else de}">
 <link rel="alternate" hreflang="en" href="https://mordsteam.com/en/{'' if name == 'index' else name}">
 <link rel="alternate" hreflang="x-default" href="https://mordsteam.com/{'' if de == 'index' else de}">
 <link rel="stylesheet" href="/assets/style.css">
@@ -300,6 +300,22 @@ P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=Tru
 </div>
 </div></section>
 
+<!--XMAS-ON-->
+<section id="specials" class="section sp-home sp-xmas"><div class="wrap">
+<div class="sp-box">
+<img class="sp-cover" src="/assets/cover/special002-en.webp" alt="Case cover: Four Minutes Dark" width="600" height="750" loading="lazy" decoding="async">
+<div class="stack">
+<div class="eyebrow">Specials · New for Christmas</div>
+<h2 class="h2">Four Minutes Dark</h2>
+<p class="purpose">The whole market goes dark.</p>
+<p>A Christmas market in Austria: for the lighting ceremony the church square goes dark for four minutes – afterwards the donation box is gone and the market manager is locked in the cold store. The Christmas mystery just for you. Also a gift that arrives instantly.</p>
+<p class="meta">1 INVESTIGATOR · 4 QUESTIONS · 50 MIN · €8.90</p>
+<div class="actions"><a class="btn btn-red" href="specials.html">Go to the Christmas Special</a></div>
+</div>
+</div>
+</div></section>
+<!--/XMAS-ON-->
+<!--XMAS-OFF-->
 <section id="specials" class="section sp-home"><div class="wrap">
 <div class="sp-box">
 <img class="sp-cover" src="/assets/cover/special001-en.webp" alt="Case cover: Trick or Treat" width="600" height="750" loading="lazy" decoding="async">
@@ -313,6 +329,7 @@ P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=Tru
 </div>
 </div>
 </div></section>
+<!--/XMAS-OFF-->
 
 <section id="wahl" class="section"><div class="wrap">
 <div class="choose" aria-labelledby="choose-t">
@@ -759,6 +776,7 @@ P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy
 <label class="check"><input type="radio" name="fall" value="solo-001" checked><span><b>Night Train to Venice</b> · Solo 001 · 40-minute countdown · €8.90</span></label>
 <label class="check"><input type="radio" name="fall" value="solo-002"><span><b>Applause for a Dead Man</b> · Solo 002 · 35-minute countdown · €8.90</span></label>
 <label class="check"><input type="radio" name="fall" value="solo-plus-001"><span><b>The Last Vintage</b> · Solo Plus · 45-minute countdown · €15.90 – with AI interrogation room, ages 18+</span></label>
+<label class="check" data-from="2026-11-02" hidden><input type="radio" name="fall" value="special-002"><span><b>Four Minutes Dark</b> · Christmas Special · 50-minute countdown · €8.90</span></label>
 <label class="check"><input type="radio" name="fall" value="special-001"><span><b>Trick or Treat</b> · Halloween Special · 50-minute countdown · €8.90</span></label>
 <div class="field"><label for="lang">Game language *</label>
 <select id="lang" name="lang"><option value="en">English</option><option value="de">German</option></select>
@@ -1220,6 +1238,129 @@ P["specials"] = dict(title="Mordsteam Specials – Halloween mystery “Trick or
 </div></section>
 </main>''')
 
+# Weihnachts-Special (21.10.2026): eigene Seite, build.sh setzt sie ab 1.11. bzw. auf der Vorschau an die Stelle von specials.html
+P["specials-xmas"] = dict(title="Mordsteam Specials – Christmas mystery “Four Minutes Dark”", scripts='<script src="/assets/aktion.js"></script>\n<script src="/assets/funnel.js?v=1" data-page="specials-en" defer></script>',
+ desc="The Christmas Special: a mystery for one person at an Austrian Christmas market. Four minutes of darkness, then the donation box is gone – four questions, 50 minutes, €8.90. Also as a gift that arrives instantly.",
+ body='''<nav class="subnav" aria-label="Mordsteam Specials"><div class="wrap">
+<b><span>Mordsteam</span> Specials</b>
+<a href="#christmas">Christmas</a><a href="#gift">As a gift</a><a href="#ablauf">How it works</a><a href="#frueher">Past Specials</a><a href="#faq">FAQ</a>
+<a class="btn btn-red" href="solo-buy.html?fall=christmas">Buy</a>
+</div></nav>
+<main id="top">
+<section class="hero bg-a sp-hero sp-xmas"><div class="wrap hero-grid">
+<div class="stack">
+<div class="eyebrow">Mordsteam Specials · Christmas</div>
+<h1>The whole market goes dark.</h1>
+<p class="lead">A Christmas market in the Austrian town of Kerzenthal: for the lighting ceremony the church square goes dark for four minutes. Afterwards the donation box is gone – and the market manager is locked in the cold store. A mystery for one person, tense but cosy: nobody dies. On phone, tablet or laptop.</p>
+<div class="actions">
+<a class="btn btn-red" href="solo-buy.html?fall=christmas" data-fn="buy">Buy the case – €8.90</a>
+<a class="btn btn-line" href="/spiel/solo.html?probe=special-002&amp;lang=en" data-fn="probe">Play the first question free</a>
+</div>
+<p class="small sp-probe-note">Free preview: no sign-up, no purchase. Play question 1 with the real case file and the clock running.</p>
+<p class="small"><a href="#gift">As a gift: a gift card to print or send as a PDF – arrives instantly, even on 24 December ↓</a></p>
+</div>
+<div class="file" aria-hidden="true">
+<div class="folder"></div>
+<div class="sheet">
+<div class="mast"><span>KERZENTHAL COURIER</span><span>THIRD ADVENT</span></div>
+<div class="headline">Market manager locked in cold store – donation box gone</div>
+<p>Church square, lighting ceremony. Four minutes of darkness, then the tree came on. The box for the nursery roof: vanished. Five stallholders – and a punch mug that doesn’t belong in the cold store.</p>
+<div class="chips"><span>5 suspects</span><span>4 questions</span><span>Template</span><span>1 investigator: you</span></div>
+</div>
+<div class="stamp"><div><small>MORDSTEAM · SPECIAL</small><strong>UNSOLVED</strong><small>DETECTIVES IN 50 MIN</small></div></div>
+</div>
+</div></section>
+<section class="tvid-sec" aria-label="Teaser video"><div class="wrap">
+<div class="tvid" data-video="special-weihnachten-en"><video muted loop playsinline preload="none" aria-label="Teaser video Christmas Special"></video><button class="tvid-sound" type="button" aria-pressed="false" data-on="Sound on" data-off="Sound off">Sound on</button></div>
+</div></section>
+<script src="/assets/teaser.js?v=2" defer></script>
+
+<section class="facts" aria-label="Key facts"><div class="wrap">
+<div><b>1 investigator</b><span>just you, on your own device</span></div>
+<div><b><svg class="ico-cd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="14" r="8"/><path d="M12 14v-4M9 2h6M12 2v4M19 7l1.5-1.5"/></svg>50 min</b><span>countdown – that’s how long the detectives need over the pass</span></div>
+<div><b>4 questions</b><span>more puzzles than a regular Solo case</span></div>
+<div><b>Different every time</b><span>culprit, time, hut and code drawn anew</span></div>
+</div></section>
+
+<section id="christmas" class="section case bg-b sp-case"><div class="wrap case-grid">
+<div class="stack">
+<div class="eyebrow">Special · Christmas · Four Minutes Dark</div>
+<h2 class="h2">“When the tree came on, the box was gone.”</h2>
+<p class="lead">Kerzenthal on the evening of the third Sunday of Advent. At 18:00 the Christkind is due to switch on the big tree – and for that the whole Christmas market goes dark for four minutes. In the darkness the punch stall’s donation box disappears, and market manager Alois Brunner ends up in the butcher’s cold store. He is found much later, frozen to the bone but alive. The detectives are stuck in the snow on the mountain road. Until they arrive, you have visitors’ photos, the church clock, a group photo with punch mugs, a carton from the rubbish – and a keypad covered in icing sugar.</p>
+<p><b>Five stallholders under suspicion:</b></p>
+<div class="objects"><span>the chestnut roaster</span><span>the gingerbread seller</span><span>the mulled-wine landlady</span><span>the nativity carver</span><span>the Christkind’s angel</span></div>
+</div>
+<div class="clues" aria-label="Examples from the case file">
+</div>
+<ul class="list case-points">
+<li>Four questions: when was the cold store bolted, who did it, which hut is the box in – and what is its new code?</li>
+<li>New puzzles: a church clock that runs fast, year motifs on punch mugs, a template you slide across the market plan and “the comet’s path”</li>
+<li>Culprit, time, hiding place and code are drawn anew each time – replay up to three times within 30 days</li>
+<li>Tense but cosy: no gore, and the victim survives</li>
+<li>At the end: flashback, certificate and a €5 voucher for Friends or Teams</li>
+</ul>
+<div class="actions case-buy"><a class="btn btn-red" href="solo-buy.html?fall=christmas" data-fn="buy">Buy the case – €8.90</a><a class="btn btn-line" href="/spiel/solo.html?probe=special-002&amp;lang=en" data-fn="probe">Play the first question free</a></div>
+</div></section>
+
+<section id="gift" class="section bg-a"><div class="wrap stack">
+<div class="eyebrow">As a gift</div>
+<h2 class="h2">The gift that arrives instantly</h2>
+<p class="lead">For everyone who loves a puzzle: after buying you get a gift card with the cover, your dedication and a QR code – to print or to send on as a PDF. No shipping, no waiting, even at 14:00 on 24 December.</p>
+<div class="steps">
+<div class="step"><span class="num">1</span><div><h3>Buy</h3><p>Buy the case and tick “As a gift?” in the form. You don’t need the recipient’s name – they enter it when they play.</p></div></div>
+<div class="step"><span class="num">2</span><div><h3>Write a dedication</h3><p>Fill in To and From, print the card or save it as a PDF. Put it under the tree, slip it into an envelope or send it by message.</p></div></div>
+<div class="step"><span class="num">3</span><div><h3>Play whenever it suits</h3><p>The code is valid for 12 months. The clock only starts when the case file is opened – between the holidays or in January.</p></div></div>
+</div>
+<div class="actions"><a class="btn btn-red" href="solo-buy.html?fall=christmas" data-fn="buy">Buy as a gift – €8.90</a></div>
+</div></section>
+
+<section id="ablauf" class="section bg-b"><div class="wrap stack">
+<div class="eyebrow">How it works</div>
+<h2 class="h2">Three steps from purchase to certificate</h2>
+<div class="steps">
+<div class="step"><span class="num">1</span><div><h3>Get your code</h3><p>After paying you get your game code on screen and by email. Start right away or any time in the next 12 months – after Christmas too, and as a gift.</p></div></div>
+<div class="step"><span class="num">2</span><div><h3>Investigate</h3><p>The clock runs from the start. Every correct answer unlocks new evidence. Stuck? Hints at the push of a button – for penalty minutes.</p></div></div>
+<div class="step"><span class="num">3</span><div><h3>Unmask</h3><p>Once you’ve solved all four questions, the flashback shows you what really happened – plus your final time and your certificate.</p></div></div>
+</div>
+</div></section>
+
+<section id="frueher" class="section bg-a"><div class="wrap stack">
+<div class="eyebrow">Past Specials</div>
+<h2 class="h2">Season over – case stays</h2>
+<p class="lead">For special occasions Mordsteam releases a case of its own. When the season is over, it stays here – you can play it any time. We announce the next Special in our <a href="newsletter.html">newsletter</a>.</p>
+<div class="sp-box sp-old">
+<img class="sp-cover" src="/assets/cover/special001-en.webp" alt="Case cover: Trick or Treat" width="600" height="750" loading="lazy" decoding="async">
+<div class="stack">
+<div class="eyebrow">Halloween 2026</div>
+<h3 class="h2">Trick or Treat</h3>
+<p class="purpose">One skeleton too many.</p>
+<p>Halloween in a small American town: a neighbor is locked in his own prop coffin, the prize money is gone – and on the porch camera there’s a skeleton that isn’t made of plastic.</p>
+<p class="meta">1 INVESTIGATOR · 4 QUESTIONS · 50 MIN · €8.90</p>
+<div class="actions"><a class="btn btn-red" href="solo-buy.html?fall=halloween">Buy the case – €8.90</a><a class="btn btn-line" href="/spiel/solo.html?probe=special-001&amp;lang=en">Play the first question free</a></div>
+</div>
+</div>
+</div></section>
+
+<section id="faq" class="section faq bg-b"><div class="wrap faq-grid">
+<div class="stack"><div class="eyebrow">FAQ</div><h2 class="h2">Questions?</h2></div>
+<div>
+<details><summary>Is the case scary?</summary><p>No, more cosy than creepy: a Christmas market, punch and snow – and a puzzle with a real bite. There’s no gore, and the victim survives.</p></details>
+<details><summary>How is it different from the Solo cases?</summary><p>It’s bigger: four questions instead of three, a 50-minute countdown and new kinds of puzzle such as the template you slide across the market plan. Otherwise it plays just like Mordsteam Solo – on your own, without AI, on any device.</p></details>
+<details><summary>Can I play it after Christmas?</summary><p>Yes. The code is valid for 12 months, and the case stays on sale after the season.</p></details>
+<details><summary>How do I give the case as a gift?</summary><p>Tick “As a gift?” in the order form. After buying you get the gift card with your dedication to print or as a PDF – instantly, no shipping. The recipient enters their name only when they play.</p></details>
+<details><summary>Can I pause?</summary><p>No. The clock starts as soon as you open the case file and keeps running. Until then, take as long as you like.</p></details>
+<details><summary>Can I play the case again?</summary><p>Yes: up to three times within 30 days of your first playthrough. Culprit, time, hiding place and code are drawn anew each time, and the matching evidence changes too. Only your first playthrough counts for the comparison.</p></details>
+<details><summary>What is the €5 voucher?</summary><p>After your first playthrough you get a voucher code worth €5 – whether you solved the case or not. Redeem it at checkout when ordering Mordsteam Friends or Teams. One voucher per order; it can’t be combined with Early Bird or other offers and can’t be exchanged for cash.</p></details>
+</div>
+</div></section>
+
+<section class="cta"><div class="wrap">
+<h2>The detectives arrive at 20:35.</h2>
+<p>By then you’ll know who locked market manager Brunner in.</p>
+<div class="actions" style="justify-content:center"><a class="btn btn-ink" href="solo-buy.html?fall=christmas" data-fn="buy">Buy the case – €8.90</a><a class="btn btn-line" href="/spiel/solo.html?probe=special-002&amp;lang=en" data-fn="probe">Take a free look first</a></div>
+</div></section>
+</main>''')
+
 P["newsletter"] = dict(title="Newsletter – Mordsteam", desc="Be the first to hear about new Mordsteam cases: the Mordsteam newsletter.", scripts='<script src="/assets/newsletter.js"></script>',
  body='''<main class="page"><div class="wrap prose">
 <div class="eyebrow">Newsletter</div>
@@ -1239,6 +1380,8 @@ P["newsletter"] = dict(title="Newsletter – Mordsteam", desc="Be the first to h
 for name, p in P.items():
     out = page(name, p["title"], p["desc"], p["body"], p.get("robots"), p.get("scripts", ""), p.get("home", False), p.get("promo", False))
     out = finish(out, "en")
+    if name == "specials-xmas":   # ersetzt ab 1.11. specials.html (build.sh) – Adressen wie die normale Specials-Seite
+        out = out.replace("mordsteam.com/en/specials-xmas", "mordsteam.com/en/specials").replace("mordsteam.com/specials-xmas", "mordsteam.com/specials").replace("specials-xmas.html", "specials.html")
     with open(os.path.join(ROOT, "en", name + ".html"), "w") as f:
         f.write(out)
 # ---------- products.html: eine Seite mit Angebot, Preisen, Erstattung und allen Rechtstexten (für die Prüfung durch Paddle) ----------

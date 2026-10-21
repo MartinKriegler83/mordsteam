@@ -20,6 +20,8 @@ const V = {
   "home-de": { bg: "#F3EFE6", ink: "#15171C", head: "Könnt ihr den Fall knacken?", sub: "Digitale Krimispiele fürs Team, den Freundeskreis oder allein – am Handy, Tablet oder Laptop.", url: "mordsteam.com", covers: ["t001-de", "friends-de", "solo001-de", "special001-de"] },
   "home-en": { bg: "#F3EFE6", ink: "#15171C", head: "Can you crack the case?", sub: "Digital murder mysteries for your team, your friends or just you – on phone, tablet or laptop.", url: "mordsteam.com/en", covers: ["t001-en", "friends-en", "solo001-en", "special001-en"] },
   "special-de": { bg: "#15171C", ink: "#F3EFE6", head: "Ein Skelett zu viel.", sub: "Das Halloween-Special: ein Krimi für dich allein. 50 Minuten, 4 Fragen – 8,90 €.", url: "mordsteam.com/specials", covers: ["special001-de"] },
+  "special-xmas-de": { bg: "#141A33", ink: "#F3EFE6", head: "Der ganze Markt wird dunkel.", sub: "Das Weihnachts-Special: ein Krimi für dich allein. 50 Minuten, 4 Fragen – 8,90 €. Auch als Geschenk.", url: "mordsteam.com/specials", covers: ["special002-de"] },
+  "special-xmas-en": { bg: "#141A33", ink: "#F3EFE6", head: "The whole market goes dark.", sub: "The Christmas Special: a murder mystery just for you. 50 minutes, 4 questions. Also as a gift.", url: "mordsteam.com/en/specials", covers: ["special002-en"] },
   "special-en": { bg: "#15171C", ink: "#F3EFE6", head: "One skeleton too many.", sub: "The Halloween Special: a murder mystery just for you. 50 minutes, 4 questions.", url: "mordsteam.com/en/specials", covers: ["special001-en"] },
 };
 const b = await chromium.launch(); const pg = await b.newPage({ viewport: { width: 1200, height: 630 } });

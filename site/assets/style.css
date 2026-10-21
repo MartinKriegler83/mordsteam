@@ -642,6 +642,11 @@ a.inlink:hover{color:var(--red)}
 .sp-cover{width:100%;max-width:340px;height:auto;display:block;margin:0 auto;box-shadow:0 18px 40px rgba(0,0,0,.45);transform:rotate(-2deg)}
 @media(min-width:820px){.sp-box{grid-template-columns:320px 1fr;gap:48px}.sp-cover{margin:0}}
 .sp-hero .stamp strong{color:#E8792B}
+/* Weihnachts-Special (21.10.2026): Nachtblau und Gold statt Violett und Orange */
+.sp-home.sp-xmas{background:#141A33;border-top-color:#F2C14E}
+.sp-xmas .eyebrow{color:#F2C14E}.sp-xmas .purpose{color:#F2C14E}.sp-xmas .meta{color:#C9D1E6}
+.sp-hero.sp-xmas .stamp strong{color:#C8342A}
+.sp-old .purpose{font-family:var(--serif);font-weight:900;font-size:22px;color:#B3261E;margin:0}.sp-old .meta{font-family:var(--mono);font-size:12px;letter-spacing:1px;color:var(--muted,#5A5D66)}
 /* Gratis-Bonus-Rätsel auf der Specials-Seite (19.10.2026, tools/bonus_raetsel.mjs, assets/bonus.js) */
 .bz{background:#1B1626;color:#F3EFE6;text-align:center}
 .bz .eyebrow{color:#E8792B}.bz .lead{color:#D9D3E6;max-width:720px;margin-left:auto;margin-right:auto}

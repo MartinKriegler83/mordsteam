@@ -576,8 +576,12 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
   function probeNote() {
     return `<div class="note" style="margin:14px 0"><b>${L("Gratis-Probe", "Free preview")}</b> · ${L("Du spielst Frage 1 von 4 – mit echter Akte und laufender Uhr. Danach kannst du den ganzen Fall kaufen; Täter, Tatzeit und Versteck werden dann neu ausgelost.", "You’re playing question 1 of 4 – with the real case file and the clock running. Afterwards you can buy the full case; culprit, time and hiding place are then drawn anew.")}</div>`;
   }
+  // Probe je Special (Weihnachten seit 21.10.2026): Kauflink, Rücklink und Texte nach dem Fall der Probe
+  const probeOf = () => ((S && S.case_id) || MS.qs("probe") || "special-001");
+  const isXmas = () => probeOf() === "special-002";
   function buyUrl() {
-    const u = EN() ? "/en/solo-buy.html?fall=halloween" : "/solo-kaufen.html?fall=halloween";
+    const fq = isXmas() ? (EN() ? "christmas" : "weihnachten") : "halloween";
+    const u = EN() ? "/en/solo-buy.html?fall=" + fq : "/solo-kaufen.html?fall=" + fq;
     return u + (probeSrc ? "&src=" + probeSrc : "") ;
   }
   function probeEndView() {
@@ -586,11 +590,11 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
     root.innerHTML = `<section class="report paper so-result" style="text-align:center">
       <div class="solved"><div class="bigstamp ${ok ? "" : "grey"}"><div><small>MORDSTEAM SPECIAL · ${L("GRATIS-PROBE", "FREE PREVIEW")}</small><strong>${ok ? L("FRAGE 1 GELÖST", "QUESTION 1 SOLVED") : L("ZEIT ABGELAUFEN", "TIME’S UP")}</strong><small>${esc((S.name || "").toUpperCase())}</small></div></div></div>
       <h2 style="margin-top:18px">${ok ? L("Stark ermittelt.", "Nice detective work.") : L("Diesmal hat es nicht gereicht.", "Not this time.")}</h2>
-      <p>${ok ? L(`Du hast die Tatzeit in ${MS.dur(r.played_ms)} gefunden${r.penalty_min ? ` (plus ${r.penalty_min} Strafminuten)` : ""}. Aber wer steckte im Skelett-Anzug, wo ist das Geld – und was wollte Frank verkünden?`, `You found the time in ${MS.dur(r.played_ms)}${r.penalty_min ? ` (plus ${r.penalty_min} penalty minutes)` : ""}. But who was in the skeleton suit, where’s the money – and what was Frank going to announce?`) : L("Im ganzen Fall helfen dir Hinweise weiter, und es warten noch drei Fragen.", "In the full case, hints help you along – and three more questions are waiting.")}</p>
+      <p>${ok ? L(`Du hast die Tatzeit in ${MS.dur(r.played_ms)} gefunden${r.penalty_min ? ` (plus ${r.penalty_min} Strafminuten)` : ""}. ${isXmas() ? "Aber wer hat Brunner eingesperrt, in welcher Hütte ist die Kassa – und wie lautet ihr Code?" : "Aber wer steckte im Skelett-Anzug, wo ist das Geld – und was wollte Frank verkünden?"}`, `You found the time in ${MS.dur(r.played_ms)}${r.penalty_min ? ` (plus ${r.penalty_min} penalty minutes)` : ""}. ${isXmas() ? "But who locked Brunner in, which hut is the box in – and what is its code?" : "But who was in the skeleton suit, where’s the money – and what was Frank going to announce?"}`) : L("Im ganzen Fall helfen dir Hinweise weiter, und es warten noch drei Fragen.", "In the full case, hints help you along – and three more questions are waiting.")}</p>
       <div class="qcards" style="text-align:left;margin:18px 0">${S.questions.slice(1).map((q) => `<div><i>${pad(q.nr)}</i><span>${esc(q.label)}</span></div>`).join("")}</div>
       <p class="small">${L("Im ganzen Fall werden Täter, Tatzeit und Versteck neu ausgelost – du ermittelst also von vorn, mit neuen Spuren. Am Ende: Rückblende, Urkunde und ein 5-€-Gutschein für Friends oder Teams.", "In the full case, culprit, time and hiding place are drawn anew – so you start fresh, with new clues. At the end: flashback, certificate and a €5 voucher for Friends or Teams.")}</p>
       <div class="actions-row" style="justify-content:center;margin-top:18px"><a class="btn btn-red btn-big" id="probebuy" href="${buyUrl()}">${L("Ganzen Fall kaufen – 8,90 €", "Get the full case")}</a></div>
-      <p style="margin-top:12px"><a class="linkbtn" href="${EN() ? "/en/specials.html" : "/specials.html"}${probeSrc ? "?src=" + probeSrc : ""}">${L("Zurück zum Halloween-Special", "Back to the Halloween Special")}</a></p>
+      <p style="margin-top:12px"><a class="linkbtn" href="${EN() ? "/en/specials.html" : "/specials.html"}${probeSrc ? "?src=" + probeSrc : ""}">${isXmas() ? L("Zurück zum Weihnachts-Special", "Back to the Christmas Special") : L("Zurück zum Halloween-Special", "Back to the Halloween Special")}</a></p>
     </section>`;
     $("probebuy").addEventListener("click", () => { try { fetch("/api/solo/probe/kauf", { method: "POST", keepalive: true, headers: { "x-solo": token || "" } }).catch(() => {}); } catch {} });
   }

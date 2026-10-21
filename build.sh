@@ -31,6 +31,28 @@ else
   echo "Modus: VOLLE SEITE"
   cp -r site/. dist/
 fi
+# Weihnachts-Special (21.10.2026): Seite und Startseiten-Abschnitt erst ab 1.11.2026 (Wiener Zeit) öffentlich.
+# Vorschau und lokale Builds zeigen es immer. Cloudflare-Variable XMAS=true erzwingt es, XMAS=false schaltet es ab.
+# Achtung: Der Wechsel passiert nur beim Bauen – am 1.11. einmal neu bereitstellen (Retry deployment) oder pushen.
+if [ -f dist/specials.html ]; then
+  XMAS_ON=0
+  if [ "$XMAS" = "true" ]; then XMAS_ON=1
+  elif [ "$XMAS" = "false" ]; then XMAS_ON=0
+  elif [ "$CF_PAGES_BRANCH" != "main" ]; then XMAS_ON=1
+  elif [ "$(TZ=Europe/Vienna date +%Y%m%d)" -ge 20261101 ]; then XMAS_ON=1
+  fi
+  if [ "$XMAS_ON" = "1" ]; then
+    mv dist/specials-xmas.html dist/specials.html; mv dist/en/specials-xmas.html dist/en/specials.html; DROP="XMAS-OFF"; KEEP="XMAS-ON"
+  else
+    rm -f dist/specials-xmas.html dist/en/specials-xmas.html; DROP="XMAS-ON"; KEEP="XMAS-OFF"
+  fi
+  for f in $(grep -rl -e '<!--XMAS-ON-->' -e '<!--XMAS-OFF-->' dist --include='*.html'); do
+    awk -v d="$DROP" -v k="$KEEP" '$0 == "<!--" d "-->" {skip=1; next} $0 == "<!--/" d "-->" {skip=0; next} $0 == "<!--" k "-->" || $0 == "<!--/" k "-->" {next} !skip' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+  done
+  echo "Weihnachts-Special: $XMAS_ON"
+else
+  rm -f dist/specials-xmas.html dist/en/specials-xmas.html
+fi
 # Eigene UID ins Impressum (Go-live-Test 5, M23): aus der Cloudflare-Text-Variable UID_NR, nur im Format ATU + 8 Ziffern.
 # Ohne Variable bleiben die unsichtbaren Platzhalter <!--UID_DE--> / <!--UID_EN--> stehen.
 if echo "$UID_NR" | grep -Eq '^ATU[0-9]{8}$'; then

@@ -11,11 +11,17 @@
     "solo-001": { p: 890, de: "Mordsteam Solo 001 „Nachtzug nach Venedig“ · Countdown 40 Min.", en: "Mordsteam Solo 001 “Night Train to Venice” · 40-minute countdown" },
     "solo-002": { p: 890, de: "Mordsteam Solo 002 „Applaus für einen Toten“ · Countdown 35 Min.", en: "Mordsteam Solo 002 “Applause for a Dead Man” · 35-minute countdown" },
     "special-001": { p: 890, de: "Mordsteam Special „Süßes oder Saures“ · Halloween · Countdown 50 Min.", en: "Mordsteam Special “Trick or Treat” · Halloween · 50-minute countdown" },
+    "special-002": { p: 890, de: "Mordsteam Special „Vier Minuten Finsternis“ · Weihnachten · Countdown 50 Min.", en: "Mordsteam Special “Four Minutes Dark” · Christmas · 50-minute countdown" },
     "solo-plus-001": { p: 1590, plus: true, de: "Mordsteam Solo Plus „Der letzte Jahrgang“ · Countdown 45 Min. · mit KI-Verhörraum", en: "Mordsteam Solo Plus “The Last Vintage” · 45-minute countdown · with AI interrogation room" },
   };
+  // Fälle mit Verkaufsstart (Weihnachts-Special ab 2.11.2026, Wiener Zeit): vorher nur auf der Vorschau sichtbar – der Server prüft es ebenso
+  const vienna = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Vienna" }).format(new Date());
+  const live = /^(www\.)?mordsteam\.com$/.test(location.hostname);
+  form.querySelectorAll("label[data-from]").forEach((l) => { l.hidden = live && vienna < l.dataset.from; });
   const fq = (q.get("fall") || "").toLowerCase().trim();
-  const want = CASES[fq] ? fq : { "002": "solo-002", plus: "solo-plus-001", "001": "solo-001", halloween: "special-001", special: "special-001" }[fq];
-  if (want) form.querySelector(`input[name=fall][value="${want}"]`).checked = true;
+  const want = CASES[fq] ? fq : { "002": "solo-002", plus: "solo-plus-001", "001": "solo-001", halloween: "special-001", special: "special-001", weihnachten: "special-002", christmas: "special-002", xmas: "special-002" }[fq];
+  const wi = want && form.querySelector(`input[name=fall][value="${want}"]`);
+  if (wi && !wi.closest("label").hidden) wi.checked = true;
   const eur = (c) => (EN ? "€" + (c / 100).toFixed(2) : (c / 100).toFixed(2).replace(".", ",") + " €");
   const paint = () => {
     document.getElementById("sofortbox").hidden = form.kunde.value !== "b2c";

@@ -14,6 +14,7 @@ import * as FE from "../lib/cases/friends-001-en.js";
 import { feuerwerk } from "../lib/art/soloplus.js";
 import { COVERS } from "../lib/art/covers.js";
 import { porchCam } from "../lib/art/special001.js";
+import { towerPhoto } from "../lib/art/special002.js";
 import { CASES, caseOf, buildVars, render, RULES } from "../lib/game.js";
 import { normalizeVars } from "../lib/create.js";
 import { randomCast } from "../lib/countries.js";
@@ -26,6 +27,8 @@ const one = (h, what) => { const f = figs(h); if (!f.length) throw new Error("Ke
 
 // Werbebild: Figur passt zu keinem Verdächtigen (66 Zoll, schwarze Sneaker), damit die Seite in keiner Runde etwas verrät (Nachttest 14.10.)
 function special001(en) { return one(porchCam(en, 66, "schwarz", "21:19:07"), "special001")[0]; }
+// Weihnachten: Besucherfoto mit Turmuhr, feste Beispielzeit (verrät nichts – Dunkelzeit, Vorgehen und Täter wechseln je Runde)
+function special002(en) { return one(towerPhoto(en, "christkind", 18 * 60 + 7, 1), "special002")[0]; }
 function solo001(en) { return one((en ? S1E : S1).docs("jonas", en ? "Alex" : "Martin", 0).find((d) => d.id === "kamera").html, "solo001")[0]; }
 function solo002(en) { return one((en ? S2E : S2).docs("paul", en ? "Alex" : "Martin", 2).find((d) => d.id === "spuren").html, "solo002")[0]; }
 function soloplus(en) {
@@ -76,6 +79,8 @@ const CARDS = [
     de: ["AUS DER AKTE · FOTOS VOM FEST", "Wer trägt welches Bändchen?"], en: ["FROM THE FILE · PHOTOS FROM THE FÊTE", "Who wears which wristband?"] },
   { key: "special001", page: "specials.html", sec: "halloween", pageEn: "en/specials.html", secEn: "halloween", make: special001,
     de: ["AUS DER AKTE · FRANKS VERANDAKAMERA", "Welches Skelett ist kein Skelett?"], en: ["FROM THE FILE · FRANK’S PORCH CAMERA", "Which skeleton isn’t a skeleton?"] },
+  { key: "special002", page: "specials-xmas.html", sec: "weihnachten", pageEn: "en/specials-xmas.html", secEn: "christmas", make: special002,
+    de: ["AUS DER AKTE · BESUCHERFOTOS VOM KIRCHPLATZ", "Wie spät war es wirklich?"], en: ["FROM THE FILE · VISITORS’ PHOTOS FROM THE CHURCH SQUARE", "What time was it really?"] },
 ];
 
 // Website: kein Vergrößern – Figur ohne Knopf-Rolle; IDs je Karte eindeutig machen
