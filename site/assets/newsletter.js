@@ -11,6 +11,23 @@
     ungueltig: T("Dieser Link ist ungültig oder abgelaufen. Melde dich einfach unten neu an.", "This link is invalid or has expired. Simply sign up again below."),
   };
   if (s && MSG[s]) { st.innerHTML = MSG[s]; st.hidden = false; if (s === "bestaetigt") form.hidden = true; }
+  // Bestätigen/Abmelden erst per Klick (Link-Scanner der Mailfilter sollen nichts auslösen) – Nachttest 21.10.2026
+  const P = new URLSearchParams(location.search), tb = P.get("bestaetigen"), ta = P.get("abmelden");
+  if (tb || ta) {
+    form.hidden = true;
+    st.innerHTML = (tb ? T("<b>Fast geschafft!</b> Ein Klick noch, dann bist du angemeldet.", "<b>Almost done!</b> One more click and you're signed up.")
+      : T("Möchtest du dich wirklich vom Newsletter abmelden?", "Do you really want to unsubscribe from the newsletter?"))
+      + `<p style="margin:14px 0 0"><button class="btn" type="button" id="nl-go">${tb ? T("Anmeldung bestätigen", "Confirm sign-up") : T("Ja, abmelden", "Yes, unsubscribe")}</button></p>`;
+    st.hidden = false;
+    document.getElementById("nl-go").addEventListener("click", async (e) => {
+      e.target.disabled = true;
+      let r = "ungueltig";
+      try { const x = await fetch("/api/shop/newsletter/" + (tb ? "bestaetigen" : "abmelden"), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ t: tb || ta }) });
+        r = (await x.json().catch(() => ({}))).s || "ungueltig"; } catch { r = "ungueltig"; }
+      history.replaceState(null, "", location.pathname + "?s=" + r);
+      st.innerHTML = MSG[r] || MSG.ungueltig; if (r === "ungueltig") form.hidden = false;
+    });
+  }
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     err.hidden = true;

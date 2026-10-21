@@ -62,6 +62,10 @@
   const btn = (text, url) => `<p style="margin:20px 0"><a href="${esc(url)}" style="display:inline-block;background:#D9820B;color:#15171C;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:15px;text-decoration:none;padding:13px 22px;border-radius:8px">${esc(text)}</a></p>`;
   const P = (x) => `<p style="margin:0 0 14px">${x}</p>`;
   const UL = (items) => `<ul style="margin:0 0 14px;padding-left:20px">${items.map((i) => `<li style="margin:0 0 4px">${i}</li>`).join("")}</ul>`;
+  // Termin aus „Erstgespräch (Video) 26.10.2026 um 15:00“ englisch formulieren (Nachttest 21.10.2026, UX8)
+  const terminEn = (t) => { const m = /^Erstgespräch \(([^)]+)\) (\d{2})\.(\d{2})\.(\d{4})(?: um (\d{1,2}:\d{2}))?/.exec(t || ""); if (!m) return t;
+    const d = new Date(Date.UTC(+m[4], +m[3] - 1, +m[2], 12)), wie = { Video: "video call", Telefon: "phone call", "vor Ort": "on site" }[m[1]] || m[1];
+    return `${d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}${m[5] ? " at " + m[5] : ""} (${wie})`; };
   const anrede = (lang, name) => (lang === "en" ? `Hello${name ? " " + esc(name) : ""},` : `Guten Tag${name ? " " + esc(name) : ""},`);
 
   // Vorlagen: liefern { to, subject, body, lang }
@@ -74,7 +78,7 @@
         ? P("thank you for your enquiry! I'd be happy to talk through what you need in a short, free call – about 30 minutes, by phone, video or on site. Afterwards you'll receive a fixed-price quote.") + P("Would one of these times suit you?") + UL(["[Day, date, time]", "[Day, date, time]"]) + P(`Examples of our work: <a href="https://brightpage.net/en/#referenzen">brightpage.net</a> · all prices: <a href="https://brightpage.net/en/prices.html">price list</a>`)
         : P("vielen Dank für Ihre Anfrage! Gerne bespreche ich mit Ihnen in einem kurzen, kostenlosen Gespräch, was Sie brauchen – ca. 30 Minuten, telefonisch, per Video oder bei Ihnen vor Ort. Danach bekommen Sie ein Angebot zum Fixpreis.") + P("Passt Ihnen einer dieser Termine?") + UL(["[Wochentag, Datum, Uhrzeit]", "[Wochentag, Datum, Uhrzeit]"]) + P(`Beispiele unserer Arbeit: <a href="https://brightpage.net/demo/salon/">Friseursalon</a> · <a href="https://brightpage.net/demo/tischlerei/">Tischlerei</a> · <a href="https://brightpage.net/demo/verein/">Musikverein</a><br>Alle Preise: <a href="https://brightpage.net/preise.html">brightpage.net/preise</a>`)) };
     if (art === "termin") return { to: a.email, lang, subject: en ? "Our call – Brightpage" : "Unser Gespräch – Brightpage", body:
-      P(anrede(lang, a.name)) + (en ? P(`thank you – I've noted our appointment: <b>${esc(a.next_was || "[date, time]")}</b>.`) + P("To make the most of our time, you could jot down beforehand: what the website should achieve, 2–3 websites you like, and whether you have a logo, texts and photos.")
+      P(anrede(lang, a.name)) + (en ? P(`thank you – I've noted our appointment: <b>${esc(terminEn(a.next_was) || "[date, time]")}</b>.`) + P("To make the most of our time, you could jot down beforehand: what the website should achieve, 2–3 websites you like, and whether you have a logo, texts and photos.")
         : P(`danke – ich habe unseren Termin notiert: <b>${esc(a.next_was || "[Datum, Uhrzeit]")}</b>.`) + P("Damit wir die Zeit gut nutzen, können Sie sich vorab notieren: was die Website erreichen soll, 2–3 Websites, die Ihnen gefallen, und ob Logo, Texte und Fotos schon da sind.")) };
     if (art === "angebot") return { to, lang, subject: en ? `Your quote ${x.nr} from Brightpage` : `Ihr Angebot ${x.nr} von Brightpage`, body:
       P(anrede(lang, name)) + (en ? P("thank you again for our conversation! Here is your fixed-price quote. You can view it online and accept it with one click – options can be added there too.")

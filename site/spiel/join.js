@@ -13,6 +13,16 @@
   };
   paintBack();
   document.addEventListener("ms-lang", paintBack);
+  // „Gerät neu verbinden“: Link der Spielleitung mit Einmal-Code (Nachttest 21.10.2026)
+  const wieder = MS.qs("wieder");
+  if (wieder) {
+    msg.textContent = t("Gerät wird neu verbunden …", "Reconnecting device …");
+    MS.api("POST", "wieder", { code: wieder }).then((d) => {
+      MS.set("ms_team", d.token); if (d.lang) MS.setLang(d.lang);
+      ["ms_seen", "ms_heard", "ms_tab", "ms_doc"].forEach(MS.del);
+      location.href = "/spiel/fall.html";
+    }).catch((err) => { msg.textContent = err.message; });
+  }
   // Spielsprache aus dem Spielcode übernehmen (Englisch gebuchte Runden zeigen die Anmeldung auf Englisch)
   let looked = "";
   async function lookup() {

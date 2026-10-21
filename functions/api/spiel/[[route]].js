@@ -33,6 +33,7 @@ export async function onRequest(ctx) {
     await migrate(env);
     // --- Teams ---
     if (route === "join" && method === "POST") return join(request, env);
+    if (route === "wieder" && method === "POST") return wiederverbinden(request, env);
     if (route === "mitlesen" && method === "POST") return mitlesen(request, env);
     if (route === "code" && method === "GET") return codeInfo(request, env);
     if (route === "state" && method === "GET") return withTeam(request, env, teamState);
@@ -174,15 +175,29 @@ async function join(request, env) {
   if (name.length < 2) return fail(L(lg, "Bitte einen Teamnamen mit mindestens 2 Zeichen eingeben.", "Please enter a team name with at least 2 characters."));
   if (session.status === "created") return fail(L(lg, "Der Fall ist noch nicht freigeschaltet. Euer Organisator öffnet ihn, sobald es losgeht.", "The case hasn't been unlocked yet. Your organiser opens it when it's time to start."), 403);
   if (session.status === "finished") return fail(L(lg, "Diese Spielrunde ist bereits beendet.", "This game round has already ended."), 403);
+  // Name zuerst prüfen: Ein Team, dessen Gerät den Spielstand verloren hat, bekommt den Weg zurück gezeigt (Nachttest 21.10.2026, B-M1)
+  const exists = await env.DB.prepare("SELECT id FROM teams WHERE session_id=? AND name=?").bind(session.id, name).first();
+  if (exists) return fail(L(lg, "Dieses Team ist schon angemeldet. Hat euer Gerät den Spielstand verloren? Dann bittet eure Spielleitung um den Link „Gerät neu verbinden“. Ein neues Team? Dann bitte einen anderen Namen wählen.",
+    "This team has already joined. Has your device lost its progress? Then ask your game leader for the “Reconnect device” link. A new team? Then please choose another name."), 409);
   const count = await env.DB.prepare("SELECT COUNT(*) AS n FROM teams WHERE session_id=?").bind(session.id).first();
   const maxTeams = session.max_teams || RULES.maxTeams;
-  if (count.n >= maxTeams) return fail(L(lg, `Alle gebuchten Teams (${maxTeams}) sind bereits angemeldet. Weitere Personen können per QR-Code bei einem Team mitlesen.`, `All booked teams (${maxTeams}) have already joined. Others can follow along with a team via its QR code.`), 403);
-  const exists = await env.DB.prepare("SELECT id FROM teams WHERE session_id=? AND name=?").bind(session.id, name).first();
-  if (exists) return fail(L(lg, "Diesen Teamnamen gibt es schon. Bitte einen anderen wählen.", "This team name is already taken. Please choose another one."), 409);
+  if (count.n >= maxTeams) return fail(L(lg, `Alle gebuchten Teams (${maxTeams}) sind bereits angemeldet. Weitere Personen können per QR-Code bei einem Team mitlesen. Hat ein Gerät seinen Spielstand verloren, hilft die Spielleitung mit „Gerät neu verbinden“.`, `All booked teams (${maxTeams}) have already joined. Others can follow along with a team via its QR code. If a device has lost its progress, the game leader can help with “Reconnect device”.`), 403);
   const token = randomToken();
   await env.DB.prepare("INSERT INTO teams (id, session_id, name, token, created_at) VALUES (?,?,?,?,?)")
     .bind(crypto.randomUUID(), session.id, name, token, Date.now()).run();
   return json({ token, team: name, lang: lg });
+}
+
+// Gerät neu verbinden: Einmal-Code von der Spielleitung (30 Minuten gültig) → Schlüssel des Teams auf dem neuen Gerät
+async function wiederverbinden(request, env) {
+  await migrate(env);
+  const b = await body(request), code = String(b.code || "").toLowerCase().replace(/[^0-9a-f]/g, "");
+  const hl = hLang(request);
+  const t = code.length === 20 && (await env.DB.prepare("SELECT * FROM teams WHERE reconnect=? AND reconnect_until > ?").bind(code, Date.now()).first());
+  if (!t) return fail(L(hl, "Dieser Link ist ungültig oder abgelaufen. Bittet die Spielleitung um einen neuen.", "This link is invalid or has expired. Please ask the game leader for a new one."), 404);
+  await env.DB.prepare("UPDATE teams SET reconnect=NULL, reconnect_until=NULL WHERE id=?").bind(t.id).run();
+  const session = await loadSession(env, t.session_id);
+  return json({ token: t.token, team: t.name, lang: session ? langOf(session) : hl });
 }
 
 // Spielcode prüfen, ohne anzumelden: Sprache der Runde für die Anmeldeseite
@@ -383,6 +398,8 @@ async function loesung({ request, env, team, session }) {
   }
   const b = await body(request);
   const qs = stageQuestions(session, stage);
+  // Leere Felder kosten keine Strafminuten – wie bei Solo und Friends (Nachttest 21.10.2026, B-M2)
+  if (qs.some((q) => !String(b[q.key] ?? "").trim())) return fail(L(langOf(session), "Bitte zuerst alle Felder ausfüllen – leere Antworten prüfen wir nicht (keine Strafzeit).", "Please fill in all fields first – we don't check empty answers (no penalty)."), 400);
   const result = checkAnswers(session, b, qs);
   const allOk = Object.values(result).every(Boolean);
   const payload = Object.fromEntries(qs.map((q) => [q.key, String(b[q.key] ?? "").slice(0, 60)]));
@@ -644,6 +661,14 @@ async function leitungAktion({ request, env, session }) {
     await env.DB.prepare("UPDATE sessions SET status='open', opened_at=? WHERE id=?").bind(now, session.id).run();
     return json({ ok: true });
   }
+  if (b.aktion === "wiederverbinden") {   // Nachttest 21.10.2026, B-M1
+    await migrate(env);
+    const t = await env.DB.prepare("SELECT id FROM teams WHERE session_id=? AND name=?").bind(session.id, String(b.team || "").slice(0, 40)).first();
+    if (!t) return fail(L(lg, "Dieses Team gibt es in der Runde nicht.", "This team doesn't exist in this round."), 404);
+    const code = randomToken(10);
+    await env.DB.prepare("UPDATE teams SET reconnect=?, reconnect_until=? WHERE id=?").bind(code, now + 30 * 60000, t.id).run();
+    return json({ ok: true, path: `/spiel/?wieder=${code}` });
+  }
   if (b.aktion === "starten") {
     if (session.status !== "open") return fail(L(lg, "Zuerst den Fall öffnen, damit sich die Teams anmelden können.", "Open the case first so the teams can join."));
     const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM teams WHERE session_id=?").bind(session.id).first();
@@ -807,7 +832,7 @@ async function adminExport(request, env) {
   const { results } = await env.DB.prepare(
     "SELECT * FROM orders WHERE status IN ('paid','fulfilling','fulfilled','refunded','withdrawn') AND paid_at BETWEEN ? AND ? ORDER BY paid_at").bind(from, to).all();
   const P = { basis: "Teams Basic", premium: "Teams Premium", plus: "Teams Premium Plus", solo: "Mordsteam Solo", friends: "Friends Krimiabend", "friends-plus": "Friends Plus" };
-  const q = (x) => { const t = String(x ?? ""); return /[;"\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+  const q = (x) => { let t = String(x ?? ""); if (/^[=+@\t\r]/.test(t) || /^-[^\d]/.test(t)) t = "'" + t; return /[;"\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };   // Excel-Formeln entschärfen (Nachttest 21.10. A-M3)
   const d = (ms) => new Intl.DateTimeFormat("de-AT", { timeZone: "Europe/Vienna", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(ms));
   const e = (c) => (c == null ? "" : (c / 100).toFixed(2).replace(".", ","));
   const lines = [["Datum (bezahlt)", "Rechnungsnr. (Stripe)", "Bestell-ID", "Kunde / Firma", "Produkt", "Anzahl", "Early Bird", "Kundenart", "Land", "Region", "Kunde zahlt (€)", "Gebühr (€)", "Auszahlung netto (€)", "fremde USt (€)", "Umsatz/Einnahme (€)", "Zahlungsweg", "Rechnungsart", "UID Kunde", "bezahlt in Fremdwährung", "erstattet (€)", "Status", "Kartenland (Stripe)", "Adressland (Stripe)"].join(";")];

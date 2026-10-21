@@ -29,6 +29,15 @@
     catch (e) { if (e.status === 401 || e.status === 410) { MS.del("ms_org"); token = null; loginView(e.message); } }
   }
 
+  // Gerät neu verbinden (Nachttest 21.10.2026, B-M1): Einmal-Link für ein Team, dessen Gerät den Spielstand verloren hat
+  let rc = null, rcOpen = false;
+  async function reconnect(team) {
+    if (!confirm(t(`Neuen Link für „${team}“ erzeugen? Wer ihn öffnet, spielt als dieses Team weiter. Der Link gilt 30 Minuten und nur einmal – schickt ihn nur an dieses Team.`, `Create a new link for “${team}”? Whoever opens it continues as this team. The link is valid for 30 minutes and only once – send it only to this team.`))) return;
+    try { const d = await MS.api("POST", "leitung/aktion", { aktion: "wiederverbinden", team }, { "x-leitung": token }); rc = { team, link: location.origin + d.path }; msg = ""; }
+    catch (e) { msg = e.message; }
+    render();
+  }
+
   async function act(aktion) {
     if (aktion === "starten") {
       const n = (S.ranking || []).length, max = S.max_teams || n;
@@ -85,6 +94,10 @@
         ${S.ranking.length ? `<table class="rank"><thead><tr><th>#</th><th>Team</th><th>${t("Stand", "Status")}</th><th>${t("Fehlversuche", "Wrong attempts")}</th><th>${t("Zeit", "Time")}</th><th>${t("Urkunde", "Certificate")}</th></tr></thead><tbody>
         ${S.ranking.map((r, i) => `<tr><td class="n">${r.rank || "–"}</td><td>${MS.esc(r.name)}${r.sonder ? ` <span class="sbadge">🕵 ${t("Sonderermittler", "Special investigators")}</span>` : ""}</td><td>${MS.stage(r, S.tier)}</td><td>${r.wrong}</td><td class="mono">${r.solved ? MS.dur(r.score_ms) : "–"}</td><td>${r.solved ? `<a class="tipbtn" href="/spiel/urkunde.html?org=${i}" target="_blank" rel="noopener">${t("Öffnen", "Open")}</a>` : "–"}</td></tr>`).join("")}
         </tbody></table>` : `<p class="muted">${t("Noch kein Team angemeldet.", "No team has joined yet.")}</p>`}
+        ${S.ranking.length && S.status !== "finished" ? `<details class="small" id="rc-box" style="margin-top:10px" ${rcOpen || rc ? "open" : ""}><summary>${t("Hat ein Team seinen Spielstand verloren (Akku leer, anderes Gerät)?", "Has a team lost its progress (battery dead, other device)?")}</summary>
+          <p style="margin:8px 0">${t("Erzeugt hier einen Einmal-Link. Das Team öffnet ihn am neuen Gerät und spielt mit seinem Stand weiter.", "Create a one-time link here. The team opens it on the new device and continues with its progress.")}</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">${S.ranking.map((r) => `<button class="tipbtn" type="button" data-rc="${MS.esc(r.name)}">${MS.esc(r.name)}: ${t("Gerät neu verbinden", "Reconnect device")}</button>`).join("")}</div>
+          ${rc ? `<p style="margin:10px 0 0"><b>${MS.esc(rc.team)}</b>: <span class="mono" style="word-break:break-all">${MS.esc(rc.link)}</span> <button class="tipbtn" type="button" id="rc-copy">${t("Kopieren", "Copy")}</button></p>` : ""}</details>` : ""}
       </div>
       ${S.solution_available ? `<div><button class="btn btn-ink" id="a-sol">${t("Auflösung anzeigen", "Show solution")}</button></div>` : ""}
       ${solutionHtml}
@@ -93,6 +106,9 @@
     const b = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
     b("a-open", () => act("oeffnen")); b("a-start", () => act("starten")); b("a-stop", () => act("beenden"));
     b("a-sol", showSolution);
+    document.querySelectorAll("[data-rc]").forEach((x) => (x.onclick = () => reconnect(x.dataset.rc)));
+    b("rc-copy", () => { try { navigator.clipboard.writeText(rc.link); } catch {} });
+    const rb = document.getElementById("rc-box"); if (rb) rb.ontoggle = () => (rcOpen = rb.open);
     b("a-rb", () => playRb());
     b("copy", () => { try { navigator.clipboard.writeText(link); } catch {} });
     b("logout", (e) => { e.preventDefault(); MS.del("ms_org"); token = null; loginView(); });

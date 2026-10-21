@@ -23,7 +23,7 @@ import { sendMail as opsMail, logError } from "../../../lib/ops.js";
 import { enrichPayment, migrateAccounting } from "../../../lib/accounting.js";
 import { taxContext, TaxInputError, invoiceFooter, invoiceFields } from "../../../lib/tax.js";
 import { PRICE_TABLE, curOfLand, convPrice } from "../../../lib/prices.js";
-import { nlSignup, nlConfirm, nlUnsubscribe, nlVisit, srcVisit, nlAfterOrder, nlTag, migrateNewsletter } from "../../../lib/newsletter.js";
+import { nlSignup, nlConfirm, nlConfirmPost, nlUnsubscribe, nlUnsubscribePost, nlVisit, srcVisit, nlAfterOrder, nlTag, migrateNewsletter } from "../../../lib/newsletter.js";
 import { funnelEvent } from "../../../lib/funnel.js";
 import { createSoloTicket, migrateSolo, soloGiftInfo } from "../../../lib/solo.js";
 import { giftPdfHtml, giftPdfRender, giftPdfLimit } from "../../../lib/geschenkpdf.js";
@@ -88,6 +88,8 @@ export async function onRequest({ request, env, params }) {
     if (route === "newsletter" && method === "POST") return await nlSignup(request, env);
     if (route === "newsletter/bestaetigen" && method === "GET") return await nlConfirm(request, env);
     if (route === "newsletter/abmelden" && method === "GET") return await nlUnsubscribe(request, env);
+    if (route === "newsletter/bestaetigen" && method === "POST") return await nlConfirmPost(request, env);
+    if (route === "newsletter/abmelden" && method === "POST") return await nlUnsubscribePost(request, env);
     if (route === "nl-besuch" && method === "GET") return await nlVisit(request, env);
     if (route === "src-besuch" && method === "GET") return await srcVisit(request, env);
     // Trichter der Specials-Seiten (Scrollen, Teaser, Kaufklick), nur Zähler ohne Personendaten

@@ -149,7 +149,7 @@
         ${tile("KI-Kosten im Monat", ops.ai.month_cost, L.ai_budget, "", usd)}
         ${tile("Server-Aufrufe heute", ops.hits.today, L.req_day, "Workers Paid: kein Tageslimit")}
         <div class="tile ${ops.errors.today > 10 ? "red" : ops.errors.today ? "yellow" : "green"}"><small>Fehler heute</small><b>${ops.errors.today}</b><span>Warnung ab 11</span></div>
-        <div class="tile green"><small>Umsatz im Monat</small><b>${eur(mon.filter((o) => !noEur(o)).reduce((a, o) => a + o.amount_cents, 0))}</b><span>${mon.length} Bestellung(en)${monOpen ? ` · ${monOpen} in £/$ offen` : ""}</span></div>
+        <div class="tile green"><small>Umsatz im Monat</small><b>${eur(mon.filter((o) => !noEur(o)).reduce((a, o) => a + Math.max(0, o.amount_cents - (o.refunded_cents || 0)), 0))}</b><span>${mon.length} Bestellung(en)${monOpen ? ` · ${monOpen} in £/$ offen` : ""}</span></div>
       </div></div>
       <div class="two-col">
       <div class="panel"><div class="eyebrow">Einrichtung dieser Umgebung</div><ul class="checks">
@@ -563,7 +563,8 @@
         <button class="btn btn-line" id="exbtn" type="button">Einnahmen exportieren (CSV)</button></div>
       <div id="bhout"></div></div>
       <div class="panel"><div class="eyebrow">Bestellungen</div>
-      <p style="margin:8px 0">${paid.length} bezahlt · Umsatz ${eur(paid.reduce((a, o) => a + umsatz(o), 0))} (ohne fremde USt)</p>
+      ${(() => { const noEur = (o) => !!o.currency && o.currency !== "EUR" && !o.eur_ok, offen = paid.filter(noEur).length;   // Nachttest 21.10. A-M1
+        return `<p style="margin:8px 0">${paid.length} bezahlt · Umsatz ${eur(paid.filter((o) => !noEur(o)).reduce((a, o) => a + umsatz(o), 0))} (ohne fremde USt)${offen ? ` · ${offen} in £/$ offen (Euro-Betrag kommt mit der Auszahlung)` : ""}</p>`; })()}
       <div class="list-sessions">${orders.length ? orders.map((o) => {
         const c = o.contact || {}, l = c.liefer;
         return `<div class="sess">
