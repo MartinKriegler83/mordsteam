@@ -199,9 +199,28 @@ const enAmt = (l) => { const m = /^(\d+) €$/.exec(String(l || "")); return m ?
       <article class="doc" data-wm="${esc(wm)}"><div class="doc-inner">${d.html}</div></article>
       <div class="pager three">${prev !== null ? pb(prev, "prev") : "<span></span>"}<div class="cur"><small>${L("Nr. ", "No. ") + pad(openDoc + 1)}</small>${esc(d.title)}</div>${next !== null ? pb(next, "next") : `<button type="button" class="next" id="toQ2"><small>${L("Weiter →", "Next →")}</small>${L("Zu den Fragen", "To the questions")}</button>`}</div>`;
     root.querySelectorAll(".doc table").forEach((t) => { const w = document.createElement("div"); w.className = "tablewrap"; t.before(w); w.append(t); });
+    root.querySelectorAll(".schab").forEach(initSchab);
     $("back").onclick = () => { openDoc = null; render(); };
     root.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => { openDoc = Number(b.dataset.go); render(); scrollTo(0, 0); }));
     if ($("toQ2")) $("toQ2").onclick = () => go("fragen");
+  }
+
+  // ---------- Schablone (Weihnachts-Special, 21.10.2026): Karton über dem Plan ziehen oder mit Pfeilen verschieben, rastet je Hütte ein ----------
+  const schabPos = {};
+  function initSchab(box) {
+    const st = box.querySelector(".schab-st"), t = box.querySelector(".schab-t"), D = box.dataset, n = (k) => Number(D[k]);
+    const W = n("w"), H = n("h"), cell = n("cell"), maxX = n("cols") - n("tw"), maxY = n("maxy") || n("rows");
+    const p = schabPos[D.id] || (schabPos[D.id] = { x: n("x0"), y: n("y0") });
+    const place = (x, y) => { t.style.left = ((n("gx") + x * cell) / W * 100) + "%"; t.style.top = ((n("gy") + y * cell) / H * 100) + "%"; };
+    const snap = () => { p.x = Math.max(0, Math.min(maxX, Math.round(p.x))); p.y = Math.max(0, Math.min(maxY, Math.round(p.y))); place(p.x, p.y); };
+    place(p.x, p.y);
+    box.querySelectorAll("[data-mv]").forEach((b) => (b.onclick = () => { const [dx, dy] = b.dataset.mv.split(",").map(Number); p.x = Math.round(p.x) + dx; p.y = Math.round(p.y) + dy; snap(); }));
+    let drag = null;
+    t.addEventListener("pointerdown", (e) => { drag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, x: p.x, y: p.y }; t.setPointerCapture(e.pointerId); t.style.cursor = "grabbing"; e.preventDefault(); });
+    t.addEventListener("pointermove", (e) => { if (!drag || e.pointerId !== drag.id) return; const k = W / st.clientWidth / cell;
+      p.x = Math.max(-0.4, Math.min(maxX + 0.4, drag.x + (e.clientX - drag.sx) * k)); p.y = Math.max(-0.4, Math.min(maxY + 0.4, drag.y + (e.clientY - drag.sy) * k)); place(p.x, p.y); });
+    const end = (e) => { if (!drag || e.pointerId !== drag.id) return; drag = null; t.style.cursor = "grab"; snap(); };
+    t.addEventListener("pointerup", end); t.addEventListener("pointercancel", end);
   }
 
   // ---------- Solo Plus: Verhörraum ----------
