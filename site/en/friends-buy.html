@@ -46,15 +46,18 @@
 </details>
 </div></header>
 <main class="page shop"><div class="wrap">
-<div class="eyebrow">Order · Mordsteam Friends 001</div>
-<h1>Last Round at the Chalet</h1>
-<p class="lead">The mystery night for 4–8 friends, with a 50- or 75-minute countdown: everyone investigates for themselves on their own device. After payment you get the invitation link for the group and your organiser page right away – on screen and by email.</p>
+<div class="eyebrow" id="fr-eyebrow">Order · Mordsteam Friends 001</div>
+<h1 id="fr-h1">Last Round at the Chalet</h1>
+<p class="lead" id="fr-lead">The mystery night for 4–8 friends, with a 50- or 75-minute countdown: everyone investigates for themselves on their own device. After payment you get the invitation link for the group and your organiser page right away – on screen and by email.</p>
 <div class="note" id="closed" hidden>Orders are not open yet. You can look at the form, but not submit it yet.</div>
 <div class="note" id="cancelled" hidden>The payment was cancelled. You can simply try again.</div>
 <form class="form" id="friends" novalidate>
-<fieldset class="step"><legend><span>1</span> Which version?</legend>
+<fieldset class="step"><legend><span>1</span> Which case, which version?</legend>
+<div class="field"><span class="label">Case *</span>
+<label class="check"><input type="radio" name="fall" value="friends-001" checked><span><b>Last Round at the Chalet</b> · Friends 001 · A snowed-in chalet weekend; in the morning the landlord lies dead in the sauna.</span></label>
+<label class="check" id="fall002"><input type="radio" name="fall" value="friends-002"><span><b>🎄 Four Minutes Dark</b> · Christmas special · You run the punch stall at the Christmas market – four minutes of darkness, and the donation box is gone. Mystery Night, 50 min, without quirks. <em id="f2from" hidden>Available to order from 2 November.</em></span></label></div>
 <label class="check"><input type="radio" name="variant" value="basis" checked><span><b>Mystery Night</b> · 50-minute countdown · from <span data-eur="2900">€29</span> (up to 4 people, +<span data-eur="500">€5</span> per extra person)</span></label>
-<label class="check"><input type="radio" name="variant" value="plus"><span><b>Mystery Night Plus</b> · 75-minute countdown · from <span data-eur="4900">€49</span> (up to 4 people, +<span data-eur="800">€8</span> per extra person) – with AI interrogation room: you question the AI doubles of your friends. 18+.</span></label>
+<label class="check" id="plusopt"><input type="radio" name="variant" value="plus"><span><b>Mystery Night Plus</b> · 75-minute countdown · from <span data-eur="4900">€49</span> (up to 4 people, +<span data-eur="800">€8</span> per extra person) – with AI interrogation room: you question the AI doubles of your friends. 18+.</span></label>
 <div class="field"><label for="lang">Game language *</label>
 <select id="lang" name="lang"><option value="en">English</option><option value="de">German</option></select>
 <span class="hint">Applies to the whole group: case file, questions, interrogation room and solution – independent of this website.</span></div>
@@ -63,7 +66,7 @@
 <div class="field"><label for="n">How many are playing? *</label><select id="n" name="n"><option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option></select>
 <span class="hint">Add yourself if you're playing. The game draws the culprit – you'll only find out at the reveal too.</span></div>
 <div id="people" class="fr-people"></div>
-<p class="hint">First names are enough; if two share a first name, add an initial (e.g. “Anna B.”). The quirk is a harmless running gag in the case – there is deliberately no free text.</p>
+<p class="hint" id="quirkhint">First names are enough; if two share a first name, add an initial (e.g. “Anna B.”). The quirk is a harmless running gag in the case – there is deliberately no free text.</p>
 <p class="hint">🎁 A gift? Enter the group of the person you’re giving it to – the names can’t be changed after purchase. After payment you’ll get a gift card to print or save as PDF.</p>
 <label class="check"><input type="checkbox" name="zustimmung"><span>Everyone named knows about it and agrees to play in the fictional case with their name and the chosen quirk – including as a suspect or culprit. *</span></label>
 </fieldset>

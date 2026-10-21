@@ -118,7 +118,7 @@
   function tick() {
     if (!S || S.ended || S.reveal) { return; }
     const hut = (m) => `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`;
-    const place = t("Hütte", "Chalet");
+    const place = S.place || t("Hütte", "Chalet");   // Friends 002: „Markt“
     if (!S.begun) {
       $("fallname").textContent = `${place} ${hut(S.clock_start)} · ${S.title}`;
       clock.className = "clock";
@@ -245,7 +245,7 @@
     ? { 2: "New evidence: alibis and logs", 3: "New evidence: the memory card", 4: "Finale: the cloud backup", 5: "Finale: Ferdl’s Part 2" }
     : { 2: "Neue Beweisstücke: Alibis und Protokolle", 3: "Neue Beweisstücke: die Speicherkarte", 4: "Finale: das Cloud-Backup", 5: "Finale: Ferdls Teil 2" };
   function akteView() {
-    const read = S.docs.filter((d) => seen.has(d.id)).length, ST = STAGE_TITLE();
+    const read = S.docs.filter((d) => seen.has(d.id)).length, ST = S.stage_titles || STAGE_TITLE();
     root.innerHTML = `<div class="deskhead"><h2>${t("Fallakte", "Case file")}</h2><span>${read} / ${S.docs.length} ${t("gelesen", "read")}</span></div>
       <div class="evid">${S.docs.map((d, i) => `${d.stage >= 2 && (i === 0 || S.docs[i - 1].stage !== d.stage) ? `<div class="actdiv"><span class="conf">${t(`Frage ${d.stage - 1} gelöst`, `Question ${d.stage - 1} solved`)}</span><b>${ST[d.stage] || ""}</b></div>` : ""}
         <button type="button" class="ev ${kindClass(d)} ${seen.has(d.id) ? "seen" : ""}" data-doc="${i}" style="--r:${ROT[i % ROT.length]}deg">
@@ -268,10 +268,30 @@
       <article class="doc" data-wm="${esc(wm)}"><div class="doc-inner">${d.html}</div></article>
       <div class="pager three">${prev !== null ? pb(prev, "prev") : "<span></span>"}<div class="cur"><small>${nr} ${pad(openDoc + 1)}</small>${esc(d.title)}</div>${next !== null ? pb(next, "next") : `<button type="button" class="next" id="toQ2"><small>${t("Weiter →", "Next →")}</small>${t("Zu den Fragen", "To the questions")}</button>`}</div>`;
     root.querySelectorAll(".doc table").forEach((tb) => { const w = document.createElement("div"); w.className = "tablewrap"; tb.before(w); w.append(tb); });
+    root.querySelectorAll(".schab").forEach(initSchab);
     $("back").onclick = () => { openDoc = null; render(); };
     root.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => { openDoc = Number(b.dataset.go); render(); scrollTo(0, 0); }));
     if ($("toQ2")) $("toQ2").onclick = () => go("fragen");
   }
+
+  // ---------- Schablone (Friends 002 / Weihnachts-Special, 21.10.2026 – wie in solo.js): Karton über dem Plan ziehen oder mit Pfeilen verschieben, rastet je Hütte ein ----------
+  const schabPos = {};
+  function initSchab(box) {
+    const st = box.querySelector(".schab-st"), t = box.querySelector(".schab-t"), D = box.dataset, n = (k) => Number(D[k]);
+    const W = n("w"), H = n("h"), cell = n("cell"), maxX = n("cols") - n("tw"), maxY = n("maxy") || n("rows");
+    const p = schabPos[D.id] || (schabPos[D.id] = { x: n("x0"), y: n("y0") });
+    const place = (x, y) => { t.style.left = ((n("gx") + x * cell) / W * 100) + "%"; t.style.top = ((n("gy") + y * cell) / H * 100) + "%"; };
+    const snap = () => { p.x = Math.max(0, Math.min(maxX, Math.round(p.x))); p.y = Math.max(0, Math.min(maxY, Math.round(p.y))); place(p.x, p.y); };
+    place(p.x, p.y);
+    box.querySelectorAll("[data-mv]").forEach((b) => (b.onclick = () => { const [dx, dy] = b.dataset.mv.split(",").map(Number); p.x = Math.round(p.x) + dx; p.y = Math.round(p.y) + dy; snap(); }));
+    let drag = null;
+    t.addEventListener("pointerdown", (e) => { drag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, x: p.x, y: p.y }; t.setPointerCapture(e.pointerId); t.style.cursor = "grabbing"; e.preventDefault(); });
+    t.addEventListener("pointermove", (e) => { if (!drag || e.pointerId !== drag.id) return; const k = W / st.clientWidth / cell;
+      p.x = Math.max(-0.4, Math.min(maxX + 0.4, drag.x + (e.clientX - drag.sx) * k)); p.y = Math.max(-0.4, Math.min(maxY + 0.4, drag.y + (e.clientY - drag.sy) * k)); place(p.x, p.y); });
+    const end = (e) => { if (!drag || e.pointerId !== drag.id) return; drag = null; t.style.cursor = "grab"; snap(); };
+    t.addEventListener("pointerup", end); t.addEventListener("pointercancel", end);
+  }
+
 
   // ---------- Fragen ----------
   function fragenView() {

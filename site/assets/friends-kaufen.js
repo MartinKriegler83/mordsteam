@@ -10,7 +10,13 @@
   if (q.get("abgebrochen")) document.getElementById("cancelled").hidden = false;
   let M = { open: true, earlybird: null, price: { base: 2900, extra: 500, included: 4 }, price_plus: { base: 4900, extra: 800, included: 4 }, quirks: [] }, open = true;
   if (q.get("v") === "plus") form.variant.value = "plus";
-  const isPlus = () => form.variant.value === "plus";
+  // Fallwahl (21.10.2026): Friends 001 oder das Weihnachts-Special Friends 002 (?fall=weihnachten). Friends 002: kein Plus, keine Eigenheiten.
+  const CASES0 = [{ id: "friends-001", nr: "001", title: T("Letzte Runde auf der Hütte", "Last Round at the Chalet"), plus: true, quirks: true, available: true, limit_min: 50 },
+    { id: "friends-002", nr: "002", title: T("Vier Minuten Finsternis", "Four Minutes Dark"), plus: false, quirks: false, available: true, limit_min: 50, special: true }];
+  if (["weihnachten", "christmas", "xmas", "friends-002"].includes(q.get("fall"))) form.fall.value = "friends-002";
+  const cases = () => (M.cases && M.cases.length ? M.cases : CASES0);
+  const curCase = () => cases().find((c) => c.id === form.fall.value) || cases()[0];
+  const isPlus = () => form.variant.value === "plus" && curCase().plus;
   const eur = (c) => (c / 100).toLocaleString(EN ? "en-IE" : "de-AT", { minimumFractionDigits: 2 }) + (EN ? "" : " €");
   const money = (c) => (window.MSBill ? MSBill.fmt(c) : EN ? "€" + eur(c) : eur(c));   // Währung nach Rechnungsland
   const U = (c) => (window.MSBill ? MSBill.price(c) : c);
@@ -34,16 +40,36 @@
   function draft() { let d = null; try { d = JSON.parse(localStorage.getItem(draftKey) || "null"); } catch {} return Array.isArray(d) ? { n: d.length, people: d } : d && Array.isArray(d.people) ? d : { n: 0, people: [] }; }
   function save() { try { const vis = [...people.querySelectorAll(".fr-person")].map((r) => ({ name: r.querySelector("input").value, quirk: r.querySelector("select").value }));
     localStorage.setItem(draftKey, JSON.stringify({ n: Number(form.n.value), people: vis.concat(draft().people.slice(vis.length)) })); } catch {} }
+  function paintCase() {
+    const c2 = cases().find((c) => c.id === "friends-002");
+    const r2 = form.querySelector('input[name=fall][value="friends-002"]');
+    if (c2) { r2.disabled = !c2.available; document.getElementById("f2from").hidden = c2.available; if (!c2.available && form.fall.value === "friends-002") form.fall.value = "friends-001"; }
+    const C = curCase();
+    document.getElementById("plusopt").hidden = !C.plus;
+    if (!C.plus && form.variant.value === "plus") form.variant.value = "basis";
+    people.querySelectorAll(".fr-person select").forEach((x) => (x.hidden = !C.quirks));
+    document.getElementById("quirkhint").textContent = C.quirks
+      ? T("Vornamen reichen, bei gleichen Vornamen mit Initial (z. B. „Anna B.“). Die Eigenheit ist ein harmloser Running Gag im Fall – Freitexte gibt es bewusst nicht.", "First names are enough; if two share a first name, add an initial (e.g. “Anna B.”). The quirk is a harmless running gag in the case – there is deliberately no free text.")
+      : T("Vornamen reichen, bei gleichen Vornamen mit Initial (z. B. „Anna B.“). In diesem Fall gibt es keine Eigenheiten.", "First names are enough; if two share a first name, add an initial (e.g. “Anna B.”). This case has no quirks.");
+    document.getElementById("fr-eyebrow").textContent = T(`Bestellung · Mordsteam Friends ${curCase().nr}${C.special ? " · Weihnachts-Special" : ""}`, `Order · Mordsteam Friends ${curCase().nr}${C.special ? " · Christmas special" : ""}`);
+    document.getElementById("fr-h1").textContent = C.title;
+    const lead = document.getElementById("fr-lead");
+    if (lead) { lead.dataset.orig ||= lead.textContent; lead.textContent = C.plus ? lead.dataset.orig
+      : T("Der Weihnachts-Krimiabend für 4–8 Freunde, mit 50 Minuten Countdown: Jeder ermittelt für sich am eigenen Gerät. Nach dem Bezahlen bekommst du sofort den Einladungslink für die Gruppe und deine Organisator-Seite – am Bildschirm und per E-Mail.",
+        "The Christmas mystery night for 4–8 friends, with a 50-minute countdown: everyone investigates for themselves on their own device. After payment you get the invitation link for the group and your organiser page right away – on screen and by email."); }
+  }
   function paint() {
+    paintCase();
     const n = Number(form.n.value), full = priceOf(n);
     const eb = M.earlybird && form.earlybird.checked, pay = eb ? Math.round(full * (100 - M.earlybird.prozent) / 100) : full;
     document.getElementById("sofortbox").hidden = form.kunde.value !== "b2c";
     document.getElementById("daysbox").hidden = form.mode.value !== "week";
     document.getElementById("ab18box").hidden = !isPlus();
     const gl = form.lang.value === "en", sl = T(`Spielsprache ${gl ? "Englisch" : "Deutsch"}`, `game language ${gl ? "English" : "German"}`);
+    const C = curCase();
     document.getElementById("sumtxt").textContent = isPlus()
-      ? T(`Mordsteam Friends 001 „Letzte Runde auf der Hütte“ · Krimiabend Plus mit KI-Verhörraum · ${n} Personen · Countdown 75 Min. · ${sl}`, `Mordsteam Friends 001 “Last Round at the Chalet” · Mystery Night Plus with AI interrogation room · ${n} people · 75-minute countdown · ${sl}`)
-      : T(`Mordsteam Friends 001 „Letzte Runde auf der Hütte“ · Krimiabend · ${n} Personen · Countdown 50 Min. · ${sl}`, `Mordsteam Friends 001 “Last Round at the Chalet” · Mystery Night · ${n} people · 50-minute countdown · ${sl}`);
+      ? T(`Mordsteam Friends ${C.nr} „${C.title}“ · Krimiabend Plus mit KI-Verhörraum · ${n} Personen · Countdown 75 Min. · ${sl}`, `Mordsteam Friends ${C.nr} “${C.title}” · Mystery Night Plus with AI interrogation room · ${n} people · 75-minute countdown · ${sl}`)
+      : T(`Mordsteam Friends ${C.nr} „${C.title}“ · Krimiabend · ${n} Personen · Countdown ${C.limit_min || 50} Min. · ${sl}`, `Mordsteam Friends ${C.nr} “${C.title}” · Mystery Night · ${n} people · ${C.limit_min || 50}-minute countdown · ${sl}`);
     document.getElementById("sumprice").textContent = money(full);
     document.getElementById("ebrow").hidden = !eb;
     if (eb) document.getElementById("ebprice").textContent = "−" + money(full - pay);
@@ -84,7 +110,7 @@
     ev.preventDefault();
     err.hidden = true;
     const list = [...people.querySelectorAll(".fr-person")].map((r) => ({ name: r.querySelector("input").value.trim(), quirk: r.querySelector("select").value, el: r }));
-    const emptyName = list.find((p) => !p.name), emptyQ = list.find((p) => !p.quirk);
+    const qOn = curCase().quirks, emptyName = list.find((p) => !p.name), emptyQ = qOn && list.find((p) => !p.quirk);
     if (emptyName) return fail(T("Bitte für jede Person einen Namen eintragen.", "Please enter a name for every person."), emptyName.el.querySelector("input"));
     if (emptyQ) return fail(T("Bitte für jede Person eine Eigenheit auswählen.", "Please choose a quirk for every person."), emptyQ.el.querySelector("select"));
     const low = list.map((p) => p.name.toLowerCase());
@@ -102,7 +128,7 @@
     if (!consent.agb) return fail(T("Bitte AGB und Datenschutzerklärung akzeptieren.", "Please accept the terms and the privacy policy."), form.agb);
     btn.disabled = true; const label = btn.innerHTML; btn.textContent = T("Weiter zur Zahlung …", "On to payment …");
     try {
-      const r = await fetch("/api/shop/friends", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: EN ? "en" : "de", lang: form.lang.value === "en" ? "en" : "de", variant: isPlus() ? "plus" : "basis", players: list.map((p) => ({ name: p.name, quirk: p.quirk })), mode: form.mode.value, days: Number(form.days.value), earlybird: !!(M.earlybird && form.earlybird.checked), contact, consent, nl: new URLSearchParams(location.search).get("nl") || "", src: window.msSrc || "" }) });
+      const r = await fetch("/api/shop/friends", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ site: EN ? "en" : "de", lang: form.lang.value === "en" ? "en" : "de", case: curCase().id, variant: isPlus() ? "plus" : "basis", players: list.map((p) => ({ name: p.name, quirk: qOn ? p.quirk : "" })), mode: form.mode.value, days: Number(form.days.value), earlybird: !!(M.earlybird && form.earlybird.checked), contact, consent, nl: new URLSearchParams(location.search).get("nl") || "", src: window.msSrc || "" }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.redirect) throw Object.assign(new Error(d.error || T("Das hat nicht geklappt.", "That didn't work.")), { field: d.field });
       location.href = d.redirect;   // Entwurf bleibt, falls die Zahlung abgebrochen wird – gelöscht auf der Bestätigungsseite (Plattform-Test 11.10.2026)

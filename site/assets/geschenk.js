@@ -90,9 +90,11 @@
       const link = d.org_short ? `${origin}/f/${encodeURIComponent(d.org_short)}` : `${origin}/spiel/friends.html?o=${encodeURIComponent(d.org_token)}`;
       card = {
         eyebrow: T("Ein Krimiabend für dich", "A mystery night for you"),
-        title: T("Letzte Runde auf der Hütte", "Last Round at the Chalet"),
-        sub: T(`Mordsteam Friends${d.plus ? " Plus mit KI-Verhörraum" : ""} · für ${d.teams} Personen · jeder ermittelt am eigenen Handy`, `Mordsteam Friends${d.plus ? " Plus with AI interrogation room" : ""} · for ${d.teams} people · everyone investigates on their own phone`),
-        kind: "Friends", cover: "friends", tagLabel: T("Beweisstück 1 · Deine Einladung", "Exhibit 1 · Your invitation"), code: "", link,
+        // Fallwahl (21.10.2026): Titel aus der Bestellung, Friends 002 = Weihnachts-Special mit Weihnachts-Cover
+        title: (EN ? d.friends_title_en : d.friends_title) || T("Letzte Runde auf der Hütte", "Last Round at the Chalet"),
+        sub: d.friends_special ? T(`Mordsteam Friends · Weihnachts-Special · für ${d.teams} Personen · jeder ermittelt am eigenen Handy`, `Mordsteam Friends · Christmas special · for ${d.teams} people · everyone investigates on their own phone`)
+          : T(`Mordsteam Friends${d.plus ? " Plus mit KI-Verhörraum" : ""} · für ${d.teams} Personen · jeder ermittelt am eigenen Handy`, `Mordsteam Friends${d.plus ? " Plus with AI interrogation room" : ""} · for ${d.teams} people · everyone investigates on their own phone`),
+        kind: "Friends", cover: d.friends_case === "friends-002" ? "special002" : "friends", tagLabel: T("Beweisstück 1 · Deine Einladung", "Exhibit 1 · Your invitation"), code: "", link,
         tagText: T("Führt zu deiner Organisator-Seite. Dort bekommst du den Link für deine Gäste.", "Leads to your organiser page, where you get the link for your guests."),
         steps: [
           T("QR-Code scannen, antippen oder Link oben eingeben – deine Organisator-Seite (nicht weitergeben)", "Scan or tap the QR code, or type the link above – your organiser page (don’t pass it on)"),

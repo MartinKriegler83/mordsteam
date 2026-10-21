@@ -48,15 +48,18 @@
 </div></header>
 
 <main class="page shop"><div class="wrap">
-<div class="eyebrow">Bestellung · Mordsteam Friends 001</div>
-<h1>Letzte Runde auf der Hütte</h1>
-<p class="lead">Der Krimiabend für 4–8 Freunde, mit 50 oder 75 Minuten Countdown: Jeder ermittelt für sich am eigenen Gerät. Nach dem Bezahlen bekommst du sofort den Einladungslink für die Gruppe und deine Organisator-Seite – am Bildschirm und per E-Mail.</p>
+<div class="eyebrow" id="fr-eyebrow">Bestellung · Mordsteam Friends 001</div>
+<h1 id="fr-h1">Letzte Runde auf der Hütte</h1>
+<p class="lead" id="fr-lead">Der Krimiabend für 4–8 Freunde, mit 50 oder 75 Minuten Countdown: Jeder ermittelt für sich am eigenen Gerät. Nach dem Bezahlen bekommst du sofort den Einladungslink für die Gruppe und deine Organisator-Seite – am Bildschirm und per E-Mail.</p>
 <div class="note" id="closed" hidden>Bestellungen sind noch nicht geöffnet. Du kannst das Formular ansehen, aber noch nicht absenden.</div>
 <div class="note" id="cancelled" hidden>Die Zahlung wurde abgebrochen. Du kannst es einfach nochmals versuchen.</div>
 <form class="form" id="friends" novalidate>
-<fieldset class="step"><legend><span>1</span> Welche Variante?</legend>
+<fieldset class="step"><legend><span>1</span> Welcher Fall, welche Variante?</legend>
+<div class="field"><span class="label">Fall *</span>
+<label class="check"><input type="radio" name="fall" value="friends-001" checked><span><b>Letzte Runde auf der Hütte</b> · Friends 001 · Hüttenwochenende im Schnee, am Morgen liegt der Vermieter tot in der Sauna.</span></label>
+<label class="check" id="fall002"><input type="radio" name="fall" value="friends-002"><span><b>🎄 Vier Minuten Finsternis</b> · Weihnachts-Special · Ihr betreibt den Punschstand am Christkindlmarkt – vier Minuten Dunkelheit, die Spendenkassa ist weg. Krimiabend, 50 Min., ohne Eigenheiten. <em id="f2from" hidden>Bestellbar ab 2. November.</em></span></label></div>
 <label class="check"><input type="radio" name="variant" value="basis" checked><span><b>Krimiabend</b> · Countdown 50 Min. · ab <span data-eur="2900">29 €</span> (bis 4 Personen, jede weitere +<span data-eur="500">5 €</span>)</span></label>
-<label class="check"><input type="radio" name="variant" value="plus"><span><b>Krimiabend Plus</b> · Countdown 75 Min. · ab <span data-eur="4900">49 €</span> (bis 4 Personen, jede weitere +<span data-eur="800">8 €</span>) – mit KI-Verhörraum: Ihr verhört die KI-Doppelgänger eurer Freunde. Ab 18 Jahren.</span></label>
+<label class="check" id="plusopt"><input type="radio" name="variant" value="plus"><span><b>Krimiabend Plus</b> · Countdown 75 Min. · ab <span data-eur="4900">49 €</span> (bis 4 Personen, jede weitere +<span data-eur="800">8 €</span>) – mit KI-Verhörraum: Ihr verhört die KI-Doppelgänger eurer Freunde. Ab 18 Jahren.</span></label>
 <div class="field"><label for="lang">Spielsprache *</label>
 <select id="lang" name="lang"><option value="de">Deutsch</option><option value="en">Englisch</option></select>
 <span class="hint">Gilt für die ganze Gruppe: Akte, Fragen, Verhörraum und Auflösung – unabhängig von dieser Webseite.</span></div>
@@ -65,7 +68,7 @@
 <div class="field"><label for="n">Wie viele spielen mit? *</label><select id="n" name="n"><option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option></select>
 <span class="hint">Trag dich selbst mit ein, wenn du mitspielst. Wer der Täter ist, lost das Spiel aus – auch du erfährst es erst bei der Auflösung.</span></div>
 <div id="people" class="fr-people"></div>
-<p class="hint">Vornamen reichen, bei gleichen Vornamen mit Initial (z. B. „Anna B.“). Die Eigenheit ist ein harmloser Running Gag im Fall – Freitexte gibt es bewusst nicht.</p>
+<p class="hint" id="quirkhint">Vornamen reichen, bei gleichen Vornamen mit Initial (z. B. „Anna B.“). Die Eigenheit ist ein harmloser Running Gag im Fall – Freitexte gibt es bewusst nicht.</p>
 <p class="hint">🎁 Als Geschenk? Trag die Runde der beschenkten Person ein – die Namen lassen sich nach dem Kauf nicht mehr ändern. Nach dem Bezahlen bekommst du eine Geschenkkarte zum Ausdrucken oder als PDF.</p>
 <label class="check"><input type="checkbox" name="zustimmung"><span>Alle Genannten wissen Bescheid und sind einverstanden, mit ihrem Namen und der gewählten Eigenheit im fiktiven Fall mitzuspielen – auch als Verdächtige oder Täter. *</span></label>
 </fieldset>

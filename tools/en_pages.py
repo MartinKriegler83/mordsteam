@@ -533,15 +533,18 @@ P["friends"] = dict(title="Mordsteam Friends – the murder-mystery night where 
 P["friends-buy"] = dict(title="Order Friends – Mordsteam", robots="noindex", desc="Order Mordsteam Friends 001 “Last Round at the Chalet”: the mystery night for 4–8 friends from €29, invitation link right away.",
  scripts='<script src="/assets/billing.js"></script>\n<script src="/assets/friends-kaufen.js"></script>',
  body='''<main class="page shop"><div class="wrap">
-<div class="eyebrow">Order · Mordsteam Friends 001</div>
-<h1>Last Round at the Chalet</h1>
-<p class="lead">The mystery night for 4–8 friends, with a 50- or 75-minute countdown: everyone investigates for themselves on their own device. After payment you get the invitation link for the group and your organiser page right away – on screen and by email.</p>
+<div class="eyebrow" id="fr-eyebrow">Order · Mordsteam Friends 001</div>
+<h1 id="fr-h1">Last Round at the Chalet</h1>
+<p class="lead" id="fr-lead">The mystery night for 4–8 friends, with a 50- or 75-minute countdown: everyone investigates for themselves on their own device. After payment you get the invitation link for the group and your organiser page right away – on screen and by email.</p>
 <div class="note" id="closed" hidden>Orders are not open yet. You can look at the form, but not submit it yet.</div>
 <div class="note" id="cancelled" hidden>The payment was cancelled. You can simply try again.</div>
 <form class="form" id="friends" novalidate>
-<fieldset class="step"><legend><span>1</span> Which version?</legend>
-<label class="check"><input type="radio" name="variant" value="basis" checked><span><b>Mystery Night</b> · 50-minute countdown · from €29 (up to 4 people, +€5 per extra person)</span></label>
-<label class="check"><input type="radio" name="variant" value="plus"><span><b>Mystery Night Plus</b> · 75-minute countdown · from €49 (up to 4 people, +€8 per extra person) – with AI interrogation room: you question the AI doubles of your friends. 18+.</span></label>
+<fieldset class="step"><legend><span>1</span> Which case, which version?</legend>
+<div class="field"><span class="label">Case *</span>
+<label class="check"><input type="radio" name="fall" value="friends-001" checked><span><b>Last Round at the Chalet</b> · Friends 001 · A snowed-in chalet weekend; in the morning the landlord lies dead in the sauna.</span></label>
+<label class="check" id="fall002"><input type="radio" name="fall" value="friends-002"><span><b>🎄 Four Minutes Dark</b> · Christmas special · You run the punch stall at the Christmas market – four minutes of darkness, and the donation box is gone. Mystery Night, 50 min, without quirks. <em id="f2from" hidden>Available to order from 2 November.</em></span></label></div>
+<label class="check"><input type="radio" name="variant" value="basis" checked><span><b>Mystery Night</b> · 50-minute countdown · from <span data-eur="2900">€29</span> (up to 4 people, +<span data-eur="500">€5</span> per extra person)</span></label>
+<label class="check" id="plusopt"><input type="radio" name="variant" value="plus"><span><b>Mystery Night Plus</b> · 75-minute countdown · from <span data-eur="4900">€49</span> (up to 4 people, +<span data-eur="800">€8</span> per extra person) – with AI interrogation room: you question the AI doubles of your friends. 18+.</span></label>
 <div class="field"><label for="lang">Game language *</label>
 <select id="lang" name="lang"><option value="en">English</option><option value="de">German</option></select>
 <span class="hint">Applies to the whole group: case file, questions, interrogation room and solution – independent of this website.</span></div>
@@ -550,7 +553,7 @@ P["friends-buy"] = dict(title="Order Friends – Mordsteam", robots="noindex", d
 <div class="field"><label for="n">How many are playing? *</label><select id="n" name="n"><option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option></select>
 <span class="hint">Add yourself if you're playing. The game draws the culprit – you'll only find out at the reveal too.</span></div>
 <div id="people" class="fr-people"></div>
-<p class="hint">First names are enough; if two share a first name, add an initial (e.g. “Anna B.”). The quirk is a harmless running gag in the case – there is deliberately no free text.</p>
+<p class="hint" id="quirkhint">First names are enough; if two share a first name, add an initial (e.g. “Anna B.”). The quirk is a harmless running gag in the case – there is deliberately no free text.</p>
 <p class="hint">🎁 A gift? Enter the group of the person you’re giving it to – the names can’t be changed after purchase. After payment you’ll get a gift card to print or save as PDF.</p>
 <label class="check"><input type="checkbox" name="zustimmung"><span>Everyone named knows about it and agrees to play in the fictional case with their name and the chosen quirk – including as a suspect or culprit. *</span></label>
 </fieldset>
@@ -571,7 +574,7 @@ P["friends-buy"] = dict(title="Order Friends – Mordsteam", robots="noindex", d
 <div id="billbox"></div>
 </fieldset>
 <fieldset class="step"><legend><span>5</span> Review and pay</legend>
-<div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Friends 001 “Last Round at the Chalet” · 6 people · 50-minute countdown · game language German</span><b id="sumprice">€39.00</b></div>
+<div class="summary"><div class="sumrow"><span id="sumtxt">Mordsteam Friends 001 “Last Round at the Chalet” · 6 people · 50-minute countdown · game language German</span><b id="sumprice"><span data-eur="3900">€39.00</span></b></div>
 <div class="sumrow" id="ebrow" hidden><span>Early bird −<span class="ebp">25</span>%</span><b id="ebprice"></b></div>
 <p class="small">Final price for the whole group. Playable for 12 months, can be started once. VAT exempt (small business scheme).</p></div>
 <label class="check" id="ab18box" hidden><input type="checkbox" name="ab18"><span>All players are at least 18 years old (required for the AI interrogation room) and agree that an AI plays their doubles in the game – only with placeholders instead of real names and the chosen quirk. *</span></label>
@@ -581,7 +584,7 @@ P["friends-buy"] = dict(title="Order Friends – Mordsteam", robots="noindex", d
 <label class="check"><input type="checkbox" name="no_news"><span>No news by email, please. Otherwise we'll occasionally tell you about new Mordsteam cases – you can unsubscribe in every email with one click.</span></label>
 <label class="check"><input type="checkbox" name="agb"><span>I accept the <a href="terms.html" target="_blank">terms</a> and have read the <a href="privacy.html" target="_blank">privacy policy</a>. *</span></label>
 <p class="formerr" id="err" role="alert" hidden></p>
-<div><button class="btn btn-red" type="submit" id="submit">Order and pay – €39.00</button></div>
+<div><button class="btn btn-red" type="submit" id="submit">Order and pay – <span data-eur="3900">€39.00</span></button></div>
 <p class="hint small" id="payhint">Payment is handled securely by Stripe (card, Apple Pay, Google Pay and more). You'll see the links right afterwards.</p>
 </fieldset>
 </form>
@@ -1243,7 +1246,7 @@ P["specials-xmas"] = dict(title="Mordsteam Specials – Christmas mystery “Fou
  desc="The Christmas Special: a mystery for one person at an Austrian Christmas market. Four minutes of darkness, then the donation box is gone – four questions, 50 minutes, €8.90. Also as a gift that arrives instantly.",
  body='''<nav class="subnav" aria-label="Mordsteam Specials"><div class="wrap">
 <b><span>Mordsteam</span> Specials</b>
-<a href="#christmas">Christmas</a><a href="#gift">As a gift</a><a href="#ablauf">How it works</a><a href="#frueher">Past Specials</a><a href="#faq">FAQ</a>
+<a href="#christmas">Christmas</a><a href="#gift">As a gift</a><a href="#friends-xmas">For friends</a><a href="#ablauf">How it works</a><a href="#frueher">Past Specials</a><a href="#faq">FAQ</a>
 <a class="btn btn-red" href="solo-buy.html?fall=christmas">Buy</a>
 </div></nav>
 <main id="top">
@@ -1314,7 +1317,19 @@ P["specials-xmas"] = dict(title="Mordsteam Specials – Christmas mystery “Fou
 <div class="actions"><a class="btn btn-red" href="solo-buy.html?fall=christmas" data-fn="buy">Buy as a gift – €8.90</a></div>
 </div></section>
 
-<section id="ablauf" class="section bg-b"><div class="wrap stack">
+<section id="friends-xmas" class="section bg-b"><div class="wrap stack">
+<div class="eyebrow">For your group · Friends</div>
+<h2 class="h2">Four Minutes Dark – also as a mystery for friends</h2>
+<p class="lead">That evening, your group runs the punch stand for a good cause. Your names are on the rota, on the mugs and in the chat – and one of you took the donation box in the dark. Everyone investigates on their own; the solution and the ranking arrive for all of you at the same time.</p>
+<div class="steps">
+<div class="step"><span class="num">4–8</span><div><h3>Players</h3><p>All at once on one evening or spread over 3, 5 or 7 days – everyone on their own phone, tablet or laptop.</p></div></div>
+<div class="step"><span class="num">5</span><div><h3>Questions, 50 minutes</h3><p>When, who, how, where and why – with the rota, deposit tokens, the key board, a template and the fairy lights. No AI.</p></div></div>
+<div class="step"><span class="num"><span data-eur="2900">€29</span></span><div><h3>up to 4 players</h3><p>Each additional player +<span data-eur="500">€5</span>. As a gift with its own Christmas gift card – the group’s names are fixed at purchase.</p></div></div>
+</div>
+<div class="actions"><a class="btn btn-red" href="friends-buy.html?fall=christmas" data-fn="buy">Order the Friends mystery – from <span data-eur="2900">€29</span></a> <a class="btn btn-line" href="friends.html">How Friends works</a></div>
+</div></section>
+
+<section id="ablauf" class="section bg-a"><div class="wrap stack">
 <div class="eyebrow">How it works</div>
 <h2 class="h2">Three steps from purchase to certificate</h2>
 <div class="steps">
@@ -1324,7 +1339,7 @@ P["specials-xmas"] = dict(title="Mordsteam Specials – Christmas mystery “Fou
 </div>
 </div></section>
 
-<section id="frueher" class="section bg-a"><div class="wrap stack">
+<section id="frueher" class="section bg-b"><div class="wrap stack">
 <div class="eyebrow">Past Specials</div>
 <h2 class="h2">Season over – case stays</h2>
 <p class="lead">For special occasions Mordsteam releases a case of its own. When the season is over, it stays here – you can play it any time. We announce the next Special in our <a href="newsletter.html">newsletter</a>.</p>
@@ -1341,7 +1356,7 @@ P["specials-xmas"] = dict(title="Mordsteam Specials – Christmas mystery “Fou
 </div>
 </div></section>
 
-<section id="faq" class="section faq bg-b"><div class="wrap faq-grid">
+<section id="faq" class="section faq bg-a"><div class="wrap faq-grid">
 <div class="stack"><div class="eyebrow">FAQ</div><h2 class="h2">Questions?</h2></div>
 <div>
 <details><summary>Is the case scary?</summary><p>No, more cosy than creepy: a Christmas market, punch and snow – and a puzzle with a real bite. There’s no gore, and the victim survives.</p></details>
