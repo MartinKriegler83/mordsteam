@@ -45,7 +45,7 @@
   ];
   const EINHEIT_EN = { pauschal: "flat rate", Seite: "page", "Stück": "pc.", km: "km", "Std.": "hrs" };   // Einheit auf englischen Rechnungen
   const ABO_VORLAGEN = [["Service Basis", 29], ["Service Komfort", 59], ["Service Plus", 119], ["Werbe-Betreuung", 79],
-    ["KI-Betrieb bis 1.000 Vorgänge", 29], ["KI-Betrieb bis 2.500 Vorgänge", 59], ["KI-Betrieb bis 5.000 Vorgänge", 89], ["KI-Betrieb bis 10.000 Vorgänge", 159]];
+    ["KI-Betrieb bis 1.000 Vorgänge", 29], ["KI-Betrieb bis 2.500 Vorgänge", 49], ["KI-Betrieb bis 5.000 Vorgänge", 79], ["KI-Betrieb bis 10.000 Vorgänge", 149]];
 
   let el = null, H = null, D = null, sub = "auftraege", edit = null, msg = "", errMsg = "", editKunde = null, editAbo = null;
   let kundeOpen = null, kundeNeu = false, kSuche = "", einJahr = null, aufOpen = null;
