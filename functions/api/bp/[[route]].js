@@ -4,9 +4,9 @@ import { json, fail, badBody } from "../../../lib/game.js";
 import { adminDenied } from "../../../lib/adminauth.js";
 import { auftragListe, auftragNeu, auftragSave, auftragStatus, auftragNotiz, auftragZeit, auftragLoeschen, anfrageEingang } from "../../../lib/bpauftrag.js";
 import { angeboteListe, angebotSave, angebotFreigeben, angebotStatus, angebotVorschau, rechnungLink, angebotWarnungen, rechnungAdminHtml, schlussAusAngebot, bpKeyOk, htmlPage, publicAngebot, publicAnnahme, publicRechnung } from "../../../lib/bpangebot.js";
-import { publicFormular, publicFormularPost, publicAnleitung, publicAV, publicWiderruf, publicAgb, publicWiderrufen, publicUebergabe, publicUebergabePost, uebergabeSave, uebergabeVorlage, nachfassWarnungen, formAbschnitte, anleitungenFuer } from "../../../lib/bpkunde.js";
+import { publicFormular, publicFormularPost, publicAnleitung, publicAV, publicWiderruf, publicAgb, publicWiderrufen, publicUebergabe, publicUebergabePost, uebergabeSave, uebergabeVorlage, nachfassWarnungen, widerrufErfassen, widerrufeFuer, formAbschnitte, anleitungenFuer } from "../../../lib/bpkunde.js";
 import { besuchEingang, besucherStats } from "../../../lib/bpbesuch.js";
-import { bpOverview, bpConfigSave, kundeSave, kundeDelete, rechnungSave, rechnungAusstellen, rechnungBezahlt, rechnungStorno, aboSave, aboRechnungen } from "../../../lib/brightpage.js";
+import { bpOverview, bpConfigSave, kundeSave, kundeDelete, rechnungSave, rechnungAusstellen, rechnungBezahlt, rechnungStorno, rechnungErstattung, aboSave, aboRechnungen } from "../../../lib/brightpage.js";
 
 export async function onRequest({ request, env, params }) {
   if (!env.DB) return fail("Datenbank nicht eingerichtet.", 500);
@@ -54,7 +54,7 @@ export async function onRequest({ request, env, params }) {
     if (route === "admin/auftraege" && m === "GET") { const d = await auftragListe(env); d.warn = [...(await angebotWarnungen(env)), ...(await nachfassWarnungen(env)), ...d.warn]; return json(d); }
     if (route === "admin/angebote" && m === "GET") { const id = new URL(request.url).searchParams.get("auftrag") || "", d = await angeboteListe(env, id);
       const au = await env.DB.prepare("SELECT produkte FROM bp_auftraege WHERE id=?").bind(id).first(); const pr = au ? JSON.parse(au.produkte || "[]") : [];
-      return json({ ...d, formular_def: formAbschnitte(pr), anleitungen: anleitungenFuer(pr), uebergabe_vorlage: await uebergabeVorlage(env, id) }); }
+      return json({ ...d, formular_def: formAbschnitte(pr), anleitungen: anleitungenFuer(pr), uebergabe_vorlage: await uebergabeVorlage(env, id), widerrufe: await widerrufeFuer(env, id) }); }
     if (m !== "POST") return fail("Nicht gefunden.", 404);
     const b = await body();
     if (route === "admin/auftrag/neu") return json(await auftragNeu(env, b));
@@ -78,6 +78,8 @@ export async function onRequest({ request, env, params }) {
     if (route === "admin/rechnung/ausstellen") return json(await rechnungAusstellen(env, b));
     if (route === "admin/rechnung/bezahlt") return json(await rechnungBezahlt(env, b));
     if (route === "admin/rechnung/storno") return json(await rechnungStorno(env, b));
+    if (route === "admin/rechnung/erstattung") return json(await rechnungErstattung(env, b));
+    if (route === "admin/widerruf") return json(await widerrufErfassen(env, b));
     if (route === "admin/abo") return json(await aboSave(env, b));
     if (route === "admin/abo/rechnungen") return json(await aboRechnungen(env));
     return fail("Nicht gefunden.", 404);

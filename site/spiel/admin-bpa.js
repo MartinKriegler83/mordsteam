@@ -11,7 +11,7 @@
   const dt = (ms) => new Date(ms).toLocaleString("de-AT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
   const KLINK = "https://brightpage.net/k/";
   let el = null, H = null, D = null, open = null, filter = "offen", neu = false, msg = "", errMsg = "";
-  let artInit = null;   // Verein-Regel nur einmal je Angebot beim ersten Öffnen anwenden
+  let artInit = null, wrNeu = false;   // Verein-Regel nur einmal je Angebot beim ersten Öffnen anwenden
   // Geöffneten Auftrag über ein Neuladen der Seite behalten (Test 21.10.2026: nach Refresh landete man in der Übersicht)
   try { open = sessionStorage.getItem("bpa_open") || null; } catch {}
   let AN = null, anFor = null, edit = null, aufSteps = new Set(), mailDlg = null, kontaktEdit = false, payFor = null, curStep = 0, rStep = 0, zeigFormular = false, prodVorschlag = null;
@@ -60,7 +60,7 @@
 <tr><td style="height:4px;line-height:4px;font-size:0;background:#D9820B">&nbsp;</td></tr>
 <tr><td data-mailbody style="padding:24px 22px 8px;font-family:Arial,Helvetica,sans-serif;font-size:19px;line-height:1.6;word-break:break-word;overflow-wrap:anywhere">${body.replace(/<a href="([^"]+)">/g, '<a href="$1" style="color:#D9820B;text-decoration:underline">')}</td></tr>
 <tr><td style="padding:8px 22px 22px;font-family:Arial,Helvetica,sans-serif;font-size:19px;line-height:1.6">${en ? "Best regards" : "Liebe Grüße"}<br><b>Martin Kriegler</b><br>Brightpage – ${en ? "a service of" : "ein Angebot der"} Mordsteam e.U.</td></tr>
-<tr><td style="padding:12px 26px;border-top:1px solid #D9D6CF;font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#8A8D94">office@brightpage.net · <a href="https://brightpage.net" style="color:#D9820B;text-decoration:none">brightpage.net</a></td></tr></table>`;
+<tr><td style="padding:12px 26px;border-top:1px solid #D9D6CF;font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#8A8D94">office@brightpage.net · <a href="https://brightpage.net" style="color:#D9820B;text-decoration:none">brightpage.net</a><br><span style="font-size:13px">Mordsteam e.U. · ${en ? "registered office" : "Sitz"} Pamhagen · FN 689638z · ${en ? "Regional Court" : "Landesgericht"} Eisenstadt</span></td></tr></table>`;
   }
   const btn = (text, url) => `<p style="margin:20px 0"><a href="${esc(url)}" style="display:inline-block;background:#D9820B;color:#15171C;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:19px;text-decoration:none;padding:14px 22px;border-radius:8px">${esc(text)}</a></p>`;
   const P = (x) => `<p style="margin:0 0 14px">${x}</p>`;
@@ -69,6 +69,10 @@
   const terminEn = (t) => { const m = /^Erstgespräch \(([^)]+)\) (\d{2})\.(\d{2})\.(\d{4})(?: um (\d{1,2}:\d{2}))?/.exec(t || ""); if (!m) return t;
     const d = new Date(Date.UTC(+m[4], +m[3] - 1, +m[2], 12)), wie = { Video: "video call", Telefon: "phone call", "vor Ort": "on site" }[m[1]] || m[1];
     return `${d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}${m[5] ? " at " + m[5] : ""} (${wie})`; };
+  // Wann wir beginnen: Verbraucher ohne vorzeitigen Beginn erst nach der Widerrufsfrist (Nachttest 22.10.2026, E-M4)
+  const startSatz = (x, en, was) => { const spaet = x && x.kunde && x.kunde.art === "b2c" && x.annahme && !x.annahme.fruehstart;
+    return spaet ? (en ? `We start after the 14-day withdrawal period has ended, as soon as ${was.en} arrived.` : `Wir beginnen nach Ablauf der 14-tägigen Widerrufsfrist, sobald ${was.de} da sind.`)
+      : (en ? `We start as soon as ${was.en} arrived.` : `Wir beginnen, sobald ${was.de} da sind.`); };
   const anrede = (lang, name) => (lang === "en" ? `Hello${name ? " " + esc(name) : ""},` : `Guten Tag${name ? " " + esc(name) : ""},`);
 
   // Vorlagen: liefern { to, subject, body, lang }
@@ -93,34 +97,46 @@
       (r && r.token ? P(en ? `Here is your advance invoice <b>${esc(r.nr)}</b> (${eur(r.summe_cents)}, due ${dat(r.faellig)}) – payable by bank transfer or QR code in your banking app:` : `Hier ist Ihre Anzahlungsrechnung <b>${esc(r.nr)}</b> (${eur(r.summe_cents)}, fällig am ${dat(r.faellig)}) – per Überweisung oder QR-Code in der Banking-App:`) + btn(en ? "View invoice" : "Rechnung ansehen", KLINK + "rechnung/" + r.token) : "") +
       (x.annahme && x.annahme.fruehstart ? P(en ? "<b>Your request for an early start:</b> you expressly asked us to begin before the 14-day withdrawal period ends, and you confirmed that you are aware you lose your right of withdrawal once we have fully performed the contract. If you withdraw before then, you pay a proportionate amount for the work done." : "<b>Ihr Wunsch nach vorzeitigem Beginn:</b> Sie haben ausdrücklich verlangt, dass wir schon vor Ende der 14-tägigen Widerrufsfrist beginnen, und bestätigt, dass Ihnen bekannt ist: Ihr Widerrufsrecht erlischt, sobald wir den Vertrag vollständig erfüllt haben. Widerrufen Sie davor, zahlen Sie einen anteiligen Betrag für die bereits erbrachten Leistungen.") : x.kunde && x.kunde.art === "b2c" ? P(en ? `You may withdraw within 14 days of acceptance – online at <a href="${KLINK}widerrufen?lang=en">brightpage.net/k/widerrufen</a>, by e-mail or with the <a href="${KLINK}widerruf?lang=en">model withdrawal form</a>; we start after the withdrawal period.` : `Sie können binnen 14 Tagen ab Annahme widerrufen – online unter <a href="${KLINK}widerrufen">brightpage.net/k/widerrufen</a>, per E-Mail oder mit dem <a href="${KLINK}widerruf">Muster-Widerrufsformular</a>; wir beginnen nach Ablauf der Widerrufsfrist.`) : "") +
       P(en ? `<b>Attached</b> you'll find your accepted quote as a PDF with all terms${x.kunde && x.kunde.art === "b2c" ? ", the withdrawal information and the model withdrawal form" : ""}.` : `<b>Im Anhang</b> finden Sie Ihr angenommenes Angebot als PDF mit allen Bedingungen${x.kunde && x.kunde.art === "b2c" ? ", der Widerrufsbelehrung und dem Muster-Widerrufsformular" : ""}.`) +
-      P(en ? "Next step: you'll shortly receive our order form for your texts, pictures and access details. We start as soon as the advance payment and your material have arrived." : "Nächster Schritt: Sie bekommen in Kürze unser Auftragsformular für Texte, Bilder und Zugänge. Wir beginnen, sobald Anzahlung und Unterlagen da sind.") +
+      P(en ? "Next step: you'll shortly receive our order form for your texts, pictures and access details. " + startSatz(x, true, { en: x && x.rechnung_id ? "the advance payment and your material have" : "your material has", de: "" }) : "Nächster Schritt: Sie bekommen in Kürze unser Auftragsformular für Texte, Bilder und Zugänge. " + startSatz(x, false, { en: "", de: x && x.rechnung_id ? "Anzahlung und Unterlagen" : "Ihre Unterlagen" })) +
       P(`<a href="${KLINK}angebot/${esc(x.token)}">${en ? "Your accepted quote" : "Ihr angenommenes Angebot"} ${esc(x.nr)}</a>`) }; }
     if (art === "formular") { const G = (AN && AN.anleitungen) || []; return { to, lang, subject: en ? "Your order form – Brightpage" : "Ihr Auftragsformular – Brightpage", body:
       P(anrede(lang, name)) + P(en ? "to get started we need a few details: your business details for the imprint, your design wishes, content and domain. You can save in between and continue later." : "damit wir loslegen können, brauchen wir ein paar Angaben: Firmendaten fürs Impressum, Ihre Design-Wünsche, Inhalte und Domain. Sie können zwischendurch speichern und später weitermachen.") +
       btn(en ? "Open order form" : "Auftragsformular öffnen", KLINK + "formular/" + a.token) +
       (G.length ? P(en ? "A few short steps you do yourself (a few minutes each, never send us passwords):" : "Ein paar kurze Schritte machen Sie selbst – je ein paar Minuten, Passwörter bitte nie an uns schicken:") + UL(G.map((g) => `<a href="${KLINK}anleitung/${g.key}${en ? "?lang=en" : ""}">${esc((en && g.titel_en) || g.titel)}</a>`)) : "") +
-      P(en ? "We start as soon as the form and the advance payment have arrived." : "Wir beginnen, sobald Formular und Anzahlung da sind.") }; }
+      P(startSatz(x, en, { en: x && x.rechnung_id ? "the form and the advance payment have" : "the form has", de: x && x.rechnung_id ? "Formular und Anzahlung" : "das Formular und Ihre Unterlagen" })) }; }
     if (art === "uebergabe") return { to, lang, subject: en ? "Your website is live – handover record" : "Ihre Website ist online – Übergabeprotokoll", body:
       P(anrede(lang, name)) + P(en ? "your website is live! Here is the handover record with everything we set up and handed over. Please check it and confirm with one click." : "Ihre Website ist online! Hier ist das Übergabeprotokoll mit allem, was wir eingerichtet und übergeben haben. Bitte kurz durchsehen und mit einem Klick bestätigen.") +
-      btn(en ? "View and confirm" : "Protokoll ansehen und bestätigen", KLINK + "uebergabe/" + a.token) + P(en ? "After confirmation you'll receive the final invoice." : "Nach der Bestätigung bekommen Sie die Schlussrechnung.") };
+      btn(en ? "View and confirm" : "Protokoll ansehen und bestätigen", KLINK + "uebergabe/" + a.token) + P(en ? "After confirmation you'll receive the final invoice." : "Nach der Bestätigung bekommen Sie die Schlussrechnung.") +
+      (x && x.kunde && x.kunde.art !== "b2c" ? P(en ? "<small>Please note: if you do not report any significant defects within 14 days, the work is deemed accepted (see “Acceptance” in our terms).</small>" : "<small>Bitte beachten Sie: Melden Sie binnen 14 Tagen keine wesentlichen Mängel, gilt die Leistung als abgenommen (Punkt „Abnahme“ unserer Bedingungen).</small>") : "") };
     if (art === "vorschau") return { to, lang, subject: en ? "Your new website – preview" : "Ihre neue Website – Vorschau", body:
       P(anrede(lang, name)) + P(en ? "your new website is ready for a first look! Please take your time and collect all requests for changes in one e-mail – two rounds of corrections are included." : "Ihre neue Website ist bereit für einen ersten Blick! Nehmen Sie sich Zeit und sammeln Sie alle Änderungswünsche in einer Mail – zwei Korrekturrunden sind inklusive.") +
-      btn(en ? "Open preview" : "Vorschau öffnen", "https://[vorschau-adresse]") + P(en ? "The preview is not visible to search engines." : "Die Vorschau ist für Suchmaschinen unsichtbar.") };
+      btn(en ? "Open preview" : "Vorschau öffnen", a.vorschau || "https://[vorschau-adresse]") +
+      (a.produkte.includes("ki") ? P(en ? "<b>Please also try your AI assistant</b> – ask it the questions your customers would ask. Anything it doesn't answer well goes into your list of changes too." : "<b>Probieren Sie auch Ihren KI-Assistenten aus</b> – stellen Sie ihm Fragen, die Ihre Kunden stellen würden. Was er noch nicht gut beantwortet, kommt einfach mit auf die Liste der Änderungswünsche.") : "") +
+      P(en ? "The preview is not visible to search engines." : "Die Vorschau ist für Suchmaschinen unsichtbar.") };
     if (art === "rechnung" || art === "erinnerung") { const r = x; return { to, lang, subject: art === "erinnerung" ? (en ? `Friendly reminder: invoice ${r.nr}` : `Freundliche Erinnerung: Rechnung ${r.nr}`) : (en ? `Invoice ${r.nr} – Brightpage` : `Rechnung ${r.nr} – Brightpage`), body:
       P(anrede(lang, name)) + (art === "erinnerung"
         ? P(en ? `a quick friendly reminder – we haven't yet received the payment for invoice <b>${esc(r.nr)}</b> (${eur(r.summe_cents)}, due ${dat(r.faellig)}). If you've already paid, please ignore this e-mail.` : `eine kurze, freundliche Erinnerung – zur Rechnung <b>${esc(r.nr)}</b> (${eur(r.summe_cents)}, fällig am ${dat(r.faellig)}) ist bei uns noch keine Zahlung eingegangen. Falls Sie schon überwiesen haben, betrachten Sie diese Mail bitte als gegenstandslos.`)
         : P(en ? `thank you for the good cooperation! Here is your ${r.typ === "schluss" ? "final " : ""}invoice <b>${esc(r.nr)}</b> over ${eur(r.summe_cents)}, payable by ${dat(r.faellig)}.` : `vielen Dank für die gute Zusammenarbeit! Hier ist Ihre ${r.typ === "schluss" ? "Schluss" : ""}rechnung <b>${esc(r.nr)}</b> über ${eur(r.summe_cents)}, zahlbar bis ${dat(r.faellig)}.`)) +
-      btn(en ? "View invoice" : "Rechnung ansehen", KLINK + "rechnung/" + r.token) + P(en ? "You can pay by bank transfer or scan the QR code with your banking app." : "Sie können per Überweisung zahlen oder den QR-Code mit der Banking-App scannen.") }; }
+      btn(en ? "View invoice" : "Rechnung ansehen", KLINK + "rechnung/" + r.token) + P(en ? "You can pay by bank transfer or scan the QR code with your banking app." : "Sie können per Überweisung zahlen oder den QR-Code mit der Banking-App scannen.") +
+      (r.typ === "schluss" && a.uebergabe && a.uebergabe.bestaetigt ? P(en ? "<b>Attached</b> you'll find the confirmed handover record as a PDF for your files." : "<b>Im Anhang</b> finden Sie das bestätigte Übergabeprotokoll als PDF für Ihre Unterlagen.") : "") }; }
     if (art === "bewertung") return { to, lang, subject: en ? "Thank you – and a small request" : "Danke – und eine kleine Bitte", body:
       P(anrede(lang, name)) + P(en ? "thank you for your trust – it was a pleasure working with you! If you're happy with your new website, a short Google review would help us a lot:" : "danke für Ihr Vertrauen – es hat Freude gemacht! Wenn Sie mit Ihrer neuen Website zufrieden sind, würde uns eine kurze Google-Bewertung sehr helfen:") +
       btn(en ? "Write a review" : "Bewertung schreiben", (D && D.bewertung) || "https://g.page/r/[bewertungslink]/review") +
       P(en ? `<b>Do you know someone who needs a website?</b> If you refer a new customer, you receive a Brightpage voucher (or half of it as a universal shopping voucher) once their order is paid. Details: <a href="https://brightpage.net/en/prices.html#empfehlung">referral bonus</a>.` : `<b>Kennen Sie jemanden, der eine Website braucht?</b> Für jeden neuen Kunden, den Sie empfehlen, bekommen Sie nach bezahltem Auftrag einen Brightpage-Gutschein – oder die Hälfte als universellen Einkaufsgutschein. Details: <a href="https://brightpage.net/preise.html#empfehlung">Empfehlungsbonus</a>.`) };
     if (art === "bericht") return { to, lang, subject: en ? "Your 30-day report – Brightpage" : "Ihr 30-Tage-Bericht – Brightpage", body:
       P(anrede(lang, name)) + P(en ? "it's been 30 days – here is a short summary:" : "30 Tage sind um – hier eine kurze Zusammenfassung:") + UL(en ? ["Visitors: [number]", "Enquiries via the website: [number]", "Google profile: [views / calls / route requests]", "Our recommendation: [one sentence]"] : ["Besucher: [Zahl]", "Anfragen über die Website: [Zahl]", "Google-Profil: [Aufrufe / Anrufe / Routen]", "Unsere Empfehlung: [ein Satz]"]) };
+    if (art === "widerruf") { const w = x || {}; return { to: w.email || to, lang, subject: en ? `Confirmation of receipt of your withdrawal${w.nr ? " (" + w.nr + ")" : ""}` : `Eingangsbestätigung Ihres Widerrufs${w.nr ? " (" + w.nr + ")" : ""}`, body:
+      P(anrede(lang, name)) + P(en ? `we hereby confirm that we received your withdrawal on ${dat(w.datum)}${w.nr ? " regarding " + esc(w.nr) : ""}. We have stopped all work on your order.` : `hiermit bestätigen wir den Eingang Ihres Widerrufs am ${dat(w.datum)}${w.nr ? " zu " + esc(w.nr) : ""}. Wir haben die Arbeit an Ihrem Auftrag eingestellt.`) +
+      P(en ? "Any payments you have made will be refunded within 14 days of receipt of your withdrawal, using the same means of payment – less a proportionate amount if you requested an early start." : "Bereits geleistete Zahlungen erstatten wir binnen 14 Tagen ab Eingang des Widerrufs auf demselben Weg, auf dem Sie bezahlt haben – abzüglich eines anteiligen Betrags, falls Sie den vorzeitigen Beginn verlangt haben.") }; }
+    if (art === "widerruf-ok") { const w = x || {}; return { to: w.email || to, lang, subject: en ? "Your withdrawal – refund" : "Ihr Widerruf – Rückzahlung", body:
+      P(anrede(lang, name)) + (w.erstattet ? P(en ? `as promised, we have refunded <b>${eur(w.erstattet)}</b> on ${dat(w.am)} to the account you paid from.${w.einbehalten ? ` As you requested an early start, we have kept <b>${eur(w.einbehalten)}</b> for the work already done.` : ""}` : `wie angekündigt haben wir Ihnen am ${dat(w.am)} <b>${eur(w.erstattet)}</b> auf das Konto zurücküberwiesen, von dem Sie bezahlt haben.${w.einbehalten ? ` Weil Sie den vorzeitigen Beginn verlangt haben, behalten wir für die bereits erbrachten Leistungen <b>${eur(w.einbehalten)}</b> ein.` : ""}`)
+        : w.bezahlt ? P(en ? `your withdrawal has been processed. We will refund your payment of <b>${eur(w.bezahlt)}</b> by ${dat(w.frist)} at the latest, to the account you paid from.` : `Ihr Widerruf ist bearbeitet. Ihre Zahlung von <b>${eur(w.bezahlt)}</b> überweisen wir Ihnen spätestens bis ${dat(w.frist)} auf das Konto zurück, von dem Sie bezahlt haben.`)
+        : P(en ? "your withdrawal has been processed. As you had not made any payments yet, there is nothing to refund; any open invoices have been cancelled." : "Ihr Widerruf ist erledigt. Da Sie noch nichts bezahlt hatten, gibt es nichts zu erstatten; offene Rechnungen haben wir storniert.")) +
+      P(en ? "The contract has thus ended. Thank you – perhaps we'll work together another time." : "Damit ist der Vertrag beendet. Danke – vielleicht arbeiten wir ein anderes Mal zusammen.") }; }
     return { to, lang, subject: "", body: "" };
   }
 
-  function openMail(art, a, x) { const m = mailVorlage(art, a, x); mailDlg = { ...m, html: mailHtml(m.lang, m.body) }; paint(); }
+  function openMail(art, a, x) { const m = mailVorlage(art, a, x); mailDlg = { ...m, art, auftrag: a.id, html: mailHtml(m.lang, m.body) }; paint(); }
   function mailDialog() {
     if (!mailDlg) return "";
     return `<div id="bpa-mail" style="position:fixed;inset:0;background:rgba(21,23,28,.55);z-index:1000;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 10px">
@@ -144,7 +160,10 @@
     el.querySelector("#bpa-mcopy").onclick = () => {
       editOn(false);
       const html = prev.innerHTML;
-      const done = (ok) => { el.querySelector("#bpa-mok").textContent = ok ? "kopiert ✓ – jetzt Schritt 2" : "Kopieren ging nicht – Mail markieren und mit ⌘C kopieren."; editOn(true); };
+      const done = (ok) => { el.querySelector("#bpa-mok").textContent = ok ? "kopiert ✓ – jetzt Schritt 2" : "Kopieren ging nicht – Mail markieren und mit ⌘C kopieren."; editOn(true);
+        // Vorschau-Mail kopiert → Punkt „Vorschau an den Kunden geschickt“ abhaken (Martin 21.10.2026)
+        if (ok && mailDlg && mailDlg.art === "vorschau" && mailDlg.auftrag) { const au = D.list.find((y) => y.id === mailDlg.auftrag), keys = au ? vorschauKeys(au) : [];
+          if (keys.length && keys.some((k) => !au.checkliste[k])) api("POST", "auftrag", { id: au.id, checkliste: Object.fromEntries(keys.map((k) => [k, true])) }).then(() => { keys.forEach((k) => (au.checkliste[k] = D.today)); }, () => {}); } };
       function fallback() { const r = document.createRange(); r.selectNodeContents(prev); const s = getSelection(); s.removeAllRanges(); s.addRange(r); let ok = false; try { ok = document.execCommand("copy"); } catch {} s.removeAllRanges(); done(ok); }
       try {
         if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) navigator.clipboard.write([new ClipboardItem({ "text/html": new Blob([html], { type: "text/html" }), "text/plain": new Blob([prev.innerText], { type: "text/plain" }) })]).then(() => done(true), fallback);
@@ -164,8 +183,8 @@
         <div><div class="small">Wert in Arbeit</div><b class="mono">${eur0(S.pipeline_cents)}</b></div>
         <div><div class="small">Gewonnen / verloren</div><b class="mono">${S.gewonnen} / ${S.verloren}</b></div>
       </div>
-      ${D.warn.length ? `<div style="margin-top:12px">${D.warn.map((w) => `<p class="${w.heute ? "note" : "err"}" style="margin:4px 0"><a href="#" data-bpaopen="${w.id}">${esc(w.text)}</a></p>`).join("")}</div>` : ""}
-      ${msg ? `<p class="note" role="status" style="margin-top:10px">${esc(msg)}</p>` : ""}${errMsg ? `<p class="err" style="margin-top:10px">${esc(errMsg)}</p>` : ""}</div>`;
+      ${D.warn.length ? `<div style="margin-top:12px">${D.warn.map((w) => `<p class="${w.heute ? "note" : "err"}" style="margin:4px 0">${w.id ? `<a href="#" data-bpaopen="${w.id}">${esc(w.text)}</a>` : `<b>${esc(w.text)}</b>`}</p>`).join("")}</div>` : ""}
+      ${msg ? `<p class="note" role="status" style="margin-top:10px">${esc(msg)}</p>` : ""}${errMsg && !edit ? `<p class="err" style="margin-top:10px">${esc(errMsg)}</p>` : ""}</div>`;
   }
   function listPanel() {
     const F = { offen: (a) => a.status !== "abgeschlossen" && a.status !== "verloren", abgeschlossen: (a) => a.status === "abgeschlossen", verloren: (a) => a.status === "verloren", alle: () => true };
@@ -322,7 +341,7 @@
     if (!AN || anFor !== a.id) return `<p class="muted small">Lade …</p>`;
     const x = AN.list.find((y) => y.status === "angenommen"), R = AN.rechnungen, K = AN.kunde;
     const anz = x && R.find((r) => r.id === x.rechnung_id);
-    return `${x ? `<p><b>Angebot ${esc(x.nr)} angenommen</b> am ${dat(x.annahme.datum)} um ${esc(x.annahme.zeit || "")} von ${esc(x.annahme.name)} · ${eur(x.summen.einmal)} einmalig${x.summen.monat ? ` · ${eur(x.summen.monat)} monatlich` : ""}${x.annahme.fruehstart ? " · <b>vorzeitiger Beginn verlangt</b>" : x.kunde.art === "b2c" ? ' · <b style="color:var(--red)">Verbraucher: erst nach 14 Tagen Widerrufsfrist beginnen</b>' : ""}</p>`
+    return `${x ? `<p><b>Angebot ${esc(x.nr)} angenommen</b> am ${dat(x.annahme.datum)} um ${esc(x.annahme.zeit || "")} von ${esc(x.annahme.name)} · ${eur(x.summen.einmal)} einmalig${x.summen.monat ? ` · ${eur(x.summen.monat)} monatlich` : ""}${x.annahme.fruehstart ? " · <b>vorzeitiger Beginn verlangt</b>" : x.kunde.art === "b2c" ? ` · <b style="color:var(--red)">Verbraucher: Widerrufsfrist bis ${dat(plusTage(x.annahme.datum, 14))} – mit der Arbeit erst ab ${dat(plusTage(x.annahme.datum, 17))} beginnen</b>` : ""}</p>`
         : `<p class="small">Noch kein angenommenes Angebot. Hat der Kunde anders zugesagt (z. B. per Mail), trotzdem weitermachen und die Anzahlungsrechnung unter „Rechnungen“ anlegen.</p>`}
       <div class="eyebrow" style="margin-top:12px">a · Kunde</div>
       ${K ? `<p class="small"><b>${esc(K.firma || K.name)}</b>${K.firma && K.name ? ", " + esc(K.name) : ""} · ${esc(K.strasse)}, ${esc(((K.plz || "") + " " + (K.ort || "")).trim() || K.plz_ort || "")} · ${esc(K.email || "")} <button class="tipbtn" type="button" data-bpkunde="${K.id}">In der Kundendatenbank öffnen</button></p>` : `<p class="small muted">Der Kunde wird bei der Online-Annahme automatisch in der Kundendatenbank angelegt.</p>`}
@@ -332,7 +351,7 @@
       <p class="small" style="margin:6px 0 0"><b>Pflicht-Anhang (§ 7 FAGG):</b> <a href="${KLINK}angebot/${esc(x.token)}" target="_blank" rel="noopener">angenommenes Angebot öffnen</a> → Drucken → „Als PDF sichern“ → an die Mail hängen${x.kunde && x.kunde.art === "b2c" ? ` – dazu das <a href="${KLINK}widerruf" target="_blank" rel="noopener">Muster-Widerrufsformular</a> als PDF` : ""}. Erst danach mit der Arbeit beginnen.</p>` : ""}
       <div class="eyebrow" style="margin-top:14px">c · Auftragsformular und Anleitungen</div>
       ${formularBlock(a)}
-      <div style="margin-top:10px">${["anzahlung", "formular", "zustimmungen"].map((k) => ckItem(a, "basis:" + k, basisLabel(k))).join("")}</div>
+      <div style="margin-top:10px">${x && !x.rechnung_id ? `<div class="small" style="color:#2F7D4F">✓ Anzahlung: entfällt (ohne Anzahlung angenommen)</div>` : ckItem(a, "basis:anzahlung", basisLabel("anzahlung"))}${["formular", "zustimmungen"].map((k) => ckItem(a, "basis:" + k, basisLabel(k))).join("")}</div>
       <div style="margin-top:12px">${nextBtn("bau", "Anzahlung und Unterlagen da → weiter zu 5 Bau")}</div>`;
   }
   function formularBlock(a) {
@@ -351,7 +370,9 @@
   }
   function protokollBlock(a) {
     const U = a.uebergabe || {}, V = (AN && AN.uebergabe_vorlage) || { punkte: [], hinweise: "" }, punkte = U.punkte && U.punkte.length ? U.punkte : V.punkte;
-    if (U.bestaetigt) return `<p><span class="chip fin">bestätigt</span> am ${dat(U.bestaetigt.datum)} um ${esc(U.bestaetigt.zeit)} von <b>${esc(U.bestaetigt.name)}</b> <button class="tipbtn" type="button" data-bpacopy="${KLINK}uebergabe/${a.token}">Link kopieren</button></p>`;
+    if (U.bestaetigt) return `<p><span class="chip fin">bestätigt</span> am ${dat(U.bestaetigt.datum)} um ${esc(U.bestaetigt.zeit)} von <b>${esc(U.bestaetigt.name)}</b>
+      <a class="tipbtn" href="${KLINK}uebergabe/${a.token}" target="_blank" rel="noopener">Protokoll öffnen / PDF</a> <button class="tipbtn" type="button" data-bpacopy="${KLINK}uebergabe/${a.token}">Link kopieren</button></p>
+      <p class="small muted" style="margin:4px 0 0">Öffnen → Drucken → „Als PDF sichern“ → im Kundenordner ablegen (7 Jahre mit der Schlussrechnung) und an die Mail zur Schlussrechnung hängen.</p>`;
     return `${U.freigegeben_at ? `<p class="small"><span class="chip open">freigegeben, wartet auf Bestätigung</span> ${mailBtn("uebergabe", "", "Protokoll-Mail")} <button class="tipbtn" type="button" data-bpacopy="${KLINK}uebergabe/${a.token}">Link kopieren</button></p>` : ""}
       <form id="bpa-ueb" style="margin-top:6px">
         <div class="two"><div class="field"><label>Website-Adresse</label><input name="website" value="${esc(U.website || a.website || "")}" placeholder="www.beispiel.at"></div><div class="field"><label>Einschulung am</label><input type="date" name="einschulung" value="${esc(U.einschulung || "")}"></div></div>
@@ -362,19 +383,38 @@
         <div class="field"><label>Gut zu wissen (eine Zeile je Hinweis)</label><textarea name="hinweise" rows="4">${esc(U.hinweise ?? V.hinweise)}</textarea></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="tipbtn" type="submit" data-fr="0">Speichern</button><button class="btn btn-ink" type="submit" data-fr="1">${U.freigegeben_at ? "Speichern (Kunde sieht es sofort)" : "Speichern und zur Bestätigung freigeben"}</button></div></form>`;
   }
-  function prodChecks(a, golive) {
-    const groups = a.produkte.filter((p) => D.check[p]).map((p) => [p, prodName(p), D.check[p].filter(([k]) => GOLIVE.has(k) === golive)]).filter((g) => g[2].length);
-    return groups.length ? groups.map(([g, gl, items]) => `<div style="margin-top:8px"><b class="small">${esc(gl)}</b>${items.map(([k, l]) => ckItem(a, g + ":" + k, l)).join("")}</div>`).join("") : `<p class="small muted">Keine Punkte – Produkte in Schritt 2 wählen.</p>`;
+  // Web Premium und Shops bauen auf den Web-Start-Punkten auf (Repository, Design, Cloudflare, Vorschau, Domain …) – Test 21.10.2026:
+  // bei einem Web-Premium-Auftrag fehlten sie. Schlüssel bleiben „web-start:…“, damit Häkchen gleich bleiben.
+  const INHERIT = { "web-premium": ["web-start"], "shop-start": ["web-start"], "shop-premium": ["web-start", "shop-start"] };
+  const VORSCHAU = new Set(["vorschau", "k1", "k2"]), ABO = new Set(["abo"]);
+  function prodItems(a) {
+    const seen = new Set();
+    return a.produkte.filter((p) => D.check[p]).map((p) => { const items = [];
+      for (const q of [...(INHERIT[p] || []).filter((q) => !a.produkte.includes(q)), p]) for (const [k, l] of D.check[q] || []) { const key = q + ":" + k; if (!seen.has(key)) { seen.add(key); items.push([key, k, l]); } }
+      return [p, prodName(p), items]; });
+  }
+  const vorschauKeys = (a) => prodItems(a).flatMap(([, , items]) => items.filter(([, k]) => k === "vorschau").map(([key]) => key));
+  // phase: "bau" (Schritt 5: alles außer Go-live und Abo; Vorschau/Korrekturen zuletzt), "golive" (Schritt 6), "abo" (Schritt 7)
+  function prodChecks(a, phase) {
+    const G = prodItems(a), sel = (k) => (phase === "golive" ? GOLIVE.has(k) : phase === "abo" ? ABO.has(k) : !GOLIVE.has(k) && !ABO.has(k) && !VORSCHAU.has(k));
+    let html = G.map(([, gl, items]) => [gl, items.filter(([, k]) => sel(k))]).filter((g) => g[1].length)
+      .map(([gl, items]) => `<div style="margin-top:8px"><b class="small">${esc(gl)}</b>${items.map(([key, , l]) => ckItem(a, key, l)).join("")}</div>`).join("");
+    if (phase === "bau") { const v = G.flatMap(([, , items]) => items.filter(([, k]) => VORSCHAU.has(k)));
+      if (v.length) html += `<div style="margin-top:14px"><b class="small">Vorschau und Korrekturen</b> <span class="small muted">– erst wenn alles oben erledigt ist, auch die KI-Lösungen: der Kunde testet alles in einer Vorschau</span>${v.map(([key, , l]) => ckItem(a, key, l)).join("")}</div>`; }
+    return html || (phase === "abo" ? "" : `<p class="small muted">Keine Punkte – Produkte in Schritt 2 wählen.</p>`);
   }
   function step5(a) {
-    return `${prodChecks(a, false)}
+    return `${prodChecks(a, "bau")}
+      <form id="bpa-vs" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:12px">
+        <div class="field" style="margin:0;flex:1;min-width:220px"><label>Vorschau-Adresse (kommt in die Vorschau-Mail)</label><input name="vorschau" type="url" maxlength="300" value="${esc(a.vorschau || "")}" placeholder="https://vorschau.kunde-xy.pages.dev"></div>
+        <button class="tipbtn" type="submit">Speichern</button></form>
       <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b class="small">Korrekturrunden:</b>
         <button class="tipbtn" data-bparunde="-1" type="button">−</button><b class="mono">${a.runden}</b><button class="tipbtn" data-bparunde="1" type="button">+</button>
         <span class="small ${a.runden > 2 ? "" : "muted"}" ${a.runden > 2 ? 'style="color:var(--red)"' : ""}>${a.runden > 2 ? "Mehr als 2 Runden: vorher ankündigen und mit 85 €/h verrechnen." : "2 Runden sind inklusive."}</span></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">${mailBtn("vorschau", "", "Vorschau-Mail")}${a.status !== "korrektur" ? nextBtn("korrektur", "Korrekturen laufen", "tipbtn") : ""}${nextBtn("freischaltung", "Kunde hat freigegeben → weiter zu 6 Freischaltung")}</div>`;
   }
   function step6(a) {
-    return `${prodChecks(a, true)}
+    return `${prodChecks(a, "golive")}
       <div class="eyebrow" style="margin-top:14px">Übergabeprotokoll</div>
       ${protokollBlock(a)}
       <div style="margin-top:10px">${ckItem(a, "basis:uebergabe", basisLabel("uebergabe"))}</div>
@@ -385,8 +425,9 @@
     const R = AN.rechnungen.filter((r) => r.typ === "schluss" && r.status !== "storniert"), x = AN.list.find((y) => y.status === "angenommen");
     const mon = x ? x.positionen.map((p, i) => [p, i]).filter(([p, i]) => p.art === "monat" && (!p.opt || (x.annahme.gewaehlt || []).includes(i))) : [];
     const hasAbo = (t) => AN.abos.some((b) => b.titel === t && b.aktiv);
-    return `${R.length ? R.map((r) => rechnungZeile(r, "rechnung")).join("") : `<p>${x ? `<button class="btn btn-ink" type="button" id="bpa-schluss">Schlussrechnung aus Angebot ${esc(x.nr)} erstellen</button>` : ""}</p><p class="small muted">Übernimmt alle gewählten einmaligen Positionen und zieht die bezahlte Anzahlung ab. Entsteht als Entwurf – prüfen, dann „Ausstellen“.${x ? "" : " Ohne angenommenes Angebot: unter „Rechnungen“ anlegen."}</p>`}
+    return `${R.length ? R.map((r) => rechnungZeile(r, "rechnung")).join("") + (a.uebergabe && a.uebergabe.bestaetigt ? `<p class="small" style="margin:6px 0 0"><b>Anhang zur Rechnungs-Mail:</b> Übergabeprotokoll als PDF (<a href="${KLINK}uebergabe/${esc(a.token)}" target="_blank" rel="noopener">Protokoll öffnen</a> → Drucken → „Als PDF sichern“).</p>` : "") : `<p>${x ? `<button class="btn btn-ink" type="button" id="bpa-schluss">Schlussrechnung aus Angebot ${esc(x.nr)} erstellen</button>` : ""}</p><p class="small muted">Übernimmt alle gewählten einmaligen Positionen und zieht die bezahlte Anzahlung ab. Entsteht als Entwurf – prüfen, dann „Ausstellen“.${x ? "" : " Ohne angenommenes Angebot: unter „Rechnungen“ anlegen."}</p>`}
       ${ckItem(a, "basis:schluss", basisLabel("schluss"))}${ckItem(a, "basis:bezahlt", basisLabel("bezahlt"))}
+      ${prodChecks(a, "abo")}
       ${mon.length ? `<div class="eyebrow" style="margin-top:14px">Laufende Leistungen aus dem Angebot</div>${mon.map(([p, i]) => `<div class="small" style="margin:4px 0">${esc(p.text)} – ${eur(p.cents)} / Monat ${hasAbo(p.text) ? `<span class="chip" style="background:#2F7D4F;color:#fff">Abo läuft</span>` : `<button class="tipbtn" type="button" data-bpaabo="${i}">Als Abo anlegen (ab nächstem Monat)</button>`}</div>`).join("")}` : ""}
       <div style="margin-top:12px">${nextBtn("abgeschlossen", "Bezahlt → weiter zu 8 Nachbetreuung")}</div>`;
   }
@@ -428,9 +469,58 @@
       <div class="panel" style="margin:0"><details><summary class="small">Station von Hand setzen, verloren, löschen</summary>
         <form id="bpa-st" style="margin-top:8px"><select name="status" style="width:100%">${D.stationen.map((s) => `<option value="${s[0]}" ${s[0] === a.status ? "selected" : ""}>${esc(s[1])}</option>`).join("")}</select>
           <button class="tipbtn" type="submit" style="margin-top:6px">Station setzen</button></form>
-        <p style="margin-top:10px"><button class="tipbtn" id="bpa-del" type="button">Anfrage löschen (z. B. Spam)</button></p></details></div>`;
+        <p style="margin-top:10px"><button class="tipbtn" id="bpa-del" type="button">Anfrage löschen (z. B. Spam)</button></p>
+        <p style="margin-top:10px"><button class="tipbtn" id="bpa-wrbtn" type="button">Widerruf von Hand erfassen (kam per Mail/Brief)</button></p></details></div>`;
   }
 
+  // ---------- Widerruf (§ 11 ff. FAGG) – Ablauf im Auftrag (Martin 21.10.2026) ----------
+  const ymdWien = (ms) => new Date(ms).toLocaleDateString("sv-SE", { timeZone: "Europe/Vienna" });
+  function wrInfo(a) {
+    const W = (AN && AN.widerrufe) || [], w = W[0] || {}, R = ((AN && AN.rechnungen) || []).filter((r) => r.typ !== "storno" && r.status === "bezahlt");
+    const erstattet = R.reduce((x, r) => x + (r.erstattet_cents || 0), 0), bezahlt = R.reduce((x, r) => x + (r.bezahlt_cents || 0), 0);
+    const am = R.map((r) => r.erstattet_am).filter(Boolean).sort().pop() || D.today;
+    const x = AN && AN.list.find((y) => y.status === "angenommen"), kmail = (x && x.kunde && x.kunde.email) || a.email || "";
+    return { email: kmail || w.email, nr: w.nr, datum: w.at ? ymdWien(w.at) : D.today, erstattet, bezahlt,
+      frist: w.at ? plusTage(ymdWien(w.at), 14) : "", einbehalten: erstattet ? Math.max(0, bezahlt - erstattet) : 0, am };
+  }
+  function widerrufPanel(a) {
+    if (!AN || anFor !== a.id) return "";
+    const W = AN.widerrufe || [];
+    const neuForm = wrNeu ? `<form id="bpa-wrneu" class="panel" style="margin:0 0 10px;border-left:4px solid var(--red,#B3261E)"><div class="eyebrow">Widerruf von Hand erfassen (per E-Mail, Brief, Telefon)</div>
+        <div class="two" style="margin-top:6px"><div class="field"><label>Eingegangen am</label><input type="date" name="datum" value="${D.today}" required></div>
+        <div class="field"><label>Wie</label><select name="wie"><option value="mail">E-Mail</option><option value="brief">Brief</option><option value="telefon">Telefon</option><option value="sonstig">sonstig</option></select></div></div>
+        <div class="field"><label>Notiz (optional, z. B. Wortlaut)</label><textarea name="text" rows="2" maxlength="1000"></textarea></div>
+        <div style="display:flex;gap:8px"><button class="btn btn-ink" type="submit">Widerruf erfassen</button><button class="tipbtn" type="button" id="bpa-wrx">Abbrechen</button></div></form>` : "";
+    if (!W.length) return neuForm;
+    const w = W[0], eingang = ymdWien(w.at), frist = plusTage(eingang, 14), x = AN.list.find((y) => y.status === "angenommen");
+    const R = AN.rechnungen.filter((r) => r.typ !== "storno"), offen = R.filter((r) => r.status === "offen" || r.status === "entwurf"), bez = R.filter((r) => r.status === "bezahlt");
+    const stundenMin = (a.zeiten || []).reduce((t, z) => t + (z.min || 0), 0);
+    const fertig = !offen.length && bez.every((r) => r.erstattet_cents) && a.status === "verloren";
+    // Echtheit und Frist (Nachttest 22.10.2026, D-2.1): Nummern sind erratbar – E-Mail mit dem Angebot vergleichen, Abstand zur Annahme zeigen
+    const kmail = String((x && x.kunde && x.kunde.email) || a.email || "").toLowerCase(), fremd = w.email && kmail && String(w.email).toLowerCase() !== kmail;
+    const tagN = x && x.annahme && x.annahme.datum ? Math.round((Date.parse(eingang) - Date.parse(x.annahme.datum)) / 86400000) : null;
+    const pruef = [fremd ? `<b>E-Mail passt nicht zum Angebot</b> (Widerruf von ${esc(w.email)}, Kunde ${esc(kmail)}) – Echtheit prüfen, z. B. kurz beim Kunden nachfragen. Mails gehen an die Kundenadresse.` : "",
+      tagN != null && tagN > 14 ? `<b>Eingang ${tagN} Tage nach der Annahme</b> (${dat(x.annahme.datum)}) – die 14-tägige Frist ist abgelaufen; das Widerrufsrecht besteht dann vermutlich nicht mehr.` : "",
+      x && x.annahme && x.annahme.fruehstart && a.status === "abgeschlossen" ? "Vorzeitiger Beginn war verlangt und der Auftrag ist abgeschlossen – das Widerrufsrecht ist damit vermutlich erloschen (§ 18 FAGG)." : ""].filter(Boolean);
+    const zeile = (ok, html) => `<li style="margin:6px 0;list-style:none"><span style="display:inline-block;width:20px;color:${ok ? "#2F7D4F" : "#B3261E"}">${ok ? "✓" : "○"}</span>${html}</li>`;
+    return `${neuForm}<section class="panel" style="margin:0 0 10px;border-left:4px solid ${fertig ? "#2F7D4F" : "var(--red,#B3261E)"}">
+      <div class="eyebrow" style="color:${fertig ? "#2F7D4F" : "var(--red,#B3261E)"}">${fertig ? "Widerruf erledigt" : "Widerruf eingegangen – bitte abarbeiten"}</div>
+      <p style="margin:6px 0"><b>${dat(eingang)}</b> · ${w.manuell ? `von Hand erfasst (${esc({ mail: "E-Mail", brief: "Brief", telefon: "Telefon", sonstig: "sonstig" }[w.manuell] || w.manuell)})` : "online über brightpage.net/k/widerrufen"} · ${esc(w.name || "")} ${w.nr ? "· " + esc(w.nr) : ""}${w.nachricht ? `<br><span class="small">„${esc(w.nachricht)}“</span>` : ""}${W.length > 1 ? `<br><span class="small muted">${W.length} Widerrufe zu diesem Auftrag – der erste zählt.</span>` : ""}</p>
+      ${pruef.length ? `<div class="err" style="margin:6px 0">${pruef.map((t) => `<p style="margin:4px 0">⚠ ${t}</p>`).join("")}<p style="margin:4px 0" class="small">Ist der Widerruf nicht echt oder verspätet: dem Kunden kurz antworten, Auftrag normal weiterführen – die Punkte unten dann nicht abarbeiten.</p></div>` : `<p class="small" style="margin:6px 0;color:#2F7D4F">✓ E-Mail passt zum Angebot${tagN != null ? `, Eingang am ${tagN}. Tag nach der Annahme` : ""}.</p>`}
+      <ol style="margin:6px 0 0;padding:0">
+        ${zeile(!w.manuell ? !!w.mail_ok : false, !w.manuell ? (w.mail_ok ? "Eingangsbestätigung wurde automatisch per Mail geschickt." : `Automatische Eingangsbestätigung ist <b>nicht</b> rausgegangen – ${mailBtn("widerruf", "", "Eingangsbestätigung")} selbst schicken.`) : `Eingangsbestätigung schicken (Pflicht, auf dauerhaftem Datenträger): ${mailBtn("widerruf", "", "Eingangsbestätigung")}`)}
+        ${x && x.kunde && x.kunde.art === "b2b" ? zeile(false, `<b style="color:var(--red,#B3261E)">Achtung: Der Kunde ist Unternehmer</b> – Unternehmer haben <b>kein gesetzliches Widerrufsrecht</b> (FAGG gilt nur für Verbraucher). Prüfen, ob es wirklich ein Verbraucher ist (z. B. Verein ohne Geschäftsbetrieb); sonst dem Kunden das freundlich mitteilen und nur aus Kulanz stornieren.`) : ""}
+        ${zeile(true, `<b>Arbeit sofort einstellen.</b> ${x && x.kunde && x.kunde.art === "b2b" ? "" : x && x.annahme ? (x.annahme.fruehstart ? `Vorzeitiger Beginn war verlangt (beide Häkchen) – für bereits Erbrachtes darf ein <b>anteiliger Betrag</b> einbehalten werden (erfasste Zeit: ${(stundenMin / 60).toLocaleString("de-AT", { maximumFractionDigits: 1 })} Std.).` : "Kein vorzeitiger Beginn verlangt – <b>alles</b> Bezahlte zurückzahlen.") : ""}`)}
+        ${offen.length ? offen.map((r) => zeile(false, `${r.typ === "anzahlung" ? "Anzahlungsrechnung" : r.typ === "schluss" ? "Schlussrechnung" : "Rechnung"} ${esc(r.nr || "(Entwurf)")} über ${eur(r.summe_cents)} ist ${r.status} – <button class="tipbtn" type="button" data-bpawrst="${r.id}">${r.status === "entwurf" ? "Entwurf löschen" : "Stornieren"}</button>`)).join("") : zeile(true, "Keine offenen Rechnungen.")}
+        ${bez.map((r) => r.erstattet_cents ? zeile(true, `${esc(r.nr)}: <b>${eur(r.erstattet_cents)}</b> zurücküberwiesen am ${dat(r.erstattet_am)}${r.erstattet_cents < r.bezahlt_cents ? ` (einbehalten ${eur(r.bezahlt_cents - r.erstattet_cents)})` : ""} <button class="tipbtn" type="button" data-bpawrzu="${r.id}">zurücknehmen</button>`)
+          : zeile(false, `${esc(r.nr)} ist bezahlt (${eur(r.bezahlt_cents)}) – <b>bis ${dat(frist)}</b> zurücküberweisen (14 Tage ab Eingang), dann buchen:
+            <form data-bpawrer="${r.id}" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin:6px 0 0 20px"><div class="field" style="margin:0"><label>Betrag (€)</label><input name="betrag" value="${(r.bezahlt_cents / 100).toFixed(2).replace(".", ",")}" inputmode="decimal" style="width:110px"></div>
+            <div class="field" style="margin:0"><label>Rücküberweisung am</label><input type="date" name="am" value="${D.today}" required></div><button class="btn btn-ink" type="submit">Erstattung buchen</button></form>`)).join("")}
+        ${zeile(a.status === "verloren", a.status === "verloren" ? "Auftrag ist auf „Verloren“ gesetzt." : `Auftrag beenden: <button class="tipbtn" type="button" id="bpa-wrend">Auf „Verloren“ setzen (Grund: Widerruf)</button>`)}
+        ${zeile(false, `Abschluss-Mail an den Kunden: ${mailBtn("widerruf-ok", "", "Widerruf erledigt / Rückzahlung")}`)}
+      </ol>
+      <p class="small muted" style="margin:8px 0 0">Rückzahlung auf demselben Weg wie die Zahlung (Überweisung zurück aufs Konto des Kunden). In der E/A-Rechnung zählt danach nur der einbehaltene Betrag.</p></section>`;
+  }
   function detail(a) {
     const cur = a.status === "verloren" ? 0 : stepOf(a.status);
     const BODY = [null, step1, step2, step3, step4, step5, step6, step7, step8];
@@ -450,7 +540,7 @@
         ${a.status === "verloren" ? `<p class="err">Verloren${a.verloren_grund ? ": " + esc(a.verloren_grund) : ""}</p>` : `<div style="display:grid;grid-template-columns:repeat(8,1fr);gap:3px;margin-top:10px">${STEPS.map(([n, t]) => `<div title="${esc(t)}" style="height:6px;border-radius:3px;background:${n < cur ? "#2F7D4F" : n === cur ? "#D9820B" : "var(--line,#ddd)"}"></div>`).join("")}</div>`}
       </div>
       <div class="bpa-grid">
-        <div>${STEPS.map(([n, t]) => { const isOpen = (n === cur) !== aufSteps.has(n), done = n < cur; curStep = cur; rStep = n;
+        <div>${widerrufPanel(a)}${STEPS.map(([n, t]) => { const isOpen = (n === cur) !== aufSteps.has(n), done = n < cur; curStep = cur; rStep = n;
           return `<section class="panel" style="margin:0 0 10px;${n === cur ? "border-left:4px solid #D9820B" : ""}">
             <button type="button" data-bpastep="${n}" style="all:unset;cursor:pointer;display:flex;gap:12px;align-items:center;width:100%">
               <span style="flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;${done ? "background:#2F7D4F;color:#fff" : n === cur ? "background:#D9820B;color:#15171C" : "background:var(--line,#e5e2db);color:#555"}">${done ? "✓" : n}</span>
@@ -462,9 +552,9 @@
 
   // ---------- Zeichnen und Ereignisse ----------
   function readEditor(f) {
-    const toC = (v) => { let x = String(v ?? "").replace(/\s|€/g, ""); if (/,\d{1,2}$/.test(x)) x = x.replace(/\./g, "").replace(",", "."); else if (/^-?\d{1,3}(\.\d{3})+$/.test(x)) x = x.replace(/\./g, ""); else x = x.replace(/,/g, ""); return Math.round(Number(x) * 100); };
+    const toC = (v) => { let x = String(v ?? "").replace(/\s|€/g, "").replace(/,[-–]$/, ",00"); if (!x || /^\d{1,3},\d{3}$/.test(x)) return NaN; if (/,\d{1,2}$/.test(x)) x = x.replace(/\./g, "").replace(",", "."); else if (/^-?\d{1,3}(\.\d{3})+$/.test(x)) x = x.replace(/\./g, ""); else x = x.replace(/,/g, ""); return Math.round(Number(x) * 100); };
     const positionen = [...f.querySelectorAll(".bpa-pos")].map((r) => ({ key: r.querySelector('[name="key"]').value, text: r.querySelector('[name="text"]').value, detail: r.querySelector('[name="detail"]').value,
-      menge: r.querySelector('[name="menge"]').value, einheit: r.querySelector('[name="einheit"]').value, preis_cents: toC(r.querySelector('[name="preis"]').value),
+      menge: r.querySelector('[name="menge"]').value, einheit: r.querySelector('[name="einheit"]').value, preis_cents: toC(r.querySelector('[name="preis"]').value), preis: r.querySelector('[name="preis"]').value,
       art: r.querySelector('[name="art"]').value, opt: r.querySelector('[name="opt"]').checked }));
     const g = (n) => f.querySelector(`[name="${n}"]`).value;
     return { id: edit.id, sprache: g("sprache"), titel: g("titel"), text_oben: g("text_oben"), text_unten: g("text_unten"), anzahlung_pct: g("anzahlung_pct"), gueltig_tage: g("gueltig_tage"), stripe_link: g("stripe_link"),
@@ -486,6 +576,7 @@
 
   function paint() {
     if (!el) return;
+    dirty = false;
     const a = open && D.list.find((x) => x.id === open);
     if (open && !a) open = null;
     try { if (open) sessionStorage.setItem("bpa_open", open); else sessionStorage.removeItem("bpa_open"); } catch {}
@@ -502,7 +593,11 @@
     $("#bpa-back").onclick = (e) => { e.preventDefault(); open = null; anFor = null; edit = null; aufSteps = new Set(); msg = errMsg = ""; paint(); };
     $$("[data-bpastep]").forEach((x) => (x.onclick = () => { const n = Number(x.dataset.bpastep); if (aufSteps.has(n)) aufSteps.delete(n); else aufSteps.add(n); paint(); }));
     $$("[data-bpanext]").forEach((x) => (x.onclick = () => { const st = x.dataset.bpanext;
-      if (st === "bau") { const R = AN && AN.rechnungen.find((r) => r.typ === "anzahlung"); if (R && R.status !== "bezahlt" && !confirm("Die Anzahlung ist noch nicht als bezahlt gebucht. Trotzdem mit dem Bau beginnen?")) return; }
+      if (st === "bau") { const R = AN && AN.rechnungen.find((r) => r.typ === "anzahlung"); if (R && R.status !== "bezahlt" && !confirm("Die Anzahlung ist noch nicht als bezahlt gebucht. Trotzdem mit dem Bau beginnen?")) return;
+        // Verbraucher ohne vorzeitigen Beginn: Widerrufsfrist 14 Tage ab Annahme + ein paar Tage Puffer für die Post (Martin 21.10.2026)
+        const xa = AN && AN.list.find((y) => y.status === "angenommen");
+        if (xa && xa.kunde && xa.kunde.art === "b2c" && xa.annahme && !xa.annahme.fruehstart) { const ab = plusTage(xa.annahme.datum, 17);
+          if (D.today < ab && !confirm(`Verbraucher ohne vorzeitigen Beginn: Die Widerrufsfrist läuft bis ${dat(plusTage(xa.annahme.datum, 14))}. Mit der Arbeit erst ab ${dat(ab)} beginnen (Puffer für einen Widerruf per Post). Trotzdem jetzt auf „Bau“ stellen?`)) return; } }
       aufSteps = new Set(); act(() => api("POST", "auftrag/status", { id: a.id, status: st }), "Weiter: " + stName(st)); }));
     $$("[data-bpamail]").forEach((x) => (x.onclick = () => { const art = x.dataset.bpamail, id = x.dataset.x;
       const base = AN && (AN.list.find((y) => y.status === "angenommen") || AN.list[0]);
@@ -512,6 +607,7 @@
         if (r && !r.token) { api("POST", "rechnung/link", { id }).then(loadAN).then(() => openMail(art, a, ctx(AN.rechnungen.find((y) => y.id === id))), (e) => { errMsg = e.message; paint(); }); return; }
         openMail(art, a, ctx(r)); return;
       }
+      if (art === "widerruf" || art === "widerruf-ok") { openMail(art, a, ctx({ ...wrInfo(a), sprache: (base && base.sprache) || a.sprache })); return; }
       openMail(art, a, ctx(id ? AN.list.find((y) => y.id === id) : base)); }));
     $$("[data-bpkunde]").forEach((x) => (x.onclick = () => window.BPAdmin && BPAdmin.go("kunden", { kunde: x.dataset.bpkunde })));
     $$("[data-bpgo]").forEach((x) => (x.onclick = () => window.BPAdmin && BPAdmin.go(x.dataset.bpgo)));
@@ -540,7 +636,7 @@
     if (f) {
       // D-M1: Firma eingetragen → Art automatisch „Firma“ (sonst bekäme eine Firma die Verbraucher-Bedingungen)
       // Vereine ohne Geschäftsbetrieb sind Verbraucher (§ 1 KSchG) – „Verein“ im Namen und keine UID → Verbraucher vorschlagen (AGB-Prüfung 21.10.2026)
-      const artAuto = () => { const fi = f.k_firma.value.trim(), uid = f.k_uid && f.k_uid.value.trim(); if (!fi) return; f.k_art.value = /verein/i.test(fi) && !uid ? "b2c" : "b2b"; };
+      const artAuto = () => { const fi = f.k_firma.value.trim(), uid = f.k_uid && f.k_uid.value.trim(); if (!fi) return; f.k_art.value = /verein/i.test(fi) && !/\b(gmbh|ag|kg|og|e\.?\s?u\.?|gesmbh|se)\b/i.test(fi) && !uid ? "b2c" : "b2b"; };   // Nachttest D-2.13: „Vereinsbedarf GmbH“ bleibt b2b
       if (f.k_firma && f.k_art) { f.k_firma.addEventListener("input", artAuto); if (f.k_uid) f.k_uid.addEventListener("input", artAuto); if (artInit !== edit.id) { artInit = edit.id; if (edit.status === "entwurf" && !f.k_strasse.value.trim()) artAuto(); } }
       edSum(f); f.addEventListener("input", () => edSum(f)); f.addEventListener("change", () => edSum(f));
       $("#bpa-edx").onclick = () => { edit = null; paint(); };
@@ -580,7 +676,7 @@
         if (fr === "1" && !confirm("Protokoll zur Bestätigung freigeben? Danach „Protokoll-Mail“ vorbereiten und selbst senden.")) return;
         act(() => api("POST", "auftrag/uebergabe", { id: a.id, website: uf.website.value, einschulung: uf.einschulung.value, punkte, offen: uf.offen.value, hinweise: uf.hinweise.value, freigeben: fr === "1" }), fr === "1" ? "Freigegeben – jetzt „Protokoll-Mail“ vorbereiten." : "Protokoll gespeichert."); }; }
     const sb = $("#bpa-schluss"); if (sb) sb.onclick = () => act(() => api("POST", "auftrag/schluss", { auftrag_id: a.id }), "Schlussrechnung als Entwurf angelegt – prüfen und ausstellen.");
-    $$("[data-bpaabo]").forEach((x) => (x.onclick = () => { const ang = AN.list.find((y) => y.status === "angenommen"), pos = ang && ang.positionen[Number(x.dataset.bpaabo)]; if (!pos) return; const titel = pos.text, cents = pos.cents; const d = new Date(D.today + "T12:00:00Z"); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() + 1);
+    $$("[data-bpaabo]").forEach((x) => (x.onclick = () => { const ang = AN.list.find((y) => y.status === "angenommen"), pos = ang && ang.positionen[Number(x.dataset.bpaabo)]; if (!pos) return; x.disabled = true; const titel = pos.text, cents = pos.cents; const d = new Date(D.today + "T12:00:00Z"); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() + 1);
       act(() => api("POST", "abo", { kunde_id: a.kunde_id, titel, preis: (Number(cents) / 100).toFixed(2).replace(".", ","), rhythmus: "monat", start: d.toISOString().slice(0, 7) }), "Abo angelegt – Rechnungen entstehen unter Brightpage → Abos."); }));
     // Checkliste, Runden
     $$("[data-bpack]").forEach((x) => (x.onchange = () => act(() => api("POST", "auftrag", { id: a.id, checkliste: { [x.dataset.bpack]: x.checked } }), "")));
@@ -590,6 +686,16 @@
     const kx = $("#bpa-kx"); if (kx) kx.onclick = () => { kontaktEdit = false; paint(); };
     const kf = $("#bpa-kontakt"); if (kf) kf.onsubmit = (e) => { e.preventDefault(); act(async () => { await api("POST", "auftrag", { id: a.id, ...Object.fromEntries(new FormData(kf)) }); kontaktEdit = false; }, "Kontakt gespeichert."); };
     // Schritt 8: Nachfassen als nächsten Schritt planen (Martin 21.10.2026)
+    // Widerruf
+    const wrb = $("#bpa-wrbtn"); if (wrb) wrb.onclick = () => { wrNeu = true; paint(); window.scrollTo(0, el.offsetTop); };
+    const wrx = $("#bpa-wrx"); if (wrx) wrx.onclick = () => { wrNeu = false; paint(); };
+    const wrf = $("#bpa-wrneu"); if (wrf) wrf.onsubmit = (e) => { e.preventDefault(); act(async () => { await api("POST", "widerruf", { auftrag_id: a.id, datum: wrf.datum.value, wie: wrf.wie.value, text: wrf.text.value }); wrNeu = false; }, "Widerruf erfasst – jetzt die Punkte abarbeiten."); };
+    $$("[data-bpawrst]").forEach((x) => (x.onclick = () => { if (!confirm("Rechnung wegen Widerruf stornieren? Es entsteht eine Stornorechnung mit eigener Nummer.")) return; act(() => api("POST", "rechnung/storno", { id: x.dataset.bpawrst, grund: "Widerruf" }), "Storniert."); }));
+    $$("[data-bpawrzu]").forEach((x) => (x.onclick = () => { if (!confirm("Erstattung zurücknehmen (Fehlbuchung)?")) return; act(() => api("POST", "rechnung/erstattung", { id: x.dataset.bpawrzu, zurueck: true }), "Erstattung zurückgenommen."); }));
+    $$("[data-bpawrer]").forEach((fm) => (fm.onsubmit = (e) => { e.preventDefault(); act(() => api("POST", "rechnung/erstattung", { id: fm.dataset.bpawrer, betrag: fm.betrag.value, am: fm.am.value, grund: "Widerruf" }), "Erstattung gebucht."); }));
+    const wre = $("#bpa-wrend"); if (wre) wre.onclick = () => act(() => api("POST", "auftrag/status", { id: a.id, status: "verloren", grund: "Widerruf" }), "Auftrag beendet (Widerruf).");
+    // Vorschau-Adresse
+    const vs = $("#bpa-vs"); if (vs) vs.onsubmit = (e) => { e.preventDefault(); act(() => api("POST", "auftrag", { id: a.id, vorschau: vs.vorschau.value.trim() }), "Vorschau-Adresse gespeichert."); };
     const nf8 = $("#bpa-nf8"); if (nf8) nf8.onsubmit = (e) => { e.preventDefault(); const d = nf8.d.value;
       act(async () => { await api("POST", "auftrag", { id: a.id, next_at: d, next_was: "Nachfassen: Ist der Kunde zufrieden?" }); await api("POST", "auftrag/notiz", { id: a.id, text: `Nachfassen geplant für ${dat(d)}` }); }, `Nachfassen am ${dat(d)} geplant.`); };
     const nfok = $("#bpa-nfok"); if (nfok) nfok.onclick = () => act(async () => { await api("POST", "auftrag", { id: a.id, next_at: "", next_was: "" }); await api("POST", "auftrag/notiz", { id: a.id, text: "Nachgefasst – erledigt" }); }, "Nachfassen erledigt.");
@@ -615,9 +721,9 @@
 
   // Zurück im Browserfenster (z. B. nach dem Mailprogramm): Daten still neu laden, damit Kundenaktionen ohne Refresh sichtbar sind.
   // Nicht, solange etwas bearbeitet wird (Angebot, Mail, Zahlung, Kontakt) oder ein Eingabefeld den Fokus hat.
-  let lastSync = 0;
+  let lastSync = 0, dirty = false;   // dirty: ungespeicherte Eingabe im Auftrag (Nachttest D-2.2) – dann nicht neu zeichnen
   async function sync() {
-    if (!el || !el.isConnected || !D || edit || mailDlg || payFor || kontaktEdit || neu) return;
+    if (!el || !el.isConnected || !D || edit || mailDlg || payFor || kontaktEdit || neu || wrNeu || dirty) return;
     const ae = document.activeElement; if (ae && el.contains(ae) && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return;
     if (Date.now() - lastSync < 5000) return; lastSync = Date.now();
     const y = window.scrollY;
@@ -629,6 +735,7 @@
   window.BPAuftraege = {
     async mount(target, headers, opts = {}) {
       el = target; H = headers;
+      if (!el.__bpaDirty) { el.__bpaDirty = true; el.addEventListener("input", () => { dirty = true; }); }
       if (opts.open) { open = opts.open; anFor = null; aufSteps = new Set(); }
       if (D) paint(); else el.innerHTML = `<div class="panel"><p class="muted">Lade …</p></div>`;
       try { await reload(); } catch (e) { el.innerHTML = `<div class="panel"><p class="err">${esc(e.message)}</p></div>`; }

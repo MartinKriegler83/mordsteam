@@ -22,6 +22,13 @@
   const want = CASES[fq] ? fq : { "002": "solo-002", plus: "solo-plus-001", "001": "solo-001", halloween: "special-001", special: "special-001", weihnachten: "special-002", christmas: "special-002", xmas: "special-002" }[fq];
   const wi = want && form.querySelector(`input[name=fall][value="${want}"]`);
   if (wi && !wi.closest("label").hidden) wi.checked = true;
+  else if (wi) {   // Wunschfall noch nicht im Verkauf (z. B. Weihnachten vor dem 2.11.): sagen statt still Solo 001 vorzuwählen (Nachttest 22.10. A-M3)
+    const d = wi.closest("label").dataset.from || "", t = d ? d.split("-").reverse().join(".") : "";
+    const n = document.createElement("p"); n.className = "err"; n.setAttribute("role", "status");
+    n.textContent = EN ? `This case can be bought from ${t}. Please choose another case below or come back then.` : `Dieser Fall ist ab ${t} erhältlich. Bitte unten einen anderen Fall wählen oder dann wiederkommen.`;
+    form.insertBefore(n, form.firstChild);
+    form.querySelectorAll("input[name=fall]").forEach((x) => { x.checked = false; });
+  }
   const eur = (c) => (EN ? "€" + (c / 100).toFixed(2) : (c / 100).toFixed(2).replace(".", ",") + " €");
   const paint = () => {
     document.getElementById("sofortbox").hidden = form.kunde.value !== "b2c";
@@ -66,6 +73,7 @@
     const contact = { name: form.c_name.value.trim(), email: form.c_email.value.trim(), kunde: form.kunde.value, ...(window.MSBill ? MSBill.read() : {}) };
     const consent = { sofort: form.sofort.checked, agb: form.agb.checked, ab18: form.ab18.checked, no_news: !!(form.no_news && form.no_news.checked) };
     const fall = form.fall.value;
+    if (!CASES[fall]) return fail(T("Bitte einen Fall wählen.", "Please choose a case."), form.querySelector("input[name=fall]"));
     if (contact.name.length < 2) return fail(T("Bitte deinen Namen angeben.", "Please enter your name."), form.c_name);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) return fail(T("Bitte eine gültige E-Mail-Adresse angeben.", "Please enter a valid email address."), form.c_email);
     if (!contact.kunde) return fail(T("Bitte angeben, ob du als Privatperson oder für ein Unternehmen bestellst.", "Please tell us whether you are ordering as a private individual or for a company."), form.kunde[0]);

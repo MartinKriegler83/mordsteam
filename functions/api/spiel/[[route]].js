@@ -832,7 +832,7 @@ async function adminExport(request, env) {
   const { results } = await env.DB.prepare(
     "SELECT * FROM orders WHERE status IN ('paid','fulfilling','fulfilled','refunded','withdrawn') AND paid_at BETWEEN ? AND ? ORDER BY paid_at").bind(from, to).all();
   const P = { basis: "Teams Basic", premium: "Teams Premium", plus: "Teams Premium Plus", solo: "Mordsteam Solo", friends: "Friends Krimiabend", "friends-plus": "Friends Plus" };
-  const q = (x) => { let t = String(x ?? ""); if (/^[=+@\t\r]/.test(t) || /^-[^\d]/.test(t)) t = "'" + t; return /[;"\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };   // Excel-Formeln entschärfen (Nachttest 21.10. A-M3)
+  const q = (x) => { let t = String(x ?? ""); if (/^[=+@\t\r-]/.test(t) && !/^-?\d+([.,]\d+)?$/.test(t)) t = "'" + t; return /[;"\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };   // Excel-Formeln entschärfen (Nachttest 21.10. A-M3)
   const d = (ms) => new Intl.DateTimeFormat("de-AT", { timeZone: "Europe/Vienna", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(ms));
   const e = (c) => (c == null ? "" : (c / 100).toFixed(2).replace(".", ","));
   const lines = [["Datum (bezahlt)", "Rechnungsnr. (Stripe)", "Bestell-ID", "Kunde / Firma", "Produkt", "Anzahl", "Early Bird", "Kundenart", "Land", "Region", "Kunde zahlt (€)", "Gebühr (€)", "Auszahlung netto (€)", "fremde USt (€)", "Umsatz/Einnahme (€)", "Zahlungsweg", "Rechnungsart", "UID Kunde", "bezahlt in Fremdwährung", "erstattet (€)", "Status", "Kartenland (Stripe)", "Adressland (Stripe)"].join(";")];

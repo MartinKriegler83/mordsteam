@@ -5,6 +5,7 @@
 // Rechnung ansehen/drucken: eigenes Fenster mit A4-Layout und QR-Code „Zahlen mit Code“ (EPC/GiroCode) → „Drucken → Als PDF sichern“.
 (function () {
   const esc = (x) => MS.esc(String(x ?? ""));
+  const netto = (r) => (r.bezahlt_cents || 0) - (r.erstattet_cents || 0);   // Nachttest 22.10.: Erstattungen abziehen
   const eur = (c) => (c == null ? "–" : (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €");
   const num = (c) => (c / 100).toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const dat = (ymd) => (ymd ? ymd.split("-").reverse().join(".") : "–");
@@ -91,7 +92,7 @@
         const st = STATUS[r.status] || [r.status, ""], late = r.status === "offen" && r.faellig && r.faellig < D.today;
         return `<tr><td class="mono">${esc(r.nr || "–")}</td><td>${dat(r.datum)}</td><td>${esc(kName(r.kunde))}${r.titel ? `<br><span class="muted">${esc(r.titel)}</span>` : ""}</td>
           <td>${TYP[r.typ] || r.typ}${r.regime !== "ku" ? `<br><span class="muted">${esc(r.regime)}</span>` : ""}</td><td class="mono" style="text-align:right">${eur(r.summe_cents)}${r.status === "bezahlt" && r.bezahlt_cents !== r.summe_cents ? `<br><span class="muted">bezahlt ${eur(r.bezahlt_cents)}</span>` : ""}</td>
-          <td><span class="chip ${st[1]}">${st[0]}</span>${late ? `<br><span style="color:var(--red)">fällig ${dat(r.faellig)}</span>` : r.status === "offen" ? `<br><span class="muted">fällig ${dat(r.faellig)}</span>` : r.status === "bezahlt" ? `<br><span class="muted">${dat(r.bezahlt_am)}</span>` : r.storno_nr ? `<br><span class="muted">${esc(r.storno_nr)}</span>` : ""}</td>
+          <td><span class="chip ${st[1]}">${st[0]}</span>${late ? `<br><span style="color:var(--red)">fällig ${dat(r.faellig)}</span>` : r.status === "offen" ? `<br><span class="muted">fällig ${dat(r.faellig)}</span>` : r.status === "bezahlt" ? `<br><span class="muted">${dat(r.bezahlt_am)}</span>${r.erstattet_cents ? `<br><span style="color:var(--red)">erstattet ${eur(r.erstattet_cents)} am ${dat(r.erstattet_am)}</span>` : ""}` : r.storno_nr ? `<br><span class="muted">${esc(r.storno_nr)}</span>` : ""}</td>
           <td style="white-space:nowrap">
             <button class="tipbtn" data-bpshow="${r.id}">${r.status === "entwurf" ? "Vorschau" : "Ansehen / PDF"}</button>${r.nr ? `<button class="tipbtn" data-bplink="${r.id}">Kundenlink</button>` : ""}
             ${r.status === "entwurf" ? `<button class="tipbtn" data-bpedit="${r.id}">Bearbeiten</button><button class="tipbtn" data-bpissue="${r.id}">Ausstellen</button><button class="tipbtn" data-bpdel="${r.id}">Löschen</button>` : ""}
@@ -174,7 +175,7 @@
     const k = kundeOpen && D.kunden.find((x) => x.id === kundeOpen);
     if (k) {
       const R = D.rechnungen.filter((r) => r.kunde_id === k.id), A = (D.auftraege || []).filter((x) => x.kunde_id === k.id), B = D.abos.filter((x) => x.kunde_id === k.id);
-      const bez = R.filter((r) => r.status === "bezahlt").reduce((a, r) => a + r.bezahlt_cents, 0), off = R.filter((r) => r.status === "offen").reduce((a, r) => a + r.summe_cents, 0);
+      const bez = R.filter((r) => r.status === "bezahlt").reduce((a, r) => a + netto(r), 0), off = R.filter((r) => r.status === "offen").reduce((a, r) => a + r.summe_cents, 0);
       return `<div class="panel"><p style="margin:0 0 6px"><a href="#" id="bp-kback">← Alle Kunden</a></p>
           <h2 style="margin:4px 0">${esc(kName(k))}</h2><p class="small muted">${esc(D.regime_label[k.regime])}${k.uid ? " · " + esc(k.uid) : ""} · Kunde seit ${new Date(k.created_at).toLocaleDateString("de-AT")}</p>
           <div class="kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:8px"><div><div class="small">Umsatz bezahlt</div><b class="mono">${eur(bez)}</b></div><div><div class="small">Offen</div><b class="mono">${eur(off)}</b></div><div><div class="small">Aufträge</div><b class="mono">${A.length}</b></div><div><div class="small">Abos aktiv</div><b class="mono">${B.filter((b) => b.aktiv).length}</b></div></div></div>
@@ -191,7 +192,7 @@
         <input id="bp-ksuche" placeholder="Suchen: Name, Firma, Ort, E-Mail" value="${esc(kSuche)}" style="flex:1;min-width:200px"></div>
       <p class="small" style="margin-top:8px">Brightpage-Kunden – getrennt von den Mordsteam-Kunden (Tab „Kunden &amp; Newsletter“). Wer ein Angebot online annimmt, landet automatisch hier.</p>
       ${L.length ? `<div style="overflow-x:auto;margin-top:10px"><table class="grid small"><tr><th>Kunde</th><th>Kontakt</th><th>Ort</th><th>Aufträge</th><th style="text-align:right">Umsatz</th><th style="text-align:right">offen</th></tr>
-        ${L.map((x) => { const R = D.rechnungen.filter((r) => r.kunde_id === x.id), u = R.filter((r) => r.status === "bezahlt").reduce((a, r) => a + r.bezahlt_cents, 0), o = R.filter((r) => r.status === "offen").reduce((a, r) => a + r.summe_cents, 0), A = (D.auftraege || []).filter((y) => y.kunde_id === x.id);
+        ${L.map((x) => { const R = D.rechnungen.filter((r) => r.kunde_id === x.id), u = R.filter((r) => r.status === "bezahlt").reduce((a, r) => a + netto(r), 0), o = R.filter((r) => r.status === "offen").reduce((a, r) => a + r.summe_cents, 0), A = (D.auftraege || []).filter((y) => y.kunde_id === x.id);
           return `<tr style="cursor:pointer" data-bpkopen="${x.id}"><td><b>${esc(kName(x))}</b>${x.art === "b2b" && x.name ? `<br>${esc(x.name)}` : ""}</td><td>${esc(x.email || "")}${x.telefon ? `<br>${esc(x.telefon)}` : ""}</td><td>${esc(((x.plz || "") + " " + (x.ort || "")).trim())} · ${esc(x.land)}</td>
             <td>${A.map((y) => esc(STN[y.status] || y.status)).join("<br>") || "–"}</td><td class="mono" style="text-align:right">${eur(u)}</td><td class="mono" style="text-align:right;${o ? "color:var(--red)" : ""}">${o ? eur(o) : "–"}</td></tr>`; }).join("")}</table></div>` : `<p class="muted" style="margin-top:10px">${q ? "Keine Treffer." : "Noch keine Kunden."}</p>`}</div>`;
   }
@@ -232,10 +233,10 @@
     const P = D.rechnungen.filter((r) => r.status === "bezahlt" && (r.bezahlt_am || "").startsWith(y));
     const art = (r) => (r.abo_id ? "abo" : r.typ === "anzahlung" ? "anzahlung" : r.typ === "schluss" ? "schluss" : "einzel");
     const COL = [["anzahlung", "Anzahlungen"], ["schluss", "Schlussrechnungen"], ["einzel", "Einzelrechnungen"], ["abo", "Abos"]];
-    const rows = MON.map((m, i) => { const mm = `${y}-${String(i + 1).padStart(2, "0")}`, R = P.filter((r) => r.bezahlt_am.slice(0, 7) === mm), c = {}; COL.forEach(([k]) => (c[k] = R.filter((r) => art(r) === k).reduce((a, r) => a + r.bezahlt_cents, 0))); return { m, c, sum: R.reduce((a, r) => a + r.bezahlt_cents, 0) }; });
+    const rows = MON.map((m, i) => { const mm = `${y}-${String(i + 1).padStart(2, "0")}`, R = P.filter((r) => r.bezahlt_am.slice(0, 7) === mm), c = {}; COL.forEach(([k]) => (c[k] = R.filter((r) => art(r) === k).reduce((a, r) => a + netto(r), 0))); return { m, c, sum: R.reduce((a, r) => a + netto(r), 0) }; });
     const tot = {}; COL.forEach(([k]) => (tot[k] = rows.reduce((a, r) => a + r.c[k], 0))); const total = rows.reduce((a, r) => a + r.sum, 0);
     const offen = D.rechnungen.filter((r) => r.status === "offen"), late = offen.filter((r) => r.faellig && r.faellig < D.today);
-    const top = D.kunden.map((k) => [k, P.filter((r) => r.kunde_id === k.id).reduce((a, r) => a + r.bezahlt_cents, 0)]).filter((x) => x[1]).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const top = D.kunden.map((k) => [k, P.filter((r) => r.kunde_id === k.id).reduce((a, r) => a + netto(r), 0)]).filter((x) => x[1]).sort((a, b) => b[1] - a[1]).slice(0, 10);
     return `<div class="panel"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div class="eyebrow" style="margin:0">Einnahmen Brightpage</div><select id="bp-ejahr">${jahre.map((j) => `<option ${j === y ? "selected" : ""}>${j}</option>`).join("")}</select></div>
         <div class="kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px">
           <div><div class="small">Bezahlt ${y}</div><b class="mono">${eur(total)}</b></div><div><div class="small">Offen (${offen.length})</div><b class="mono">${eur(offen.reduce((a, r) => a + r.summe_cents, 0))}</b></div>

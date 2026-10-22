@@ -141,6 +141,18 @@ Webdesign unter der Mordsteam e.U. – eine Firma, eine Buchhaltung. Dateien: `l
 - Buchhaltung: `bpPaidRows()` liefert bezahlte Rechnungen im Format der Bestellungen (`pay_provider` `bp`, Zufluss am Zahlungstag) – eingebunden in `accountingSummary` (Einnahmen, Kleinunternehmergrenze, U30, ZM) und `ledgerYear` (E/A-Rechnung).
 - Pflege-Abos: je Kunde, monatlich/vierteljährlich/jährlich im Voraus; „Als Entwürfe anlegen“ erzeugt für jeden begonnenen Zeitraum ohne Rechnung einen Entwurf.
 - Rechnung ansehen: eigenes Fenster (A4, DE/EN), QR-Code „Zahlen mit Code“ (EPC, UTF-8) bei offenen Rechnungen, „Drucken → Als PDF sichern“. Absender, IBAN, Firmenbuch unter „Einstellungen“ (nicht im Code); eigene UID aus `UID_NR`.
+- Erstattung (22.10.2026): bezahlte Rechnungen lassen sich nicht stornieren, aber erstatten (`POST admin/rechnung/erstattung` mit Betrag, Datum, Grund; `zurueck:true` nimmt eine Fehlbuchung zurück). Spalten `erstattet_cents`, `erstattet_am`, `erstattet_grund`; `bpPaidRows` gibt sie als `refunded_cents` weiter → E/A-Rechnung, KU-Grenze und U30 zählen nur den behaltenen Betrag (wie Erstattungen im Shop, im Zahlungsmonat).
+- Einstellungen enthalten auch den Google-Bewertungslink (`bewertung_link`, nur g.page/google-Adressen) für die Bewertungs-Mail.
+
+### Brightpage-Auftragsablauf (Tab „Brightpage“ → Aufträge, 20.–22.10.2026)
+Dateien: `lib/bpauftrag.js` (Tabelle `bp_auftraege`, Stationen, Checklisten `CHECK`, Leitfaden, Warnungen, `bpInfoMail`), `lib/bpangebot.js` (Angebote `bp_angebote`, Vorlagen, Annahme mit zwei Häkchen für vorzeitigen Beginn, AGB-Texte `bedingungen()`/`widerruf()`), `lib/bpkunde.js` (Kundenseiten `/api/bp/public/k/*`: Auftragsformular, Anleitungen, AV, AGB, Widerrufsformular und Widerrufsbutton `bp_widerrufe`, Übergabeprotokoll), `lib/bpbesuch.js` (Besucherzähler `bp_besuche` ohne Cookies), `site/spiel/admin-bpa.js` (8 Schritte, Mails per Kopieren).
+- Kundenseiten erreicht der Kunde über brightpage.net/k/* (Durchreicher im Brightpage-Repo mit `BP_INBOX_KEY`).
+- Info-Mails an office@brightpage.net (nie an Kunden): Angebot angenommen, Auftragsformular eingereicht/geändert, Übergabe bestätigt. Automatisch an Kunden geht nur die Eingangsbestätigung eines Online-Widerrufs.
+- Admin merkt den offenen Auftrag (`sessionStorage bpa_open`) und lädt beim Zurückkehren ins Fenster still neu (nicht während Bearbeitung).
+- Checklisten: Web Premium und Shops erben die Web-Start-Punkte (Schlüssel bleiben `web-start:…`); Schritt 5 zeigt „Vorschau und Korrekturen“ zuletzt, Abo-Punkte (`…:abo`) stehen in Schritt 7. Vorschau-Adresse je Auftrag (`bp_auftraege.vorschau`, nur https) geht in die Vorschau-Mail; Kopieren der Vorschau-Mail hakt „Vorschau geschickt“ ab.
+- Verbraucher ohne vorzeitigen Beginn: Hinweis mit Fristende (Annahme + 14 Tage) und Arbeitsbeginn ab Tag 17, Warnung beim Wechsel auf „Bau“.
+- Widerruf: Panel im Auftrag, sobald ein Widerruf zum Auftrag existiert (online oder „von Hand erfassen“, `POST admin/widerruf`): Eingangsbestätigung, offene Rechnungen stornieren, Bezahltes erstatten (Frist 14 Tage ab Eingang), Auftrag auf „Verloren“, Abschluss-Mail; Warnung, wenn der Kunde Unternehmer ist.
+- Schritt 8: Nachfassen „Ist der Kunde zufrieden?“ als nächster Schritt mit Datum; abgeschlossene Aufträge erscheinen nur mit eingetragenem nächsten Schritt in den Hinweisen.
 
 ## API-Routen
 
@@ -270,6 +282,8 @@ Voraussetzung: Node.js. Wrangler wird per `npx` geladen.
    node tools/check_special001.mjs && node tools/check_special001.mjs en
    node tools/check_soloplus.mjs
    node tools/check_friends.mjs
+   node tools/check_special002.mjs                                        # Weihnachts-Special Solo (DE und EN)
+   node tools/check_friends002.mjs                                        # Friends 002 „Vier Minuten Finsternis“
    for f in tools/check_*_en.mjs; do node $f; done
    ```
    Alle müssen ohne „FEHLER“ enden. `check_teams.mjs` und `check_teams002.mjs` rufen zusätzlich zwei Wächter auf: `tools/regio_guard.mjs` (keine österreichischen Wörter in DE/CH/LI-Runden) und `tools/answer_guard.mjs` (die richtigen Antworten jeder Stufe zählen über `checkAnswers` als richtig, falsche und Vornamen anderer Personen als falsch – in allen Paketen, Sprachen und Ländern).
