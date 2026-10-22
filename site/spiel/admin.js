@@ -19,7 +19,13 @@
     return `<div class="panel"><div class="eyebrow">Specials-Seite · wo steigen Besucher aus?</div>
       <div style="overflow-x:auto;margin-top:10px"><table class="grid small"><tr><th>Schritt (letzte 30 Tage)</th><th>Deutsch</th><th>Englisch</th></tr>
       ${rows.map(([k, l]) => `<tr><td>${l}</td><td class="mono">${cell(de[k] || {}, (de.view || {}).n30)}</td><td class="mono">${cell(en[k] || {}, (en.view || {}).n30)}</td></tr>`).join("")}</table></div>
-      <p class="small">Prozent = Anteil der geladenen Seiten. Gezählt wird nur Seite und Ereignis, ohne Cookies und ohne Personendaten${F.since ? `, seit ${new Date(F.since).toLocaleDateString("de-AT")}` : ""}. Käufe stehen oben unter „Werbung“ und in den Bestellungen.</p></div>`;
+      <p class="small">Prozent = Anteil der geladenen Seiten. Gezählt wird nur Seite und Ereignis, ohne Cookies und ohne Personendaten${F.since ? `, seit ${new Date(F.since).toLocaleDateString("de-AT")}` : ""}. Käufe stehen oben unter „Werbung“ und in den Bestellungen.</p></div>`
+      + (() => { const hd = P["home-de"] || {}, he = P["home-en"] || {}; if (!(hd.view || {}).n && !(he.view || {}).n) return "";
+        const R2 = [["view", "Seite geladen"], ["name", "Vorname in die Akte getippt"], ["s50", "halb gescrollt"], ["fall", "Klick „Fall wählen“ / „Zu Mordsteam …“"], ["s90", "bis unten gescrollt"]];
+        return `<div class="panel"><div class="eyebrow">Startseite · Bewegung wirkt?</div>
+        <div style="overflow-x:auto;margin-top:10px"><table class="grid small"><tr><th>Schritt (letzte 30 Tage)</th><th>Deutsch</th><th>Englisch</th></tr>
+        ${R2.map(([k, l]) => `<tr><td>${l}</td><td class="mono">${cell(hd[k] || {}, (hd.view || {}).n30)}</td><td class="mono">${cell(he[k] || {}, (he.view || {}).n30)}</td></tr>`).join("")}</table></div>
+        <p class="small">Gezählt seit 22.10.2026 (Bewegung auf der Startseite). Wichtigste Zahl: Anteil „Klick Fall wählen“.</p></div>`; })();
   }
 
   function keyView(e) {

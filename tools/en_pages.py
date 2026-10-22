@@ -62,6 +62,7 @@ def page(name, title, desc, body, robots=None, scripts="", home=False, promo=Fal
 </div></header>
 {body}
 {scripts}
+<script src="/assets/bewegung.js?v=1" defer></script>
 <footer class="footer"><div class="wrap">
 <span class="brand"><span class="wm"><span class="wm-r">MORDS</span>TEAM</span></span>
 <nav aria-label="Legal"><a href="newsletter.html">Newsletter</a><a href="imprint.html">Imprint</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Contact</a><a href="withdraw.html">Withdraw from contract</a></nav>
@@ -253,7 +254,7 @@ P["teams"] = dict(title="Mordsteam Teams – the personalised murder-mystery tea
 </div></section>
 </main>''')
 
-P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=True, scripts='<script src="/assets/aktion.js"></script>',
+P["index"] = dict(title="Mordsteam – Today, you’re the detectives", home=True, scripts='<script src="/assets/aktion.js"></script>\n<script src="/assets/funnel.js?v=1" data-page="home-en" defer></script>',
  desc="Personalised murder-mystery games to play: as a team event for companies and clubs, with friends or on your own. In the browser, no game master.",
  body='''<main id="top">
 <section class="bh" aria-labelledby="bh-t"><div class="wrap">
