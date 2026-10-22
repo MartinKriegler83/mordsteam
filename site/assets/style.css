@@ -699,14 +699,12 @@ html[lang="en"] .bw-akte::before{content:"CASE FILE · CONFIDENTIAL"}
 @keyframes bwSmark{to{opacity:1;transform:rotate(7deg) scale(1)}}
 
 .bw-steps{position:relative}
-.bw-pin,.bw-thread{display:none}
-@media (min-width:760px){
-  .bw-steps .step{position:relative}
-  .bw-pin{display:block;position:absolute;top:-8px;left:50%;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:var(--red);box-shadow:0 2px 0 rgba(0,0,0,.3);z-index:2}
-  .bw-thread{display:block;position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:1}
-  .bw-thread path{fill:none;stroke:var(--red);stroke-width:2.5;stroke-linecap:round;stroke-dasharray:var(--bw-len,1500);stroke-dashoffset:var(--bw-len,1500);transition:stroke-dashoffset 1.6s ease}
-  .bw-thread.bw-in path{stroke-dashoffset:0}
-}
+.bw-steps .step{position:relative}
+.bw-pin{display:block;position:absolute;top:-8px;left:0;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:var(--red);box-shadow:0 2px 0 rgba(0,0,0,.3);z-index:2}
+.bw-thread{display:block;position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:1}
+.bw-thread path{fill:none;stroke:var(--red);stroke-width:2.5;stroke-linecap:round;stroke-dasharray:var(--bw-len,1500);stroke-dashoffset:var(--bw-len,1500);transition:stroke-dashoffset 2s ease}
+.bw-thread.bw-in path{stroke-dashoffset:0}
+@media (min-width:760px){.bw-pin{left:50%}.bw-thread path{transition-duration:1.6s}}
 
 .bw-lights{display:flex;gap:clamp(8px,1.6vw,14px);flex-wrap:wrap;margin:6px 0 0}
 .bw-lights i{width:12px;height:12px;border-radius:50%;background:#FFD27A;box-shadow:0 0 10px 3px rgba(255,190,90,.65);transition:background .25s,box-shadow .25s}

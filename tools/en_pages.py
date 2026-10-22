@@ -543,7 +543,7 @@ P["friends-buy"] = dict(title="Order Friends – Mordsteam", robots="noindex", d
 <fieldset class="step"><legend><span>1</span> Which case, which version?</legend>
 <div class="field"><span class="label">Case *</span>
 <label class="check"><input type="radio" name="fall" value="friends-001" checked><span><b>Last Round at the Chalet</b> · Friends 001 · A snowed-in chalet weekend; in the morning the landlord lies dead in the sauna.</span></label>
-<label class="check" id="fall002"><input type="radio" name="fall" value="friends-002"><span><b>🎄 Four Minutes Dark</b> · Christmas special · You run the punch stall at the Christmas market – four minutes of darkness, and the donation box is gone. Mystery Night, 50 min, without quirks. <em id="f2from" hidden>Available to order from 2 November.</em></span></label></div>
+<label class="check" id="fall002"><input type="radio" name="fall" value="friends-002"><span><b>🎄 Four Minutes Dark</b> · Christmas special · You run the punch stall at the Christmas market – four minutes of darkness, and the donation box is gone. Mystery Night, 50 min, without quirks. <em id="f2from" hidden>Available to order from 1 November.</em></span></label></div>
 <label class="check"><input type="radio" name="variant" value="basis" checked><span><b>Mystery Night</b> · 50-minute countdown · from <span data-eur="2900">€29</span> (up to 4 people, +<span data-eur="500">€5</span> per extra person)</span></label>
 <label class="check" id="plusopt"><input type="radio" name="variant" value="plus"><span><b>Mystery Night Plus</b> · 75-minute countdown · from <span data-eur="4900">€49</span> (up to 4 people, +<span data-eur="800">€8</span> per extra person) – with AI interrogation room: you question the AI doubles of your friends. 18+.</span></label>
 <div class="field"><label for="lang">Game language *</label>
@@ -780,7 +780,7 @@ P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy
 <label class="check"><input type="radio" name="fall" value="solo-001" checked><span><b>Night Train to Venice</b> · Solo 001 · 40-minute countdown · €8.90</span></label>
 <label class="check"><input type="radio" name="fall" value="solo-002"><span><b>Applause for a Dead Man</b> · Solo 002 · 35-minute countdown · €8.90</span></label>
 <label class="check"><input type="radio" name="fall" value="solo-plus-001"><span><b>The Last Vintage</b> · Solo Plus · 45-minute countdown · €15.90 – with AI interrogation room, ages 18+</span></label>
-<label class="check" data-from="2026-11-02" hidden><input type="radio" name="fall" value="special-002"><span><b>Four Minutes Dark</b> · Christmas Special · 50-minute countdown · €8.90</span></label>
+<label class="check" data-from="2026-11-01" hidden><input type="radio" name="fall" value="special-002"><span><b>Four Minutes Dark</b> · Christmas Special · 50-minute countdown · €8.90</span></label>
 <label class="check"><input type="radio" name="fall" value="special-001"><span><b>Trick or Treat</b> · Halloween Special · 50-minute countdown · €8.90</span></label>
 <div class="field"><label for="lang">Game language *</label>
 <select id="lang" name="lang"><option value="en">English</option><option value="de">German</option></select>

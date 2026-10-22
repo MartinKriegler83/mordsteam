@@ -393,7 +393,7 @@ async function soloBestellung(request, env) {
   const s = (x, max = 120) => String(x ?? "").trim().slice(0, max);
   if (b.fall && !own(SOLO_OFFERS, b.fall)) throw new InputError(L(site, "Diesen Fall gibt es nicht – bitte im Formular einen Fall auswählen.", "This case doesn’t exist – please choose a case in the form."));
   const fall = own(SOLO_OFFERS, b.fall) ? b.fall : "solo-001", F = SOLO_OFFERS[fall];
-  if (notYetOnSale(request, fall)) throw new InputError(L(site, "Das Weihnachts-Special gibt es ab 2. November – bitte einen anderen Fall wählen.", "The Christmas Special is available from 2 November – please choose another case."));
+  if (notYetOnSale(request, fall)) throw new InputError(L(site, "Das Weihnachts-Special gibt es ab 1. November – bitte einen anderen Fall wählen.", "The Christmas Special is available from 1 November – please choose another case."));
   const contact = { name: s(k.name), email: s(k.email, 160).toLowerCase(), lang: b.lang === "en" ? "en" : "de", site, produkt: fall };
   const GL = contact.lang === "en" ? L(site, "Englisch", "English") : L(site, "Deutsch", "German");
   if (!["b2b", "b2c"].includes(k.kunde)) throw new InputError(L(site, "Bitte angeben, ob du als Privatperson oder für ein Unternehmen bestellst.", "Please tell us whether you are ordering as a private individual or for a company."));
@@ -456,7 +456,7 @@ async function soloBestellung(request, env) {
 // auf Vorschau-/Testhosts (pages.dev, localhost) immer, damit vorher getestet werden kann. plus = Krimiabend Plus möglich.
 export const FRIENDS_OFFERS = {
   "friends-001": { nr: "001", de: "Letzte Runde auf der Hütte", en: "Last Round at the Chalet", h2: ["Die Hütte wartet.", "The chalet is waiting."], plus: true, quirks: true },
-  "friends-002": { nr: "002", de: "Vier Minuten Finsternis", en: "Four Minutes Dark", h2: ["Der Christkindlmarkt wartet.", "The Christmas market is waiting."], plus: false, quirks: false, from: "2026-11-02", special: true },
+  "friends-002": { nr: "002", de: "Vier Minuten Finsternis", en: "Four Minutes Dark", h2: ["Der Christkindlmarkt wartet.", "The Christmas market is waiting."], plus: false, quirks: false, from: "2026-11-01", special: true },
 };
 const friendsOffer = (id) => (own(FRIENDS_OFFERS, id) ? FRIENDS_OFFERS[id] : FRIENDS_OFFERS["friends-001"]);
 const friendsCaseId = (id) => (own(FRIENDS_OFFERS, id) && FRIENDS_CASES[id] ? id : "friends-001");

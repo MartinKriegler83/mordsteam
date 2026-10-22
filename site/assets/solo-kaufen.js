@@ -14,7 +14,7 @@
     "special-002": { p: 890, de: "Mordsteam Special „Vier Minuten Finsternis“ · Weihnachten · Countdown 50 Min.", en: "Mordsteam Special “Four Minutes Dark” · Christmas · 50-minute countdown" },
     "solo-plus-001": { p: 1590, plus: true, de: "Mordsteam Solo Plus „Der letzte Jahrgang“ · Countdown 45 Min. · mit KI-Verhörraum", en: "Mordsteam Solo Plus “The Last Vintage” · 45-minute countdown · with AI interrogation room" },
   };
-  // Fälle mit Verkaufsstart (Weihnachts-Special ab 2.11.2026, Wiener Zeit): vorher nur auf der Vorschau sichtbar – der Server prüft es ebenso
+  // Fälle mit Verkaufsstart (Weihnachts-Special ab 1.11.2026, Wiener Zeit): vorher nur auf der Vorschau sichtbar – der Server prüft es ebenso
   const vienna = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Vienna" }).format(new Date());
   const live = /^(www\.)?mordsteam\.com$/.test(location.hostname);
   form.querySelectorAll("label[data-from]").forEach((l) => { l.hidden = live && vienna < l.dataset.from; });
@@ -22,7 +22,7 @@
   const want = CASES[fq] ? fq : { "002": "solo-002", plus: "solo-plus-001", "001": "solo-001", halloween: "special-001", special: "special-001", weihnachten: "special-002", christmas: "special-002", xmas: "special-002" }[fq];
   const wi = want && form.querySelector(`input[name=fall][value="${want}"]`);
   if (wi && !wi.closest("label").hidden) wi.checked = true;
-  else if (wi) {   // Wunschfall noch nicht im Verkauf (z. B. Weihnachten vor dem 2.11.): sagen statt still Solo 001 vorzuwählen (Nachttest 22.10. A-M3)
+  else if (wi) {   // Wunschfall noch nicht im Verkauf (z. B. Weihnachten vor dem 1.11.): sagen statt still Solo 001 vorzuwählen (Nachttest 22.10. A-M3)
     const d = wi.closest("label").dataset.from || "", t = d ? d.split("-").reverse().join(".") : "";
     const n = document.createElement("p"); n.className = "err"; n.setAttribute("role", "status");
     n.textContent = EN ? `This case can be bought from ${t}. Please choose another case below or come back then.` : `Dieser Fall ist ab ${t} erhältlich. Bitte unten einen anderen Fall wählen oder dann wiederkommen.`;

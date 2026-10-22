@@ -48,11 +48,17 @@
     cards.forEach(function (c, i) {
       if (c.getBoundingClientRect().top < vh * 0.9) return;   // schon im Bild → nicht verstecken
       c.style.setProperty("--bw-r", ["-4deg", "3deg", "-2.5deg"][i % 3]);
-      c.style.setProperty("--bw-d", (i % 3) * 0.12 + "s");
       c.classList.add("bw-wait");
     });
-    var wait = document.querySelector(".games");
-    if (wait) once(wait, function () { cards.forEach(function (c) { if (c.classList.contains("bw-wait")) c.classList.add("bw-in"); }); }, 0.15);
+    // Jede Karte einzeln, wenn sie selbst ins Bild kommt (am Handy untereinander); kommen mehrere zugleich, kurz versetzt
+    var oc = new IntersectionObserver(function (es) {
+      var n = 0;
+      es.forEach(function (e) {
+        if (!e.isIntersecting || !e.target.classList.contains("bw-wait")) return;
+        e.target.style.setProperty("--bw-d", (n++ * 0.15) + "s"); e.target.classList.add("bw-in"); oc.unobserve(e.target);
+      });
+    }, { threshold: 0.25 });
+    cards.forEach(function (c) { if (c.classList.contains("bw-wait")) oc.observe(c); });
   }
 
   // ---------- 3 Der rote Faden ----------
@@ -64,17 +70,19 @@
     var NS = "http://www.w3.org/2000/svg", svg = document.createElementNS(NS, "svg"), path = document.createElementNS(NS, "path");
     svg.setAttribute("class", "bw-thread"); svg.setAttribute("aria-hidden", "true"); svg.appendChild(path); st.appendChild(svg);
     var draw = function () {
-      var r = st.getBoundingClientRect(), d = "", px = 0;
+      var r = st.getBoundingClientRect(), d = "", px = 0, py = 0;
       st.querySelectorAll(".bw-pin").forEach(function (p, i) {
         var q = p.getBoundingClientRect(), x = q.left - r.left + q.width / 2, y = q.top - r.top + q.height / 2;
-        d += i ? " Q " + (px + (x - px) / 2) + " " + (y + 34) + " " + x + " " + y : "M " + x + " " + y; px = x;
+        // nebeneinander: Faden hängt nach unten durch; untereinander (Handy): Faden schwingt leicht nach links aus
+        d += !i ? "M " + x + " " + y : Math.abs(x - px) > 40 ? " Q " + (px + (x - px) / 2) + " " + (y + 34) + " " + x + " " + y : " Q " + (x - 14) + " " + (py + (y - py) / 2) + " " + x + " " + y;
+        px = x; py = y;
       });
       path.setAttribute("d", d);
       var len = path.getTotalLength ? Math.ceil(path.getTotalLength()) : 1500;
       svg.style.setProperty("--bw-len", len);
     };
     draw(); addEventListener("resize", draw);
-    once(st, function () { draw(); svg.classList.add("bw-in"); }, 0.4);
+    once(st, function () { draw(); svg.classList.add("bw-in"); }, window.innerWidth < 760 ? 0.15 : 0.4);
   });
 
   // ---------- 4 Der Markt wird dunkel (nur Weihnachts-Abschnitt der Startseite) ----------
