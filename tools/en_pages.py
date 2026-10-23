@@ -569,8 +569,8 @@ P["friends-buy"] = dict(title="Order Friends – Mordsteam", robots="noindex", d
 <div class="field"><label for="c_email">Email *</label><input id="c_email" name="c_email" type="email" maxlength="160" autocomplete="email"><span class="hint">We'll send the links and the invoice here.</span></div>
 </div>
 <div class="field"><span class="label">You are ordering as *</span>
-<label class="check"><input type="radio" name="kunde" value="b2c"><span>Private individual</span></label>
-<label class="check"><input type="radio" name="kunde" value="b2b"><span>Company, club or organisation</span></label>
+<label class="check"><input type="radio" name="kunde" value="b2c"><span>Private individual or club without a VAT number</span></label>
+<label class="check"><input type="radio" name="kunde" value="b2b"><span>Company, organisation or club with a VAT number</span></label>
 <span class="hint">Private individuals have the statutory right of withdrawal (see <a href="terms.html#ruecktritt" target="_blank" rel="noopener">terms section 8</a>).</span></div>
 <div id="billbox"></div>
 </fieldset>
@@ -793,8 +793,8 @@ P["solo-buy"] = dict(title="Buy Solo – Mordsteam", robots="noindex", desc="Buy
 </div>
 <p class="hint">A gift? No problem: after paying you get a gift card to print or save as PDF. The name that appears in the story and on the certificate is only entered by whoever plays.</p>
 <div class="field"><span class="label">You are ordering as *</span>
-<label class="check"><input type="radio" name="kunde" value="b2c"><span>Private individual</span></label>
-<label class="check"><input type="radio" name="kunde" value="b2b"><span>Company, club or organisation</span></label>
+<label class="check"><input type="radio" name="kunde" value="b2c"><span>Private individual or club without a VAT number</span></label>
+<label class="check"><input type="radio" name="kunde" value="b2b"><span>Company, organisation or club with a VAT number</span></label>
 <span class="hint">Private individuals have the statutory right of withdrawal (see <a href="terms.html#ruecktritt" target="_blank" rel="noopener">terms section 8</a>).</span></div>
 <div id="billbox"></div>
 </fieldset>
@@ -892,8 +892,8 @@ P["order"] = dict(title="Order – Mordsteam", robots="noindex", desc="Order Mor
 <div class="field"><label for="c_firma"><span data-c1>Company</span><span data-c2 hidden>Club</span> on the invoice <span class="opt">required when ordering as a company or club</span></label><input id="c_firma" name="c_firma" maxlength="120" autocomplete="organization"><span class="hint">You enter the billing address when paying; billing country and VAT ID further down.</span></div>
 </div>
 <div class="field"><span class="label">You are ordering as *</span>
-<label class="check"><input type="radio" name="kunde" value="b2b"><span>Company, club or organisation</span></label>
-<label class="check"><input type="radio" name="kunde" value="b2c"><span>Private individual</span></label>
+<label class="check"><input type="radio" name="kunde" value="b2b"><span>Company, organisation or club with a VAT number</span></label>
+<label class="check"><input type="radio" name="kunde" value="b2c"><span>Private individual or club without a VAT number</span></label>
 <span class="hint">Private individuals have a statutory right of withdrawal (see <a href="terms.html#ruecktritt" target="_blank" rel="noopener">terms section 8</a>).</span></div>
 <div id="billbox"></div>
 </fieldset>
@@ -934,6 +934,9 @@ P["privacy"] = dict(title="Privacy policy – Mordsteam", desc="How Mordsteam ha
 <p>The website is delivered via Cloudflare (Cloudflare, Inc., USA, and affiliated companies). Technically necessary connection data such as IP address, time, page requested and browser identifier are processed to deliver the site securely and quickly (Art. 6(1)(f) GDPR). Cloudflare is certified under the EU-US Data Privacy Framework.</p>
 <p>To see how often which pages are visited, we use Cloudflare Web Analytics. It works without cookies and without storing anything in your browser and does not build profiles of individual visitors; we only see aggregated figures (e.g. page views, country, device type). The legal basis is our legitimate interest in improving the website (Art. 6(1)(f) GDPR). For operations, we also count server requests and emails sent only as numbers per day – without IP addresses, recipients or content.</p>
 <p>We use no cookies and do not track individual visitors. Fonts are hosted locally; no data is sent to Google. Without cookies, your browser only stores what the site needs: the chosen currency, a draft of the order form and your game progress (the browser’s local storage). To show your local currency, Cloudflare determines the country from your IP address; we do not store the IP address.</p>
+<p><b>Origin of a visit:</b> If you arrive via a link with a source code (e.g. <code>?src=gads</code> from a Google ad or <code>?nl=…</code> from a newsletter), we count visits and orders per code. The code is passed on in links when you change pages and stored with an order. It contains no information about you and is not combined into profiles (Art. 6(1)(f) GDPR).</p>
+<p><b>Protection against misuse:</b> To prevent forms, orders, free trials and PDF generation from being misused on a large scale, we briefly store an irreversible check value (hash) of the IP address, never the IP address itself. We delete these entries after 24 hours at the latest (Art. 6(1)(f) GDPR).</p>
+<p><b>Gift cards as PDF:</b> If you download a gift card as a PDF, Cloudflare (Browser Rendering) creates the PDF from the card including your dedication. The card is only processed briefly for this and is not stored by us (Art. 6(1)(b) GDPR).</p>
 <h2>3. Feedback after the game</h2>
 <p>The day after the game ends, we send the person who ordered a single email with a link to a feedback form (Art. 6(1)(f) GDPR – we want to improve our cases; for early bird orders part of the discount conditions, Art. 6(1)(b) GDPR). You can opt out of this email when ordering. We store your answers without reference to the people in the case. We only publish a review if you expressly agree in the form – anonymously or under the name you provide for it. You can withdraw your consent at any time by email; we will then remove the review from the website.</p>
 <p>After a Teams round ends, we ask on every game device – voluntarily and without names – how the game was (stars, difficulty, optionally comments and a few words for the website). This is stored with the team name and round, without further personal data. The words are only published with express consent – anonymously or with the first name you enter – and only after we approve them (Art. 6(1)(a) GDPR).</p>
@@ -1039,7 +1042,7 @@ P["terms"] = dict(title="Terms – Mordsteam", desc="Terms and conditions of Mor
 <p>Cases, texts, graphics and software are protected by copyright. You receive the simple, non-transferable right to play your game round for your own or internal use. You may not publish, pass on or reuse case content, solutions or codes for other rounds. You are welcome to share certificates, results and photos of your game round.</p>
 
 <h2 id="ruecktritt">8. Right of withdrawal for consumers</h2>
-<p>This right of withdrawal applies to consumers only. If you order as a company, club or for your professional activity, there is no statutory right of withdrawal.</p>
+<p>This right of withdrawal applies to consumers only. If you order as a company, as a club with a VAT number or for your professional activity, there is no statutory right of withdrawal. We treat clubs without a VAT number like consumers.</p>
 <p><b>Withdrawal period:</b> As a consumer you may withdraw from the contract within 14 days of its conclusion without giving reasons – unless the right of withdrawal has expired earlier.</p>
 <p><b>Immediate start and expiry:</b> When ordering as a private individual, you expressly request that we set up your game round and provide the codes right after payment – you still play whenever you like – and confirm that you know you thereby lose your right of withdrawal. Our service is a game provided online. Insofar as it counts as digital content, the right of withdrawal expires when the codes are provided following our email confirmation (§ 18 (1) no. 11 FAGG). Insofar as it counts as a (digital) service, it expires once the game round has been fully performed, i.e. played and ended (§ 18 (1) no. 1 FAGG); for Mordsteam Friends that is the joint reveal.</p>
 <p><b>Withdrawal before the game ends:</b> If you withdraw before the right has expired, we refund all payments within 14 days using the original means of payment. If the game round has not been started, we refund the full price. If it has already been started, you pay a proportionate amount for the service provided up to the withdrawal (§ 16 FAGG), because you expressly requested the immediate start. It is based on the playing time elapsed up to the withdrawal in relation to the total playing time of the booked variant; setting up and personalising the game round has already been fully performed.</p>

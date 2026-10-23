@@ -3,10 +3,21 @@
 import { json, fail, badBody } from "../../../lib/game.js";
 import { adminDenied } from "../../../lib/adminauth.js";
 import { auftragListe, auftragNeu, auftragSave, auftragStatus, auftragNotiz, auftragZeit, auftragLoeschen, anfrageEingang } from "../../../lib/bpauftrag.js";
-import { angeboteListe, angebotSave, angebotFreigeben, angebotStatus, angebotVorschau, rechnungLink, angebotWarnungen, rechnungAdminHtml, schlussAusAngebot, bpKeyOk, htmlPage, publicAngebot, publicAnnahme, publicRechnung } from "../../../lib/bpangebot.js";
+import { angeboteListe, angebotSave, angebotFreigeben, angebotStatus, angebotVorschau, rechnungLink, angebotWarnungen, rechnungAdminHtml, schlussAusAngebot, bpKeyOk, htmlPage, publicAngebot, widerrufBar, publicAnnahme, publicRechnung } from "../../../lib/bpangebot.js";
 import { publicFormular, publicFormularPost, publicAnleitung, publicAV, publicWiderruf, publicAgb, publicWiderrufen, publicUebergabe, publicUebergabePost, uebergabeSave, uebergabeVorlage, nachfassWarnungen, widerrufErfassen, widerrufeFuer, formAbschnitte, anleitungenFuer } from "../../../lib/bpkunde.js";
 import { besuchEingang, besucherStats } from "../../../lib/bpbesuch.js";
 import { bpOverview, bpConfigSave, kundeSave, kundeDelete, rechnungSave, rechnungAusstellen, rechnungBezahlt, rechnungStorno, rechnungErstattung, aboSave, aboRechnungen } from "../../../lib/brightpage.js";
+
+// Widerrufshinweis (F4) oben in die Kundenseite setzen, Status und Kopfzeilen (CSP, no-store) bleiben gleich
+async function mitWiderruf(env, art, tok, res) {
+  try {
+    if (!res || res.status !== 200 || !/text\/html/.test(res.headers.get("content-type") || "")) return res;
+    const bar = await widerrufBar(env, art, tok);
+    if (!bar) return res;
+    const html = (await res.text()).replace(/<body([^>]*)>/, (m) => m + bar);
+    return new Response(html, { status: res.status, headers: res.headers });
+  } catch { return res; }
+}
 
 export async function onRequest({ request, env, params }) {
   if (!env.DB) return fail("Datenbank nicht eingerichtet.", 500);
@@ -27,20 +38,20 @@ export async function onRequest({ request, env, params }) {
   if (route.startsWith("public/k/")) {
     if (!bpKeyOk(env, request)) return htmlPage("Nicht erlaubt.", 403);
     const [, , art, tok = ""] = route.split("/");
-    if (art === "angebot" && request.method === "GET") return publicAngebot(env, tok);
+    if (art === "angebot" && request.method === "GET") return mitWiderruf(env, art, tok, await publicAngebot(env, tok));
     if (art === "angebot" && request.method === "POST") { let f; try { f = await request.formData(); } catch { f = new FormData(); } return publicAnnahme(env, tok, f, request.headers.get("x-bp-ip") || ""); }
-    if (art === "rechnung" && request.method === "GET") return publicRechnung(env, tok, new URL(request.url).searchParams.get("neu") === "1");
+    if (art === "rechnung" && request.method === "GET") return mitWiderruf(env, art, tok, await publicRechnung(env, tok, new URL(request.url).searchParams.get("neu") === "1"));
     const form = async () => { try { return await request.formData(); } catch { return new FormData(); } }, ip = request.headers.get("x-bp-ip") || "";
-    if (art === "formular" && request.method === "GET") return publicFormular(env, tok, new URL(request.url));
+    if (art === "formular" && request.method === "GET") return mitWiderruf(env, art, tok, await publicFormular(env, tok, new URL(request.url)));
     if (art === "formular" && request.method === "POST") return publicFormularPost(env, tok, await form(), ip);
-    if (art === "uebergabe" && request.method === "GET") return publicUebergabe(env, tok);
+    if (art === "uebergabe" && request.method === "GET") return mitWiderruf(env, art, tok, await publicUebergabe(env, tok));
     if (art === "uebergabe" && request.method === "POST") return publicUebergabePost(env, tok, await form(), ip);
     const lang = new URL(request.url).searchParams.get("lang") === "en" ? "en" : "de";
     if (art === "anleitung" && request.method === "GET") return publicAnleitung(env, tok, lang);
     if (art === "av" && request.method === "GET") return publicAV(env, lang);
     if (art === "widerruf" && request.method === "GET") return publicWiderruf(env, lang);
     if (art === "agb" && request.method === "GET") return publicAgb(env, lang);
-    if (art === "widerrufen" && request.method === "GET") return publicWiderrufen(env, lang);
+    if (art === "widerrufen" && request.method === "GET") return publicWiderrufen(env, lang, null, "", new URL(request.url).searchParams.get("nr") || "");
     if (art === "widerrufen" && request.method === "POST") return publicWiderrufen(env, lang, await form(), ip);
     return htmlPage("Nicht gefunden.", 404);
   }

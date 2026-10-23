@@ -121,8 +121,10 @@
       (r.typ === "schluss" && a.uebergabe && a.uebergabe.bestaetigt ? P(en ? "<b>Attached</b> you'll find the confirmed handover record as a PDF for your files." : "<b>Im Anhang</b> finden Sie das bestätigte Übergabeprotokoll als PDF für Ihre Unterlagen.") : "") }; }
     if (art === "bewertung") return { to, lang, subject: en ? "Thank you – and a small request" : "Danke – und eine kleine Bitte", body:
       P(anrede(lang, name)) + P(en ? "thank you for your trust – it was a pleasure working with you! If you're happy with your new website, a short Google review would help us a lot:" : "danke für Ihr Vertrauen – es hat Freude gemacht! Wenn Sie mit Ihrer neuen Website zufrieden sind, würde uns eine kurze Google-Bewertung sehr helfen:") +
-      btn(en ? "Write a review" : "Bewertung schreiben", (D && D.bewertung) || "https://g.page/r/[bewertungslink]/review") +
-      P(en ? `<b>Do you know someone who needs a website?</b> If you refer a new customer, you receive a Brightpage voucher (or half of it as a universal shopping voucher) once their order is paid. Details: <a href="https://brightpage.net/en/prices.html#empfehlung">referral bonus</a>.` : `<b>Kennen Sie jemanden, der eine Website braucht?</b> Für jeden neuen Kunden, den Sie empfehlen, bekommen Sie nach bezahltem Auftrag einen Brightpage-Gutschein – oder die Hälfte als universellen Einkaufsgutschein. Details: <a href="https://brightpage.net/preise.html#empfehlung">Empfehlungsbonus</a>.`) };
+      btn(en ? "Write a review" : "Bewertung schreiben", (D && D.bewertung) || "https://g.page/r/[bewertungslink]/review") };
+    // Empfehlungsbonus bewusst als eigene Mail, getrennt von der Bitte um Bewertung (Freigabe F8, 23.10.2026)
+    if (art === "empfehlung") return { to, lang, subject: en ? "Do you know someone who needs a website?" : "Kennen Sie jemanden, der eine Website braucht?", body:
+      P(anrede(lang, name)) + P(en ? `<b>Do you know someone who needs a website?</b> If you refer a new customer, you receive a Brightpage voucher (or half of it as a universal shopping voucher) once their order is paid. Details: <a href="https://brightpage.net/en/prices.html#empfehlung">referral bonus</a>.` : `<b>Kennen Sie jemanden, der eine Website braucht?</b> Für jeden neuen Kunden, den Sie empfehlen, bekommen Sie nach bezahltem Auftrag einen Brightpage-Gutschein – oder die Hälfte als universellen Einkaufsgutschein. Details: <a href="https://brightpage.net/preise.html#empfehlung">Empfehlungsbonus</a>.`) };
     if (art === "bericht") return { to, lang, subject: en ? "Your 30-day report – Brightpage" : "Ihr 30-Tage-Bericht – Brightpage", body:
       P(anrede(lang, name)) + P(en ? "it's been 30 days – here is a short summary:" : "30 Tage sind um – hier eine kurze Zusammenfassung:") + UL(en ? ["Visitors: [number]", "Enquiries via the website: [number]", "Google profile: [views / calls / route requests]", "Our recommendation: [one sentence]"] : ["Besucher: [Zahl]", "Anfragen über die Website: [Zahl]", "Google-Profil: [Aufrufe / Anrufe / Routen]", "Unsere Empfehlung: [ein Satz]"]) };
     if (art === "widerruf") { const w = x || {}; return { to: w.email || to, lang, subject: en ? `Confirmation of receipt of your withdrawal${w.nr ? " (" + w.nr + ")" : ""}` : `Eingangsbestätigung Ihres Widerrufs${w.nr ? " (" + w.nr + ")" : ""}`, body:
@@ -347,7 +349,7 @@
       ${K ? `<p class="small"><b>${esc(K.firma || K.name)}</b>${K.firma && K.name ? ", " + esc(K.name) : ""} · ${esc(K.strasse)}, ${esc(((K.plz || "") + " " + (K.ort || "")).trim() || K.plz_ort || "")} · ${esc(K.email || "")} <button class="tipbtn" type="button" data-bpkunde="${K.id}">In der Kundendatenbank öffnen</button></p>` : `<p class="small muted">Der Kunde wird bei der Online-Annahme automatisch in der Kundendatenbank angelegt.</p>`}
       <div class="eyebrow" style="margin-top:12px">b · Anzahlung</div>
       ${anz ? rechnungZeile(anz) : `<p class="small muted">${x && !x.rechnung_id ? "Ohne Anzahlung angenommen." : "Noch keine Anzahlungsrechnung."}</p>`}
-      ${x ? `<div style="margin-top:8px">${mailBtn("bestaetigung", x.id, anz ? "Auftragsbestätigung mit Rechnungslink" : "Auftragsbestätigung")}</div>
+      ${x ? `<div style="margin-top:8px">${mailBtn("bestaetigung", x.id, x.annahme ? "Auftragsbestätigung erneut schicken (ging bei der Annahme automatisch raus)" : anz ? "Auftragsbestätigung mit Rechnungslink" : "Auftragsbestätigung")}</div>
       <p class="small" style="margin:6px 0 0"><b>Pflicht-Anhang (§ 7 FAGG):</b> <a href="${KLINK}angebot/${esc(x.token)}" target="_blank" rel="noopener">angenommenes Angebot öffnen</a> → Drucken → „Als PDF sichern“ → an die Mail hängen${x.kunde && x.kunde.art === "b2c" ? ` – dazu das <a href="${KLINK}widerruf" target="_blank" rel="noopener">Muster-Widerrufsformular</a> als PDF` : ""}. Erst danach mit der Arbeit beginnen.</p>` : ""}
       <div class="eyebrow" style="margin-top:14px">c · Auftragsformular und Anleitungen</div>
       ${formularBlock(a)}
@@ -433,7 +435,7 @@
   }
   function step8(a) {
     const p = a.produkte, bericht = p.includes("gefunden") || p.includes("werbung");
-    return `<div style="display:flex;gap:8px;flex-wrap:wrap">${mailBtn("bewertung", "", "Bitte um Bewertung + Empfehlungsbonus")}${bericht ? mailBtn("bericht", "", "30-Tage-Bericht") : ""}</div>
+    return `<div style="display:flex;gap:8px;flex-wrap:wrap">${mailBtn("bewertung", "", "Bitte um Bewertung")}${mailBtn("empfehlung", "", "Empfehlungsbonus vorstellen (eigene Mail)")}${bericht ? mailBtn("bericht", "", "30-Tage-Bericht") : ""}</div>
       <div style="margin-top:10px">${ckItem(a, "basis:bewertung", basisLabel("bewertung"))}</div>
       ${a.empfohlen ? `<p class="note" style="margin-top:10px"><b>Empfohlen von ${esc(a.empfohlen)}:</b> Auftrag bezahlt → Empfehlungsbonus fällig (Gutschein laut Preisliste). Gutschein vorbereiten und schicken.</p>` : ""}
       ${bericht ? `<p class="small">Kurzbericht nach 30 Tagen (Gefunden werden / Werbung): rechts als nächsten Schritt mit Datum eintragen.</p>` : ""}

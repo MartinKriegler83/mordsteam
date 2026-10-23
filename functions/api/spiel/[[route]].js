@@ -14,6 +14,7 @@ import { logAI, opsSummary } from "../../../lib/ops.js";
 import { customers, nlAdmin, syncAll, ecgUpload, nlDraft, ecgCheckNow } from "../../../lib/newsletter.js";
 import { migrateFeedback, dueFeedback, runFeedbackMails } from "../../../lib/feedback.js";
 import { localize, countryOf, COUNTRIES, COUNTRY_ORDER, randomCast, castToEnglish, americanize, isUS, cityName } from "../../../lib/countries.js";
+import { migrateWithdraw } from "../../../lib/withdraw.js";
 // USA: amerikanisches Englisch auch für Texte, die nicht über render() laufen (ARIA, Sonderauftrag)
 // Schweiz/Liechtenstein (Deutsch): kein ß – auch in KI-Antworten, Prompts und Sonderauftrag (Go-live-Test 3, T1-7)
 const noSz = (x) => x && x.LANG !== "en" && COUNTRIES[countryOf(x.LAND || "AT")] && COUNTRIES[countryOf(x.LAND || "AT")].noEszett;
@@ -784,14 +785,16 @@ async function adminCreate(request, env) {
 }
 async function adminOrders(env) {
   await migrateAccounting(env);
-  const base = "SELECT o.id, o.created_at, o.status, o.currency, o.eur_ok, o.paket, o.teams, o.amount_cents, o.refunded_cents, o.refunded_at, o.tax_cents, o.pay_provider, o.paddle_txn, o.event_date, o.contact, o.paid_at, o.shipped_at, json_extract(o.vars,'$.FIRMA') AS firma, s.join_code, s.org_code";
+  await migrateWithdraw(env);   // Spalte withdrawal + Tabelle withdraw_inbox (Freigabe F2, 23.10.2026)
+  const base = "SELECT o.id, o.created_at, o.status, o.withdrawal, o.currency, o.eur_ok, o.paket, o.teams, o.amount_cents, o.refunded_cents, o.refunded_at, o.tax_cents, o.pay_provider, o.paddle_txn, o.event_date, o.contact, o.paid_at, o.shipped_at, json_extract(o.vars,'$.FIRMA') AS firma, s.join_code, s.org_code";
   const tail = " FROM orders o LEFT JOIN sessions s ON s.id=o.session_id ORDER BY o.created_at DESC LIMIT 200";
   const solo = ", (SELECT t.code FROM solo_tickets t WHERE t.order_id=o.id) AS solo_code";
   const friends = ", (SELECT g.org_token FROM friends_groups g WHERE g.order_id=o.id) AS friends_org";
   const { results } = await env.DB.prepare(base + solo + friends + tail).all()
     .catch(() => env.DB.prepare(base + solo + tail).all())
     .catch(() => env.DB.prepare(base + tail).all());
-  return json({ orders: results.map((o) => ({ ...o, contact: JSON.parse(o.contact || "{}") })) });
+  const inbox = await env.DB.prepare("SELECT at, nr, email, name, grund FROM withdraw_inbox WHERE at > ? ORDER BY at DESC LIMIT 50").bind(Date.now() - 30 * 86400000).all().then((r) => r.results).catch(() => []);
+  return json({ orders: results.map((o) => ({ ...o, contact: JSON.parse(o.contact || "{}"), withdrawal: (() => { try { return o.withdrawal ? JSON.parse(o.withdrawal) : null; } catch { return null; } })() })), withdrawInbox: inbox });
 }
 // Statistik: Zeiten je Paket (Median und Quartile), Lösungsquote, Fehlversuche je Frage
 async function adminStats(request, env) {

@@ -703,6 +703,19 @@ async function fulfill(env, id, origin) {
   }
 }
 
+// AGB als Anhang jeder Bestellbestätigung (Freigabe F10, 23.10.2026: Bestätigung samt AGB auf dauerhaftem Datenträger, § 7 Abs 3 FAGG).
+// Die AGB-Seite der Website wird als HTML-Datei angehängt; klappt das nicht, geht die Mail ohne Anhang (Link steht im Text).
+async function agbAnhang(env, origin, site) {
+  try {
+    const path = site === "en" ? "/en/terms" : "/agb";   // ohne .html: Pages leitet .html-Adressen sonst um (308)
+    const r = env.ASSETS ? await env.ASSETS.fetch(new Request(origin + path)) : await fetch(origin + path);
+    if (!r || !r.ok) return undefined;
+    const bytes = new Uint8Array(await r.arrayBuffer());
+    let bin = ""; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return [{ filename: site === "en" ? "Mordsteam-Terms.html" : "Mordsteam-AGB.html", content: btoa(bin) }];
+  } catch { return undefined; }
+}
+
 // ---------- Bestätigungsmail (optional, über Resend) ----------
 async function sendMail(env, o, s, origin) {
   if (!env.RESEND_API_KEY || !env.MAIL_FROM) return;
@@ -746,10 +759,11 @@ ${T("Bestellnummer", "Order number")}: ${orderNo(o.id)}<br>
 ${T("Anbieter", "Provider")}: Mordsteam e.U., ${T("Inhaber", "owner")} Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, ${T("Österreich", "Austria")}, office@mordsteam.com${COMPANY_FN ? `, FN ${COMPANY_FN}` : ""}, ${T("Firmenbuchgericht", "register court")} Landesgericht Eisenstadt<br>
 ${T("Leistung", "Service")}: ${T(`Personalisierter digitaler Krimi-Fall „${e(title)}“, Paket ${NAMES[o.paket] || o.paket}, ${o.teams} Team${o.teams === 1 ? "" : "s"}, Spielsprache ${lang === "en" ? "Englisch" : "Deutsch"}; spielbar 12 Monate ab Kauf, einmal startbar.`, `Personalised digital murder-mystery case “${e(title)}”, package ${NAMES_EN[o.paket] || o.paket}, ${o.teams} team${o.teams === 1 ? "" : "s"}, game language ${lang === "en" ? "English" : "German"}; playable for 12 months from purchase, can be started once.`)}<br>
 ${T("Preis", "Price")}: ${priceTxt(o)} ${vatNote(c, T)}<br>
-${T("Es gelten unsere AGB", "Our terms apply")}: <a href="${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}">${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}</a><br>
+${T("Es gelten unsere AGB (auch im Anhang dieser E-Mail)", "Our terms apply (also attached to this email)")}: <a href="${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}">${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}</a><br>
+${T("Es gelten die gesetzlichen Gewährleistungsrechte.", "The statutory warranty rights apply.")}<br>
 ${c.kunde === "b2b" ? T("Für Bestellungen als Unternehmen, Verein oder Organisation besteht kein gesetzliches Rücktrittsrecht.", "Orders placed as a company, club or organisation have no statutory right of withdrawal.") : T("Ihr habt bei der Bestellung ausdrücklich verlangt, dass wir eure Spielrunde gleich nach dem Bezahlen anlegen und die Codes bereitstellen, und bestätigt, dass ihr als Privatperson dadurch euer Rücktrittsrecht verliert. Es erlischt mit dieser Bestätigung und der Bereitstellung der Codes (§ 18 Abs. 1 Z 11 FAGG), spätestens aber, sobald die Spielrunde gespielt und beendet ist (§ 18 Abs. 1 Z 1 FAGG).", "When ordering, you expressly requested that we set up your game round and provide the codes right after payment, and confirmed that as a private individual you thereby lose your right of withdrawal. It expires with this confirmation and the provision of the codes (§ 18 (1) no. 11 FAGG), but at the latest once the game round has been played and ended (§ 18 (1) no. 1 FAGG).")}${c.kunde !== "b2b" ? `<br>${T("Widerruf (nur Privatpersonen, solange das Rücktrittsrecht besteht)", "Withdrawal (private individuals only, while the right of withdrawal exists)")}: <a href="${origin}${site === "en" ? "/en/withdraw.html" : "/widerruf.html"}?nr=${orderNo(o.id)}">${T("Vertrag widerrufen", "Withdraw from contract")}</a>` : ""}
 </div></div>`;
-  await opsMail(env, "bestellung", { to: [c.email], reply_to: "office@mordsteam.com",
+  await opsMail(env, "bestellung", { to: [c.email], reply_to: "office@mordsteam.com", attachments: await agbAnhang(env, origin, site),
       subject: T(`Euer Mordsteam-Fall für ${vars.FIRMA} ist bereit`, `Your Mordsteam case for ${vars.FIRMA} is ready`), html });
 }
 
@@ -778,10 +792,11 @@ ${T("Bestellnummer", "Order number")}: ${orderNo(o.id)}<br>
 ${T("Anbieter", "Provider")}: Mordsteam e.U., ${T("Inhaber", "owner")} Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, ${T("Österreich", "Austria")}, office@mordsteam.com${COMPANY_FN ? `, FN ${COMPANY_FN}` : ""}, ${T("Firmenbuchgericht", "register court")} Landesgericht Eisenstadt<br>
 ${T("Leistung", "Service")}: ${T(`Digitaler Krimi für eine Person „${F.de}“ (Mordsteam ${F.no})${F.plus ? " mit KI-Verhörraum, ab 18 Jahren" : ""}, Spielsprache ${GL}; spielbar 12 Monate ab Kauf; innerhalb von 30 Tagen nach dem ersten Durchgang bis zu dreimal wiederholbar.`, `Digital murder mystery for one person “${F.en}” (Mordsteam ${F.no})${F.plus ? " with AI interrogation room, ages 18 and over" : ""}, game language ${GL}; playable for 12 months from purchase; can be replayed up to three times within 30 days of the first playthrough.`)}<br>
 ${T("Preis", "Price")}: ${priceTxt(o)} ${vatNote(c, T)}<br>
-${T("Es gelten unsere AGB", "Our terms apply")}: <a href="${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}">${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}</a><br>
+${T("Es gelten unsere AGB (auch im Anhang dieser E-Mail)", "Our terms apply (also attached to this email)")}: <a href="${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}">${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}</a><br>
+${T("Es gelten die gesetzlichen Gewährleistungsrechte.", "The statutory warranty rights apply.")}<br>
 ${c.kunde === "b2b" ? T("Für Bestellungen als Unternehmen besteht kein gesetzliches Rücktrittsrecht.", "Orders placed as a company have no statutory right of withdrawal.") : T("Du hast ausdrücklich verlangt, dass wir deinen Code gleich nach dem Bezahlen bereitstellen, und bestätigt, dass du als Privatperson dadurch dein Rücktrittsrecht verlierst. Es erlischt mit dieser Bestätigung und der Bereitstellung des Codes (§ 18 Abs. 1 Z 11 FAGG), spätestens aber, sobald der Fall gespielt und beendet ist (§ 18 Abs. 1 Z 1 FAGG).", "You expressly requested that we provide your code right after payment and confirmed that as a private individual you thereby lose your right of withdrawal. It expires with this confirmation and the provision of the code (§ 18 (1) no. 11 FAGG), but at the latest once the case has been played and ended (§ 18 (1) no. 1 FAGG).")}${c.kunde !== "b2b" ? `<br>${T("Widerruf (nur Privatpersonen, solange das Rücktrittsrecht besteht)", "Withdrawal (private individuals only, while the right of withdrawal exists)")}: <a href="${origin}${site === "en" ? "/en/withdraw.html" : "/widerruf.html"}?nr=${orderNo(o.id)}">${T("Vertrag widerrufen", "Withdraw from contract")}</a>` : ""}
 </div></div>`;
-  await opsMail(env, "solo", { to: [c.email], reply_to: "office@mordsteam.com", subject: String(c.produkt || "").startsWith("special-") ? T(`Dein Mordsteam Special: ${F.de}`, `Your Mordsteam Special: ${F.en}`) : T(`Dein Mordsteam-Solo-Fall: ${F.de}`, `Your Mordsteam Solo case: ${F.en}`), html });
+  await opsMail(env, "solo", { to: [c.email], reply_to: "office@mordsteam.com", attachments: await agbAnhang(env, origin, site), subject: String(c.produkt || "").startsWith("special-") ? T(`Dein Mordsteam Special: ${F.de}`, `Your Mordsteam Special: ${F.en}`) : T(`Dein Mordsteam-Solo-Fall: ${F.de}`, `Your Mordsteam Solo case: ${F.en}`), html });
 }
 
 // ---------- Friends: Mail mit Organisator- und Einladungslink ----------
@@ -815,10 +830,11 @@ ${T("Bestellnummer", "Order number")}: ${orderNo(o.id)}<br>
 ${T("Anbieter", "Provider")}: Mordsteam e.U., ${T("Inhaber", "owner")} Martin Kriegler, Sportplatzgasse 16, 7152 Pamhagen, ${T("Österreich", "Austria")}, office@mordsteam.com${COMPANY_FN ? `, FN ${COMPANY_FN}` : ""}, ${T("Firmenbuchgericht", "register court")} Landesgericht Eisenstadt<br>
 ${T("Leistung", "Service")}: ${T(`Digitaler ${vName} „${FO.de}“ (Mordsteam Friends ${FO.nr}) für ${n} Personen, ${lim} Minuten, Spielsprache ${GL}; spielbar 12 Monate ab Kauf, einmal startbar.`, `Digital ${vName} “${FO.en}” (Mordsteam Friends ${FO.nr}) for ${n} people, ${lim} minutes, game language ${GL}; playable for 12 months from purchase, can be started once.`)}<br>
 ${T("Preis", "Price")}: ${priceTxt(o)} ${vatNote(c, T)}<br>
-${T("Es gelten unsere AGB", "Our terms apply")}: <a href="${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}">${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}</a><br>
+${T("Es gelten unsere AGB (auch im Anhang dieser E-Mail)", "Our terms apply (also attached to this email)")}: <a href="${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}">${origin}${site === "en" ? "/en/terms.html" : "/agb.html"}</a><br>
+${T("Es gelten die gesetzlichen Gewährleistungsrechte.", "The statutory warranty rights apply.")}<br>
 ${c.kunde === "b2b" ? T("Für Bestellungen als Unternehmen besteht kein gesetzliches Rücktrittsrecht.", "Orders placed as a company have no statutory right of withdrawal.") : T("Du hast ausdrücklich verlangt, dass wir eure Runde gleich nach dem Bezahlen anlegen und die Links bereitstellen, und bestätigt, dass du als Privatperson dadurch dein Rücktrittsrecht verlierst. Es erlischt mit dieser Bestätigung und der Bereitstellung der Links (§ 18 Abs. 1 Z 11 FAGG), spätestens aber mit der gemeinsamen Auflösung (§ 18 Abs. 1 Z 1 FAGG).", "You expressly requested that we set up your round and provide the links right after payment and confirmed that as a private individual you thereby lose your right of withdrawal. It expires with this confirmation and the provision of the links (§ 18 (1) no. 11 FAGG), but at the latest with the joint solution (§ 18 (1) no. 1 FAGG).")}${c.kunde !== "b2b" ? `<br>${T("Widerruf (nur Privatpersonen, solange das Rücktrittsrecht besteht)", "Withdrawal (private individuals only, while the right of withdrawal exists)")}: <a href="${origin}${site === "en" ? "/en/withdraw.html" : "/widerruf.html"}?nr=${orderNo(o.id)}">${T("Vertrag widerrufen", "Withdraw from contract")}</a>` : ""}
 </div></div>`;
-  await opsMail(env, "friends", { to: [c.email], reply_to: "office@mordsteam.com", subject: T(`Euer Mordsteam-Krimiabend: ${FO.de}`, `Your Mordsteam mystery night: ${FO.en}`), html });
+  await opsMail(env, "friends", { to: [c.email], reply_to: "office@mordsteam.com", attachments: await agbAnhang(env, origin, site), subject: T(`Euer Mordsteam-Krimiabend: ${FO.de}`, `Your Mordsteam mystery night: ${FO.en}`), html });
 }
 
 // Für die Buchhaltung: tatsächlich bezahlter Betrag (nach Rabatt) und Stripe-Rechnungsnummer speichern
