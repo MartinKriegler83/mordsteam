@@ -35,6 +35,7 @@
     ["KI-Lösung Einrichtung – alle vier zusammen", 2190, "pauschal", "AI solution setup – all four together"],
     ["KI-Lösung Einrichtung – Produkttexte (auch auf Englisch)", 390, "pauschal", "AI solution setup – product texts (also in English)"],
     ["KI-Lösung Einrichtung – Sprachnotiz-Bericht", 490, "pauschal", "AI solution setup – voice note report"],
+    ["KI-Lösungen Einrichtung – alle sieben zusammen (Bestpreis: nie mehr als dieses Paket)", 3490, "pauschal", "AI solutions setup – all seven together"],
     ["KI-Lösung Einrichtung – Mailbox-Assistent", 590, "pauschal", "AI solution setup – voicemail assistant"],
     ["Englische Fassung der Website (Web Start)", 190, "pauschal", "English version of the website (Web Start)"],
     ["Terminbuchung einbinden – bestehendes Buchungssystem auf der Website", 99, "pauschal", "Embed booking system – existing booking system on the website"],
