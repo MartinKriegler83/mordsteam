@@ -185,7 +185,7 @@
         <div><div class="small">Wert in Arbeit</div><b class="mono">${eur0(S.pipeline_cents)}</b></div>
         <div><div class="small">Gewonnen / verloren</div><b class="mono">${S.gewonnen} / ${S.verloren}</b></div>
       </div>
-      ${D.warn.length ? `<div style="margin-top:12px">${D.warn.map((w) => `<p class="${w.heute ? "note" : "err"}" style="margin:4px 0">${w.id ? `<a href="#" data-bpaopen="${w.id}">${esc(w.text)}</a>` : `<b>${esc(w.text)}</b>`}</p>`).join("")}</div>` : ""}
+      ${D.warn.length ? `<div style="margin-top:12px">${D.warn.map((w) => `<p class="${w.heute ? "note" : "err"}" style="margin:4px 0">${w.id ? `<a href="#" data-bpaopen="${w.id}">${esc(w.text)}</a>` : `<b>${esc(w.text)}</b>`}${w.wr ? ` <button class="tipbtn" type="button" data-bpwrok="${esc(w.wr)}">Erledigt / kein Kunde</button>` : ""}</p>`).join("")}</div>` : ""}
       ${msg ? `<p class="note" role="status" style="margin-top:10px">${esc(msg)}</p>` : ""}${errMsg && !edit ? `<p class="err" style="margin-top:10px">${esc(errMsg)}</p>` : ""}</div>`;
   }
   function listPanel() {
@@ -586,6 +586,11 @@
     const $ = (s) => el.querySelector(s), $$ = (s) => el.querySelectorAll(s);
     bindMail();
     $$("[data-bpaopen]").forEach((x) => (x.onclick = (e) => { e.preventDefault(); openAuftrag(x.dataset.bpaopen); }));
+    // Widerruf ohne Zuordnung ausblenden (bleibt gespeichert) – Martin 24.10.2026
+    $$("[data-bpwrok]").forEach((x) => (x.onclick = () => {
+      const g = prompt("Warum erledigt? (z. B. Test, Spam, kein Kunde, per Mail erledigt)");
+      if (g && g.trim().length > 1) act(async () => { const r = await api("POST", "widerruf/erledigt", { id: x.dataset.bpwrok, grund: g.trim() }); if (r && r.ok === false) throw new Error(r.error || "Fehler"); }, "Widerruf als erledigt markiert.");
+    }));
     $$("[data-bpaf]").forEach((x) => (x.onclick = () => { filter = x.dataset.bpaf; paint(); }));
     const nb = $("#bpa-neu"); if (nb) nb.onclick = () => { neu = !neu; paint(); };
     const nfx = $("#bpa-nfx"); if (nfx) nfx.onclick = () => { neu = false; paint(); };
